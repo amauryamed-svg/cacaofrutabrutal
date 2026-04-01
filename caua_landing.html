@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CAÚA — Fruta Brutal · Experiencia Interactiva</title>
+<meta name="description" content="Descubre por qué 2 millones de toneladas de mucílago de cacao se desperdician cada año — y cómo CAÚA Colombia SAS lo convierte en oro molecular.">
+<link rel="canonical" href="https://cacaofrutabrutal.com/experiencia">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+:root{
+  --pod:#91A63B;--pod2:#A8BF4A;--pod3:#C5DB6A;--podBg:rgba(145,166,59,.1);
+  --cos:#8D2679;--cos2:#B040A0;--cosBg:rgba(141,38,121,.1);
+  --amb:#C9952A;--amb2:#E8B84B;--ambBg:rgba(201,149,42,.08);
+  --g0:#040C06;--g1:#070F09;--g2:#0C1C12;--g3:#142815;--g4:#1A3420;
+  --hei:#F4EDE4;--tx1:rgba(244,237,228,.94);--tx2:rgba(244,237,228,.55);--tx3:rgba(244,237,228,.25);
+  --bdr:rgba(145,166,59,.15);--bdra:rgba(145,166,59,.5);
+  --FD:'Cormorant Garamond',Georgia,serif;
+  --FB:'DM Sans',system-ui,sans-serif;
+  --FM:'Space Mono',monospace;
+}
+body{background:var(--g0);color:var(--tx1);font-family:var(--FB);font-weight:300;overflow-x:hidden;line-height:1.7}
+
+/* ══ NOISE OVERLAY ══ */
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.03'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.5}
+
+/* ══ LEVEL SYSTEM ══ */
+.level{display:none;min-height:100vh;position:relative;overflow:hidden}
+.level.active{display:flex;flex-direction:column;align-items:center;justify-content:center}
+.level-in{position:relative;z-index:2;width:100%;max-width:860px;padding:60px 28px;text-align:center}
+
+/* ══ PROGRESS BAR ══ */
+#progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--pod),var(--cos));z-index:600;transition:width .6s ease}
+#level-indicator{position:fixed;top:12px;right:18px;font-family:var(--FM);font-size:.52rem;letter-spacing:.14em;color:var(--tx2);z-index:600;text-transform:uppercase}
+
+/* ══ TYPOGRAPHY ══ */
+.tag{font-family:var(--FM);font-size:.52rem;letter-spacing:.24em;text-transform:uppercase;color:var(--pod);margin-bottom:14px;display:block}
+.h1{font-family:var(--FD);font-size:clamp(2.4rem,8vw,5.5rem);font-weight:700;line-height:.9;color:var(--hei);margin-bottom:20px}
+.h1 em{color:var(--pod2);font-style:italic}
+.h1 .cos{color:var(--cos2)}
+.h2{font-family:var(--FD);font-size:clamp(1.6rem,5vw,3.2rem);font-weight:600;line-height:1;color:var(--hei);margin-bottom:16px}
+.h2 em{font-style:italic;color:var(--pod2)}
+.lead{font-size:.98rem;color:var(--tx2);max-width:600px;margin:0 auto 36px;line-height:1.84}
+.strong{color:var(--hei);font-weight:400}
+
+/* ══ BUTTONS ══ */
+.btn{display:inline-flex;align-items:center;gap:9px;padding:14px 32px;font-family:var(--FD);font-size:.95rem;font-style:italic;cursor:pointer;border:none;transition:all .28s;text-decoration:none}
+.btn-g{background:var(--pod);color:var(--g0)}
+.btn-g:hover{background:var(--pod2);transform:translateY(-2px);box-shadow:0 12px 32px rgba(145,166,59,.35)}
+.btn-o{background:transparent;color:var(--pod);border:1px solid var(--bdra)}
+.btn-o:hover{background:var(--podBg);transform:translateY(-2px)}
+.btn-c{background:var(--cos);color:var(--hei)}
+.btn-c:hover{background:var(--cos2);transform:translateY(-2px);box-shadow:0 12px 32px rgba(141,38,121,.35)}
+.btn-wa{background:#25D366;color:#fff}
+.btn-wa:hover{background:#128C7E;transform:translateY(-2px)}
+.btn-sm{padding:10px 22px;font-size:.82rem}
+
+/* ══ ORB BG ══ */
+.orb{position:absolute;border-radius:60% 40% 55% 45%/50% 55% 45% 50%;filter:blur(80px);pointer-events:none;z-index:0}
+.o1{width:600px;height:400px;background:rgba(145,166,59,.08);top:-15%;left:-18%;animation:d1 32s ease-in-out infinite}
+.o2{width:480px;height:600px;background:rgba(141,38,121,.07);top:5%;right:-14%;animation:d2 26s ease-in-out infinite}
+.o3{width:360px;height:220px;background:rgba(201,149,42,.05);bottom:0;left:24%;animation:d3 22s ease-in-out infinite}
+@keyframes d1{0%,100%{transform:translate(0,0)}40%{transform:translate(18px,-26px) rotate(7deg)}70%{transform:translate(-12px,18px) rotate(-4deg)}}
+@keyframes d2{0%,100%{transform:translate(0,0)}38%{transform:translate(-22px,14px) rotate(-8deg)}66%{transform:translate(10px,-18px) rotate(5deg)}}
+@keyframes d3{0%,100%{transform:scale(1)}50%{transform:scale(1.1) translate(-8px,-12px)}}
+
+/* ══ LEVEL 1 — GAME ══ */
+#canvas-wrap{position:relative;margin:24px auto;border:1px solid var(--bdra);box-shadow:0 0 60px rgba(145,166,59,.2)}
+canvas{display:block;background:#040C06}
+.score-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;background:rgba(28,59,38,.25);border:1px solid var(--bdr);border-bottom:none;font-family:var(--FM);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--pod2);max-width:640px;margin:0 auto}
+.score-bar span{color:var(--hei)}
+#game-msg{font-family:var(--FD);font-size:1rem;font-style:italic;color:var(--pod2);min-height:28px;margin-top:12px}
+#game-btn-wrap{margin-top:16px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+/* ══ LEVEL 2 — LEAD CAPTURE ══ */
+#lead-form{background:rgba(12,28,18,.8);border:1px solid var(--bdra);padding:36px 40px;max-width:460px;margin:0 auto;position:relative}
+#lead-form::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--pod),var(--cos))}
+.form-field{margin-bottom:18px;text-align:left}
+.form-field label{font-family:var(--FM);font-size:.52rem;letter-spacing:.14em;text-transform:uppercase;color:var(--pod);display:block;margin-bottom:7px}
+.form-field input{width:100%;background:rgba(0,0,0,.5);border:1px solid var(--bdr);color:var(--hei);font-family:var(--FB);font-size:.9rem;padding:11px 14px;outline:none;transition:border .22s}
+.form-field input:focus{border-color:var(--bdra)}
+.form-field input::placeholder{color:var(--tx3)}
+.gdpr-check{display:flex;align-items:flex-start;gap:10px;margin-bottom:20px;text-align:left}
+.gdpr-check input[type=checkbox]{width:16px;height:16px;margin-top:3px;accent-color:var(--pod);flex-shrink:0;cursor:pointer}
+.gdpr-check label{font-size:.72rem;color:var(--tx2);line-height:1.6;cursor:pointer}
+.gdpr-check label a{color:var(--pod);text-decoration:none}
+.field-hidden{display:none}
+.reward-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 18px;background:var(--podBg);border:1px solid var(--bdra);font-family:var(--FM);font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;color:var(--pod);margin-bottom:28px}
+.reward-num{font-family:var(--FD);font-size:1.6rem;font-weight:700;font-style:italic;color:var(--pod2)}
+
+/* ══ LEVEL 3 — PITCH ══ */
+.pitch-stat{padding:20px 18px;border:1px solid var(--bdr);background:rgba(4,12,6,.7);text-align:left;transition:border .3s}
+.pitch-stat:hover{border-color:var(--bdra)}
+.ps-num{font-family:var(--FD);font-size:2.6rem;font-weight:700;font-style:italic;color:var(--pod2);display:block;line-height:1;margin-bottom:5px}
+.ps-num.red{color:#FF7070}
+.ps-num.green{color:var(--pod2)}
+.ps-lbl{font-size:.72rem;color:var(--tx2);line-height:1.55}
+.pitch-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:2px;margin-bottom:32px}
+.problem-bar{margin-bottom:28px}
+.pb-row{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.pb-label{font-family:var(--FM);font-size:.54rem;letter-spacing:.1em;text-transform:uppercase;color:var(--tx2);width:140px;flex-shrink:0;text-align:right}
+.pb-bar{flex:1;height:7px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden}
+.pb-fill{height:100%;border-radius:4px;transition:width 1.5s ease}
+.pb-val{font-family:var(--FM);font-size:.56rem;color:var(--pod2);width:36px;text-align:right;flex-shrink:0}
+.solution-boxes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;margin-bottom:28px}
+@media(max-width:600px){.solution-boxes{grid-template-columns:1fr}}
+.sol-box{padding:18px 14px;border:1px solid var(--bdr);text-align:center;transition:all .3s}
+.sol-box:hover{border-color:var(--bdra);background:rgba(28,59,38,.18)}
+.sol-icon{font-size:1.6rem;display:block;margin-bottom:8px}
+.sol-h{font-family:var(--FD);font-size:.92rem;font-weight:600;font-style:italic;color:var(--hei);margin-bottom:5px}
+.sol-b{font-size:.7rem;color:var(--tx2);line-height:1.6}
+
+/* ══ LEVEL 4 — GROWTH ══ */
+.lean-canvas{display:grid;grid-template-columns:repeat(5,1fr);background:rgba(4,12,6,.8);border:1px solid var(--bdr);overflow:hidden;text-align:left;margin-bottom:28px}
+.lc-cell{padding:14px 12px;border-right:1px solid var(--bdr);border-bottom:1px solid var(--bdr);min-height:120px}
+.lc-cell:nth-child(5),.lc-cell:nth-child(10){border-right:none}
+.lc-label{font-family:var(--FM);font-size:.46rem;letter-spacing:.14em;text-transform:uppercase;color:var(--pod);margin-bottom:7px;display:block}
+.lc-body{font-size:.68rem;color:var(--tx2);line-height:1.6}
+.lc-body strong{color:var(--hei)}
+.lc-span2{grid-column:1/3;border-right:1px solid var(--bdr)}
+.lc-span3{grid-column:3/6;border-right:none}
+.growth-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:2px;margin-bottom:28px}
+.gm-card{padding:18px 14px;border:1px solid var(--bdr);background:rgba(4,12,6,.7);position:relative;overflow:hidden}
+.gm-card::before{content:'';position:absolute;left:0;top:0;width:2px;height:0;background:var(--pod);transition:height .6s}
+.gm-card.visible::before{height:100%}
+.gm-v{font-family:var(--FD);font-size:1.8rem;font-weight:600;font-style:italic;color:var(--pod2);display:block;line-height:1;margin-bottom:4px}
+.gm-l{font-family:var(--FM);font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:var(--tx2)}
+.gm-t{font-size:.68rem;color:var(--tx3);margin-top:3px}
+
+/* ══ LEVEL 5 — GIVE ══ */
+.give-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:28px}
+.give-card{border:1px solid var(--bdr);padding:26px 22px;background:rgba(4,12,6,.7);cursor:pointer;transition:all .32s;position:relative;overflow:hidden;text-align:left}
+.give-card:hover,.give-card.selected{border-color:var(--bdra);background:rgba(28,59,38,.25);transform:translateY(-3px);box-shadow:0 16px 44px rgba(0,0,0,.45)}
+.give-card::after{content:'';position:absolute;bottom:0;left:0;width:0;height:2px;background:linear-gradient(90deg,var(--pod),var(--cos));transition:width .4s}
+.give-card:hover::after,.give-card.selected::after{width:100%}
+.give-card.selected::before{content:'✓';position:absolute;top:10px;right:12px;font-size:.8rem;color:var(--pod);font-family:var(--FM)}
+.give-amount{font-family:var(--FD);font-size:2.4rem;font-weight:700;font-style:italic;color:var(--pod2);display:block;line-height:1;margin-bottom:8px}
+.give-tier{font-family:var(--FM);font-size:.5rem;letter-spacing:.14em;text-transform:uppercase;color:var(--pod);margin-bottom:10px;display:block}
+.give-impact{font-size:.76rem;color:var(--tx2);line-height:1.65}
+.give-impact strong{color:var(--hei)}
+.give-total{padding:16px 20px;border:1px solid var(--bdra);background:var(--podBg);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:20px}
+.gt-label{font-family:var(--FM);font-size:.54rem;letter-spacing:.14em;text-transform:uppercase;color:var(--pod)}
+.gt-amount{font-family:var(--FD);font-size:2rem;font-weight:700;font-style:italic;color:var(--pod2)}
+.crowdfund-meter{margin-bottom:24px}
+.cm-header{display:flex;justify-content:space-between;margin-bottom:8px}
+.cm-label{font-family:var(--FM);font-size:.54rem;letter-spacing:.1em;text-transform:uppercase;color:var(--tx2)}
+.cm-pct{font-family:var(--FD);font-size:.9rem;font-style:italic;color:var(--pod2)}
+.cm-track{height:9px;background:rgba(255,255,255,.05);border-radius:5px;overflow:hidden}
+.cm-fill{height:100%;background:linear-gradient(90deg,var(--pod),var(--cos));border-radius:5px;transition:width 1.5s ease;width:0}
+
+/* ══ LEVEL 6 — AOP GANTT ══ */
+.gantt-wrap{background:rgba(4,12,6,.8);border:1px solid var(--bdr);overflow-x:auto;margin-bottom:24px}
+.gantt-header{display:grid;grid-template-columns:160px repeat(20,1fr);background:rgba(28,59,38,.25);border-bottom:1px solid var(--bdr);min-width:800px}
+.gh-label{font-family:var(--FM);font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;color:var(--tx2);padding:10px 8px;text-align:center;border-right:1px solid var(--bdr)}
+.gh-label.year{background:rgba(145,166,59,.08);font-weight:700;color:var(--pod)}
+.gantt-row{display:grid;grid-template-columns:160px repeat(20,1fr);border-bottom:1px solid rgba(145,166,59,.06);min-width:800px;transition:background .2s}
+.gantt-row:hover{background:rgba(28,59,38,.12)}
+.gr-label{font-family:var(--FM);font-size:.5rem;letter-spacing:.06em;color:var(--tx2);padding:9px 10px;border-right:1px solid var(--bdr);display:flex;align-items:center;text-transform:uppercase}
+.gr-cell{padding:5px 3px;border-right:1px solid rgba(145,166,59,.04)}
+.gr-bar{height:24px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:var(--FM);font-size:.42rem;letter-spacing:.06em;text-transform:uppercase;overflow:hidden;white-space:nowrap;padding:0 5px;transition:all .3s;cursor:pointer;position:relative}
+.bar-pod{background:linear-gradient(90deg,rgba(145,166,59,.8),rgba(168,191,74,.6));color:var(--g0)}
+.bar-cos{background:linear-gradient(90deg,rgba(141,38,121,.8),rgba(176,64,160,.6));color:var(--hei)}
+.bar-amb{background:linear-gradient(90deg,rgba(201,149,42,.8),rgba(232,184,75,.6));color:var(--g0)}
+.bar-red{background:linear-gradient(90deg,rgba(192,64,64,.8),rgba(220,80,80,.6));color:var(--hei)}
+.bar-empty{background:transparent}
+/* milestone marker */
+.milestone-marker{position:absolute;top:0;bottom:0;width:2px;background:var(--pod2);z-index:5}
+.crisis-marker{position:absolute;top:0;bottom:0;width:2px;background:#C44040;z-index:5}
+.gantt-legend{display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;justify-content:center}
+.gl-item{display:flex;align-items:center;gap:7px;font-family:var(--FM);font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;color:var(--tx2)}
+.gl-dot{width:12px;height:12px;border-radius:2px;flex-shrink:0}
+/* milestone cards below gantt */
+.milestone-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:10px;margin-top:20px}
+.mc{padding:14px 16px;border:1px solid var(--bdr);background:rgba(4,12,6,.7);transition:border .3s}
+.mc:hover{border-color:var(--bdra)}
+.mc-year{font-family:var(--FM);font-size:.5rem;letter-spacing:.14em;text-transform:uppercase;color:var(--pod);margin-bottom:5px}
+.mc.crisis .mc-year{color:#C44040}
+.mc-title{font-family:var(--FD);font-size:.9rem;font-weight:600;font-style:italic;color:var(--hei);margin-bottom:5px}
+.mc-body{font-size:.68rem;color:var(--tx2);line-height:1.6}
+
+/* ══ LEVEL 7 — FINAL CTA ══ */
+.final-section{text-align:center}
+.wa-big{font-size:1.05rem;padding:18px 44px;gap:12px}
+.share-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+
+/* ══ ANIMATIONS ══ */
+@keyframes up{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+@keyframes pulse-glow{0%,100%{box-shadow:0 0 0 rgba(145,166,59,0)}50%{box-shadow:0 0 24px rgba(145,166,59,.4)}}
+@keyframes bar-in{from{width:0}to{width:var(--w)}}
+.anim-up{opacity:0;transform:translateY(20px);transition:opacity .7s,transform .7s}
+.anim-up.in{opacity:1;transform:none}
+
+/* ══ NOTIFICATIONS ══ */
+.notif{position:fixed;bottom:28px;right:28px;padding:12px 20px;background:rgba(28,59,38,.96);border:1px solid var(--bdra);font-family:var(--FM);font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;color:var(--pod2);z-index:800;transform:translateX(120%);transition:transform .4s;max-width:280px}
+.notif.show{transform:none}
+
+/* ══ TOOLTIP ══ */
+.tooltip-wrap{position:relative;display:inline-block}
+.tooltip-box{position:absolute;bottom:120%;left:50%;transform:translateX(-50%);background:rgba(7,15,8,.97);border:1px solid var(--bdra);padding:10px 14px;font-family:var(--FM);font-size:.52rem;letter-spacing:.06em;color:var(--hei);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s;z-index:100}
+.tooltip-wrap:hover .tooltip-box{opacity:1}
+
+/* ══ DIVIDER ══ */
+.rule{height:1px;background:linear-gradient(90deg,transparent,var(--bdr),transparent);margin:32px 0}
+@media(max-width:600px){.lean-canvas{grid-template-columns:1fr 1fr}.lc-span2{grid-column:auto}.lc-span3{grid-column:auto}.give-cards,.solution-boxes{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- PROGRESS -->
+<div id="progress-bar" style="width:0%"></div>
+<div id="level-indicator">Nivel <span id="cur-level">1</span>/6</div>
+
+<!-- NOTIFICATION -->
+<div class="notif" id="notif"></div>
+
+<!-- ══════════════════════════════════════════
+     NIVEL 1 — JUEGO INDIE 2D: RECOLECTOR DE MUCÍLAGO
+══════════════════════════════════════════ -->
+<div class="level active" id="lvl-1">
+  <div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+  <div class="level-in" style="padding-top:80px">
+    <span class="tag" style="animation:up .7s .1s both;opacity:0">Nivel 1 · El Problema</span>
+    <h1 class="h1" style="animation:up .7s .22s both;opacity:0">El <em>40%</em> del cacao<br>se <span class="cos">desperdicia</span></h1>
+    <p class="lead" style="animation:up .7s .36s both;opacity:0">2 millones de toneladas de mucílago de cacao se descartan cada año. Recoge el mucílago antes de que caiga al suelo — cada gota vale <strong class="strong">€28/kg</strong> en el mercado europeo.</p>
+
+    <div class="score-bar" style="max-width:640px;animation:up .7s .5s both;opacity:0">
+      <span>MUCÍLAGO RECOLECTADO: <span id="score">0</span> gotas</span>
+      <span>NIVEL: <span id="game-level">1</span></span>
+      <span>TIEMPO: <span id="timer">30</span>s</span>
+    </div>
+    <div id="canvas-wrap" style="max-width:640px;animation:up .7s .62s both;opacity:0">
+      <canvas id="gameCanvas" width="640" height="320"></canvas>
+    </div>
+    <div id="game-msg">← Mueve el ratón / toca para recoger mucílago ✦</div>
+    <div id="game-btn-wrap">
+      <button class="btn btn-g" id="startBtn" onclick="startGame()">▶ Iniciar Juego</button>
+      <button class="btn btn-o btn-sm" id="skipBtn" onclick="goLevel(2)" style="display:none">Saltar →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     NIVEL 2 — DESBLOQUEO PROGRESIVO (GDPR)
+══════════════════════════════════════════ -->
+<div class="level" id="lvl-2">
+  <div class="orb o1"></div><div class="orb o2"></div>
+  <div class="level-in">
+    <span class="tag">Nivel 2 · Acceso Exclusivo</span>
+    <h1 class="h1">Has recolectado<br><em id="score-display">0</em> gotas</h1>
+    <p class="lead">Eso equivale a <strong id="value-display" class="strong">€0</strong> en el mercado EU. Desbloquea el sistema completo CAÚA y descubre cómo convertir este desperdicio en oro molecular.</p>
+
+    <div class="reward-badge">
+      <span>🫙</span>
+      <span>Acceso a la metodología MucilageExtract™ + modelo financiero</span>
+    </div>
+
+    <div id="lead-form">
+      <!-- Step 1: email only -->
+      <div id="step-email">
+        <div class="form-field">
+          <label>Tu email</label>
+          <input type="email" id="inp-email" placeholder="nombre@empresa.com" required>
+        </div>
+        <div class="gdpr-check">
+          <input type="checkbox" id="gdpr1" required>
+          <label for="gdpr1">Acepto recibir información de CAÚA Colombia SAS. Datos tratados conforme al <a href="#" onclick="return false">RGPD EU 2016/679</a>. Puedo revocar en cualquier momento a <a href="mailto:amauryamed@gmail.com">amauryamed@gmail.com</a></label>
+        </div>
+        <button class="btn btn-g" style="width:100%;justify-content:center" onclick="submitEmail()">Desbloquear →</button>
+      </div>
+      <!-- Step 2: name + phone (revealed after email) -->
+      <div id="step-name" style="display:none">
+        <p style="font-family:var(--FM);font-size:.54rem;letter-spacing:.12em;text-transform:uppercase;color:var(--pod);margin-bottom:20px">✓ Email registrado — un paso más para el acceso completo</p>
+        <div class="form-field">
+          <label>Nombre completo</label>
+          <input type="text" id="inp-name" placeholder="Tu nombre">
+        </div>
+        <div class="form-field">
+          <label>WhatsApp / Teléfono <span style="color:var(--tx3)">(opcional)</span></label>
+          <input type="tel" id="inp-phone" placeholder="+34 600 000 000">
+        </div>
+        <div class="gdpr-check">
+          <input type="checkbox" id="gdpr2">
+          <label for="gdpr2">Acepto ser contactado por WhatsApp/teléfono para una llamada informativa sobre inversión o partnership.</label>
+        </div>
+        <button class="btn btn-g" style="width:100%;justify-content:center" onclick="submitFull()">Acceder al Sistema Completo →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     NIVEL 3 — PITCH: EL PROBLEMA + SOLUCIÓN
+══════════════════════════════════════════ -->
+<div class="level" id="lvl-3">
+  <div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+  <div class="level-in">
+    <span class="tag">Nivel 3 · El Sistema CAÚA</span>
+    <h2 class="h2">2 millones de toneladas<br>de <em>mucílago desperdiciado</em> al año</h2>
+    <p class="lead">La industria del cacao solo usa las semillas. El resto — cáscara, mucílago, pulpa — se descarta. <span class="strong">CAÚA Colombia SAS</span> convierte ese desperdicio en el ingrediente funcional más valioso del mercado EU.</p>
+
+    <div class="pitch-grid anim-up">
+      <div class="pitch-stat"><span class="ps-num red">2M</span><span class="ps-lbl">toneladas de mucílago desperdiciadas anualmente en la cadena de cacao global</span></div>
+      <div class="pitch-stat"><span class="ps-num red">70%</span><span class="ps-lbl">del peso del fruto de cacao se descarta en la producción tradicional de chocolate</span></div>
+      <div class="pitch-stat"><span class="ps-num green">€28/kg</span><span class="ps-lbl">precio del mucílago concentrado de cacao en el mercado nutracéutico europeo</span></div>
+      <div class="pitch-stat"><span class="ps-num green">8×</span><span class="ps-lbl">más polifenoles en el Criollo Élite colombiano vs. el Forastero africano industrial</span></div>
+    </div>
+
+    <div class="problem-bar anim-up">
+      <div class="pb-row"><span class="pb-label">Desperdicio global</span><div class="pb-bar"><div class="pb-fill" style="width:0;background:#C44040;--w:70%" data-w="70"></div></div><span class="pb-val">70%</span></div>
+      <div class="pb-row"><span class="pb-label">Valor capturado</span><div class="pb-bar"><div class="pb-fill" style="width:0;background:var(--pod);--w:100%" data-w="100"></div></div><span class="pb-val">CAÚA</span></div>
+      <div class="pb-row"><span class="pb-label">Polifenoles</span><div class="pb-bar"><div class="pb-fill" style="width:0;background:var(--cos);--w:88%" data-w="88"></div></div><span class="pb-val">8×</span></div>
+    </div>
+
+    <div class="rule"></div>
+    <h2 class="h2" style="margin-bottom:18px">La solución <em>IaaS</em></h2>
+    <div class="solution-boxes anim-up">
+      <div class="sol-box"><span class="sol-icon">🫙</span><div class="sol-h">MucilageExtract™</div><div class="sol-b">Mucílago liofilizado → ingrediente nutracéutico certificable EU. €3K–€15K por lote.</div></div>
+      <div class="sol-box"><span class="sol-icon">💧</span><div class="sol-h">HydrosolDistill™</div><div class="sol-b">Hidrosol aromático destilado con curva térmica propietaria. Para cosmética y bebidas premium.</div></div>
+      <div class="sol-box"><span class="sol-icon">🧬</span><div class="sol-h">IA Flavor Matrix™</div><div class="sol-b">Data moat creciente. Cada batch entrena el modelo. 5 genotipos × 5 regiones colombianas.</div></div>
+    </div>
+
+    <p style="font-family:var(--FM);font-size:.56rem;letter-spacing:.14em;color:var(--pod);margin-bottom:20px;text-transform:uppercase">CAÚA Colombia SAS · Essence Food SAS · NSA-0014914-2023 · INVIMA 2018L-0009309</p>
+    <button class="btn btn-g" onclick="goLevel(4)">Ver Modelo de Crecimiento →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     NIVEL 4 — GROWTH: MÉTRICAS + LEAN STARTUP
+══════════════════════════════════════════ -->
+<div class="level" id="lvl-4">
+  <div class="orb o1"></div><div class="orb o2"></div>
+  <div class="level-in">
+    <span class="tag">Nivel 4 · Modelo de Crecimiento</span>
+    <h2 class="h2">De la validación<br>al <em>mercado europeo</em></h2>
+    <p class="lead">CAÚA está en transición de Seed validado a escala EU. EBITDA positivo, cero deuda, $1.3M USD en IP pre-patente. BFFood VIII + CAÚA España SL (en constitución).</p>
+
+    <div class="growth-metrics anim-up">
+      <div class="gm-card"><span class="gm-v">€120K</span><span class="gm-l">Revenue Año 1</span><span class="gm-t">B2B IaaS + B2C DTC Colombia+EU</span></div>
+      <div class="gm-card"><span class="gm-v">€400K</span><span class="gm-l">Revenue Año 2</span><span class="gm-t">Escala España + HoReCa EU</span></div>
+      <div class="gm-card"><span class="gm-v">€1M+</span><span class="gm-l">Revenue Año 3</span><span class="gm-t">Plataforma EU + IP Licensing</span></div>
+      <div class="gm-card"><span class="gm-v">65–75%</span><span class="gm-l">Margen Bruto</span><span class="gm-t">Ingredientes funcionales premium</span></div>
+      <div class="gm-card"><span class="gm-v">Q3'27</span><span class="gm-l">Break-Even</span><span class="gm-t">Ronda seed €250K–€500K</span></div>
+      <div class="gm-card"><span class="gm-v">$1.3M</span><span class="gm-l">Valor IP USD</span><span class="gm-t">5 Trade Secrets pre-patente</span></div>
+    </div>
+
+    <div class="rule"></div>
+    <p style="font-family:var(--FM);font-size:.54rem;letter-spacing:.2em;text-transform:uppercase;color:var(--pod);margin-bottom:18px">◈ Lean Canvas · CAÚA Colombia SAS · BFFood 2026</p>
+    <div class="lean-canvas anim-up">
+      <div class="lc-cell"><span class="lc-label">Problema</span><div class="lc-body"><strong>70% mazorca desperdiciada</strong><br>Mucílago = biodesecho<br>Sin proveedor IaaS cacao en EU<br>Barrera Novel Foods EFSA</div></div>
+      <div class="lc-cell"><span class="lc-label">Solución</span><div class="lc-body"><strong>5 Trade Secrets</strong><br>MucilageExtract™<br>HydrosolDistill™<br>IA Flavor Matrix™</div></div>
+      <div class="lc-cell" style="background:rgba(141,38,121,.06);border-color:rgba(141,38,121,.2)"><span class="lc-label" style="color:var(--cos2)">Propuesta Única</span><div class="lc-body"><strong>"Del genoma colombiano al mercado EU"</strong><br>Primer IaaS cacao funcional. Sin desperdiciar una sola molécula.</div></div>
+      <div class="lc-cell"><span class="lc-label">Ventaja Injusta</span><div class="lc-body"><strong>$1.3M IP · 5 genotipos</strong><br>Data moat IA creciente<br>CAÚA™ registrada TX+CO<br>Red de 5 cacaocultores</div></div>
+      <div class="lc-cell"><span class="lc-label">Segmentos</span><div class="lc-body"><strong>B2B:</strong> Chocolatería Clusaga, cosmética EU, nutraceútica<br><strong>B2C:</strong> Biohackers 25–45, HoReCa, turismo Camino SCQ</div></div>
+      <div class="lc-cell lc-span2"><span class="lc-label">Costes Clave</span><div class="lc-body">Liofilizador €80K · Centrífuga €35K · Certificaciones EFSA €30K · Equipo 4: €72K/año · Mktg EU: €20K/año</div></div>
+      <div class="lc-cell"><span class="lc-label">Métricas</span><div class="lc-body">LTV/CAC B2B ≥8:1<br>PMF Score ≥7/10<br>Batch yield ≥25kg<br>Break-Even Q3'27</div></div>
+      <div class="lc-cell lc-span2"><span class="lc-label">Canales</span><div class="lc-body">BFFood VIII tractoras · cacaofrutabrutal.com · Pop-Up SCQ · HoReCa EU · Export USA: UNFI/KeHE</div></div>
+      <div class="lc-cell lc-span3" style="border-right:none"><span class="lc-label">Flujos de Ingresos</span><div class="lc-body"><strong>B2B IaaS:</strong> €3K–€15K/lote · <strong>Hidrosol:</strong> €2.5K/lote · <strong>IP Licensing SaaS</strong> · <strong>B2C DTC:</strong> RTD €8–€14 · Sachets €25–€65</div></div>
+    </div>
+
+    <button class="btn btn-g" onclick="goLevel(5)">Quiero Apoyar →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     NIVEL 5 — GIVE: CROWDFUNDING
+══════════════════════════════════════════ -->
+<div class="level" id="lvl-5">
+  <div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+  <div class="level-in">
+    <span class="tag">Nivel 5 · Apoya a CAÚA</span>
+    <h2 class="h2">Elige tu <em>nivel de impacto</em><br>en el cacao colombiano</h2>
+    <p class="lead">Cada contribución tiene un impacto cuantificable en las comunidades cacaoteras colombianas, en la certificación EU y en la apertura del canal nutracéutico para el mucílago.</p>
+
+    <div class="crowdfund-meter anim-up">
+      <div class="cm-header"><span class="cm-label">Meta Seed Round · €250,000</span><span class="cm-pct" id="fund-pct">34%</span></div>
+      <div class="cm-track"><div class="cm-fill" id="fund-fill" style="width:34%"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:7px"><span style="font-family:var(--FM);font-size:.52rem;color:var(--pod2)">€84,500 recaudados</span><span style="font-family:var(--FM);font-size:.52rem;color:var(--tx2)">Objetivo: €250,000</span></div>
+    </div>
+
+    <div class="give-cards">
+      <div class="give-card" onclick="selectGive(this, 50, 'Supporter')">
+        <span class="give-amount">€50</span>
+        <span class="give-tier">🌱 Supporter · Comunidad</span>
+        <div class="give-impact">
+          Financia <strong>2kg de mucílago liofilizado</strong> para análisis HPLC de polifenoles.<br><br>
+          <em style="color:var(--pod)">Recibe:</em> Acceso digital al reporte científico CAÚA + updates mensual por WhatsApp.
+        </div>
+      </div>
+      <div class="give-card" onclick="selectGive(this, 500, 'Partner')">
+        <span class="give-amount">€500</span>
+        <span class="give-tier">🧪 Partner · Laboratorio</span>
+        <div class="give-impact">
+          Financia <strong>un análisis ADME completo</strong> del mucílago CAÚA para el dossier EFSA Novel Foods.<br><br>
+          <em style="color:var(--pod)">Recibe:</em> Mención en el dossier EFSA + acceso al deck completo de inversores + llamada 1:1 con Amaury.
+        </div>
+      </div>
+      <div class="give-card" onclick="selectGive(this, 25000, 'Investor')">
+        <span class="give-amount">€25,000</span>
+        <span class="give-tier">🚀 Investor · Seed Round</span>
+        <div class="give-impact">
+          Financia <strong>el liofilizador industrial</strong> que convierte el mucílago en polvo exportable EU.<br><br>
+          <em style="color:var(--pod)">Recibe:</em> Equity seed + asiento observador en advisory board CAÚA Colombia SAS + visita a la finca.
+        </div>
+      </div>
+    </div>
+
+    <div class="give-total anim-up" id="give-total-wrap" style="display:none">
+      <span class="gt-label">Tu contribución</span>
+      <span class="gt-amount" id="give-total-amount">€0</span>
+      <button class="btn btn-wa btn-sm" id="give-wa-btn" onclick="giveViaWA()">💬 Confirmar por WhatsApp</button>
+    </div>
+
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:8px">
+      <button class="btn btn-o btn-sm" onclick="goLevel(6)">Ver Plan 5 Años →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     NIVEL 6 — AOP 5 AÑOS · GANTT
+══════════════════════════════════════════ -->
+<div class="level" id="lvl-6">
+  <div class="orb o1"></div><div class="orb o2"></div>
+  <div class="level-in">
+    <span class="tag">Nivel 6 · Plan Operacional 2026–2030</span>
+    <h2 class="h2"><em>5 años</em> de cacao inteligente<br>para Europa</h2>
+    <p class="lead">Roadmap con hitos de crecimiento, crisis anticipadas y horizontes de internacionalización. Los momentos rojos son <strong class="strong">crisis gestionadas</strong> — parte del plan, no del azar.</p>
+
+    <div class="gantt-wrap anim-up">
+      <div class="gantt-header">
+        <div class="gh-label">Línea</div>
+        <div class="gh-label year" style="grid-column:span 4">2026</div>
+        <div class="gh-label year" style="grid-column:span 4">2027</div>
+        <div class="gh-label year" style="grid-column:span 4">2028</div>
+        <div class="gh-label year" style="grid-column:span 4">2029</div>
+        <div class="gh-label year" style="grid-column:span 4">2030</div>
+      </div>
+      <!-- Row builder will be done in JS -->
+      <div id="gantt-rows"></div>
+    </div>
+
+    <div class="gantt-legend">
+      <div class="gl-item"><div class="gl-dot bar-pod"></div>Operaciones &amp; I+D</div>
+      <div class="gl-item"><div class="gl-dot bar-cos"></div>Expansión EU</div>
+      <div class="gl-item"><div class="gl-dot bar-amb"></div>Financiación &amp; IP</div>
+      <div class="gl-item"><div class="gl-dot bar-red"></div>Crisis anticipada</div>
+    </div>
+
+    <div class="milestone-cards anim-up" style="margin-top:24px">
+      <div class="mc"><div class="mc-year">Q1–Q2 2026 ✦ Hito</div><div class="mc-title">BFFood VIII + EFSA Pre-Assessment</div><div class="mc-body">Constitución CAÚA España SL. Consulta Novel Foods EFSA mucílago. Primer lote 600L Sunrise. IGAPE €25K.</div></div>
+      <div class="mc crisis"><div class="mc-year">Q3 2026 ⚠ Crisis</div><div class="mc-title">Crisis de Cosecha · El Niño</div><div class="mc-body">Contingencia: activación red de los 5 guardianes + inventario estratégico 6 meses. Protocolo de cadena de frío alternativa.</div></div>
+      <div class="mc"><div class="mc-year">Q4 2026 ✦ Hito</div><div class="mc-title">Primer B2B Clusaga Activo</div><div class="mc-body">Partnership chocolatería gallega. Rev €80K–€120K Año 1. Cierre ronda seed €250K–€500K.</div></div>
+      <div class="mc"><div class="mc-year">Q3 2027 ✦ Hito</div><div class="mc-title">Break-Even + Patent Pending</div><div class="mc-body">Break-Even operativo. MucilageExtract™ Patent Filed USPTO. Amazon ES + El Corte Inglés.</div></div>
+      <div class="mc crisis"><div class="mc-year">Q1 2028 ⚠ Crisis</div><div class="mc-title">Competidor EU copia metodología</div><div class="mc-body">Ventaja: IA Flavor Matrix™ data lock-in + 5 genotipos únicos no replicables. Barrera de entrada 3+ años.</div></div>
+      <div class="mc"><div class="mc-year">2028 ✦ Hito</div><div class="mc-title">Aprobación EFSA Novel Foods</div><div class="mc-body">Mucílago CAÚA como Novel Food EU. Mercado DE + FR. Serie A €1M. Centro I+D Colombia.</div></div>
+      <div class="mc"><div class="mc-year">2029 ✦ Hito</div><div class="mc-title">Plataforma SaaS Intelligence</div><div class="mc-body">CAÚA Intelligence™ licenciada a industria EU. 10 guardianes activos. Rev €3M+.</div></div>
+      <div class="mc"><div class="mc-year">2030 ✦ Hito</div><div class="mc-title">IPO / Exit · 10 Países</div><div class="mc-body">CAÚA INC USA o CAÚA SA Colombia-LatAm-EU. Valoración objetivo €10M–€20M. JP · KR · MX · US.</div></div>
+    </div>
+
+    <div class="rule"></div>
+
+    <!-- FINAL CTA -->
+    <div class="final-section">
+      <span class="tag">Con la naturaleza caminamos</span>
+      <h2 class="h2" style="margin-bottom:12px">¿Listo para <em>caminar</em><br>con nosotros?</h2>
+      <p class="lead" style="margin-bottom:28px">Escríbenos por WhatsApp. Amaury responde personalmente en menos de 24 horas.</p>
+      <a href="https://wa.me/573102227848?text=Quiero+apoyar+a+Caúa+%E2%80%94+me+interesa+el+cacao+colombiano+y+el+proyecto+EU" target="_blank" class="btn btn-wa wa-big">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Quiero apoyar a Caúa
+      </a>
+      <div class="share-row" style="margin-top:28px">
+        <button class="btn btn-o btn-sm" onclick="goLevel(3)">← Releer Pitch</button>
+        <button class="btn btn-o btn-sm" onclick="goLevel(5)">← Volver a Apoyar</button>
+        <a href="https://cacaofrutabrutal.com" class="btn btn-o btn-sm" target="_blank">cacaofrutabrutal.com ↗</a>
+      </div>
+      <p style="font-family:var(--FM);font-size:.52rem;color:var(--tx3);margin-top:24px;letter-spacing:.08em">© 2026 CAÚA Colombia SAS · WA'KA1 CORP (Texas) · +57 310 222 7848 · amauryamed@gmail.com</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══ STATE ══
+var state = {
+  currentLevel: 1,
+  score: 0,
+  gameRunning: false,
+  gameOver: false,
+  userData: { email:'', name:'', phone:'', gdpr1:false, gdpr2:false },
+  selectedGive: 0
+};
+
+// ══ LEVEL NAVIGATION ══
+function goLevel(n) {
+  if (n < 1 || n > 6) return;
+  // Hide all
+  for (var i=1;i<=6;i++) {
+    var el = document.getElementById('lvl-'+i);
+    el.classList.remove('active');
+    el.classList.remove('display-block');
+  }
+  var next = document.getElementById('lvl-'+n);
+  next.classList.add('active');
+  state.currentLevel = n;
+  document.getElementById('cur-level').textContent = n;
+  var pct = ((n-1)/5*100).toFixed(0);
+  document.getElementById('progress-bar').style.width = pct + '%';
+  window.scrollTo(0,0);
+  // Trigger animations
+  setTimeout(function(){ triggerAnims(next); }, 150);
+  if (n === 2) {
+    document.getElementById('score-display').textContent = state.score;
+    document.getElementById('value-display').textContent = '€' + (state.score * 0.28).toFixed(2);
+  }
+  if (n === 4) { animGrowthCards(); }
+  if (n === 5) { setTimeout(function(){ animFundFill(); },400); }
+  if (n === 6) { setTimeout(function(){ buildGantt(); animGanttRows(); }, 200); }
+}
+
+function triggerAnims(container) {
+  container.querySelectorAll('.anim-up').forEach(function(el, i) {
+    setTimeout(function() { el.classList.add('in'); }, i * 120);
+  });
+  container.querySelectorAll('[data-w]').forEach(function(el) {
+    setTimeout(function() { el.style.width = el.getAttribute('data-w') + '%'; }, 400);
+  });
+}
+
+// ══ NOTIFICATION ══
+function notify(msg, dur) {
+  var n = document.getElementById('notif');
+  n.textContent = msg;
+  n.classList.add('show');
+  setTimeout(function() { n.classList.remove('show'); }, dur || 3000);
+}
+
+// ══════════════════════════
+//  LEVEL 1 — CANVAS GAME
+// ══════════════════════════
+var canvas = document.getElementById('gameCanvas');
+var ctx = canvas.getContext('2d');
+var drops = [], player = { x:300, y:260, w:44, h:18, speed:7 };
+var timeLeft = 30, scoreCount = 0, gameInterval, timerInterval, gameStarted = false;
+var animId;
+
+function startGame() {
+  if (gameStarted && !state.gameOver) return;
+  drops = []; scoreCount = 0; timeLeft = 30; state.gameOver = false; gameStarted = true;
+  player.x = 300;
+  document.getElementById('startBtn').style.display = 'none';
+  document.getElementById('skipBtn').style.display = 'inline-flex';
+  document.getElementById('game-msg').textContent = '← Mueve el ratón / desliza para recoger mucílago';
+  clearInterval(gameInterval);
+  clearInterval(timerInterval);
+  spawnDrops();
+  timerInterval = setInterval(tickTimer, 1000);
+  if (animId) cancelAnimationFrame(animId);
+  gameLoop();
+}
+
+function spawnDrops() {
+  gameInterval = setInterval(function() {
+    if (state.gameOver) return;
+    var colors = ['#91A63B','#A8BF4A','#8D2679','#C9952A','#C5DB6A'];
+    drops.push({
+      x: 30 + Math.random()*(canvas.width-60),
+      y: -12,
+      r: 6 + Math.random()*8,
+      speed: 1.2 + Math.random()*2.4 * (1 + (30-timeLeft)/40),
+      color: colors[Math.floor(Math.random()*colors.length)],
+      glow: Math.random() > 0.75,
+      pulse: Math.random()*Math.PI*2,
+      value: Math.random() > 0.85 ? 3 : 1
+    });
+  }, 600 - Math.min(450, (30-timeLeft)*10));
+}
+
+function tickTimer() {
+  timeLeft--;
+  document.getElementById('timer').textContent = timeLeft;
+  if (timeLeft <= 0) { endGame(); }
+}
+
+function gameLoop() {
+  if (state.gameOver) return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  // BG
+  ctx.fillStyle = '#040C06';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  // subtle grid
+  ctx.strokeStyle='rgba(145,166,59,.04)';ctx.lineWidth=1;
+  for(var gx=0;gx<canvas.width;gx+=40){ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,canvas.height);ctx.stroke();}
+  for(var gy=0;gy<canvas.height;gy+=40){ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(canvas.width,gy);ctx.stroke();}
+  // Cacao tree silhouettes
+  drawTree(60, canvas.height, 0.7);
+  drawTree(canvas.width-60, canvas.height, 0.7);
+  // Player
+  drawPlayer();
+  // Drops
+  var toRemove = [];
+  drops.forEach(function(d, i) {
+    d.y += d.speed;
+    d.pulse += 0.08;
+    // Collision
+    if (d.y + d.r > player.y && d.x > player.x - player.w/2 && d.x < player.x + player.w/2 && d.y < player.y + player.h) {
+      scoreCount += d.value;
+      document.getElementById('score').textContent = scoreCount;
+      toRemove.push(i);
+      spawnSplash(d.x, player.y, d.color);
+      return;
+    }
+    if (d.y > canvas.height + 20) { toRemove.push(i); return; }
+    drawDrop(d);
+  });
+  toRemove.reverse().forEach(function(i){ drops.splice(i,1); });
+  // Splash
+  drawSplashes();
+  animId = requestAnimationFrame(gameLoop);
+}
+
+var splashes = [];
+function spawnSplash(x,y,color) {
+  for(var i=0;i<8;i++) {
+    splashes.push({x:x,y:y,vx:(Math.random()-0.5)*4,vy:-(1+Math.random()*3),life:1,color:color});
+  }
+}
+function drawSplashes() {
+  splashes = splashes.filter(function(s){ return s.life > 0; });
+  splashes.forEach(function(s) {
+    ctx.globalAlpha = s.life;
+    ctx.fillStyle = s.color;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, 2.5, 0, Math.PI*2);
+    ctx.fill();
+    s.x += s.vx; s.y += s.vy; s.vy += 0.15; s.life -= 0.06;
+  });
+  ctx.globalAlpha = 1;
+}
+
+function drawDrop(d) {
+  if (d.glow) {
+    ctx.shadowColor = d.color;
+    ctx.shadowBlur = 10 + 5*Math.sin(d.pulse);
+  }
+  ctx.fillStyle = d.color;
+  ctx.beginPath();
+  ctx.arc(d.x, d.y, d.r, 0, Math.PI*2);
+  ctx.fill();
+  // value indicator
+  if (d.value > 1) {
+    ctx.fillStyle='#F4EDE4'; ctx.font='bold 8px Space Mono'; ctx.textAlign='center';
+    ctx.fillText('×'+d.value, d.x, d.y+3);
+  }
+  ctx.shadowBlur = 0;
+}
+
+function drawPlayer() {
+  ctx.shadowColor='rgba(145,166,59,.8)'; ctx.shadowBlur=18;
+  ctx.fillStyle='rgba(145,166,59,.9)';
+  ctx.beginPath();
+  ctx.roundRect ? ctx.roundRect(player.x - player.w/2, player.y, player.w, player.h, 3) :
+    ctx.rect(player.x - player.w/2, player.y, player.w, player.h);
+  ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.fillStyle='rgba(4,12,6,.8)'; ctx.font='bold 9px Space Mono'; ctx.textAlign='center';
+  ctx.fillText('CAÚA', player.x, player.y+12);
+}
+
+function drawTree(x, h, scale) {
+  ctx.strokeStyle='rgba(145,166,59,.07)';ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(x, h); ctx.lineTo(x, h - 80*scale); ctx.stroke();
+  for(var i=0;i<5;i++) {
+    var ty = h - 30*scale - i*14*scale;
+    ctx.beginPath();
+    ctx.ellipse(x, ty, 28*scale*(1-i*.12), 14*scale*(1-i*.1), 0, 0, Math.PI*2);
+    ctx.strokeStyle='rgba(145,166,59,'+(0.04+i*.01)+')';
+    ctx.stroke();
+  }
+}
+
+function endGame() {
+  state.gameOver = true;
+  state.score = scoreCount;
+  clearInterval(gameInterval);
+  clearInterval(timerInterval);
+  cancelAnimationFrame(animId);
+  ctx.fillStyle='rgba(4,12,6,.85)';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#A8BF4A'; ctx.font='bold 28px Cormorant Garamond'; ctx.textAlign='center';
+  ctx.fillText(scoreCount + ' gotas de mucílago', canvas.width/2, canvas.height/2 - 20);
+  ctx.fillStyle='rgba(244,237,228,.6)'; ctx.font='16px DM Sans';
+  ctx.fillText('Valor EU estimado: €' + (scoreCount * 0.28).toFixed(2), canvas.width/2, canvas.height/2 + 15);
+  ctx.fillStyle='rgba(145,166,59,.7)'; ctx.font='13px Space Mono';
+  ctx.fillText('DESCUBRE CÓMO CAÚA CAPTURA ESTE VALOR →', canvas.width/2, canvas.height/2 + 48);
+  document.getElementById('game-msg').textContent = '✦ Impresionante. El mucílago que capturaste vale €' + (scoreCount * 0.28).toFixed(2) + ' en EU.';
+  setTimeout(function() { goLevel(2); }, 2500);
+}
+
+// Input
+canvas.addEventListener('mousemove', function(e) {
+  var rect = canvas.getBoundingClientRect();
+  var scaleX = canvas.width / rect.width;
+  player.x = Math.max(player.w/2, Math.min(canvas.width - player.w/2, (e.clientX - rect.left) * scaleX));
+});
+canvas.addEventListener('touchmove', function(e) {
+  e.preventDefault();
+  var rect = canvas.getBoundingClientRect();
+  var scaleX = canvas.width / rect.width;
+  player.x = Math.max(player.w/2, Math.min(canvas.width - player.w/2, (e.touches[0].clientX - rect.left) * scaleX));
+}, {passive:false});
+
+// Draw idle state
+(function idleLoop() {
+  if (gameStarted) return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#040C06'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  drawTree(60,canvas.height,0.7); drawTree(canvas.width-60,canvas.height,0.7);
+  drawPlayer();
+  // idle drops
+  ctx.fillStyle='rgba(145,166,59,.15)';
+  for(var i=0;i<6;i++) {
+    ctx.beginPath();
+    ctx.arc(60+i*100, 60+Math.sin(Date.now()/800+i)*30, 7, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.fillStyle='rgba(244,237,228,.35)'; ctx.font='14px Cormorant Garamond'; ctx.textAlign='center';
+  ctx.fillText('Presiona INICIAR para jugar', canvas.width/2, canvas.height-22);
+  requestAnimationFrame(idleLoop);
+})();
+
+// ══════════════════════════
+//  LEVEL 2 — LEAD CAPTURE
+// ══════════════════════════
+function submitEmail() {
+  var email = document.getElementById('inp-email').value.trim();
+  var gdpr = document.getElementById('gdpr1').checked;
+  if (!email || !email.includes('@')) { notify('Por favor ingresa un email válido'); return; }
+  if (!gdpr) { notify('Acepta el tratamiento de datos (RGPD) para continuar'); return; }
+  state.userData.email = email;
+  state.userData.gdpr1 = true;
+  document.getElementById('step-email').style.display = 'none';
+  document.getElementById('step-name').style.display = 'block';
+  notify('✓ Email registrado — un paso más →', 2500);
+}
+
+function submitFull() {
+  state.userData.name = document.getElementById('inp-name').value.trim();
+  state.userData.phone = document.getElementById('inp-phone').value.trim();
+  state.userData.gdpr2 = document.getElementById('gdpr2').checked;
+  notify('✦ Bienvenido/a, ' + (state.userData.name || 'amigo/a') + '! Acceso completo desbloqueado.', 3000);
+  setTimeout(function(){ goLevel(3); }, 1000);
+}
+
+// ══════════════════════════
+//  LEVEL 4 — GROWTH
+// ══════════════════════════
+function animGrowthCards() {
+  var cards = document.querySelectorAll('#lvl-4 .gm-card');
+  cards.forEach(function(c, i) {
+    setTimeout(function() { c.classList.add('visible'); }, i*80);
+  });
+}
+
+// ══════════════════════════
+//  LEVEL 5 — GIVE
+// ══════════════════════════
+function animFundFill() {
+  var fill = document.getElementById('fund-fill');
+  if (fill) { fill.style.width = '34%'; }
+}
+
+function selectGive(el, amount, tier) {
+  document.querySelectorAll('.give-card').forEach(function(c){ c.classList.remove('selected'); });
+  el.classList.add('selected');
+  state.selectedGive = amount;
+  document.getElementById('give-total-wrap').style.display = 'flex';
+  document.getElementById('give-total-amount').textContent = '€' + amount.toLocaleString();
+  notify('✓ ' + tier + ' · €' + amount.toLocaleString() + ' seleccionado — confirma por WhatsApp', 3000);
+}
+
+function giveViaWA() {
+  var name = state.userData.name || 'Inversor/a';
+  var tier = state.selectedGive >= 25000 ? 'Investor Seed' : state.selectedGive >= 500 ? 'Partner Lab' : 'Supporter';
+  var msg = 'Hola Amaury, soy ' + name + ' y quiero apoyar a Caúa como ' + tier + ' con €' + state.selectedGive.toLocaleString() + '. Me interesa conocer los detalles.';
+  window.open('https://wa.me/573102227848?text=' + encodeURIComponent(msg), '_blank');
+}
+
+// ══════════════════════════
+//  LEVEL 6 — GANTT
+// ══════════════════════════
+var ganttData = [
+  { label:'CAÚA Labs · I+D', bars:[
+    {from:1,to:4,cls:'bar-pod',text:'Constitución SAS'},{from:5,to:12,cls:'bar-pod',text:'Liofilización x3'},
+    {from:13,to:16,cls:'bar-pod',text:'CICTA+AGROSAVIA'},{from:17,to:20,cls:'bar-pod',text:'I+D Escala'}
+  ]},
+  { label:'Producción · Lotes', bars:[
+    {from:3,to:4,cls:'bar-pod',text:'600L Sunrise'},{from:5,to:8,cls:'bar-pod',text:'Lote B2B'},
+    {from:9,to:12,cls:'bar-pod',text:'3 lotes/sem'},{from:13,to:20,cls:'bar-pod',text:'Producción EU'}
+  ]},
+  { label:'CAÚA España SL · EU', bars:[
+    {from:2,to:4,cls:'bar-cos',text:'Constitución'},{from:5,to:8,cls:'bar-cos',text:'BFFood VIII'},
+    {from:9,to:12,cls:'bar-cos',text:'Pilot SCQ'},{from:13,to:16,cls:'bar-cos',text:'España Full'},
+    {from:17,to:20,cls:'bar-cos',text:'DE+FR+IT'}
+  ]},
+  { label:'EFSA Novel Foods', bars:[
+    {from:3,to:7,cls:'bar-amb',text:'Dossier'},{from:8,to:11,cls:'bar-amb',text:'Evaluación'},
+    {from:12,to:13,cls:'bar-amb',text:'Aprobación✓'}
+  ]},
+  { label:'IP · Patentes', bars:[
+    {from:1,to:4,cls:'bar-amb',text:'Trade Secrets'},{from:5,to:8,cls:'bar-amb',text:'Patent Filing'},
+    {from:9,to:12,cls:'bar-amb',text:'USPTO Process'},{from:13,to:16,cls:'bar-amb',text:'Grant'},
+    {from:17,to:20,cls:'bar-amb',text:'IP Licensing SaaS'}
+  ]},
+  { label:'Financiación', bars:[
+    {from:1,to:4,cls:'bar-amb',text:'Seed €250K'},{from:9,to:12,cls:'bar-amb',text:'Serie A €1M'},
+    {from:17,to:20,cls:'bar-amb',text:'Serie B / IPO'}
+  ]},
+  { label:'⚠ Crisis: Cosecha', bars:[
+    {from:7,to:8,cls:'bar-red',text:'El Niño · Contingencia'}
+  ]},
+  { label:'⚠ Crisis: Competidor', bars:[
+    {from:13,to:14,cls:'bar-red',text:'Copia EU · Data Moat ✓'}
+  ]},
+  { label:'Revenue (€)', bars:[
+    {from:5,to:8,cls:'bar-pod',text:'€80K–120K'},{from:9,to:12,cls:'bar-pod',text:'€400K'},
+    {from:13,to:16,cls:'bar-pod',text:'€1M+'},{from:17,to:20,cls:'bar-pod',text:'€3M+'}
+  ]},
+];
+
+function buildGantt() {
+  var wrap = document.getElementById('gantt-rows');
+  if (!wrap || wrap.children.length > 0) return;
+  ganttData.forEach(function(row) {
+    var rowDiv = document.createElement('div');
+    rowDiv.className = 'gantt-row';
+    var cells = '<div class="gr-label">' + row.label + '</div>';
+    var grid = {};
+    row.bars.forEach(function(b) {
+      for (var c = b.from; c <= b.to; c++) grid[c] = b;
+    });
+    for (var c = 1; c <= 20; c++) {
+      var b = grid[c];
+      if (b) {
+        // Only render bar text at start of bar
+        var isStart = !grid[c-1] || grid[c-1] !== b;
+        var span = b.to - b.from + 1;
+        if (isStart) {
+          cells += '<div class="gr-cell" style="grid-column:span '+span+'"><div class="gr-bar ' + b.cls + '" style="opacity:0;transition:opacity .5s">' + (b.text||'') + '</div></div>';
+          c = b.to;
+        }
+      } else {
+        cells += '<div class="gr-cell"><div class="gr-bar bar-empty"></div></div>';
+      }
+    }
+    rowDiv.innerHTML = cells;
+    wrap.appendChild(rowDiv);
+  });
+}
+
+function animGanttRows() {
+  var bars = document.querySelectorAll('.gr-bar:not(.bar-empty)');
+  bars.forEach(function(b, i) {
+    setTimeout(function() { b.style.opacity = '1'; }, i * 50);
+  });
+}
+
+// ══ INTERSECTION OBSERVER ══
+var io = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) { if (e.isIntersecting) { e.target.classList.add('in'); } });
+}, {threshold: 0.15});
+document.querySelectorAll('.anim-up').forEach(function(el) { io.observe(el); });
+
+// ══ SKIP BUTTON visible after 10s ══
+setTimeout(function() {
+  var skipBtn = document.getElementById('skipBtn');
+  if (skipBtn) skipBtn.style.display = 'inline-flex';
+}, 10000);
+
+// Initial progress
+document.getElementById('progress-bar').style.width = '0%';
+</script>
+</body>
+</html>
