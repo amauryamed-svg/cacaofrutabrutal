@@ -1,0 +1,34 @@
+{
+  "name": "CAUA — Cacao Fruta Brutal",
+  "short_name": "CAUA",
+  "description": "Biotecnología ancestral del cacao colombiano. Ritual, mercado y comunidad.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#040C06",
+  "theme_color": "#040C06",
+  "orientation": "portrait-primary",
+  "categories": ["food", "lifestyle", "health"],
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Ritual del Día",
+      "short_name": "Ritual",
+      "url": "/ritual",
+      "description": "Tu tirada de cacao diaria"
+    },
+    {
+      "name": "Mercado CAUA",
+      "short_name": "Mercado",
+      "url": "/marketplace",
+      "description": "Productos funcionales de cacao"
+    }
+  ]
+}
