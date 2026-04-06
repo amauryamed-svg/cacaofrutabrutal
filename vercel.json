@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/pitch", "destination": "/pitch/index.html" },
+    { "source": "/((?!pitch|assets|manifest\\.json|favicon\\.svg|icons\\.svg).*)", "destination": "/index.html" }
+  ]
+}
