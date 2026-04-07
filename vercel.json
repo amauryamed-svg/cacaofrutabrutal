@@ -5,6 +5,9 @@
   "framework": "vite",
   "rewrites": [
     { "source": "/pitch", "destination": "/pitch/index.html" },
-    { "source": "/((?!pitch_growth\\.html|siembra\\.html|pitch|assets|manifest\\.json|favicon\\.svg|icons\\.svg).*)", "destination": "/index.html" }
+    {
+      "source": "/((?!pitch_growth\\.html|siembra\\.html|pitch|assets|manifest\\.json|favicon\\.svg|favicon-32\\.png|apple-touch-icon\\.png|icon-192\\.png|icon-512\\.png|icons\\.svg).*)",
+      "destination": "/index.html"
+    }
   ]
 }
