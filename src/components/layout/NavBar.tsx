@@ -30,7 +30,7 @@ export default function NavBar() {
       justifyContent: 'space-between',
     }}>
       <Link to="/" style={{ textDecoration: 'none' }}>
-        <CauaLogo size={28} />
+        <CauaLogo size={26} variant="white" />
       </Link>
 
       <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>

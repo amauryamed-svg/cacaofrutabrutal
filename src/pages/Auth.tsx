@@ -87,7 +87,7 @@ export default function Auth() {
         {/* Logo + tagline */}
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
-            <CauaLogo size={36} />
+            <CauaLogo size={36} variant="white" showTagline />
           </div>
           <p style={{
             fontFamily: FONTS.serif, fontStyle: 'italic',

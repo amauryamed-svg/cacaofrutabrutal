@@ -7,52 +7,57 @@ import HubspotLeadForm from '../components/ui/HubspotLeadForm'
 import { useLang } from '../context/LangContext'
 import { makeT } from '../utils/i18n'
 
-// Botanical SVG icons for value props
+// Brand icons — thin stroke, ~1.5px, Pod Green — matching brand icon sheet (p.22)
+
+// Bioflavonoids / molecule icon (science row, brand icon sheet)
 function IconBiotech() {
   return (
-    <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="18" cy="20" rx="8" ry="11" stroke={BRAND.pod} strokeWidth="1" opacity="0.9"/>
-      {[-3,0,3].map((x,i) => (
-        <ellipse key={i} cx={18+x} cy="20" rx="2.5" ry="9" fill="none" stroke={BRAND.pod} strokeWidth="0.4" opacity="0.4"/>
+    <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      {/* Central atom */}
+      <circle cx="22" cy="22" r="3.5" stroke={BRAND.pod} strokeWidth="1.5"/>
+      {/* Satellite atoms + bonds */}
+      {([
+        [22, 9],  [33, 15], [33, 29], [22, 35], [11, 29], [11, 15]
+      ] as [number,number][]).map(([x,y], i) => (
+        <g key={i}>
+          <line x1="22" y1="22" x2={x} y2={y} stroke={BRAND.pod} strokeWidth="1.2" opacity="0.5"/>
+          <circle cx={x} cy={y} r="2.5" stroke={BRAND.pod} strokeWidth="1.3"/>
+        </g>
       ))}
-      <path d="M18 9 Q17 6 18 3" stroke={BRAND.pod} strokeWidth="1" strokeLinecap="round" opacity="0.8"/>
-      <path d="M18 5 C21 3 24 5 21 8 C19 9 18 7 18 5Z" fill={BRAND.criollo} opacity="0.9"/>
-      <circle cx="11" cy="29" r="1.5" fill={BRAND.pod} opacity="0.5"/>
-      <circle cx="18" cy="31" r="1.5" fill={BRAND.pod} opacity="0.5"/>
-      <circle cx="25" cy="29" r="1.5" fill={BRAND.pod} opacity="0.5"/>
     </svg>
   )
 }
 
+// Circular arrows / upcycling icon (sustainability row, brand icon sheet)
 function IconRegeneration() {
   return (
-    <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M18 6 C12 6 7 11 7 18 C7 25 12 30 18 30 C24 30 29 25 29 18"
-        stroke={BRAND.pod} strokeWidth="1" strokeLinecap="round" fill="none" opacity="0.9"/>
-      <path d="M29 18 L29 12 L23 12" stroke={BRAND.pod} strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-      <path d="M18 13 C15 13 13 15 13 18 C13 21 15 23 18 23" stroke={BRAND.mazorca} strokeWidth="0.8" fill="none" opacity="0.7"/>
-      <circle cx="18" cy="18" r="2.5" fill={BRAND.pod} opacity="0.35"/>
+    <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      {/* Arc top-right, clockwise */}
+      <path d="M22 8 A14 14 0 0 1 36 22" stroke={BRAND.pod} strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+      {/* Arrowhead top-right */}
+      <polyline points="33,16 36,22 30,23" stroke={BRAND.pod} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      {/* Arc bottom-left, clockwise */}
+      <path d="M22 36 A14 14 0 0 1 8 22" stroke={BRAND.pod} strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+      {/* Arrowhead bottom-left */}
+      <polyline points="11,28 8,22 14,21" stroke={BRAND.pod} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
     </svg>
   )
 }
 
+// Globe / world icon (community row, brand icon sheet)
 function IconImpact() {
   return (
-    <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* People / community radial */}
-      {[0,1,2,3,4].map(i => {
-        const a = (i/5)*Math.PI*2 - Math.PI/2
-        const x = 18 + Math.cos(a)*11
-        const y = 18 + Math.sin(a)*11
-        return (
-          <g key={i}>
-            <circle cx={x} cy={y} r="3.5" fill={BRAND.pod} opacity="0.25" stroke={BRAND.pod} strokeWidth="0.6"/>
-            <line x1="18" y1="18" x2={x} y2={y} stroke={BRAND.pod} strokeWidth="0.4" opacity="0.3"/>
-          </g>
-        )
-      })}
-      <circle cx="18" cy="18" r="5" fill={BRAND.pod} opacity="0.2" stroke={BRAND.pod} strokeWidth="0.8"/>
-      <circle cx="18" cy="18" r="2" fill={BRAND.mazorca} opacity="0.8"/>
+    <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      {/* Globe circle */}
+      <circle cx="22" cy="22" r="14" stroke={BRAND.pod} strokeWidth="1.5"/>
+      {/* Latitude lines */}
+      <ellipse cx="22" cy="22" rx="7" ry="14" stroke={BRAND.pod} strokeWidth="1.2" opacity="0.55"/>
+      {/* Horizontal equator */}
+      <line x1="8" y1="22" x2="36" y2="22" stroke={BRAND.pod} strokeWidth="1.2" opacity="0.55"/>
+      {/* Upper lat */}
+      <path d="M10 15 Q22 18 34 15" stroke={BRAND.pod} strokeWidth="1" opacity="0.4" fill="none"/>
+      {/* Lower lat */}
+      <path d="M10 29 Q22 26 34 29" stroke={BRAND.pod} strokeWidth="1" opacity="0.4" fill="none"/>
     </svg>
   )
 }
@@ -350,7 +355,7 @@ export default function Landing() {
           }
         </p>
         <div style={{ marginTop: 24, display: 'inline-flex', justifyContent: 'center' }}>
-          <CauaLogo size={22} showTagline />
+          <CauaLogo size={22} variant="secondary" />
         </div>
       </div>
 
