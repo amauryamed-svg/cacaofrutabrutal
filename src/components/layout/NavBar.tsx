@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { BRAND } from '../../utils/constants'
+import { BRAND, FONTS } from '../../utils/constants'
 import CauaLogo from '../ui/CauaLogo'
 import CauaButton from '../ui/CauaButton'
 import LanguageToggle from '../ui/LanguageToggle'
@@ -43,7 +43,7 @@ export default function NavBar() {
                 border: active ? `1px solid ${BRAND.pod}44` : '1px solid transparent',
                 color: active ? BRAND.pod : `${BRAND.heirloom}88`,
                 padding: '6px 14px', borderRadius: 999, cursor: 'pointer',
-                fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+                fontFamily: FONTS.display, fontWeight: 700,
                 fontSize: 11, letterSpacing: '0.12em', transition: 'all 0.3s',
               }}>{t.label}</button>
             </Link>
@@ -61,7 +61,7 @@ export default function NavBar() {
           <a key={href} href={href} target="_blank" rel="noopener noreferrer"
             style={{
               padding: '4px 10px', borderRadius: 999,
-              fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+              fontFamily: FONTS.display, fontWeight: 700,
               fontSize: 10, letterSpacing: '0.1em', textDecoration: 'none',
               color: `${color}88`, border: `1px solid ${color}22`,
               transition: 'all 0.3s',

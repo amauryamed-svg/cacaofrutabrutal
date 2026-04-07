@@ -1,18 +1,29 @@
 import type { Product, TarotCard, Guardian } from '../types'
 
 export const BRAND = {
-  heirloom:  '#F7F1EE',
-  amazon:    '#1C3B26',
-  pod:       '#91A63B',
-  mazorca:   '#F1A91E',
-  criollo:   '#8D2679',
-  theobroma: '#DB5527',
-  muisca:    '#004E64',
-  brown:     '#583915',
-  heroic:    '#00A3CD',
-  bgDeep:    '#040C06',
-  bgDark:    '#0F2218',
-  bgCard:    '#132B1C',
+  heirloom:   '#F7F1EE',
+  amazon:     '#1C3B26',
+  pod:        '#91A63B',
+  mazorca:    '#F1A91E',
+  criollo:    '#8D2679',
+  theobroma:  '#DB5527',
+  muisca:     '#004E64',
+  brown:      '#583915',
+  heroic:     '#00A3CD',
+  bgDeep:     '#040C06',
+  bgDark:     '#0F2218',
+  bgCard:     '#132B1C',
+  // Extended palette
+  leafy:      '#667039',
+  radioRed:   '#8C201D',
+  santaMaria: '#583915',
+} as const
+
+/** Typography stack — mirrors brand guidelines */
+export const FONTS = {
+  display: "'Barlow Condensed', Impact, sans-serif",
+  body:    "'DM Sans', system-ui, -apple-system, sans-serif",
+  serif:   "'Cormorant Garamond', 'Playfair Display', Georgia, serif",
 } as const
 
 export const PRODUCTS: Product[] = [

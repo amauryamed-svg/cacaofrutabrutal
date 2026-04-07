@@ -1,4 +1,4 @@
-import { BRAND } from '../../utils/constants'
+import { BRAND, FONTS } from '../../utils/constants'
 import { useCountdown } from '../../hooks/useCountdown'
 import ProductIllustration from '../ui/ProductIllustration'
 import type { Product } from '../../types'
@@ -75,7 +75,7 @@ export default function ProductCard({ product: p, multiplier, user }: Props) {
           border: `1px solid ${tc.color}66`,
           backdropFilter: 'blur(8px)',
           padding: '4px 10px', borderRadius: 999,
-          fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+          fontFamily: FONTS.display, fontWeight: 700,
           fontSize: 9, letterSpacing: '0.14em', color: tc.color,
         }}>{tc.label}</div>
 
@@ -86,7 +86,7 @@ export default function ProductCard({ product: p, multiplier, user }: Props) {
             background: `${BRAND.bgDeep}cc`, backdropFilter: 'blur(8px)',
             border: `1px solid ${BRAND.mazorca}44`,
             padding: '4px 10px', borderRadius: 999,
-            fontFamily: 'system-ui', fontSize: 9, color: BRAND.mazorca,
+            fontFamily: FONTS.body, fontSize: 9, color: BRAND.mazorca,
           }}>⏱ {countdown}</div>
         )}
 
@@ -97,7 +97,7 @@ export default function ProductCard({ product: p, multiplier, user }: Props) {
             background: `linear-gradient(90deg, ${BRAND.mazorca}22, transparent)`,
             borderTop: `1px solid ${BRAND.mazorca}33`,
             padding: '5px 12px',
-            fontFamily: 'system-ui', fontSize: 10, color: BRAND.mazorca,
+            fontFamily: FONTS.body, fontSize: 10, color: BRAND.mazorca,
           }}>
             Tu multiplicador activo: <strong>{multiplier.toFixed(1)}x</strong>
           </div>
@@ -114,7 +114,7 @@ export default function ProductCard({ product: p, multiplier, user }: Props) {
               background: `${BRAND.amazon}66`,
               border: `1px solid ${BRAND.amazon}`,
               padding: '2px 8px', borderRadius: 999,
-              fontFamily: 'system-ui', fontSize: 9, color: `${BRAND.heirloom}99`,
+              fontFamily: FONTS.body, fontSize: 9, color: `${BRAND.heirloom}99`,
               letterSpacing: '0.05em',
             }}>{b}</span>
           ))}
@@ -123,12 +123,12 @@ export default function ProductCard({ product: p, multiplier, user }: Props) {
         {/* Name + description */}
         <div>
           <h3 style={{
-            fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900,
+            fontFamily: FONTS.display, fontWeight: 900,
             color: BRAND.heirloom, fontSize: 20, margin: '0 0 5px',
             letterSpacing: '0.04em', lineHeight: 1.1,
           }}>{p.name}</h3>
           <p style={{
-            fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic',
+            fontFamily: FONTS.serif, fontStyle: 'italic',
             color: `${BRAND.heirloom}77`, fontSize: 11.5, margin: 0, lineHeight: 1.55,
           }}>{p.desc}</p>
         </div>
@@ -136,15 +136,15 @@ export default function ProductCard({ product: p, multiplier, user }: Props) {
         {/* Price */}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
           <span style={{
-            fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900,
+            fontFamily: FONTS.display, fontWeight: 900,
             fontSize: 26, color: BRAND.heirloom, lineHeight: 1,
           }}>${(discountedPrice / 100).toFixed(0)}</span>
           {hasDiscount && (
-            <span style={{ fontFamily: 'system-ui', fontSize: 13, color: `${BRAND.heirloom}40`, textDecoration: 'line-through' }}>
+            <span style={{ fontFamily: FONTS.body, fontSize: 13, color: `${BRAND.heirloom}40`, textDecoration: 'line-through' }}>
               ${(p.price / 100).toFixed(0)}
             </span>
           )}
-          <span style={{ fontFamily: 'system-ui', fontSize: 10, color: `${BRAND.heirloom}50` }}>
+          <span style={{ fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}50` }}>
             USD{p.type === 'subscription' ? '/mes' : ''}
           </span>
         </div>
@@ -159,7 +159,7 @@ export default function ProductCard({ product: p, multiplier, user }: Props) {
             borderRadius: 10, border: 'none',
             background: `linear-gradient(135deg, ${BRAND.pod}, ${BRAND.amazon})`,
             color: BRAND.heirloom, cursor: 'pointer',
-            fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+            fontFamily: FONTS.display, fontWeight: 700,
             fontSize: 13, letterSpacing: '0.1em',
             transition: 'opacity 0.2s',
           }}
@@ -170,7 +170,7 @@ export default function ProductCard({ product: p, multiplier, user }: Props) {
           </button>
           <p style={{
             textAlign: 'center', margin: '7px 0 0',
-            fontFamily: 'system-ui', fontSize: 10, color: `${BRAND.heirloom}44`,
+            fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}44`,
           }}>{tc.sub}</p>
         </div>
 
@@ -180,7 +180,7 @@ export default function ProductCard({ product: p, multiplier, user }: Props) {
           paddingTop: 10, borderTop: `1px solid ${BRAND.amazon}44`,
         }}>
           <span style={{ fontSize: 10 }}>🌿</span>
-          <span style={{ fontFamily: 'system-ui', fontSize: 9.5, color: `${BRAND.heirloom}55` }}>
+          <span style={{ fontFamily: FONTS.body, fontSize: 9.5, color: `${BRAND.heirloom}55` }}>
             {p.stock} unidades · Guardián verificado · Trazable
           </span>
         </div>

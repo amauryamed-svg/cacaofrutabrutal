@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BRAND, PRODUCTS } from '../utils/constants'
+import { BRAND, FONTS, PRODUCTS } from '../utils/constants'
 import { useAuth } from '../context/AuthContext'
 import ProductCard from '../components/auction/ProductCard'
 import { useLang } from '../context/LangContext'
@@ -36,7 +36,7 @@ export default function Marketplace() {
       <div style={{ maxWidth: 1000, margin: '0 auto', padding: '40px 24px' }}>
 
         <p style={{
-          fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic',
+          fontFamily: FONTS.serif, fontStyle: 'italic',
           color: BRAND.mazorca, fontSize: 12, letterSpacing: '0.25em', marginBottom: 10,
         }}>{T('mkt_eyebrow')}</p>
         <h2 style={{
@@ -45,7 +45,7 @@ export default function Marketplace() {
           textTransform: 'uppercase', margin: '0 0 8px', lineHeight: 0.9,
         }}>{T('mkt_title')}</h2>
         <p style={{
-          fontFamily: 'system-ui', color: `${BRAND.heirloom}60`,
+          fontFamily: FONTS.body, color: `${BRAND.heirloom}60`,
           fontSize: 14, margin: '0 0 28px', lineHeight: 1.6, maxWidth: 540,
         }}>
           {T('mkt_desc')}
@@ -60,14 +60,14 @@ export default function Marketplace() {
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12,
           }}>
             <div>
-              <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, color: BRAND.mazorca, fontSize: 12, letterSpacing: '0.1em' }}>
+              <div style={{ fontFamily: FONTS.display, fontWeight: 700, color: BRAND.mazorca, fontSize: 12, letterSpacing: '0.1em' }}>
                 {T('mkt_mult_label')}
               </div>
-              <div style={{ fontFamily: 'system-ui', color: `${BRAND.heirloom}88`, fontSize: 11, marginTop: 2 }}>
+              <div style={{ fontFamily: FONTS.body, color: `${BRAND.heirloom}88`, fontSize: 11, marginTop: 2 }}>
                 {referrals} {lang === 'es' ? 'referidos' : 'referrals'} + {prevLots} {lang === 'es' ? 'lotes previos' : 'previous lots'}
               </div>
             </div>
-            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: 32, color: BRAND.mazorca }}>
+            <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 32, color: BRAND.mazorca }}>
               {mult.toFixed(1)}x
             </div>
           </div>
@@ -81,7 +81,7 @@ export default function Marketplace() {
               border: `1px solid ${filter === f.id ? BRAND.pod : BRAND.amazon}44`,
               color: filter === f.id ? BRAND.pod : `${BRAND.heirloom}66`,
               padding: '6px 14px', borderRadius: 999, cursor: 'pointer',
-              fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+              fontFamily: FONTS.display, fontWeight: 700,
               fontSize: 10, letterSpacing: '0.12em',
             }}>{f.label}</button>
           ))}
@@ -101,14 +101,14 @@ export default function Marketplace() {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
             <div>
-              <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, color: BRAND.heirloom, fontSize: 14, letterSpacing: '0.08em' }}>
+              <div style={{ fontFamily: FONTS.display, fontWeight: 700, color: BRAND.heirloom, fontSize: 14, letterSpacing: '0.08em' }}>
                 CROWDFUNDING · RONDA SEMILLA
               </div>
-              <div style={{ fontFamily: 'system-ui', color: `${BRAND.heirloom}66`, fontSize: 11, marginTop: 2 }}>
+              <div style={{ fontFamily: FONTS.body, color: `${BRAND.heirloom}66`, fontSize: 11, marginTop: 2 }}>
                 Transparencia total — cada compra impulsa el desarrollo rural
               </div>
             </div>
-            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, color: BRAND.pod, fontSize: 24 }}>
+            <div style={{ fontFamily: FONTS.display, fontWeight: 900, color: BRAND.pod, fontSize: 24 }}>
               23%
             </div>
           </div>
@@ -119,7 +119,7 @@ export default function Marketplace() {
               transition: 'width 1s ease',
             }} />
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontFamily: 'system-ui', fontSize: 10, color: `${BRAND.heirloom}55` }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}55` }}>
             <span>$17,250 USD recaudado</span>
             <span>Meta: $75,000 USD</span>
           </div>

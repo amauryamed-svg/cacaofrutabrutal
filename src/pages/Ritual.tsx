@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BRAND, TAROT_CARDS, ELEMENT_COLORS } from '../utils/constants'
+import { BRAND, FONTS, TAROT_CARDS, ELEMENT_COLORS } from '../utils/constants'
 import { useAuth } from '../context/AuthContext'
 import TarotCardArt from '../components/ritual/TarotCardArt'
 import { hsUpdateRitual } from '../lib/hubspotTracking'
@@ -58,13 +58,13 @@ export default function Ritual() {
       {/* Hero header */}
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '40px 24px 0', textAlign: 'center' }}>
         <p style={{
-          fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic',
+          fontFamily: FONTS.serif, fontStyle: 'italic',
           color: BRAND.criollo, fontSize: 13, letterSpacing: '0.25em', marginBottom: 10,
         }}>
           {T('rit_eyebrow')}
         </p>
         <h1 style={{
-          fontFamily: "'Barlow Condensed', Impact, sans-serif", fontWeight: 900,
+          fontFamily: FONTS.display, fontWeight: 900,
           fontSize: 'clamp(42px, 10vw, 72px)', color: BRAND.heirloom,
           textTransform: 'uppercase', margin: '0 0 12px', lineHeight: 0.9,
         }}>
@@ -72,7 +72,7 @@ export default function Ritual() {
           <span style={{ color: BRAND.criollo }}>{T('rit_title2')}</span>
         </h1>
         <p style={{
-          fontFamily: 'system-ui', color: `${BRAND.heirloom}66`,
+          fontFamily: FONTS.body, color: `${BRAND.heirloom}66`,
           fontSize: 14, lineHeight: 1.65, maxWidth: 440, margin: '0 auto 24px',
         }}>
           {T('rit_desc')}
@@ -118,7 +118,7 @@ export default function Ritual() {
 
             <div style={{ textAlign: 'center' }}>
               <p style={{
-                fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic',
+                fontFamily: FONTS.serif, fontStyle: 'italic',
                 color: `${BRAND.heirloom}70`, fontSize: 13, marginBottom: 16, lineHeight: 1.6,
               }}>
                 {T('rit_intention').split('\n').map((line, i) => (
@@ -135,7 +135,7 @@ export default function Ritual() {
                 {user ? T('rit_reveal') : T('rit_start')}
               </button>
               {!user && (
-                <p style={{ fontFamily: 'system-ui', fontSize: 11, color: `${BRAND.heirloom}44`, marginTop: 10 }}>
+                <p style={{ fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}44`, marginTop: 10 }}>
                   {T('rit_anon')}
                 </p>
               )}
@@ -155,7 +155,7 @@ export default function Ritual() {
             }}>
               <div style={{ fontSize: 36, animation: 'float 2s ease-in-out infinite' }}>🫘</div>
               <div style={{
-                fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic',
+                fontFamily: FONTS.serif, fontStyle: 'italic',
                 color: `${BRAND.heirloom}80`, fontSize: 12,
               }}>{T('rit_listening')}</div>
             </div>
@@ -175,7 +175,7 @@ export default function Ritual() {
 
             {/* Element label */}
             <div style={{
-              fontFamily: 'system-ui', fontSize: 11, color: cardColor,
+              fontFamily: FONTS.body, fontSize: 11, color: cardColor,
               letterSpacing: '0.2em', textTransform: 'uppercase',
               opacity: 0.8,
             }}>
@@ -190,7 +190,7 @@ export default function Ritual() {
               width: '100%',
             }}>
               <p style={{
-                fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic',
+                fontFamily: FONTS.serif, fontStyle: 'italic',
                 color: `${BRAND.heirloom}cc`, fontSize: 14, lineHeight: 1.7,
                 margin: '0 0 16px',
               }}>"{selectedCard.meaning}"</p>
@@ -204,7 +204,7 @@ export default function Ritual() {
                   color: BRAND.pod, fontSize: 10, letterSpacing: '0.2em', marginBottom: 8,
                 }}>{T('rit_invitation')}</div>
                 <p style={{
-                  fontFamily: 'system-ui', color: BRAND.heirloom,
+                  fontFamily: FONTS.body, color: BRAND.heirloom,
                   fontSize: 13, lineHeight: 1.65, margin: 0,
                 }}>{selectedCard.advice}</p>
               </div>
@@ -221,7 +221,7 @@ export default function Ritual() {
                 color: BRAND.heirloom, fontSize: 13, letterSpacing: '0.1em', marginBottom: 6,
               }}>{T('rit_ceremony')}</div>
               <p style={{
-                fontFamily: 'system-ui', color: `${BRAND.heirloom}66`,
+                fontFamily: FONTS.body, color: `${BRAND.heirloom}66`,
                 fontSize: 12, margin: '0 0 14px', lineHeight: 1.5,
               }}>
                 {T('rit_cer_desc')}
@@ -282,7 +282,7 @@ export default function Ritual() {
                   onClick={() => navigate('/marketplace')}
                   style={{
                     background: 'none', border: 'none', padding: 0,
-                    fontFamily: 'system-ui', fontSize: 11,
+                    fontFamily: FONTS.body, fontSize: 11,
                     color: BRAND.pod, cursor: 'pointer', textDecoration: 'underline',
                   }}
                 >

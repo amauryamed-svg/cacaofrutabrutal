@@ -1,4 +1,4 @@
-import { BRAND } from '../utils/constants'
+import { BRAND, FONTS } from '../utils/constants'
 import { useAuth } from '../context/AuthContext'
 import HubspotLeadForm from '../components/ui/HubspotLeadForm'
 import { useLang } from '../context/LangContext'
@@ -38,11 +38,11 @@ export default function Dashboard() {
     <div style={{ background: '#040C06', minHeight: '100vh', paddingTop: 80 }}>
       <div style={{ maxWidth: 1000, margin: '0 auto', padding: '40px 24px' }}>
 
-        <p style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic', color: BRAND.mazorca, fontSize: 12, letterSpacing: '0.2em', marginBottom: 8 }}>
+        <p style={{ fontFamily: FONTS.serif, fontStyle: 'italic', color: BRAND.mazorca, fontSize: 12, letterSpacing: '0.2em', marginBottom: 8 }}>
           {T('dash_eyebrow')}
         </p>
         <h2 style={{
-          fontFamily: "'Barlow Condensed', Impact, sans-serif", fontWeight: 900,
+          fontFamily: FONTS.display, fontWeight: 900,
           fontSize: 'clamp(36px, 8vw, 56px)', color: BRAND.heirloom,
           textTransform: 'uppercase', margin: '0 0 32px', lineHeight: 0.95,
         }}>{T('dash_title').split(' ')[0]} <span style={{ color: BRAND.pod }}>{T('dash_title').split(' ')[1]}</span></h2>
@@ -55,7 +55,7 @@ export default function Dashboard() {
               <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: 36, color: m.color }}>
                 {m.value}<span style={{ fontSize: 14, color: `${BRAND.heirloom}55` }}> {m.unit}</span>
               </div>
-              <div style={{ fontFamily: 'system-ui', color: `${BRAND.heirloom}77`, fontSize: 11, marginTop: 4 }}>{m.label}</div>
+              <div style={{ fontFamily: FONTS.body, color: `${BRAND.heirloom}77`, fontSize: 11, marginTop: 4 }}>{m.label}</div>
             </div>
           ))}
         </div>
@@ -93,7 +93,7 @@ export default function Dashboard() {
                   {t.items.map((item, j) => (
                     <span key={j} style={{
                       background: `${BRAND.amazon}44`, padding: '3px 10px', borderRadius: 999,
-                      fontFamily: 'system-ui', fontSize: 10, color: `${BRAND.heirloom}88`,
+                      fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}88`,
                     }}>{item}</span>
                   ))}
                 </div>
@@ -111,7 +111,7 @@ export default function Dashboard() {
             {DISTRIBUTION.map((row, i) => (
               <div key={i}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ fontFamily: 'system-ui', fontSize: 11, color: `${BRAND.heirloom}cc` }}>{row.label}</span>
+                  <span style={{ fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}cc` }}>{row.label}</span>
                   <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 12, color: row.color }}>{row.pct}%</span>
                 </div>
                 <div style={{ height: 4, background: `${BRAND.amazon}44`, borderRadius: 999, overflow: 'hidden' }}>
