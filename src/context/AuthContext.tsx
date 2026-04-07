@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import { supabase } from '../lib/supabase'
-import { hsIdentify } from '../lib/hubspot'
+import { trackLoggedInUser } from '../lib/hubspotTracking'
 import type { UserProfile } from '../lib/database.types'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -44,17 +44,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq('user_id', userId)
       .then(() => {})
 
-    // HubSpot identify — only if analytics consented
-    const stored = localStorage.getItem('caua_cookie_consent')
-    if (stored && JSON.parse(stored).analytics) {
-      hsIdentify(email, {
-        firstname:      p.full_name?.split(' ')[0] ?? '',
-        caua_region:    p.region,
-        caua_streak:    String(p.ritual_streak),
-        caua_orders:    String(p.completed_orders),
-        caua_referrals: String(p.referral_count),
-      })
-    }
+    // HubSpot first-party tracking — gates on analytics consent internally
+    trackLoggedInUser(email, {
+      region:           p.region,
+      ritual_streak:    p.ritual_streak,
+      completed_orders: p.completed_orders,
+      referral_count:   p.referral_count,
+    })
   }, [])
 
   // ── Supabase auth listener ─────────────────────────────────────────────────

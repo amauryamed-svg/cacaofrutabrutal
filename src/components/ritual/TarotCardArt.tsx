@@ -1,7 +1,7 @@
 /**
  * Luxury Botanical Brutalism tarot card illustrations.
  * Each element has its own botanical motif rendered in SVG.
- * Designed for women 25-45, global travelers, conscious luxury consumers.
+ * Buyer persona derived from first-party behavioral data — no demographic assumptions.
  */
 
 import type { ReactElement } from 'react'

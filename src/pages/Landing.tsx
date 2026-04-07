@@ -69,7 +69,7 @@ export default function Landing() {
           }}>
             El primer sistema biotecnológico de cacao funcional.<br />
             <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic', color: BRAND.mazorca }}>
-              Para viajeras que eligen con conciencia.
+              Del genoma colombiano al mundo.
             </span>
           </p>
 

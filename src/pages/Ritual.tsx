@@ -56,8 +56,8 @@ export default function Ritual() {
           fontFamily: 'system-ui', color: `${BRAND.heirloom}66`,
           fontSize: 14, lineHeight: 1.65, maxWidth: 440, margin: '0 auto 24px',
         }}>
-          El cacao como espejo. Una práctica diaria para mujeres que eligen vivir con intención,
-          conectadas con la naturaleza y con el mundo.
+          El cacao como espejo. Una práctica diaria de presencia,
+          conexión con la naturaleza y el origen de lo que consumes.
         </p>
 
         {/* Streak — only when logged in */}
