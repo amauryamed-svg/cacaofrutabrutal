@@ -1,6 +1,6 @@
 {
   "rewrites": [
     { "source": "/pitch", "destination": "/pitch/index.html" },
-    { "source": "/((?!pitch|assets|manifest\\.json|favicon\\.svg|icons\\.svg).*)", "destination": "/index.html" }
+    { "source": "/((?!pitch|pitch_growth\\.html|siembra\\.html|assets|manifest\\.json|favicon\\.svg|icons\\.svg).*)", "destination": "/index.html" }
   ]
 }

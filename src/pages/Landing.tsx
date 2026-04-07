@@ -80,6 +80,10 @@ export default function Landing() {
             <CauaButton size="lg" variant="secondary" onClick={() => navigate('/ritual')}>
               RITUAL DEL DÍA
             </CauaButton>
+            <CauaButton size="lg" variant="accent"
+              onClick={() => navigate('/marketplace')}>
+              ↗ ABRIR APP
+            </CauaButton>
           </div>
         </div>
 
