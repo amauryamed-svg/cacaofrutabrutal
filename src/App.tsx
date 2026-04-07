@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 import { AuthProvider }  from './context/AuthContext'
+import { LangProvider }  from './context/LangContext'
 import NavBar            from './components/layout/NavBar'
 import Footer            from './components/layout/Footer'
 import GrainOverlay      from './components/ui/GrainOverlay'
@@ -43,10 +44,12 @@ function AppShell() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AppShell />
-      </BrowserRouter>
-    </AuthProvider>
+    <LangProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppShell />
+        </BrowserRouter>
+      </AuthProvider>
+    </LangProvider>
   )
 }

@@ -3,31 +3,50 @@ import { useNavigate } from 'react-router-dom'
 import { BRAND, TAROT_CARDS, ELEMENT_COLORS } from '../utils/constants'
 import { useAuth } from '../context/AuthContext'
 import TarotCardArt from '../components/ritual/TarotCardArt'
+import { hsUpdateRitual } from '../lib/hubspotTracking'
+import { useLang } from '../context/LangContext'
+import { makeT } from '../utils/i18n'
 import type { TarotCard } from '../types'
 
 type Phase = 'intro' | 'drawing' | 'reveal'
 
-const ELEMENT_LABELS: Record<string, string> = {
-  Tierra: '◈ Tierra · Arraigo',
-  Fuego:  '◆ Fuego · Transformación',
-  Agua:   '◉ Agua · Intuición',
-  Aire:   '◇ Aire · Claridad',
-}
-
 export default function Ritual() {
   const [phase, setPhase]       = useState<Phase>('intro')
   const [selectedCard, setCard] = useState<TarotCard | null>(null)
-  const { user }                = useAuth()
+  const [drawCount, setDrawCount]   = useState(0)
+  const [shareCount, setShareCount] = useState(0)
+  const { user, profile }       = useAuth()
   const navigate                = useNavigate()
-  const streak                  = user ? 7 : 0
+  const streak                  = profile?.ritual_streak ?? (user ? 7 : 0)
+  const { lang } = useLang()
+  const T = makeT(lang)
+
+  const ELEMENT_LABELS: Record<string, string> = {
+    Tierra: T('rit_el_tierra'),
+    Fuego:  T('rit_el_fuego'),
+    Agua:   T('rit_el_agua'),
+    Aire:   T('rit_el_aire'),
+  }
 
   const drawCard = () => {
     if (!user) { navigate('/auth'); return }
     setPhase('drawing')
     setTimeout(() => {
       const idx = Math.floor(Math.random() * TAROT_CARDS.length)
-      setCard(TAROT_CARDS[idx])
+      const card = TAROT_CARDS[idx]
+      setCard(card)
       setPhase('reveal')
+      const newCount = drawCount + 1
+      setDrawCount(newCount)
+      if (profile?.email) {
+        hsUpdateRitual({
+          email:                        profile.email,
+          last_ritual_draw_card_name:    card.name,
+          last_ritual_draw_card_element: card.element,
+          last_ritual_draw_streak:       String(streak),
+          ritual_draw_count:             String(newCount),
+        })
+      }
     }, 2200)
   }
 
@@ -42,22 +61,21 @@ export default function Ritual() {
           fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic',
           color: BRAND.criollo, fontSize: 13, letterSpacing: '0.25em', marginBottom: 10,
         }}>
-          Ritual del Cacao · 22 Arcanas
+          {T('rit_eyebrow')}
         </p>
         <h1 style={{
           fontFamily: "'Barlow Condensed', Impact, sans-serif", fontWeight: 900,
           fontSize: 'clamp(42px, 10vw, 72px)', color: BRAND.heirloom,
           textTransform: 'uppercase', margin: '0 0 12px', lineHeight: 0.9,
         }}>
-          TU LECTURA<br />
-          <span style={{ color: BRAND.criollo }}>DE HOY</span>
+          {T('rit_title1')}<br />
+          <span style={{ color: BRAND.criollo }}>{T('rit_title2')}</span>
         </h1>
         <p style={{
           fontFamily: 'system-ui', color: `${BRAND.heirloom}66`,
           fontSize: 14, lineHeight: 1.65, maxWidth: 440, margin: '0 auto 24px',
         }}>
-          El cacao como espejo. Una práctica diaria de presencia,
-          conexión con la naturaleza y el origen de lo que consumes.
+          {T('rit_desc')}
         </p>
 
         {/* Streak — only when logged in */}
@@ -71,7 +89,7 @@ export default function Ritual() {
             <span style={{
               fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
               fontSize: 12, color: BRAND.mazorca, letterSpacing: '0.1em',
-            }}>{streak} DÍAS DE PRÁCTICA CONTINUA</span>
+            }}>{streak} {T('rit_streak')}</span>
           </div>
         )}
       </div>
@@ -103,8 +121,9 @@ export default function Ritual() {
                 fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic',
                 color: `${BRAND.heirloom}70`, fontSize: 13, marginBottom: 16, lineHeight: 1.6,
               }}>
-                Cierra los ojos. Respira. Piensa en tu intención para hoy.<br />
-                Cuando estés lista, toca la carta.
+                {T('rit_intention').split('\n').map((line, i) => (
+                  <span key={i}>{line}{i === 0 && <br />}</span>
+                ))}
               </p>
               <button onClick={drawCard} style={{
                 background: `linear-gradient(135deg, ${BRAND.criollo}, #6B1B5A)`,
@@ -113,11 +132,11 @@ export default function Ritual() {
                 fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
                 fontSize: 13, letterSpacing: '0.15em', cursor: 'pointer',
               }}>
-                {user ? 'REVELAR MI ARCANA' : 'INICIAR RITUAL'}
+                {user ? T('rit_reveal') : T('rit_start')}
               </button>
               {!user && (
                 <p style={{ fontFamily: 'system-ui', fontSize: 11, color: `${BRAND.heirloom}44`, marginTop: 10 }}>
-                  Crea tu cuenta gratuita para guardar tu racha diaria
+                  {T('rit_anon')}
                 </p>
               )}
             </div>
@@ -138,7 +157,7 @@ export default function Ritual() {
               <div style={{
                 fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic',
                 color: `${BRAND.heirloom}80`, fontSize: 12,
-              }}>el cacao te escucha…</div>
+              }}>{T('rit_listening')}</div>
             </div>
           </div>
         )}
@@ -183,7 +202,7 @@ export default function Ritual() {
                 <div style={{
                   fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
                   color: BRAND.pod, fontSize: 10, letterSpacing: '0.2em', marginBottom: 8,
-                }}>INVITACIÓN DEL DÍA</div>
+                }}>{T('rit_invitation')}</div>
                 <p style={{
                   fontFamily: 'system-ui', color: BRAND.heirloom,
                   fontSize: 13, lineHeight: 1.65, margin: 0,
@@ -200,12 +219,12 @@ export default function Ritual() {
               <div style={{
                 fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
                 color: BRAND.heirloom, fontSize: 13, letterSpacing: '0.1em', marginBottom: 6,
-              }}>CEREMONIA DE CACAO GUIADA</div>
+              }}>{T('rit_ceremony')}</div>
               <p style={{
                 fontFamily: 'system-ui', color: `${BRAND.heirloom}66`,
                 fontSize: 12, margin: '0 0 14px', lineHeight: 1.5,
               }}>
-                15 minutos · Taza caliente · Espacio sagrado para ti
+                {T('rit_cer_desc')}
               </p>
               <button style={{
                 background: 'transparent',
@@ -215,23 +234,28 @@ export default function Ritual() {
                 fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
                 fontSize: 11, letterSpacing: '0.12em',
               }}>
-                🎵 Abrir meditación en Spotify
+                {T('rit_spotify')}
               </button>
             </div>
 
             {/* Action row */}
             <div style={{ display: 'flex', gap: 10, width: '100%' }}>
               <button onClick={() => {
-                const text = `🫘 Mi arcana de hoy: ${selectedCard.name} — "${selectedCard.meaning}" · CAUA Ritual`
+                const text = `${T('rit_share_text')}: ${selectedCard.name} — "${selectedCard.meaning}" · CAUA Ritual`
                 if (navigator.share) navigator.share({ text })
                 else navigator.clipboard.writeText(text)
+                const newShare = shareCount + 1
+                setShareCount(newShare)
+                if (profile?.email) {
+                  hsUpdateRitual({ email: profile.email, ritual_share_count: String(newShare) })
+                }
               }} style={{
                 flex: 1, padding: '12px', borderRadius: 10,
                 background: '#132B1C', border: `1px solid ${BRAND.amazon}66`,
                 color: `${BRAND.heirloom}cc`, cursor: 'pointer',
                 fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
                 fontSize: 11, letterSpacing: '0.1em',
-              }}>Compartir ↗</button>
+              }}>{T('rit_share')}</button>
 
               <button onClick={() => { setPhase('intro'); setCard(null) }} style={{
                 flex: 1, padding: '12px', borderRadius: 10,
@@ -239,7 +263,7 @@ export default function Ritual() {
                 color: BRAND.pod, cursor: 'pointer',
                 fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
                 fontSize: 11, letterSpacing: '0.1em',
-              }}>Nueva tirada</button>
+              }}>{T('rit_new_draw')}</button>
             </div>
 
             {/* Upsell — subtle */}
@@ -253,7 +277,7 @@ export default function Ritual() {
                 <div style={{
                   fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
                   color: BRAND.heirloom, fontSize: 12, letterSpacing: '0.08em',
-                }}>Potencia tu ritual con cacao real</div>
+                }}>{T('rit_upsell')}</div>
                 <button
                   onClick={() => navigate('/marketplace')}
                   style={{
@@ -262,7 +286,7 @@ export default function Ritual() {
                     color: BRAND.pod, cursor: 'pointer', textDecoration: 'underline',
                   }}
                 >
-                  Ver Cacao Ceremonial Criollo →
+                  {T('rit_upsell_cta')}
                 </button>
               </div>
             </div>

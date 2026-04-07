@@ -2,14 +2,21 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BRAND } from '../utils/constants'
 import CauaLogo from '../components/ui/CauaLogo'
-import { useAuth } from '../context/AuthContext'
+import { supabase } from '../lib/supabase'
+import { hsSubmitForm, readConsent } from '../lib/hubspotTracking'
+import { useLang } from '../context/LangContext'
+import { makeT } from '../utils/i18n'
 
 export default function Auth() {
-  const [email, setEmail]   = useState('')
-  const [pass, setPass]     = useState('')
-  const [mode, setMode]     = useState<'login' | 'register'>('login')
-  const { setUser }         = useAuth()
-  const navigate            = useNavigate()
+  const [email, setEmail]     = useState('')
+  const [pass, setPass]       = useState('')
+  const [mode, setMode]       = useState<'login' | 'register'>('login')
+  const [loading, setLoading] = useState(false)
+  const [error, setError]     = useState('')
+  const [success, setSuccess] = useState('')
+  const navigate              = useNavigate()
+  const { lang } = useLang()
+  const T = makeT(lang)
 
   const inputStyle = {
     width: '100%', padding: '12px 16px', borderRadius: 8,
@@ -18,8 +25,38 @@ export default function Auth() {
     marginBottom: 8, boxSizing: 'border-box' as const, outline: 'none',
   }
 
-  const handleSubmit = () => {
-    if (email.trim()) { setUser(email.split('@')[0]); navigate('/') }
+  const handleSubmit = async () => {
+    if (!email.trim() || !pass.trim()) return
+    setLoading(true)
+    setError('')
+    setSuccess('')
+
+    if (mode === 'register') {
+      const { error: signUpError } = await supabase.auth.signUp({ email, password: pass })
+      if (signUpError) { setError(signUpError.message); setLoading(false); return }
+
+      // HubSpot: capture lead at moment of registration
+      if (readConsent().analytics) {
+        hsSubmitForm({
+          email,
+          caua_region:            'OTHER',
+          caua_streak:            '0',
+          caua_orders:            '0',
+          caua_referrals:         '0',
+          caua_login_status:      'anonymous',
+          caua_tracking_consent:  'analytics',
+          caua_persona_label:     'new_registrant',
+        })
+      }
+
+      setSuccess('¡Cuenta creada! Revisa tu correo para confirmar.')
+      setLoading(false)
+    } else {
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password: pass })
+      if (signInError) { setError(signInError.message); setLoading(false); return }
+      // AuthContext.onAuthStateChange fires → fetchProfile → trackLoggedInUser()
+      navigate('/')
+    }
   }
 
   return (
@@ -37,7 +74,7 @@ export default function Auth() {
           <p style={{
             fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic',
             color: `${BRAND.heirloom}88`, fontSize: 12, marginTop: 12,
-          }}>With Nature We Walk</p>
+          }}>{T('auth_tagline')}</p>
         </div>
 
         {/* Social */}
@@ -50,7 +87,7 @@ export default function Auth() {
             alignItems: 'center', justifyContent: 'center', gap: 8,
           }}>
             <span style={{ fontSize: 18 }}>{provider === 'Google' ? 'G' : ''}</span>
-            Continuar con {provider}
+            {T('auth_continue')} {provider}
           </button>
         ))}
 
@@ -61,25 +98,38 @@ export default function Auth() {
         </div>
 
         <input value={email} onChange={e => setEmail(e.target.value)}
-          placeholder="correo@ejemplo.com" style={inputStyle} />
+          placeholder={T('auth_email')} style={inputStyle} />
         <input value={pass} onChange={e => setPass(e.target.value)}
-          placeholder="Contraseña" type="password" style={{ ...inputStyle, marginBottom: 16 }} />
+          placeholder={T('auth_pass')} type="password" style={{ ...inputStyle, marginBottom: 16 }} />
 
-        <button onClick={handleSubmit} style={{
+        {error && (
+          <p style={{ fontFamily: 'system-ui', fontSize: 12, color: '#E05C5C', marginBottom: 10, textAlign: 'center' }}>
+            {error}
+          </p>
+        )}
+        {success && (
+          <p style={{ fontFamily: 'system-ui', fontSize: 12, color: BRAND.pod, marginBottom: 10, textAlign: 'center' }}>
+            {success}
+          </p>
+        )}
+
+        <button onClick={handleSubmit} disabled={loading} style={{
           width: '100%', padding: '14px 16px', borderRadius: 8, border: 'none',
-          background: `linear-gradient(135deg, ${BRAND.pod}, ${BRAND.amazon})`,
-          color: BRAND.heirloom, cursor: 'pointer',
+          background: loading
+            ? `${BRAND.pod}66`
+            : `linear-gradient(135deg, ${BRAND.pod}, ${BRAND.amazon})`,
+          color: BRAND.heirloom, cursor: loading ? 'not-allowed' : 'pointer',
           fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
           fontSize: 14, letterSpacing: '0.1em',
         }}>
-          {mode === 'login' ? 'INICIAR SESIÓN' : 'CREAR CUENTA'}
+          {loading ? '…' : mode === 'login' ? T('auth_login') : T('auth_register')}
         </button>
 
         <p style={{ textAlign: 'center', marginTop: 16, fontSize: 12, color: `${BRAND.heirloom}66` }}>
-          {mode === 'login' ? '¿No tienes cuenta? ' : '¿Ya tienes cuenta? '}
+          {mode === 'login' ? `${T('auth_no_acct')} ` : `${T('auth_yes_acct')} `}
           <span onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
             style={{ color: BRAND.pod, cursor: 'pointer', textDecoration: 'underline' }}>
-            {mode === 'login' ? 'Regístrate' : 'Inicia sesión'}
+            {mode === 'login' ? T('auth_signup') : T('auth_signin')}
           </span>
         </p>
       </div>

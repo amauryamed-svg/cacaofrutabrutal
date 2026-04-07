@@ -9,11 +9,10 @@
  * Declared interests are set by the USER, never inferred.
  */
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { BRAND } from '../../utils/constants'
 import {
   readConsent,
-  loadHubSpotScript,
   hsSubmitForm,
   type HubSpotContactProps,
 } from '../../lib/hubspotTracking'
@@ -80,35 +79,19 @@ export default function HubspotLeadForm({
   )
 }
 
-// ── Embedded HubSpot Form (renders HubSpot's own iframe/widget) ───────────────
+// ── Embedded HubSpot Form (new div-based embed, hsforms.net) ─────────────────
 function EmbeddedHubSpotForm({
-  portalId, formGuid, onSuccess,
+  portalId, formGuid,
 }: { portalId: string; formGuid: string; onSuccess?: () => void }) {
-  const ref = useRef<HTMLDivElement>(null)
-
   useEffect(() => {
-    loadHubSpotScript()
-
-    // HubSpot Forms JS API — renders their hosted form into our container
-    const load = () => {
-      if (!window.hbspt || !ref.current) return
-      window.hbspt.forms.create({
-        portalId,
-        formId: formGuid,
-        target: `#hs-form-container`,
-        onFormSubmitted: () => onSuccess?.(),
-        // Styling hook — HubSpot appends .hs-form class
-        cssRequired: '',
-      })
-    }
-
-    if (window.hbspt) { load() }
-    else {
-      // Script not yet loaded — poll until ready
-      const t = setInterval(() => { if (window.hbspt) { load(); clearInterval(t) } }, 300)
-      return () => clearInterval(t)
-    }
-  }, [portalId, formGuid, onSuccess])
+    const scriptId = 'hs-embed-script'
+    if (document.getElementById(scriptId)) return
+    const s = document.createElement('script')
+    s.id    = scriptId
+    s.src   = `https://js.hsforms.net/forms/embed/${portalId}.js`
+    s.defer = true
+    document.head.appendChild(s)
+  }, [portalId])
 
   return (
     <div style={{
@@ -116,8 +99,8 @@ function EmbeddedHubSpotForm({
       border: `1px solid ${BRAND.amazon}66`, padding: '24px',
     }}>
       <style>{`
-        #hs-form-container .hs-form input,
-        #hs-form-container .hs-form select {
+        .hs-form-frame input,
+        .hs-form-frame select {
           background: #0F2218 !important;
           border: 1px solid #1C3B2666 !important;
           color: #F7F1EE !important;
@@ -126,7 +109,7 @@ function EmbeddedHubSpotForm({
           font-family: system-ui !important;
           width: 100% !important;
         }
-        #hs-form-container .hs-form .hs-button {
+        .hs-form-frame .hs-button {
           background: #91A63B !important;
           color: #040C06 !important;
           border: none !important;
@@ -136,14 +119,20 @@ function EmbeddedHubSpotForm({
           letter-spacing: 0.1em !important;
           padding: 10px 28px !important;
           cursor: pointer !important;
+          width: 100% !important;
         }
-        #hs-form-container .hs-form label {
+        .hs-form-frame label {
           color: #F7F1EEcc !important;
           font-family: system-ui !important;
           font-size: 12px !important;
         }
       `}</style>
-      <div id="hs-form-container" ref={ref} />
+      <div
+        className="hs-form-frame"
+        data-region="na1"
+        data-portal-id={portalId}
+        data-form-id={formGuid}
+      />
     </div>
   )
 }
@@ -310,16 +299,3 @@ const labelStyle: React.CSSProperties = {
   color: `#F7F1EEaa`, display: 'block', marginBottom: 6,
 }
 
-// ── Global type augmentation for hbspt ───────────────────────────────────────
-declare global {
-  interface Window {
-    hbspt?: {
-      forms: {
-        create: (opts: {
-          portalId: string; formId: string; target: string
-          onFormSubmitted?: () => void; cssRequired?: string
-        }) => void
-      }
-    }
-  }
-}

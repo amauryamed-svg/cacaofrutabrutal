@@ -2,10 +2,15 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BRAND, GUARDIANS } from '../utils/constants'
 import CauaButton from '../components/ui/CauaButton'
+import HubspotLeadForm from '../components/ui/HubspotLeadForm'
+import { useLang } from '../context/LangContext'
+import { makeT } from '../utils/i18n'
 
 export default function Landing() {
   const [visible, setVisible] = useState(false)
   const navigate = useNavigate()
+  const { lang } = useLang()
+  const T = makeT(lang)
 
   useEffect(() => { setTimeout(() => setVisible(true), 100) }, [])
 
@@ -50,7 +55,7 @@ export default function Landing() {
           <p style={{
             fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic',
             color: BRAND.mazorca, fontSize: 14, marginBottom: 16, letterSpacing: '0.2em',
-          }}>AgriFoodTech · Biotecnología Ancestral</p>
+          }}>{T('land_eyebrow')}</p>
 
           <h1 style={{
             fontFamily: "'Barlow Condensed', Impact, sans-serif", fontWeight: 900,
@@ -67,22 +72,22 @@ export default function Landing() {
             fontFamily: 'system-ui', color: `${BRAND.heirloom}80`,
             fontSize: 16, maxWidth: 500, margin: '0 auto 32px', lineHeight: 1.7,
           }}>
-            El primer sistema biotecnológico de cacao funcional.<br />
+            {T('land_sub')}<br />
             <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic', color: BRAND.mazorca }}>
-              Del genoma colombiano al mundo.
+              {T('land_sub2')}
             </span>
           </p>
 
           {/* CTAs principales */}
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
             <CauaButton size="lg" onClick={() => navigate('/marketplace')}>
-              EXPLORAR PRODUCTOS
+              {T('land_cta1')}
             </CauaButton>
             <CauaButton size="lg" variant="secondary" onClick={() => navigate('/ritual')}>
-              RITUAL DEL DÍA
+              {T('land_cta2')}
             </CauaButton>
             <CauaButton size="lg" variant="accent" onClick={() => navigate('/marketplace')}>
-              ↗ ABRIR APP
+              {T('land_cta3')}
             </CauaButton>
           </div>
 
@@ -114,7 +119,7 @@ export default function Landing() {
           position: 'absolute', bottom: 32, left: '50%', transform: 'translateX(-50%)',
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
         }}>
-          <span style={{ color: `${BRAND.heirloom}44`, fontSize: 10, letterSpacing: '0.2em' }}>SCROLL</span>
+          <span style={{ color: `${BRAND.heirloom}44`, fontSize: 10, letterSpacing: '0.2em' }}>{T('land_scroll')}</span>
           <div style={{ width: 1, height: 32, background: `linear-gradient(${BRAND.heirloom}44, transparent)` }} />
         </div>
       </div>
@@ -124,12 +129,12 @@ export default function Landing() {
         <p style={{
           fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic',
           color: BRAND.mazorca, fontSize: 12, letterSpacing: '0.2em', marginBottom: 8,
-        }}>Los 5 Pétalos de la Flor del Cacao</p>
+        }}>{T('land_petals')}</p>
         <h2 style={{
           fontFamily: "'Barlow Condensed', Impact, sans-serif", fontWeight: 900,
           fontSize: 'clamp(32px, 6vw, 56px)', color: BRAND.heirloom,
           textTransform: 'uppercase', margin: '0 0 40px', lineHeight: 0.95,
-        }}>NUESTROS GUARDIANES</h2>
+        }}>{T('land_guardians')}</h2>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 16 }}>
           {GUARDIANS.map((g, i) => (
@@ -161,12 +166,12 @@ export default function Landing() {
       </div>
 
       {/* ── Value Props ── */}
-      <div style={{ padding: '60px 24px 100px', maxWidth: 800, margin: '0 auto' }}>
+      <div style={{ padding: '60px 24px 60px', maxWidth: 800, margin: '0 auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 24 }}>
           {[
-            { icon: '🧬', title: 'BIOACTIVOS CERTIFICADOS', desc: 'Epicatequina, teobromina y mucílago fermentado. Novel Food aprobado para el mercado europeo.' },
-            { icon: '🌿', title: 'AGROFORESTERÍA VIVA',    desc: 'Cacao criollo en sistemas regenerativos. 100% del fruto aprovechado, cero desperdicio.' },
-            { icon: '🌍', title: 'IMPACTO VERIFICADO',     desc: '+180% ingreso directo a las familias Guardianas. Trazabilidad completa de origen a taza.' },
+            { icon: '🧬', title: T('land_v1_title'), desc: T('land_v1_desc') },
+            { icon: '🌿', title: T('land_v2_title'), desc: T('land_v2_desc') },
+            { icon: '🌍', title: T('land_v3_title'), desc: T('land_v3_desc') },
           ].map((v, i) => (
             <div key={i} style={{
               background: `${BRAND.bgCard}88`, borderRadius: 12, padding: 24,
@@ -178,6 +183,16 @@ export default function Landing() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* ── Lead capture ── */}
+      <div style={{ padding: '0 24px 100px', maxWidth: 480, margin: '0 auto' }}>
+        <p style={{
+          fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic',
+          color: BRAND.mazorca, fontSize: 12, letterSpacing: '0.2em',
+          marginBottom: 16, textAlign: 'center',
+        }}>{T('land_join')}</p>
+        <HubspotLeadForm />
       </div>
     </div>
   )

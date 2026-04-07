@@ -2,16 +2,11 @@ import { useState } from 'react'
 import { BRAND, PRODUCTS } from '../utils/constants'
 import { useAuth } from '../context/AuthContext'
 import ProductCard from '../components/auction/ProductCard'
+import { useLang } from '../context/LangContext'
+import { makeT } from '../utils/i18n'
 import type { Product } from '../types'
 
 type Filter = 'all' | 'preorder' | 'auction' | 'subscription'
-
-const FILTERS: { id: Filter; label: string }[] = [
-  { id: 'all',          label: 'TODOS'       },
-  { id: 'preorder',     label: 'PRE-ORDER'   },
-  { id: 'auction',      label: 'SUBASTA'     },
-  { id: 'subscription', label: 'SUSCRIPCIÓN' },
-]
 
 function getMultiplier(referrals: number, prevLots: number): number {
   const refBonus = Math.min(referrals * 0.1, 1.0)
@@ -22,6 +17,15 @@ function getMultiplier(referrals: number, prevLots: number): number {
 export default function Marketplace() {
   const { user }          = useAuth()
   const [filter, setFilter] = useState<Filter>('all')
+  const { lang } = useLang()
+  const T = makeT(lang)
+
+  const FILTERS: { id: Filter; label: string }[] = [
+    { id: 'all',          label: T('mkt_all')      },
+    { id: 'preorder',     label: T('mkt_preorder') },
+    { id: 'auction',      label: T('mkt_auction')  },
+    { id: 'subscription', label: T('mkt_sub')      },
+  ]
   const referrals           = 2   // TODO: query from Supabase user_referrals
   const prevLots            = 1   // TODO: query from Supabase orders
   const mult                = getMultiplier(referrals, prevLots)
@@ -34,18 +38,17 @@ export default function Marketplace() {
         <p style={{
           fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic',
           color: BRAND.mazorca, fontSize: 12, letterSpacing: '0.25em', marginBottom: 10,
-        }}>Ediciones limitadas · Novel Foods · Regenerativo</p>
+        }}>{T('mkt_eyebrow')}</p>
         <h2 style={{
           fontFamily: "'Barlow Condensed', Impact, sans-serif", fontWeight: 900,
           fontSize: 'clamp(36px, 8vw, 64px)', color: BRAND.heirloom,
           textTransform: 'uppercase', margin: '0 0 8px', lineHeight: 0.9,
-        }}>MERCADO CAUA</h2>
+        }}>{T('mkt_title')}</h2>
         <p style={{
           fontFamily: 'system-ui', color: `${BRAND.heirloom}60`,
           fontSize: 14, margin: '0 0 28px', lineHeight: 1.6, maxWidth: 540,
         }}>
-          Cacao colombiano de origen verificado. Cada compra redistribuye directamente
-          a los Guardianes. Certificado para mercados europeos de Novel Foods.
+          {T('mkt_desc')}
         </p>
 
         {/* Multiplier badge */}
@@ -58,10 +61,10 @@ export default function Marketplace() {
           }}>
             <div>
               <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, color: BRAND.mazorca, fontSize: 12, letterSpacing: '0.1em' }}>
-                TU MULTIPLICADOR ACTIVO
+                {T('mkt_mult_label')}
               </div>
               <div style={{ fontFamily: 'system-ui', color: `${BRAND.heirloom}88`, fontSize: 11, marginTop: 2 }}>
-                {referrals} referidos + {prevLots} lotes previos
+                {referrals} {lang === 'es' ? 'referidos' : 'referrals'} + {prevLots} {lang === 'es' ? 'lotes previos' : 'previous lots'}
               </div>
             </div>
             <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: 32, color: BRAND.mazorca }}>

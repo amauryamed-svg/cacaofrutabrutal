@@ -1,43 +1,51 @@
 import { BRAND } from '../utils/constants'
-
-const METRICS = [
-  { label: 'Toneladas Desviadas',    value: '2.4', unit: 'ton',  icon: '♻️', color: BRAND.pod     },
-  { label: 'Familias Impactadas',    value: '5',   unit: 'fam.', icon: '👨‍👩‍👧‍�', color: BRAND.mazorca },
-  { label: 'Ingreso +% Agricultor',  value: '+180',unit: '%',    icon: '📈', color: BRAND.heroic  },
-  { label: 'Biodiversidad Protegida',value: '12',  unit: 'ha',   icon: '🌳', color: BRAND.pod     },
-]
-
-const TIMELINE = [
-  { q: 'Q1 2026', title: 'MVP + Validación', status: 'active',   items: ['Landing + Marketplace', '100 pre-orders', 'BFFood Candidatura'] },
-  { q: 'Q2 2026', title: 'Producción',       status: 'upcoming', items: ['600L Sunrise Shot', 'CAUA Labs apertura', '5 guardianes activos'] },
-  { q: 'Q3 2026', title: 'Escala',           status: 'upcoming', items: ['Canal B2B España', 'Pop-Up Galicia', 'Panel consumidores'] },
-  { q: 'Q4 2026', title: 'Ronda Semilla',    status: 'upcoming', items: ['$750K - $1.5M raise', 'Equipo clave 3+', 'Certificaciones EU'] },
-  { q: '2027',    title: 'Crecimiento',      status: 'future',   items: ['$500K revenue', '8-10 guardianes', 'Distribución EU'] },
-  { q: '2028-29', title: 'Consolidación',    status: 'future',   items: ['$1M+ revenue', 'Licencias IP', '5 países'] },
-]
-
-const DISTRIBUTION = [
-  { label: 'Agricultor (Guardián)',     pct: 35, color: BRAND.pod      },
-  { label: 'Producción + R&D',          pct: 25, color: BRAND.muisca   },
-  { label: 'Operaciones + Logística',   pct: 15, color: BRAND.mazorca  },
-  { label: 'Marketing + Comunidad',     pct: 10, color: BRAND.theobroma},
-  { label: 'Reinversión + Impacto',     pct: 10, color: BRAND.criollo  },
-  { label: 'Equipo CAUA',               pct: 5,  color: BRAND.heroic   },
-]
+import { useAuth } from '../context/AuthContext'
+import HubspotLeadForm from '../components/ui/HubspotLeadForm'
+import { useLang } from '../context/LangContext'
+import { makeT } from '../utils/i18n'
 
 export default function Dashboard() {
+  const { profile } = useAuth()
+  const { lang } = useLang()
+  const T = makeT(lang)
+
+  const METRICS = [
+    { label: lang === 'es' ? 'Toneladas Desviadas'    : 'Tons Diverted',         value: '2.4', unit: 'ton',  icon: '♻️', color: BRAND.pod     },
+    { label: lang === 'es' ? 'Familias Impactadas'    : 'Families Impacted',      value: '5',   unit: 'fam.', icon: '👨‍👩‍👧‍👦', color: BRAND.mazorca },
+    { label: lang === 'es' ? 'Ingreso +% Agricultor'  : 'Farmer Income Increase', value: '+180',unit: '%',    icon: '📈', color: BRAND.heroic  },
+    { label: lang === 'es' ? 'Biodiversidad Protegida': 'Protected Biodiversity', value: '12',  unit: 'ha',   icon: '🌳', color: BRAND.pod     },
+  ]
+
+  const TIMELINE = [
+    { q: 'Q1 2026', title: lang === 'es' ? 'MVP + Validación' : 'MVP + Validation', status: 'active',   items: ['Landing + Marketplace', '100 pre-orders', 'BFFood Candidatura'] },
+    { q: 'Q2 2026', title: lang === 'es' ? 'Producción'       : 'Production',        status: 'upcoming', items: ['600L Sunrise Shot', 'CAUA Labs apertura', lang === 'es' ? '5 guardianes activos' : '5 active guardians'] },
+    { q: 'Q3 2026', title: lang === 'es' ? 'Escala'           : 'Scale',             status: 'upcoming', items: [lang === 'es' ? 'Canal B2B España' : 'Spain B2B Channel', 'Pop-Up Galicia', lang === 'es' ? 'Panel consumidores' : 'Consumer panel'] },
+    { q: 'Q4 2026', title: lang === 'es' ? 'Ronda Semilla'    : 'Seed Round',        status: 'upcoming', items: ['$750K - $1.5M raise', lang === 'es' ? 'Equipo clave 3+' : 'Core team 3+', lang === 'es' ? 'Certificaciones EU' : 'EU Certifications'] },
+    { q: '2027',    title: lang === 'es' ? 'Crecimiento'      : 'Growth',            status: 'future',   items: ['$500K revenue', lang === 'es' ? '8-10 guardianes' : '8-10 guardians', lang === 'es' ? 'Distribución EU' : 'EU Distribution'] },
+    { q: '2028-29', title: lang === 'es' ? 'Consolidación'    : 'Consolidation',     status: 'future',   items: ['$1M+ revenue', lang === 'es' ? 'Licencias IP' : 'IP Licenses', lang === 'es' ? '5 países' : '5 countries'] },
+  ]
+
+  const DISTRIBUTION = [
+    { label: lang === 'es' ? 'Agricultor (Guardián)'   : 'Farmer (Guardian)',        pct: 35, color: BRAND.pod      },
+    { label: lang === 'es' ? 'Producción + R&D'        : 'Production + R&D',         pct: 25, color: BRAND.muisca   },
+    { label: lang === 'es' ? 'Operaciones + Logística' : 'Operations + Logistics',   pct: 15, color: BRAND.mazorca  },
+    { label: lang === 'es' ? 'Marketing + Comunidad'   : 'Marketing + Community',    pct: 10, color: BRAND.theobroma},
+    { label: lang === 'es' ? 'Reinversión + Impacto'   : 'Reinvestment + Impact',    pct: 10, color: BRAND.criollo  },
+    { label: 'Equipo CAUA',                                                           pct: 5,  color: BRAND.heroic   },
+  ]
+
   return (
     <div style={{ background: '#040C06', minHeight: '100vh', paddingTop: 80 }}>
       <div style={{ maxWidth: 1000, margin: '0 auto', padding: '40px 24px' }}>
 
         <p style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic', color: BRAND.mazorca, fontSize: 12, letterSpacing: '0.2em', marginBottom: 8 }}>
-          Triple Impacto · Transparencia Total
+          {T('dash_eyebrow')}
         </p>
         <h2 style={{
           fontFamily: "'Barlow Condensed', Impact, sans-serif", fontWeight: 900,
           fontSize: 'clamp(36px, 8vw, 56px)', color: BRAND.heirloom,
           textTransform: 'uppercase', margin: '0 0 32px', lineHeight: 0.95,
-        }}>IMPACTO <span style={{ color: BRAND.pod }}>REAL</span></h2>
+        }}>{T('dash_title').split(' ')[0]} <span style={{ color: BRAND.pod }}>{T('dash_title').split(' ')[1]}</span></h2>
 
         {/* Metrics */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 48 }}>
@@ -54,7 +62,7 @@ export default function Dashboard() {
 
         {/* Roadmap */}
         <h3 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, color: BRAND.heirloom, fontSize: 16, letterSpacing: '0.1em', marginBottom: 24 }}>
-          HOJA DE RUTA
+          {T('dash_roadmap')}
         </h3>
         <div style={{ position: 'relative', marginBottom: 48 }}>
           <div style={{ position: 'absolute', left: 16, top: 0, bottom: 0, width: 2, background: `linear-gradient(${BRAND.pod}, ${BRAND.amazon}44)` }} />
@@ -97,7 +105,7 @@ export default function Dashboard() {
         {/* Value distribution */}
         <div style={{ background: '#132B1C', border: `1px solid ${BRAND.amazon}66`, borderRadius: 12, padding: 24, marginBottom: 40 }}>
           <h3 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, color: BRAND.heirloom, fontSize: 14, letterSpacing: '0.1em', marginBottom: 16 }}>
-            DISTRIBUCIÓN DEL VALOR · POR CADA $1 USD
+            {T('dash_distrib')}
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {DISTRIBUTION.map((row, i) => (
@@ -114,6 +122,19 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* ── Lead capture ── */}
+        <div style={{ padding: '0 0 32px', maxWidth: 480, margin: '0 auto' }}>
+          <HubspotLeadForm
+            prefillEmail={profile?.email ?? ''}
+            prefillRegion={profile?.region ?? 'OTHER'}
+            prefillBehavior={{
+              streak:    profile?.ritual_streak    ?? 0,
+              orders:    profile?.completed_orders ?? 0,
+              referrals: profile?.referral_count   ?? 0,
+            }}
+          />
+        </div>
+
         {/* WhatsApp CTA */}
         <div style={{ textAlign: 'center', paddingBottom: 40 }}>
           <a href="https://wa.me/573102227848?text=Quiero%20saber%20m%C3%A1s%20sobre%20CAUA"
@@ -124,7 +145,7 @@ export default function Dashboard() {
               fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
               fontSize: 13, letterSpacing: '0.08em',
             }}>
-            💬 ÚNETE A LA COMUNIDAD WHATSAPP
+            {T('dash_whatsapp')}
           </a>
         </div>
       </div>

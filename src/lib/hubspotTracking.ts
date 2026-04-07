@@ -33,13 +33,28 @@ export interface HubSpotContactProps {
   caua_region:              'EU' | 'US' | 'CO' | 'OTHER'
 
   // Declared interest — set only when user explicitly interacts with a section
-  // e.g. clicks "Agroforestería" filter or visits /ritual 3+ times
   caua_interest_organic?:     'true' | 'false'
   caua_interest_novel_foods?: 'true' | 'false'
 
-  // Persona label — assigned by HubSpot workflow AFTER behavioral clustering,
-  // never assumed at tracking time. Default provided as a starting suggestion.
+  // Persona label — assigned by HubSpot workflow AFTER behavioral clustering
   caua_persona_label?:      string
+
+  // Ritual activity — simulated via contact property updates (no paid Events needed)
+  last_ritual_draw_card_name?:    string   // e.g. "El Guardián del Cacao"
+  last_ritual_draw_card_element?: string   // e.g. "Tierra"
+  last_ritual_draw_streak?:       string   // streak at time of draw
+  ritual_draw_count?:             string   // cumulative draws (session + persisted)
+  ritual_share_count?:            string   // cumulative shares
+}
+
+/** Partial ritual props for contact updates — email required, rest optional. */
+export interface RitualUpdateProps {
+  email: string
+  last_ritual_draw_card_name?:    string
+  last_ritual_draw_card_element?: string
+  last_ritual_draw_streak?:       string
+  ritual_draw_count?:             string
+  ritual_share_count?:            string
 }
 
 /** Consent state read from localStorage (set by CookieBanner). */
@@ -188,6 +203,50 @@ function getHutkCookie(): string | undefined {
     .split('; ')
     .find(c => c.startsWith('hubspotutk='))
     ?.split('=')[1]
+}
+
+// ── Ritual contact-property updater ──────────────────────────────────────────
+
+/**
+ * hsUpdateRitual()
+ *
+ * Simulates event tracking using contact property updates + Forms API.
+ * Free alternative to Custom Behavioral Events (paid).
+ *
+ * Creates/updates these HubSpot contact properties on each ritual action:
+ *   last_ritual_draw_card_name, last_ritual_draw_card_element,
+ *   last_ritual_draw_streak, ritual_draw_count, ritual_share_count
+ *
+ * In HubSpot: create these as "Single-line text" or "Number" contact properties
+ * under Contacts → Properties → Create property.
+ */
+export async function hsUpdateRitual(props: RitualUpdateProps): Promise<void> {
+  const consent = readConsent()
+  if (!consent.analytics || !FORM_GUID) return
+
+  const fields = Object.entries(props)
+    .filter(([k]) => k !== 'email')
+    .filter(([, v]) => v !== undefined)
+    .map(([name, value]) => ({ name, value: String(value) }))
+
+  if (!fields.length) return
+
+  const payload = {
+    portalId: PORTAL_ID,
+    formGuid:  FORM_GUID,
+    fields: [{ name: 'email', value: props.email }, ...fields],
+    context: {
+      hutk:     getHutkCookie(),
+      pageUri:  window.location.href,
+      pageName: document.title,
+    },
+  }
+
+  // Fire-and-forget — never blocks UX
+  fetch(
+    `https://api.hsforms.com/submissions/v3/integration/submit/${PORTAL_ID}/${FORM_GUID}`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }
+  ).catch(() => {})
 }
 
 // ── Main tracking orchestrator ────────────────────────────────────────────────

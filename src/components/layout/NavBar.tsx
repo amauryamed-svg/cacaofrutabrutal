@@ -2,19 +2,24 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { BRAND } from '../../utils/constants'
 import CauaLogo from '../ui/CauaLogo'
 import CauaButton from '../ui/CauaButton'
+import LanguageToggle from '../ui/LanguageToggle'
 import { useAuth } from '../../context/AuthContext'
-
-const TABS = [
-  { path: '/',           label: 'INICIO'  },
-  { path: '/marketplace',label: 'MERCADO' },
-  { path: '/ritual',     label: 'RITUAL'  },
-  { path: '/dashboard',  label: 'IMPACTO' },
-]
+import { useLang } from '../../context/LangContext'
+import { makeT } from '../../utils/i18n'
 
 export default function NavBar() {
   const location = useLocation()
   const navigate  = useNavigate()
   const { user, setUser } = useAuth()
+  const { lang } = useLang()
+  const T = makeT(lang)
+
+  const TABS = [
+    { path: '/',            label: T('nav_home')   },
+    { path: '/marketplace', label: T('nav_market') },
+    { path: '/ritual',      label: T('nav_ritual') },
+    { path: '/dashboard',   label: T('nav_impact') },
+  ]
 
   return (
     <nav style={{
@@ -44,32 +49,31 @@ export default function NavBar() {
             </Link>
           )
         })}
+      </div>
 
-        {/* Separador */}
-        <div style={{ width: 1, height: 16, background: `${BRAND.amazon}66`, margin: '0 4px' }} />
-
-        {/* Links externos */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {/* External links — compact */}
         {[
-          { href: '/pitch/', label: 'PITCH', color: BRAND.heroic, title: 'Pitch 5 slides' },
-          { href: '/pitch_growth.html', label: 'GROWTH', color: BRAND.mazorca, title: 'Pitch extendido' },
-          { href: '/siembra.html', label: 'SIEMBRA', color: BRAND.pod, title: 'Simulación Siembra' },
-        ].map(({ href, label, color, title }) => (
+          { href: '/pitch/', label: 'PITCH', color: BRAND.heroic },
+          { href: '/pitch_growth.html', label: 'GROWTH', color: BRAND.mazorca },
+          { href: '/siembra.html', label: 'SIEMBRA', color: BRAND.pod },
+        ].map(({ href, label, color }) => (
           <a key={href} href={href} target="_blank" rel="noopener noreferrer"
-            title={title}
             style={{
-              padding: '6px 12px', borderRadius: 999,
+              padding: '4px 10px', borderRadius: 999,
               fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
-              fontSize: 11, letterSpacing: '0.12em', textDecoration: 'none',
-              color: `${color}99`,
-              border: '1px solid transparent',
+              fontSize: 10, letterSpacing: '0.1em', textDecoration: 'none',
+              color: `${color}88`, border: `1px solid ${color}22`,
               transition: 'all 0.3s',
             }}>
             {label}
           </a>
         ))}
-      </div>
 
-      <div>
+        {/* Separator */}
+        <div style={{ width: 1, height: 16, background: `${BRAND.amazon}55` }} />
+
+        <LanguageToggle />
         {user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{
@@ -81,10 +85,10 @@ export default function NavBar() {
             <button onClick={() => setUser(null)} style={{
               background: 'none', border: 'none', color: `${BRAND.heirloom}66`,
               fontSize: 10, cursor: 'pointer',
-            }}>Salir</button>
+            }}>{T('nav_exit')}</button>
           </div>
         ) : (
-          <CauaButton size="sm" onClick={() => navigate('/auth')}>ENTRAR</CauaButton>
+          <CauaButton size="sm" onClick={() => navigate('/auth')}>{T('nav_enter')}</CauaButton>
         )}
       </div>
     </nav>
