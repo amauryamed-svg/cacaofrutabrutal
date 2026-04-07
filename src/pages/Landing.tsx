@@ -88,32 +88,25 @@ export default function Landing() {
 
           {/* Links secundarios */}
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a href="/pitch_growth.html" target="_blank" rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                padding: '8px 18px', borderRadius: 999,
-                border: `1px solid ${BRAND.mazorca}44`,
-                background: `${BRAND.mazorca}0d`,
-                color: `${BRAND.mazorca}cc`,
-                fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
-                fontSize: 11, letterSpacing: '0.12em', textDecoration: 'none',
-                transition: 'all 0.3s',
-              }}>
-              📊 PITCH DECK
-            </a>
-            <a href="/siembra.html" target="_blank" rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                padding: '8px 18px', borderRadius: 999,
-                border: `1px solid ${BRAND.pod}44`,
-                background: `${BRAND.pod}0d`,
-                color: `${BRAND.pod}cc`,
-                fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
-                fontSize: 11, letterSpacing: '0.12em', textDecoration: 'none',
-                transition: 'all 0.3s',
-              }}>
-              🌱 SIMULACIÓN SIEMBRA
-            </a>
+            {[
+              { href: '/pitch/', label: 'PITCH', icon: '🎯', color: BRAND.heroic },
+              { href: '/pitch_growth.html', label: 'GROWTH', icon: '📊', color: BRAND.mazorca },
+              { href: '/siembra.html', label: 'SIEMBRA', icon: '🌱', color: BRAND.pod },
+            ].map(({ href, label, icon, color }) => (
+              <a key={href} href={href} target="_blank" rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '8px 18px', borderRadius: 999,
+                  border: `1px solid ${color}44`,
+                  background: `${color}0d`,
+                  color: `${color}cc`,
+                  fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+                  fontSize: 11, letterSpacing: '0.12em', textDecoration: 'none',
+                  transition: 'all 0.3s',
+                }}>
+                {icon} {label}
+              </a>
+            ))}
           </div>
         </div>
 

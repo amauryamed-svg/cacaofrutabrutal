@@ -49,30 +49,24 @@ export default function NavBar() {
         <div style={{ width: 1, height: 16, background: `${BRAND.amazon}66`, margin: '0 4px' }} />
 
         {/* Links externos */}
-        <a href="/pitch_growth.html" target="_blank" rel="noopener noreferrer"
-          title="Pitch Deck"
-          style={{
-            padding: '6px 12px', borderRadius: 999, cursor: 'pointer',
-            fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
-            fontSize: 11, letterSpacing: '0.12em', textDecoration: 'none',
-            color: `${BRAND.mazorca}99`,
-            border: '1px solid transparent',
-            transition: 'all 0.3s',
-          }}>
-          📊 PITCH
-        </a>
-        <a href="/siembra.html" target="_blank" rel="noopener noreferrer"
-          title="Simulación Siembra"
-          style={{
-            padding: '6px 12px', borderRadius: 999, cursor: 'pointer',
-            fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
-            fontSize: 11, letterSpacing: '0.12em', textDecoration: 'none',
-            color: `${BRAND.pod}99`,
-            border: '1px solid transparent',
-            transition: 'all 0.3s',
-          }}>
-          🌱 SIEMBRA
-        </a>
+        {[
+          { href: '/pitch/', label: 'PITCH', color: BRAND.heroic, title: 'Pitch 5 slides' },
+          { href: '/pitch_growth.html', label: 'GROWTH', color: BRAND.mazorca, title: 'Pitch extendido' },
+          { href: '/siembra.html', label: 'SIEMBRA', color: BRAND.pod, title: 'Simulación Siembra' },
+        ].map(({ href, label, color, title }) => (
+          <a key={href} href={href} target="_blank" rel="noopener noreferrer"
+            title={title}
+            style={{
+              padding: '6px 12px', borderRadius: 999,
+              fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+              fontSize: 11, letterSpacing: '0.12em', textDecoration: 'none',
+              color: `${color}99`,
+              border: '1px solid transparent',
+              transition: 'all 0.3s',
+            }}>
+            {label}
+          </a>
+        ))}
       </div>
 
       <div>
