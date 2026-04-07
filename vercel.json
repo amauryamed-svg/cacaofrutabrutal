@@ -1,6 +1,10 @@
 {
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
+  "framework": "vite",
   "rewrites": [
     { "source": "/pitch", "destination": "/pitch/index.html" },
-    { "source": "/((?!pitch|pitch_growth\\.html|siembra\\.html|assets|manifest\\.json|favicon\\.svg|icons\\.svg).*)", "destination": "/index.html" }
+    { "source": "/((?!pitch_growth\\.html|siembra\\.html|pitch|assets|manifest\\.json|favicon\\.svg|icons\\.svg).*)", "destination": "/index.html" }
   ]
 }
