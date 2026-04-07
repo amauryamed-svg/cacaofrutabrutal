@@ -73,17 +73,47 @@ export default function Landing() {
             </span>
           </p>
 
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          {/* CTAs principales */}
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
             <CauaButton size="lg" onClick={() => navigate('/marketplace')}>
               EXPLORAR PRODUCTOS
             </CauaButton>
             <CauaButton size="lg" variant="secondary" onClick={() => navigate('/ritual')}>
               RITUAL DEL DÍA
             </CauaButton>
-            <CauaButton size="lg" variant="accent"
-              onClick={() => navigate('/marketplace')}>
+            <CauaButton size="lg" variant="accent" onClick={() => navigate('/marketplace')}>
               ↗ ABRIR APP
             </CauaButton>
+          </div>
+
+          {/* Links secundarios */}
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <a href="/pitch_growth.html" target="_blank" rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '8px 18px', borderRadius: 999,
+                border: `1px solid ${BRAND.mazorca}44`,
+                background: `${BRAND.mazorca}0d`,
+                color: `${BRAND.mazorca}cc`,
+                fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+                fontSize: 11, letterSpacing: '0.12em', textDecoration: 'none',
+                transition: 'all 0.3s',
+              }}>
+              📊 PITCH DECK
+            </a>
+            <a href="/siembra.html" target="_blank" rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '8px 18px', borderRadius: 999,
+                border: `1px solid ${BRAND.pod}44`,
+                background: `${BRAND.pod}0d`,
+                color: `${BRAND.pod}cc`,
+                fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+                fontSize: 11, letterSpacing: '0.12em', textDecoration: 'none',
+                transition: 'all 0.3s',
+              }}>
+              🌱 SIMULACIÓN SIEMBRA
+            </a>
           </div>
         </div>
 

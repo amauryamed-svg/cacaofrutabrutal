@@ -28,7 +28,7 @@ export default function NavBar() {
         <CauaLogo size={28} />
       </Link>
 
-      <div style={{ display: 'flex', gap: 4 }}>
+      <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
         {TABS.map(t => {
           const active = location.pathname === t.path
           return (
@@ -44,6 +44,35 @@ export default function NavBar() {
             </Link>
           )
         })}
+
+        {/* Separador */}
+        <div style={{ width: 1, height: 16, background: `${BRAND.amazon}66`, margin: '0 4px' }} />
+
+        {/* Links externos */}
+        <a href="/pitch_growth.html" target="_blank" rel="noopener noreferrer"
+          title="Pitch Deck"
+          style={{
+            padding: '6px 12px', borderRadius: 999, cursor: 'pointer',
+            fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+            fontSize: 11, letterSpacing: '0.12em', textDecoration: 'none',
+            color: `${BRAND.mazorca}99`,
+            border: '1px solid transparent',
+            transition: 'all 0.3s',
+          }}>
+          📊 PITCH
+        </a>
+        <a href="/siembra.html" target="_blank" rel="noopener noreferrer"
+          title="Simulación Siembra"
+          style={{
+            padding: '6px 12px', borderRadius: 999, cursor: 'pointer',
+            fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+            fontSize: 11, letterSpacing: '0.12em', textDecoration: 'none',
+            color: `${BRAND.pod}99`,
+            border: '1px solid transparent',
+            transition: 'all 0.3s',
+          }}>
+          🌱 SIEMBRA
+        </a>
       </div>
 
       <div>
