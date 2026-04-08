@@ -8,12 +8,7 @@ export default function Footer() {
       padding: '32px 24px', textAlign: 'center',
     }}>
       <CauaLogo size={20} />
-      <p style={{
-        fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic',
-        color: `${BRAND.heirloom}44`, fontSize: 11, marginTop: 8,
-      }}>
-        con la naturaleza caminamos
-      </p>
+
       <p style={{
         fontFamily: 'system-ui', color: `${BRAND.heirloom}33`,
         fontSize: 9, marginTop: 8,

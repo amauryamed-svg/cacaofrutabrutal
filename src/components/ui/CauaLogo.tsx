@@ -21,13 +21,13 @@ type Variant = 'primary' | 'white' | 'compact' | 'secondary' | 'wordmark' | 'log
 interface Props {
   size?:        number
   variant?:     Variant
-  showTagline?: boolean
+
 }
 
 // Bean accent color from actual brand SVG (cls-2 in Recurso 2.svg)
 const BEAN_COLOR = '#911f70'
 
-export default function CauaLogo({ size = 32, variant = 'primary', showTagline = false }: Props) {
+export default function CauaLogo({ size = 32, variant = 'primary' }: Props) {
 
   // ── Jaguar + pod mark (inline SVG) ──────────────────────────────────────
   if (variant === 'logo' || variant === 'circular') {
@@ -92,20 +92,6 @@ export default function CauaLogo({ size = 32, variant = 'primary', showTagline =
         />
       </svg>
 
-      {showTagline && variant !== 'compact' && (
-        <span style={{
-          fontFamily:    "'Cormorant Garamond', 'Playfair Display', Georgia, serif",
-          fontStyle:     'italic',
-          fontWeight:    500,
-          fontSize:      size * 0.3,
-          color:         isDark ? `${BRAND.heirloom}77` : BRAND.mazorca,
-          letterSpacing: '0.05em',
-          lineHeight:    1,
-          whiteSpace:    'nowrap',
-        }}>
-          con la naturaleza caminamos
-        </span>
-      )}
     </div>
   )
 }
