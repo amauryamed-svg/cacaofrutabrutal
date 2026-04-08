@@ -36,7 +36,7 @@ const translations = {
                    en: '+180% direct income to Guardian families. Full traceability from origin to cup.' },
 
   // ── Auth ───────────────────────────────────────────────────────────────────
-  auth_tagline:  { es: 'With Nature We Walk',     en: 'With Nature We Walk'  },
+  auth_tagline:  { es: 'con la naturaleza caminamos', en: 'con la naturaleza caminamos' },
   auth_continue: { es: 'Continuar con',           en: 'Continue with'        },
   auth_email:    { es: 'correo@ejemplo.com',      en: 'email@example.com'    },
   auth_pass:     { es: 'Contraseña',              en: 'Password'             },

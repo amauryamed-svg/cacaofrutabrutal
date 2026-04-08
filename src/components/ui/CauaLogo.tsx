@@ -103,7 +103,7 @@ export default function CauaLogo({ size = 32, variant = 'primary', showTagline =
           lineHeight:    1,
           whiteSpace:    'nowrap',
         }}>
-          with nature we walk
+          con la naturaleza caminamos
         </span>
       )}
     </div>

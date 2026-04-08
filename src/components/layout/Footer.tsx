@@ -12,7 +12,7 @@ export default function Footer() {
         fontFamily: "'Playfair Display', Georgia, serif", fontStyle: 'italic',
         color: `${BRAND.heirloom}44`, fontSize: 11, marginTop: 8,
       }}>
-        Con la Naturaleza Caminamos · With Nature We Walk
+        con la naturaleza caminamos
       </p>
       <p style={{
         fontFamily: 'system-ui', color: `${BRAND.heirloom}33`,
