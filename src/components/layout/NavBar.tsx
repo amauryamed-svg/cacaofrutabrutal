@@ -280,7 +280,7 @@ export default function NavBar() {
           user={user}
           onLogout={() => setUser(null)}
           onLogin={() => navigate('/auth')}
-          T={T}
+          T={T as (key: string) => string}
         />
       )}
     </>
