@@ -37,6 +37,7 @@ function AppShell() {
         <Route path="/ritual"      element={<Ritual />}      />
         <Route path="/dashboard"   element={<Dashboard />}   />
         <Route path="/fund"        element={<Fund />}        />
+
       </Routes>
       {!hideChrome && <Footer />}
       <CookieBanner />
