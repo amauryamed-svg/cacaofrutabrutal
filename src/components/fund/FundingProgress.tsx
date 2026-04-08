@@ -65,9 +65,10 @@ export default function FundingProgress({ lotsFunded, lotsTotal, raisedUsdCents,
             border: `1px solid ${BRAND.heroic}33`,
             background: `${BRAND.heroic}0a`,
             fontFamily: FONTS.display, fontWeight: 700,
-            fontSize: 8, letterSpacing: '0.12em', color: `${BRAND.heroic}cc`,
+            fontSize: 7, letterSpacing: '0.08em', color: `${BRAND.heroic}cc`,
+            maxWidth: 200, lineHeight: 1.3, textAlign: 'right',
           }}>
-            🇪🇺 {lang === 'es' ? 'APROBACIÓN EU' : 'EU APPROVAL'}
+            🇪🇺 {euTarget}
           </div>
         )}
       </div>

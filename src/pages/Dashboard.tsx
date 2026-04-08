@@ -137,7 +137,7 @@ export default function Dashboard() {
 
         {/* WhatsApp CTA */}
         <div style={{ textAlign: 'center', paddingBottom: 40 }}>
-          <a href="https://wa.me/573102227848?text=Quiero%20saber%20m%C3%A1s%20sobre%20CAUA"
+          <a href="https://chat.whatsapp.com/Kkcf4lk6Fas5VYfTI4VBhG"
             target="_blank" rel="noopener noreferrer" style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
               background: '#25D366', color: '#fff', padding: '12px 24px',

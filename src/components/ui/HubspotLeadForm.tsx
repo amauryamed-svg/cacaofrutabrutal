@@ -99,32 +99,91 @@ function EmbeddedHubSpotForm({
       border: `1px solid ${BRAND.amazon}66`, padding: '24px',
     }}>
       <style>{`
+        .hs-form-frame,
+        .hs-form-frame * {
+          box-sizing: border-box;
+        }
         .hs-form-frame input,
-        .hs-form-frame select {
-          background: #0F2218 !important;
-          border: 1px solid #1C3B2666 !important;
+        .hs-form-frame input[type="text"],
+        .hs-form-frame input[type="email"],
+        .hs-form-frame input[type="tel"],
+        .hs-form-frame select,
+        .hs-form-frame textarea {
+          background: #0A1C11 !important;
+          border: 1px solid rgba(40, 90, 55, 0.5) !important;
           color: #F7F1EE !important;
           border-radius: 8px !important;
           padding: 10px 14px !important;
-          font-family: system-ui !important;
+          font-family: system-ui, sans-serif !important;
+          font-size: 14px !important;
           width: 100% !important;
+          outline: none !important;
         }
-        .hs-form-frame .hs-button {
-          background: #91A63B !important;
+        .hs-form-frame input::placeholder,
+        .hs-form-frame textarea::placeholder {
+          color: rgba(247,241,238,0.3) !important;
+        }
+        .hs-form-frame input:focus,
+        .hs-form-frame select:focus,
+        .hs-form-frame textarea:focus {
+          border-color: #91A63B !important;
+          box-shadow: 0 0 0 2px rgba(145,166,59,0.15) !important;
+        }
+        .hs-form-frame label,
+        .hs-form-frame .hs-field-desc,
+        .hs-form-frame .hs-form-field label {
+          color: rgba(247,241,238,0.85) !important;
+          font-family: system-ui, sans-serif !important;
+          font-size: 12px !important;
+          font-weight: 500 !important;
+          display: block !important;
+          margin-bottom: 5px !important;
+        }
+        .hs-form-frame .hs-error-msgs label,
+        .hs-form-frame .hs-error-msg {
+          color: #e05a4a !important;
+          font-size: 11px !important;
+        }
+        .hs-form-frame .hs-button,
+        .hs-form-frame input[type="submit"] {
+          background: linear-gradient(135deg, #91A63B, #6d7332) !important;
           color: #040C06 !important;
           border: none !important;
           border-radius: 999px !important;
-          font-family: 'Barlow Condensed', sans-serif !important;
+          font-family: 'Barlow Condensed', 'Space Mono', sans-serif !important;
           font-weight: 700 !important;
-          letter-spacing: 0.1em !important;
-          padding: 10px 28px !important;
+          font-size: 13px !important;
+          letter-spacing: 0.12em !important;
+          text-transform: uppercase !important;
+          padding: 12px 28px !important;
           cursor: pointer !important;
           width: 100% !important;
+          margin-top: 8px !important;
         }
-        .hs-form-frame label {
-          color: #F7F1EEcc !important;
-          font-family: system-ui !important;
-          font-size: 12px !important;
+        .hs-form-frame .hs-form-field {
+          margin-bottom: 14px !important;
+        }
+        .hs-form-frame .submitted-message {
+          color: #91A63B !important;
+          font-family: system-ui, sans-serif !important;
+          font-size: 14px !important;
+          text-align: center !important;
+          padding: 12px 0 !important;
+        }
+        .hs-form-frame .hs-richtext,
+        .hs-form-frame .legal-consent-container {
+          color: rgba(247,241,238,0.5) !important;
+          font-family: system-ui, sans-serif !important;
+          font-size: 10px !important;
+          line-height: 1.5 !important;
+        }
+        .hs-form-frame .hs-richtext a,
+        .hs-form-frame .legal-consent-container a {
+          color: #91A63B !important;
+        }
+        .hs-form-frame select option {
+          background: #0A1C11 !important;
+          color: #F7F1EE !important;
         }
       `}</style>
       <div

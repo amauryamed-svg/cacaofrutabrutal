@@ -109,5 +109,12 @@ export interface LotInvestment {
   created_at: string
 }
 
-export type PaymentMethod = 'stripe' | 'mercadopago'
+export type Currency      = 'COP' | 'USD' | 'EUR'
+export type PaymentMethod =
+  | 'mercadopago'        // COP — PSE, Nequi, Daviplata
+  | 'stripe_usd'         // USD — Visa/MC/Amex
+  | 'stripe_eur'         // EUR — Visa/MC/Amex
+  | 'coinbase_usdc'      // USDC on-chain — Coinbase Commerce
+  | 'coinbase_cop_digital' // COP Digital — en proceso
+  | 'coinbase_eur_digital' // EUR Digital — en proceso
 export type InvestMode   = 'lot' | 'mvp'
