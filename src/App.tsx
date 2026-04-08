@@ -11,6 +11,7 @@ import Auth              from './pages/Auth'
 import Marketplace       from './pages/Marketplace'
 import Ritual            from './pages/Ritual'
 import Dashboard         from './pages/Dashboard'
+import Fund              from './pages/Fund'
 import { hsTrackPage }   from './lib/hubspot'
 
 function AppShell() {
@@ -35,6 +36,7 @@ function AppShell() {
         <Route path="/marketplace" element={<Marketplace />} />
         <Route path="/ritual"      element={<Ritual />}      />
         <Route path="/dashboard"   element={<Dashboard />}   />
+        <Route path="/fund"        element={<Fund />}        />
       </Routes>
       {!hideChrome && <Footer />}
       <CookieBanner />

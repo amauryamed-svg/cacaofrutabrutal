@@ -28,6 +28,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
+    "shadcn": "^4.2.0",
     "sharp": "^0.34.5",
     "supabase": "^2.85.0",
     "typescript": "~6.0.2",

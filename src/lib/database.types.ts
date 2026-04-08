@@ -51,6 +51,7 @@ export interface UserProfile {
   avatar_url: string | null
   locale: 'es' | 'en'
   region: 'EU' | 'US' | 'CO' | 'OTHER'
+  caua_role: 'investor' | 'creyente' | 'colono' | 'nativo' | 'farmer' | 'founder'
   hubspot_contact_id: string | null
   referral_code: string | null
   referral_count: number
@@ -88,6 +89,62 @@ export interface Order {
   amount_cents: number
   stripe_session_id: string | null
   status: 'pending' | 'completed' | 'failed' | 'refunded'
+  technology_id: string | null
+  mvp_id: string | null
+  lots_count: number
+  currency: 'USD' | 'COP' | 'EUR'
+  payment_provider: 'stripe' | 'mercadopago'
+  mercadopago_preference_id: string | null
+  created_at: string
+}
+
+export interface Technology {
+  id: string
+  slug: string
+  name: string
+  tagline: string | null
+  input_description: string
+  process_steps: unknown[]
+  output_description: string
+  lot_price_cop: number
+  lot_price_usd_cents: number
+  lots_total: number
+  lots_funded: number
+  goal_usd_cents: number
+  raised_usd_cents: number
+  category: string
+  eu_approval_target: string | null
+  active: boolean
+  sort_order: number
+  created_at: string
+}
+
+export interface Mvp {
+  id: string
+  technology_id: string
+  name: string
+  description: string | null
+  sku: string | null
+  size_label: string | null
+  price_usd_cents: number
+  price_cop: number | null
+  stripe_price_id: string | null
+  stock: number
+  image_url: string | null
+  active: boolean
+  created_at: string
+}
+
+export interface LotInvestment {
+  id: string
+  user_id: string
+  technology_id: string
+  order_id: string
+  lots_count: number
+  amount_usd_cents: number
+  amount_cop: number | null
+  currency: 'USD' | 'COP' | 'EUR'
+  caua_role: string | null
   created_at: string
 }
 

@@ -36,7 +36,7 @@ export default function Dashboard() {
 
   return (
     <div style={{ background: '#040C06', minHeight: '100vh', paddingTop: 80 }}>
-      <div style={{ maxWidth: 1000, margin: '0 auto', padding: '40px 24px' }}>
+      <div style={{ maxWidth: 1000, margin: '0 auto', padding: 'clamp(24px,5vw,40px) var(--space-page)' }}>
 
         <p style={{ fontFamily: FONTS.serif, fontStyle: 'italic', color: BRAND.mazorca, fontSize: 12, letterSpacing: '0.2em', marginBottom: 8 }}>
           {T('dash_eyebrow')}
@@ -48,7 +48,7 @@ export default function Dashboard() {
         }}>{T('dash_title').split(' ')[0]} <span style={{ color: BRAND.pod }}>{T('dash_title').split(' ')[1]}</span></h2>
 
         {/* Metrics */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 48 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 45%), 1fr))', gap: 16, marginBottom: 48 }}>
           {METRICS.map((m, i) => (
             <div key={i} style={{ background: '#132B1C', border: `1px solid ${BRAND.amazon}66`, borderRadius: 12, padding: 20, textAlign: 'center' }}>
               <div style={{ fontSize: 28, marginBottom: 8 }}>{m.icon}</div>

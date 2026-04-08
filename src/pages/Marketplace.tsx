@@ -33,7 +33,7 @@ export default function Marketplace() {
 
   return (
     <div style={{ background: '#040C06', minHeight: '100vh', paddingTop: 80 }}>
-      <div style={{ maxWidth: 1000, margin: '0 auto', padding: '40px 24px' }}>
+      <div style={{ maxWidth: 1000, margin: '0 auto', padding: 'clamp(24px,5vw,40px) var(--space-page)' }}>
 
         <p style={{
           fontFamily: FONTS.serif, fontStyle: 'italic',
@@ -74,7 +74,7 @@ export default function Marketplace() {
         )}
 
         {/* Filters */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 24, overflowX: 'auto', scrollbarWidth: 'none', flexWrap: 'nowrap', paddingBottom: 4 }}>
           {FILTERS.map(f => (
             <button key={f.id} onClick={() => setFilter(f.id)} style={{
               background: filter === f.id ? `${BRAND.pod}22` : 'transparent',
@@ -88,7 +88,7 @@ export default function Marketplace() {
         </div>
 
         {/* Product grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))', gap: 16 }}>
           {filtered.map(p => (
             <ProductCard key={p.id} product={p} multiplier={mult} user={user} />
           ))}

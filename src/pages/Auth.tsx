@@ -64,7 +64,7 @@ export default function Auth() {
     <div style={{
       minHeight: '100vh', display: 'flex', alignItems: 'center',
       justifyContent: 'center', background: BRAND.bgDeep,
-      padding: 24, position: 'relative', overflow: 'hidden',
+      padding: 'var(--space-page)', position: 'relative', overflow: 'hidden',
     }}>
       {/* Background glow */}
       <div style={{
@@ -77,7 +77,7 @@ export default function Auth() {
 
       <div style={{
         background: BRAND.bgCard,
-        borderRadius: 20, padding: '40px 36px',
+        borderRadius: 20, padding: 'clamp(24px,5vw,40px) clamp(20px,5vw,36px)',
         maxWidth: 400, width: '100%',
         border: `1px solid ${BRAND.amazon}66`,
         boxShadow: `0 40px 80px rgba(0,0,0,0.6), 0 0 80px ${BRAND.pod}08`,

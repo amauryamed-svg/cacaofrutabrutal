@@ -1,4 +1,44 @@
 import type { Product, TarotCard, Guardian } from '../types'
+import type { CauaRole, RoleConfig } from '../types/fund.types'
+
+export const ROLE_CONFIG: Record<CauaRole, RoleConfig> = {
+  investor: {
+    label: 'Investor',  labelEs: 'Inversor',
+    icon: '💼', color: '#00A3CD',
+    desc: 'Angel capital + returns',   descEs: 'Capital ángel + retornos',
+    minUsd: 1000,
+  },
+  founder: {
+    label: 'Founder',   labelEs: 'Fundador',
+    icon: '⚡', color: '#F7F1EE',
+    desc: 'Core team + equity',        descEs: 'Equipo fundador + equity',
+    minUsd: 0,
+  },
+  colono: {
+    label: 'Settler',   labelEs: 'Colono',
+    icon: '🏡', color: '#F1A91E',
+    desc: 'Regional pioneer backer',   descEs: 'Pionero regional',
+    minUsd: 100,
+  },
+  creyente: {
+    label: 'Believer',  labelEs: 'Creyente',
+    icon: '🌱', color: '#91A63B',
+    desc: 'Community early adopter',   descEs: 'Early adopter comunitario',
+    minUsd: 20,
+  },
+  nativo: {
+    label: 'Native',    labelEs: 'Nativo',
+    icon: '🌿', color: '#8D2679',
+    desc: 'Heritage guardian',         descEs: 'Guardián del territorio',
+    minUsd: 10,
+  },
+  farmer: {
+    label: 'Farmer',    labelEs: 'Guardián',
+    icon: '🫘', color: '#DB5527',
+    desc: 'Supplies fresh mucilage',   descEs: 'Proveedor de mucílago fresco',
+    minUsd: 0,
+  },
+}
 
 export const BRAND = {
   heirloom:   '#F7F1EE',

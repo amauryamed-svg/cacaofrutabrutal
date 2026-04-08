@@ -56,7 +56,7 @@ export default function Ritual() {
     <div style={{ background: '#040C06', minHeight: '100vh', paddingTop: 80 }}>
 
       {/* Hero header */}
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: '40px 24px 0', textAlign: 'center' }}>
+      <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(24px,5vw,40px) var(--space-page) 0', textAlign: 'center' }}>
         <p style={{
           fontFamily: FONTS.serif, fontStyle: 'italic',
           color: BRAND.criollo, fontSize: 13, letterSpacing: '0.25em', marginBottom: 10,
@@ -96,7 +96,7 @@ export default function Ritual() {
 
       {/* Main ritual area */}
       <div style={{
-        maxWidth: 480, margin: '0 auto', padding: '0 24px 80px',
+        maxWidth: 480, margin: '0 auto', padding: '0 var(--space-page) clamp(48px,8vw,80px)',
         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32,
       }}>
 
@@ -106,7 +106,7 @@ export default function Ritual() {
             <div
               onClick={drawCard}
               style={{
-                width: 200, height: 300, cursor: 'pointer',
+                width: 'min(200px, 55vw)', aspectRatio: '2/3', cursor: 'pointer',
                 transition: 'transform 0.4s',
                 filter: 'drop-shadow(0 20px 48px rgba(141,38,121,0.3))',
               }}
@@ -147,7 +147,7 @@ export default function Ritual() {
         {phase === 'drawing' && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
             <div className="animate-pulse-glow" style={{
-              width: 200, height: 300, borderRadius: 12,
+              width: 'min(200px, 55vw)', aspectRatio: '2/3', borderRadius: 12,
               background: `linear-gradient(145deg, ${BRAND.criollo}44, #132B1C)`,
               border: `2px solid ${BRAND.criollo}`,
               display: 'flex', flexDirection: 'column',
@@ -167,7 +167,7 @@ export default function Ritual() {
           <>
             {/* Card */}
             <div className="animate-fade-in-up" style={{
-              width: 220, height: 330,
+              width: 'min(220px, 60vw)', aspectRatio: '2/3',
               filter: `drop-shadow(0 24px 56px ${cardColor}44)`,
             }}>
               <TarotCardArt card={selectedCard} revealed />

@@ -77,7 +77,8 @@ export default function Landing() {
       <div style={{
         minHeight: '100vh', display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
-        padding: '100px 24px 60px', position: 'relative', overflow: 'hidden',
+        padding: 'clamp(80px,12vw,100px) var(--space-page) clamp(48px,8vw,60px)',
+        position: 'relative', overflow: 'hidden',
       }}>
 
         {/* Atmospheric radial glow behind hero text */}
@@ -124,7 +125,7 @@ export default function Landing() {
           {/* Main wordmark-scale hero */}
           <h1 style={{
             fontFamily: FONTS.display, fontWeight: 900,
-            fontSize: 'clamp(56px, 14vw, 136px)', lineHeight: 0.88,
+            fontSize: 'clamp(36px, 10vw, 136px)', lineHeight: 0.88,
             letterSpacing: '-0.01em', color: BRAND.heirloom,
             textTransform: 'uppercase', margin: '0 0 8px',
           }}>
@@ -136,6 +137,7 @@ export default function Landing() {
           {/* Scientific descriptor */}
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
+            flexWrap: 'wrap', justifyContent: 'center',
             margin: '20px 0 28px',
             padding: '8px 20px', borderRadius: 999,
             border: `1px solid ${BRAND.pod}30`,
@@ -213,7 +215,7 @@ export default function Landing() {
       </div>
 
       {/* ── Guardianes ── */}
-      <div style={{ padding: '100px 24px 80px', maxWidth: 1040, margin: '0 auto' }}>
+      <div style={{ padding: 'var(--space-section) var(--space-page) clamp(48px,8vw,80px)', maxWidth: 1040, margin: '0 auto' }}>
         <div style={{ marginBottom: 48 }}>
           <p style={{
             fontFamily: FONTS.serif, fontStyle: 'italic',
@@ -221,12 +223,12 @@ export default function Landing() {
           }}>{T('land_petals')}</p>
           <h2 style={{
             fontFamily: FONTS.display, fontWeight: 900,
-            fontSize: 'clamp(36px, 6vw, 64px)', color: BRAND.heirloom,
+            fontSize: 'clamp(24px, 5vw, 64px)', color: BRAND.heirloom,
             textTransform: 'uppercase', margin: 0, lineHeight: 0.92,
           }}>{T('land_guardians')}</h2>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(180px, 45%), 1fr))', gap: 16 }}>
           {GUARDIANS.map((g, i) => (
             <div key={i} style={{
               background: BRAND.bgCard,
@@ -287,7 +289,7 @@ export default function Landing() {
 
       {/* ── Value Props ── */}
       <div style={{
-        padding: '0 24px 100px', maxWidth: 960, margin: '0 auto',
+        padding: '0 var(--space-page) var(--space-section)', maxWidth: 960, margin: '0 auto',
       }}>
         {/* Section divider */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 48 }}>
@@ -298,7 +300,7 @@ export default function Landing() {
           <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, ${BRAND.amazon}88, transparent)` }} />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(240px, 100%), 1fr))', gap: 20 }}>
           {[
             { Icon: IconBiotech,      title: T('land_v1_title'), desc: T('land_v1_desc'), accent: BRAND.pod      },
             { Icon: IconRegeneration, title: T('land_v2_title'), desc: T('land_v2_desc'), accent: BRAND.mazorca  },
@@ -337,7 +339,7 @@ export default function Landing() {
 
       {/* ── Tagline break ── */}
       <div style={{
-        padding: '60px 24px',
+        padding: 'clamp(40px,6vw,60px) var(--space-page)',
         borderTop: `1px solid ${BRAND.amazon}33`,
         borderBottom: `1px solid ${BRAND.amazon}33`,
         textAlign: 'center',
@@ -360,7 +362,7 @@ export default function Landing() {
       </div>
 
       {/* ── Lead capture ── */}
-      <div style={{ padding: '80px 24px 120px', maxWidth: 480, margin: '0 auto' }}>
+      <div style={{ padding: 'clamp(48px,8vw,80px) var(--space-page) clamp(64px,10vw,120px)', maxWidth: 480, margin: '0 auto' }}>
         <p style={{
           fontFamily: FONTS.serif, fontStyle: 'italic',
           color: BRAND.mazorca, fontSize: 13, letterSpacing: '0.2em',
