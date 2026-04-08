@@ -7,6 +7,7 @@ import Footer            from './components/layout/Footer'
 import GrainOverlay      from './components/ui/GrainOverlay'
 import CookieBanner      from './components/ui/CookieBanner'
 import AuthGate          from './components/ui/AuthGate'
+import DevErrorMonitor   from './components/ui/DevErrorMonitor'
 import Landing           from './pages/Landing'
 import Auth              from './pages/Auth'
 import Marketplace       from './pages/Marketplace'
@@ -47,6 +48,7 @@ function AppShell() {
       </Routes>
       {!hideChrome && <Footer />}
       <CookieBanner />
+      <DevErrorMonitor />
     </>
   )
 }
