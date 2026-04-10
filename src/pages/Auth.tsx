@@ -3,11 +3,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { BRAND, FONTS } from '../utils/constants'
 import CauaLogo from '../components/ui/CauaLogo'
 import { supabase } from '../lib/supabase'
-import { hsSubmitForm, readConsent } from '../lib/hubspotTracking'
 import { useLang } from '../context/LangContext'
 import { makeT } from '../utils/i18n'
 
-type AuthMode = 'login' | 'register' | 'forgot' | 'reset'
+type AuthMode = 'login' | 'forgot' | 'reset'
 
 export default function Auth() {
   const [searchParams]        = useSearchParams()
@@ -16,7 +15,6 @@ export default function Auth() {
   const [passConfirm, setPassConfirm] = useState('')
   const [mode, setMode]       = useState<AuthMode>(() => {
     const m = searchParams.get('mode')
-    if (m === 'register') return 'register'
     if (m === 'reset') return 'reset'
     return 'login'
   })
@@ -35,7 +33,6 @@ export default function Auth() {
       options: { redirectTo: `${window.location.origin}/` },
     })
     if (err) { setError(err.message); setLoading(false) }
-    // on success Supabase redirects — no need to setLoading(false)
   }
 
   // Supabase sends ?type=recovery in the hash after clicking reset link
@@ -91,48 +88,13 @@ export default function Auth() {
       return
     }
 
-    // ── Register ─────────────────────────────────────────────────────────────
-    if (mode === 'register') {
-      if (!email.trim() || !pass.trim()) return
-      const { error: signUpError } = await supabase.auth.signUp({ email, password: pass })
-      if (signUpError) { setError(signUpError.message); setLoading(false); return }
-      if (readConsent().analytics) {
-        hsSubmitForm({
-          email,
-          caua_region:           'OTHER',
-          caua_streak:           '0',
-          caua_orders:           '0',
-          caua_referrals:        '0',
-          caua_login_status:     'anonymous',
-          caua_tracking_consent: 'analytics',
-          caua_persona_label:    'new_registrant',
-        })
-      }
-      setSuccess(es ? '¡Cuenta creada! Revisa tu correo para confirmar.' : 'Account created! Check your email to confirm.')
-      setLoading(false)
-      return
-    }
-
-    // ── Login ─────────────────────────────────────────────────────────────────
-    if (!email.trim() || !pass.trim()) { setLoading(false); return }
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password: pass })
-    if (signInError) { setError(signInError.message); setLoading(false); return }
-    navigate('/')
+    setLoading(false)
   }
 
   const titles: Record<AuthMode, string> = {
-    login:  es ? 'Iniciar sesión' : 'Sign in',
-    register: es ? 'Crear cuenta' : 'Create account',
+    login:  es ? 'Acceder' : 'Sign in',
     forgot: es ? 'Recuperar contraseña' : 'Reset password',
     reset:  es ? 'Nueva contraseña' : 'New password',
-  }
-
-  const ctaLabel = () => {
-    if (loading) return '…'
-    if (mode === 'forgot') return es ? 'ENVIAR ENLACE' : 'SEND LINK'
-    if (mode === 'reset')  return es ? 'GUARDAR CONTRASEÑA' : 'SAVE PASSWORD'
-    if (mode === 'register') return T('auth_register')
-    return T('auth_login')
   }
 
   return (
@@ -160,7 +122,7 @@ export default function Auth() {
       }}>
 
         {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
             <CauaLogo size={36} variant="white" />
           </div>
@@ -188,6 +150,20 @@ export default function Auth() {
               onBlur={e => (e.currentTarget.style.borderColor = `${BRAND.amazon}66`)}
               onKeyDown={e => e.key === 'Enter' && handleSubmit()}
             />
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              style={{
+                width: '100%', padding: '15px 16px', borderRadius: 10, border: 'none',
+                background: loading ? `${BRAND.pod}55` : `linear-gradient(135deg, ${BRAND.pod}, ${BRAND.amazon})`,
+                color: BRAND.heirloom, cursor: loading ? 'not-allowed' : 'pointer',
+                fontFamily: FONTS.display, fontWeight: 700,
+                fontSize: 13, letterSpacing: '0.14em', textTransform: 'uppercase',
+                opacity: loading ? 0.7 : 1, marginBottom: 16,
+              }}
+            >
+              {loading ? '…' : (es ? 'ENVIAR ENLACE' : 'SEND LINK')}
+            </button>
           </>
         )}
 
@@ -212,44 +188,39 @@ export default function Auth() {
               onBlur={e => (e.currentTarget.style.borderColor = `${BRAND.amazon}66`)}
               onKeyDown={e => e.key === 'Enter' && handleSubmit()}
             />
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              style={{
+                width: '100%', padding: '15px 16px', borderRadius: 10, border: 'none',
+                background: loading ? `${BRAND.pod}55` : `linear-gradient(135deg, ${BRAND.pod}, ${BRAND.amazon})`,
+                color: BRAND.heirloom, cursor: loading ? 'not-allowed' : 'pointer',
+                fontFamily: FONTS.display, fontWeight: 700,
+                fontSize: 13, letterSpacing: '0.14em', textTransform: 'uppercase',
+                opacity: loading ? 0.7 : 1, marginBottom: 16,
+              }}
+            >
+              {loading ? '…' : (es ? 'GUARDAR CONTRASEÑA' : 'SAVE PASSWORD')}
+            </button>
           </>
         )}
 
-        {/* ── Login / Register flow ─────────────────────────────────────────── */}
-        {(mode === 'login' || mode === 'register') && (
+        {/* ── Login — Google only ───────────────────────────────────────────── */}
+        {mode === 'login' && (
           <>
-            {/* Mode tabs */}
-            <div style={{
-              display: 'flex', borderRadius: 10, overflow: 'hidden',
-              border: `1px solid ${BRAND.amazon}66`, marginBottom: 24,
-            }}>
-              {(['login', 'register'] as const).map(m => (
-                <button key={m} onClick={() => { setMode(m); setError(''); setSuccess('') }} style={{
-                  flex: 1, padding: '10px 16px', border: 'none', cursor: 'pointer',
-                  fontFamily: FONTS.display, fontWeight: 700,
-                  fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase',
-                  transition: 'all 0.2s',
-                  background: mode === m ? BRAND.pod : 'transparent',
-                  color: mode === m ? BRAND.bgDeep : `${BRAND.heirloom}55`,
-                }}>
-                  {m === 'login' ? T('auth_login') : T('auth_register')}
-                </button>
-              ))}
-            </div>
-
-            {/* Social auth */}
             <button
               onClick={handleGoogleLogin}
               disabled={loading}
               style={{
-                width: '100%', padding: '12px 16px', borderRadius: 10,
+                width: '100%', padding: '14px 16px', borderRadius: 10,
                 border: `1px solid ${BRAND.amazon}77`, background: BRAND.bgDark,
-                color: `${BRAND.heirloom}cc`, cursor: 'pointer',
-                fontFamily: FONTS.body, fontSize: 13, marginBottom: 8,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                color: BRAND.heirloom, cursor: loading ? 'not-allowed' : 'pointer',
+                fontFamily: FONTS.body, fontSize: 14, marginBottom: 12,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
                 transition: 'border-color 0.2s',
+                opacity: loading ? 0.7 : 1,
               }}
-              onMouseEnter={e => (e.currentTarget.style.borderColor = `${BRAND.pod}66`)}
+              onMouseEnter={e => (e.currentTarget.style.borderColor = `${BRAND.pod}88`)}
               onMouseLeave={e => (e.currentTarget.style.borderColor = `${BRAND.amazon}77`)}
             >
               {/* Google G SVG */}
@@ -260,97 +231,44 @@ export default function Auth() {
                 <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
                 <path fill="none" d="M0 0h48v48H0z"/>
               </svg>
-              {T('auth_continue')} Google
+              {loading ? '…' : `${T('auth_continue')} Google`}
             </button>
 
-            {/* Divider */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0' }}>
-              <div style={{ flex: 1, height: 1, background: `${BRAND.amazon}55` }} />
-              <span style={{ fontFamily: FONTS.body, color: `${BRAND.heirloom}33`, fontSize: 10, letterSpacing: '0.1em' }}>
-                {es ? 'o continúa con email' : 'or continue with email'}
+            {/* Forgot password link */}
+            <div style={{ textAlign: 'center', marginTop: 8 }}>
+              <span
+                onClick={() => { setMode('forgot'); setError(''); setSuccess('') }}
+                style={{ fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}44`, cursor: 'pointer' }}
+              >
+                {es ? '¿Olvidaste tu contraseña?' : 'Forgot your password?'}
               </span>
-              <div style={{ flex: 1, height: 1, background: `${BRAND.amazon}55` }} />
             </div>
-
-            <input
-              value={email} onChange={e => setEmail(e.target.value)}
-              placeholder={T('auth_email')} type="email" style={inputStyle}
-              onFocus={e => (e.currentTarget.style.borderColor = `${BRAND.pod}66`)}
-              onBlur={e => (e.currentTarget.style.borderColor = `${BRAND.amazon}66`)}
-            />
-            <input
-              value={pass} onChange={e => setPass(e.target.value)}
-              placeholder={T('auth_pass')} type="password"
-              style={{ ...inputStyle, marginBottom: 8 }}
-              onFocus={e => (e.currentTarget.style.borderColor = `${BRAND.pod}66`)}
-              onBlur={e => (e.currentTarget.style.borderColor = `${BRAND.amazon}66`)}
-              onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-            />
-
-            {/* Forgot link — only in login mode */}
-            {mode === 'login' && (
-              <div style={{ textAlign: 'right', marginBottom: 16 }}>
-                <span
-                  onClick={() => { setMode('forgot'); setError(''); setSuccess('') }}
-                  style={{ fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.pod}cc`, cursor: 'pointer' }}
-                >
-                  {es ? '¿Olvidaste tu contraseña?' : 'Forgot your password?'}
-                </span>
-              </div>
-            )}
           </>
         )}
 
         {/* Feedback */}
         {error && (
-          <p style={{ fontFamily: FONTS.body, fontSize: 12, color: '#E05C5C', marginBottom: 12, textAlign: 'center', lineHeight: 1.4 }}>
+          <p style={{ fontFamily: FONTS.body, fontSize: 12, color: '#E05C5C', marginBottom: 12, textAlign: 'center', lineHeight: 1.4, marginTop: 12 }}>
             {error}
           </p>
         )}
         {success && (
-          <p style={{ fontFamily: FONTS.body, fontSize: 13, color: BRAND.pod, marginBottom: 12, textAlign: 'center', lineHeight: 1.5 }}>
+          <p style={{ fontFamily: FONTS.body, fontSize: 13, color: BRAND.pod, marginBottom: 12, textAlign: 'center', lineHeight: 1.5, marginTop: 12 }}>
             {success}
           </p>
         )}
 
-        {/* Submit */}
-        <button
-          onClick={handleSubmit}
-          disabled={loading}
-          style={{
-            width: '100%', padding: '15px 16px', borderRadius: 10, border: 'none',
-            background: loading ? `${BRAND.pod}55` : `linear-gradient(135deg, ${BRAND.pod}, ${BRAND.amazon})`,
-            color: BRAND.heirloom, cursor: loading ? 'not-allowed' : 'pointer',
-            fontFamily: FONTS.display, fontWeight: 700,
-            fontSize: 13, letterSpacing: '0.14em', textTransform: 'uppercase',
-            opacity: loading ? 0.7 : 1,
-          }}
-        >
-          {ctaLabel()}
-        </button>
-
-        {/* Footer links */}
-        <div style={{ marginTop: 20, textAlign: 'center' }}>
-          {(mode === 'login' || mode === 'register') && (
-            <p style={{ fontFamily: FONTS.body, fontSize: 12, color: `${BRAND.heirloom}55`, margin: 0 }}>
-              {mode === 'login' ? `${T('auth_no_acct')} ` : `${T('auth_yes_acct')} `}
-              <span
-                onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); setSuccess('') }}
-                style={{ color: BRAND.pod, cursor: 'pointer', textDecoration: 'underline' }}
-              >
-                {mode === 'login' ? T('auth_signup') : T('auth_signin')}
-              </span>
-            </p>
-          )}
-          {(mode === 'forgot' || mode === 'reset') && (
+        {/* Back link for forgot/reset */}
+        {(mode === 'forgot' || mode === 'reset') && (
+          <div style={{ textAlign: 'center' }}>
             <span
               onClick={() => { setMode('login'); setError(''); setSuccess('') }}
               style={{ fontFamily: FONTS.body, fontSize: 12, color: `${BRAND.heirloom}44`, cursor: 'pointer' }}
             >
-              ← {es ? 'Volver al inicio de sesión' : 'Back to sign in'}
+              ← {es ? 'Volver' : 'Back'}
             </span>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   )

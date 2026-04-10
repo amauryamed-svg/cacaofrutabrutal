@@ -167,7 +167,7 @@ export default function NavBar() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const location  = useLocation()
   const navigate  = useNavigate()
-  const { user, setUser } = useAuth()
+  const { user, isAdmin, setUser } = useAuth()
   const { lang }  = useLang()
   const T         = makeT(lang)
   const { isMobile, isTablet } = useBreakpoint()
@@ -245,6 +245,16 @@ export default function NavBar() {
 
             {user ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {isAdmin && (
+                  <Link to="/admin/crm" style={{ textDecoration: 'none' }}>
+                    <button style={{
+                      background: `${BRAND.mazorca}22`, border: `1px solid ${BRAND.mazorca}44`,
+                      color: BRAND.mazorca, padding: '4px 10px', borderRadius: 999,
+                      cursor: 'pointer', fontFamily: FONTS.display, fontWeight: 700,
+                      fontSize: 10, letterSpacing: '0.1em',
+                    }}>CRM</button>
+                  </Link>
+                )}
                 <div style={{
                   width: 28, height: 28, borderRadius: '50%',
                   background: `linear-gradient(135deg, ${BRAND.criollo}, ${BRAND.theobroma})`,

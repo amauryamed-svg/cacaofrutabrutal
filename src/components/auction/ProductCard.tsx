@@ -12,12 +12,14 @@ interface Props {
 
 // Product image slots — swap for real photo URLs when available
 const PRODUCT_IMAGES: Record<number, string | undefined> = {
-  1: undefined,  // TODO: swap for real Sunrise Shot photo
-  2: undefined,  // TODO: swap for real Sunset Shot photo
-  3: undefined,  // TODO: swap for real Cacao Ceremonial photo
-  4: undefined,  // TODO: swap for real Edición Guardián mockup
-  5: undefined,  // TODO: swap for real Círculo Sumapaz visual
-  6: undefined,  // TODO: swap for real Cold Brew Cacao photo
+  1: undefined,
+  2: undefined,
+  3: undefined,
+  4: undefined,
+  5: undefined,
+  6: undefined,
+  7: undefined,
+  8: undefined,
 }
 
 const TYPE_CONFIG = {
@@ -29,11 +31,13 @@ const TYPE_CONFIG = {
 // Benefit tags per product — sensory, functional language for female audience
 const PRODUCT_BENEFITS: Record<number, string[]> = {
   1: ['Funcional','Sin azúcar','Novel Food EU'],
-  2: ['Alta concentración','Adaptógeno','Ritual matutino'],
+  2: ['Alta concentración','Adaptógeno','Vespertino'],
   3: ['Fine Flavor','Origen único','Ceremonia'],
   4: ['Colección limitada','5 terroirs','Regalo consciente'],
   5: ['Comunidad viva','Mensual','Impacto directo'],
-  6: ['Fermentado','Probiótico','Refrescante'],
+  6: ['Fermentado 72h','Probiótico','Cold brew'],
+  7: ['HydroSol™','500mL','Cosmético + alimentario'],
+  8: ['Aceite puro','5mL','Aromaterapia'],
 }
 
 export default function ProductCard({ product: p, multiplier, user }: Props) {
