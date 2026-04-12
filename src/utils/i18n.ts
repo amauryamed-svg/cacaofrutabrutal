@@ -4,6 +4,7 @@ const translations = {
   // ── NavBar ─────────────────────────────────────────────────────────────────
   nav_home:      { es: 'INICIO',   en: 'HOME'   },
   nav_market:    { es: 'MERCADO',  en: 'MARKET' },
+  nav_blog:      { es: 'BLOG',     en: 'BLOG'   },
   nav_ritual:    { es: 'RITUAL',   en: 'RITUAL' },
   nav_impact:    { es: 'IMPACTO',  en: 'IMPACT' },
   nav_enter:     { es: 'ENTRAR',   en: 'SIGN IN' },
@@ -135,6 +136,20 @@ const translations = {
                    en: 'VALUE DISTRIBUTION · PER $1 USD'                    },
   dash_whatsapp: { es: '💬 ÚNETE A LA COMUNIDAD WHATSAPP',
                    en: '💬 JOIN THE WHATSAPP COMMUNITY'                     },
+
+  // ── Blog ──────────────────────────────────────────────────────────────────
+  blog_eyebrow:  { es: 'CAUA CULTURA · Ciencia · Territorio · Salud',
+                   en: 'CAUA CULTURE · Science · Territory · Health'          },
+  blog_title:    { es: 'EL BLOG',                   en: 'THE BLOG'            },
+  blog_read:     { es: 'LEER →',                    en: 'READ →'              },
+  blog_by:       { es: 'por',                       en: 'by'                  },
+  blog_min_read: { es: 'min de lectura',            en: 'min read'            },
+
+  // ── Tokens ────────────────────────────────────────────────────────────────
+  tok_beans:     { es: 'Granos',                    en: 'Beans'               },
+  tok_mazorcas:  { es: 'Mazorcas',                  en: 'Mazorcas'            },
+  tok_earned:    { es: '¡Ganaste',                  en: 'You earned'          },
+  rit_tokens:    { es: 'Tu balance de fidelidad',   en: 'Your loyalty balance' },
 } as const
 
 export type TKey = keyof typeof translations

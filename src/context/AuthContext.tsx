@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { trackLoggedInUser } from '../lib/hubspotTracking'
 import type { UserProfile } from '../lib/database.types'
 
-const SUPER_ADMIN = 'amauryamed@gmail.com'
+const SUPER_ADMINS = ['amauryamed@gmail.com', 'amaury@cauaculture.co']
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface AuthState {
@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile]   = useState<UserProfile | null>(null)
   const [loading, setLoading]   = useState(true)
 
-  const isAdmin = email === SUPER_ADMIN
+  const isAdmin = email ? SUPER_ADMINS.includes(email) || profile?.caua_role === 'founder' : false
 
   // ── ONE DB CALL per session ────────────────────────────────────────────────
   const fetchProfile = useCallback(async (userId: string, userEmail: string) => {
