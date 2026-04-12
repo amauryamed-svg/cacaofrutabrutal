@@ -1,0 +1,4 @@
+#!/bin/bash
+# Pre-commit hook for CAUA — runs health.py before commit
+python scripts/health.py
+exit $?
