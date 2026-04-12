@@ -4,7 +4,7 @@ import SupplyChainFlow from './SupplyChainFlow'
 import FundingProgress from './FundingProgress'
 import MvpCard from './MvpCard'
 import InvestModal from './InvestModal'
-import type { Technology, Mvp, InvestMode } from '../../types/fund.types'
+import type { Technology, Mvp, InvestMode, UserProfile } from '../../types/fund.types'
 
 const CATEGORY_COLORS: Record<string, string> = {
   extract:    BRAND.pod,
@@ -31,10 +31,11 @@ const TECH_IMAGES: Record<string, string | null> = {
 interface Props {
   tech: Technology
   user: string | null
+  profile?: UserProfile | null
   lang: 'es' | 'en'
 }
 
-export default function TechnologyCard({ tech, user, lang }: Props) {
+export default function TechnologyCard({ tech, user, profile, lang }: Props) {
   const [modal, setModal] = useState<{ mode: InvestMode; mvp?: Mvp } | null>(null)
   const accent = CATEGORY_COLORS[tech.category] ?? BRAND.pod
   const mvps   = (tech.mvps ?? []).filter(m => m.active)
@@ -190,6 +191,7 @@ export default function TechnologyCard({ tech, user, lang }: Props) {
           mvp={modal.mvp}
           mode={modal.mode}
           user={user}
+          profile={profile}
           lang={lang}
           onClose={() => setModal(null)}
         />

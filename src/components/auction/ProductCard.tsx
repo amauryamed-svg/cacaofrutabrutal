@@ -8,6 +8,7 @@ interface Props {
   product: Product
   multiplier: number
   user: string | null
+  roleDiscount?: number // 0-1, where 1 = no discount, 0 = 100% off
 }
 
 // Product image slots — swap for real photo URLs when available
@@ -40,12 +41,14 @@ const PRODUCT_BENEFITS: Record<number, string[]> = {
   8: ['Aceite puro','5mL','Aromaterapia'],
 }
 
-export default function ProductCard({ product: p, multiplier, user }: Props) {
+export default function ProductCard({ product: p, multiplier, user, roleDiscount = 1 }: Props) {
   const navigate        = useNavigate()
   const countdown       = useCountdown(p.timer ?? 0)
   const tc              = TYPE_CONFIG[p.type]
-  const discountedPrice = p.type === 'auction' ? Math.round(p.price / multiplier) : p.price
-  const hasDiscount     = p.type === 'auction' && multiplier > 1
+  let discountedPrice   = p.type === 'auction' ? Math.round(p.price / multiplier) : p.price
+  // Apply role-based discount on top
+  discountedPrice       = Math.round(discountedPrice * roleDiscount)
+  const hasDiscount     = (p.type === 'auction' && multiplier > 1) || roleDiscount < 1
   const benefits        = PRODUCT_BENEFITS[p.id] ?? []
 
   return (
@@ -94,16 +97,17 @@ export default function ProductCard({ product: p, multiplier, user }: Props) {
           }}>⏱ {countdown}</div>
         )}
 
-        {/* Discount ribbon — when multiplier active */}
+        {/* Discount ribbon — when multiplier or role discount active */}
         {hasDiscount && (
           <div style={{
             position: 'absolute', bottom: 0, left: 0, right: 0,
-            background: `linear-gradient(90deg, ${BRAND.mazorca}22, transparent)`,
-            borderTop: `1px solid ${BRAND.mazorca}33`,
+            background: `linear-gradient(90deg, ${BRAND.pod}22, transparent)`,
+            borderTop: `1px solid ${BRAND.pod}33`,
             padding: '5px 12px',
-            fontFamily: FONTS.body, fontSize: 10, color: BRAND.mazorca,
+            fontFamily: FONTS.body, fontSize: 10, color: BRAND.pod,
           }}>
-            Tu multiplicador activo: <strong>{multiplier.toFixed(1)}x</strong>
+            {multiplier > 1 && `Multiplicador: ${multiplier.toFixed(1)}x`}
+            {roleDiscount < 1 && ` ${multiplier > 1 ? '·' : ''} ${Math.round((1 - roleDiscount) * 100)}% descuento`}
           </div>
         )}
       </div>

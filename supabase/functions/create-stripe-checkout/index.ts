@@ -1,23 +1,25 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import Stripe from 'https://esm.sh/stripe@14?target=deno'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { getCorsHeaders, handleCorsPreFlight } from '../cors-config.ts'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, { apiVersion: '2023-10-16' })
-const CORS   = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type' }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
+  const origin = req.headers.get('origin') || ''
+
+  if (req.method === 'OPTIONS') return handleCorsPreFlight(origin)
   try {
     const { technology_id, mvp_id, lots_count = 1, success_url, cancel_url } = await req.json()
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
     const jwt = req.headers.get('Authorization')?.replace('Bearer ', '')
     const { data: { user } } = await supabase.auth.getUser(jwt!)
-    if (!user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: CORS })
+    if (!user) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: getCorsHeaders(origin) })
 
     const price = mvp_id
       ? await getMvpPrice(supabase, mvp_id)
       : await getLotPrice(supabase, technology_id)
-    if (!price) return new Response(JSON.stringify({ error: 'Item not found' }), { status: 404, headers: CORS })
+    if (!price) return new Response(JSON.stringify({ error: 'Item not found' }), { status: 404, headers: getCorsHeaders(origin) })
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -28,15 +30,30 @@ serve(async (req) => {
       cancel_url:  cancel_url  ?? `${req.headers.get('origin')}/fund?status=cancelled`,
     })
 
-    await supabase.from('orders').insert({
+    const { data: order } = await supabase.from('orders').insert({
       user_id: user.id, product_id: technology_id, amount_cents: price.cents * lots_count,
       stripe_session_id: session.id, status: 'pending',
       technology_id, mvp_id: mvp_id ?? null, lots_count, currency: 'USD', payment_provider: 'stripe',
-    })
+    }).select().single()
 
-    return new Response(JSON.stringify({ url: session.url }), { headers: { ...CORS, 'Content-Type': 'application/json' } })
+    // Send order created email
+    if (user.email) {
+      await supabase.functions.invoke('send-order-email', {
+        body: {
+          user_id: user.id,
+          email: user.email,
+          type: 'order_created',
+          order_id: order?.id,
+          lots_count,
+          amount_usd: (price.cents * lots_count) / 100,
+        },
+      })
+    }
+
+    const corsHeaders = getCorsHeaders(origin)
+    return new Response(JSON.stringify({ url: session.url }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), { status: 500, headers: CORS })
+    return new Response(JSON.stringify({ error: String(e) }), { status: 500, headers: getCorsHeaders(origin) })
   }
 })
 

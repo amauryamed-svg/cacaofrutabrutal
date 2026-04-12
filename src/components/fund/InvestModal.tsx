@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BRAND, FONTS } from '../../utils/constants'
+import { BRAND, FONTS, ROLE_CONFIG } from '../../utils/constants'
 import { supabase } from '../../lib/supabase'
 import PaymentSelector from './PaymentSelector'
-import type { Technology, Mvp, PaymentMethod, Currency, InvestMode } from '../../types/fund.types'
+import type { Technology, Mvp, PaymentMethod, Currency, InvestMode, UserProfile } from '../../types/fund.types'
 
 interface Props {
   technology: Technology
@@ -11,13 +11,14 @@ interface Props {
   mode: InvestMode
   onClose: () => void
   user: string | null
+  profile?: UserProfile | null
   lang: 'es' | 'en'
 }
 
 const EUR_COP_APPROX = 4500   // 1 EUR ≈ 4 500 COP (display only — server prices from DB)
 const EUR_USD_APPROX = 1.10   // 1 EUR ≈ 1.10 USD (display only)
 
-export default function InvestModal({ technology, mvp, mode, onClose, user, lang }: Props) {
+export default function InvestModal({ technology, mvp, mode, onClose, user, profile, lang }: Props) {
   const [lots,     setLots]    = useState(1)
   const [payment,  setPayment] = useState<PaymentMethod>('mercadopago')
   const [currency, setCurrency] = useState<Currency>('COP')
@@ -27,8 +28,12 @@ export default function InvestModal({ technology, mvp, mode, onClose, user, lang
 
   const T = (es: string, en: string) => lang === 'es' ? es : en
 
-  const unitUsd = mode === 'mvp' && mvp ? mvp.price_usd_cents : technology.lot_price_usd_cents
-  const unitCop = mode === 'mvp' && mvp ? (mvp.price_cop ?? 0) : technology.lot_price_cop
+  // Apply investor 50% discount on lots only
+  const isInvestor = profile?.caua_role === 'investor' && mode === 'lot'
+  const discountMultiplier = isInvestor ? 0.5 : 1
+
+  const unitUsd = (mode === 'mvp' && mvp ? mvp.price_usd_cents : technology.lot_price_usd_cents) * discountMultiplier
+  const unitCop = (mode === 'mvp' && mvp ? (mvp.price_cop ?? 0) : technology.lot_price_cop) * discountMultiplier
 
   // Display totals per currency (server always re-prices — these are for display only)
   const totalCop = unitCop * lots
@@ -136,6 +141,11 @@ export default function InvestModal({ technology, mvp, mode, onClose, user, lang
           {mode === 'lot' && (
             <div style={{ fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}44`, marginTop: 6 }}>
               {fmtUsd(unitUsd)} {T('por lote · 40 kg input · 22 kg output', 'per lot · 40 kg input · 22 kg output')}
+              {isInvestor && (
+                <div style={{ color: BRAND.pod, marginTop: 4 }}>
+                  ✓ {T('Descuento inversor 50%', 'Investor 50% discount')}
+                </div>
+              )}
             </div>
           )}
         </div>

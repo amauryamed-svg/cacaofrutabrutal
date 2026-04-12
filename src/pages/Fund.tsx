@@ -98,7 +98,7 @@ export default function Fund() {
         {!loading && !error && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             {technologies.map(tech => (
-              <TechnologyCard key={tech.id} tech={tech} user={user} lang={lang} />
+              <TechnologyCard key={tech.id} tech={tech} user={user} profile={profile} lang={lang} />
             ))}
           </div>
         )}

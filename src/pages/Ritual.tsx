@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { BRAND, FONTS, TAROT_CARDS, ELEMENT_COLORS } from '../utils/constants'
 import { useAuth } from '../context/AuthContext'
 import TarotCardArt from '../components/ritual/TarotCardArt'
+import TokenReward from '../components/ritual/TokenReward'
+import { useTokenBalance } from '../hooks/useTokenBalance'
 import { hsUpdateRitual } from '../lib/hubspotTracking'
 import { useLang } from '../context/LangContext'
 import { makeT } from '../utils/i18n'
@@ -15,8 +17,10 @@ export default function Ritual() {
   const [selectedCard, setCard] = useState<TarotCard | null>(null)
   const [drawCount, setDrawCount]   = useState(0)
   const [shareCount, setShareCount] = useState(0)
+  const [tokenReward, setTokenReward] = useState<{ beans: number; mazorcas: number } | null>(null)
   const { user, profile }       = useAuth()
   const navigate                = useNavigate()
+  const { beans }               = useTokenBalance()
   const streak                  = profile?.ritual_streak ?? (user ? 7 : 0)
   const { lang } = useLang()
   const T = makeT(lang)
@@ -26,6 +30,30 @@ export default function Ritual() {
     Fuego:  T('rit_el_fuego'),
     Agua:   T('rit_el_agua'),
     Aire:   T('rit_el_aire'),
+  }
+
+  const awardTokens = async (eventType: string, amount?: number) => {
+    if (!user) return
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/award-tokens`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await user.getSession())?.access_token}`,
+        },
+        body: JSON.stringify({ event_type: eventType, amount }),
+      })
+      const data = await response.json()
+      if (data.beans_awarded || data.mazorcas_awarded) {
+        setTokenReward({
+          beans: data.beans_awarded,
+          mazorcas: data.mazorcas_awarded,
+        })
+        setTimeout(() => setTokenReward(null), 2500)
+      }
+    } catch {
+      // Token award failed silently - user can try again
+    }
   }
 
   const drawCard = () => {
@@ -38,6 +66,7 @@ export default function Ritual() {
       setPhase('reveal')
       const newCount = drawCount + 1
       setDrawCount(newCount)
+      awardTokens('ritual_draw')
       if (profile?.email) {
         hsUpdateRitual({
           email:                        profile.email,
@@ -78,18 +107,33 @@ export default function Ritual() {
           {T('rit_desc')}
         </p>
 
-        {/* Streak — only when logged in */}
+        {/* Streak + Token balance — only when logged in */}
         {user && (
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            background: `${BRAND.mazorca}12`, border: `1px solid ${BRAND.mazorca}30`,
-            padding: '6px 16px', borderRadius: 999, marginBottom: 32,
-          }}>
-            <span style={{ fontSize: 15 }}>🔥</span>
-            <span style={{
-              fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
-              fontSize: 12, color: BRAND.mazorca, letterSpacing: '0.1em',
-            }}>{streak} {T('rit_streak')}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center', marginBottom: 32 }}>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              background: `${BRAND.mazorca}12`, border: `1px solid ${BRAND.mazorca}30`,
+              padding: '6px 16px', borderRadius: 999,
+            }}>
+              <span style={{ fontSize: 15 }}>🔥</span>
+              <span style={{
+                fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+                fontSize: 12, color: BRAND.mazorca, letterSpacing: '0.1em',
+              }}>{streak} {T('rit_streak')}</span>
+            </div>
+            {beans > 0 && (
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                background: `${BRAND.pod}12`, border: `1px solid ${BRAND.pod}30`,
+                padding: '6px 16px', borderRadius: 999,
+              }}>
+                <span style={{ fontSize: 15 }}>🫘</span>
+                <span style={{
+                  fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+                  fontSize: 12, color: BRAND.pod, letterSpacing: '0.1em',
+                }}>{beans.toFixed(1)}</span>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -134,6 +178,11 @@ export default function Ritual() {
               }}>
                 {user ? T('rit_reveal') : T('rit_start')}
               </button>
+              {user && (
+                <p style={{ fontFamily: FONTS.body, fontSize: 11, color: BRAND.pod, marginTop: 10 }}>
+                  {T('rit_tokens')}
+                </p>
+              )}
               {!user && (
                 <p style={{ fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}44`, marginTop: 10 }}>
                   {T('rit_anon')}
@@ -165,6 +214,7 @@ export default function Ritual() {
         {/* REVEAL */}
         {phase === 'reveal' && selectedCard && (
           <>
+            {tokenReward && <TokenReward beans={tokenReward.beans} mazorcas={tokenReward.mazorcas} />}
             {/* Card */}
             <div className="animate-fade-in-up" style={{
               width: 'min(220px, 60vw)', aspectRatio: '2/3',
@@ -246,6 +296,7 @@ export default function Ritual() {
                 else navigator.clipboard.writeText(text)
                 const newShare = shareCount + 1
                 setShareCount(newShare)
+                awardTokens('blog_share')
                 if (profile?.email) {
                   hsUpdateRitual({ email: profile.email, ritual_share_count: String(newShare) })
                 }

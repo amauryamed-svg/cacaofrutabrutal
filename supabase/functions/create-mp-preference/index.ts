@@ -21,12 +21,27 @@ serve(async (req) => {
     const origin = req.headers.get('origin') ?? 'https://cacaofrutabrutal.com'
     const preference = await createPreference({ title: price.name, unit_price: price.cop / 100, quantity: lots_count }, origin)
 
-    await supabase.from('orders').insert({
+    const { data: order } = await supabase.from('orders').insert({
       user_id: user.id, product_id: technology_id, amount_cents: Math.round(price.cop / 100 * 0.00025 * lots_count),
       status: 'pending', technology_id, mvp_id: mvp_id ?? null,
       lots_count, currency: 'COP', payment_provider: 'mercadopago',
       mercadopago_preference_id: preference.id,
-    })
+    }).select().single()
+
+    // Send order created email (convert COP to approximate USD: 1 USD ≈ 4000 COP)
+    if (user.email) {
+      const amountUsd = (price.cop / 100) / 4000
+      await supabase.functions.invoke('send-order-email', {
+        body: {
+          user_id: user.id,
+          email: user.email,
+          type: 'order_created',
+          order_id: order?.id,
+          lots_count,
+          amount_usd: Math.round(amountUsd * 100) / 100,
+        },
+      })
+    }
 
     return new Response(JSON.stringify({ url: preference.init_point }), { headers: { ...CORS, 'Content-Type': 'application/json' } })
   } catch (e) {

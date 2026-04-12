@@ -10,6 +10,8 @@ import AuthGate          from './components/ui/AuthGate'
 import DevErrorMonitor   from './components/ui/DevErrorMonitor'
 import Landing           from './pages/Landing'
 import Auth              from './pages/Auth'
+import Blog              from './pages/Blog'
+import BlogPost          from './pages/BlogPost'
 import Marketplace       from './pages/Marketplace'
 import Ritual            from './pages/Ritual'
 import Dashboard         from './pages/Dashboard'
@@ -34,8 +36,10 @@ function AppShell() {
       {!hideChrome && <NavBar />}
       <Routes>
         {/* Public — no auth required */}
-        <Route path="/"    element={<Landing />} />
-        <Route path="/auth" element={<Auth />} />
+        <Route path="/"           element={<Landing />} />
+        <Route path="/auth"       element={<Auth />} />
+        <Route path="/blog"       element={<Blog />} />
+        <Route path="/blog/:slug" element={<BlogPost />} />
 
         {/* Protected — require registration */}
         <Route path="/marketplace" element={<AuthGate><Marketplace /></AuthGate>} />

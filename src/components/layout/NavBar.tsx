@@ -4,6 +4,7 @@ import { BRAND, FONTS } from '../../utils/constants'
 import CauaLogo from '../ui/CauaLogo'
 import CauaButton from '../ui/CauaButton'
 import LanguageToggle from '../ui/LanguageToggle'
+import TokenBalance from '../ui/TokenBalance'
 import { useAuth } from '../../context/AuthContext'
 import { useLang } from '../../context/LangContext'
 import { makeT } from '../../utils/i18n'
@@ -174,6 +175,7 @@ export default function NavBar() {
 
   const TABS = [
     { path: '/',            label: T('nav_home')   },
+    { path: '/blog',        label: T('nav_blog')   },
     { path: '/marketplace', label: T('nav_market') },
     { path: '/ritual',      label: T('nav_ritual') },
     { path: '/fund',        label: T('nav_fund')   },
@@ -245,6 +247,7 @@ export default function NavBar() {
 
             {user ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <TokenBalance />
                 {isAdmin && (
                   <Link to="/admin/crm" style={{ textDecoration: 'none' }}>
                     <button style={{

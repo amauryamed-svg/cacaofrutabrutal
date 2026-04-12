@@ -51,12 +51,16 @@ export interface UserProfile {
   avatar_url: string | null
   locale: 'es' | 'en'
   region: 'EU' | 'US' | 'CO' | 'OTHER'
-  caua_role: 'investor' | 'creyente' | 'colono' | 'nativo' | 'farmer' | 'founder'
+  caua_role: 'investor' | 'creyente' | 'nativo' | 'farmer' | 'founder'
   hubspot_contact_id: string | null
   referral_code: string | null
   referral_count: number
   completed_orders: number
   ritual_streak: number
+  lead_score: number
+  beans_balance: number
+  mazorcas_balance: number
+  beans_lifetime: number
   last_seen_at: string
   created_at: string
 }

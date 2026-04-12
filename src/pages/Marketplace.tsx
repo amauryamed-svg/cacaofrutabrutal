@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BRAND, FONTS, PRODUCTS } from '../utils/constants'
+import { BRAND, FONTS, PRODUCTS, ROLE_CONFIG } from '../utils/constants'
 import { useAuth } from '../context/AuthContext'
 import ProductCard from '../components/auction/ProductCard'
 import { useLang } from '../context/LangContext'
@@ -15,7 +15,7 @@ function getMultiplier(referrals: number, prevLots: number): number {
 }
 
 export default function Marketplace() {
-  const { user }          = useAuth()
+  const { user, profile }   = useAuth()
   const [filter, setFilter] = useState<Filter>('all')
   const { lang } = useLang()
   const T = makeT(lang)
@@ -29,6 +29,7 @@ export default function Marketplace() {
   const referrals           = 2   // TODO: query from Supabase user_referrals
   const prevLots            = 1   // TODO: query from Supabase orders
   const mult                = getMultiplier(referrals, prevLots)
+  const roleDiscount        = profile?.caua_role ? (1 - ROLE_CONFIG[profile.caua_role].discount) : 1
   const filtered            = filter === 'all' ? PRODUCTS : PRODUCTS.filter((p: Product) => p.type === filter)
 
   return (
@@ -90,7 +91,7 @@ export default function Marketplace() {
         {/* Product grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))', gap: 16 }}>
           {filtered.map(p => (
-            <ProductCard key={p.id} product={p} multiplier={mult} user={user} />
+            <ProductCard key={p.id} product={p} multiplier={mult} user={user} roleDiscount={roleDiscount} />
           ))}
         </div>
 
