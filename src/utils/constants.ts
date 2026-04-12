@@ -6,37 +6,31 @@ export const ROLE_CONFIG: Record<CauaRole, RoleConfig> = {
     label: 'Investor',  labelEs: 'Inversor',
     icon: '💼', color: '#00A3CD',
     desc: 'Angel capital + returns',   descEs: 'Capital ángel + retornos',
-    minUsd: 1000,
+    minUsd: 1000, discount: 0.5, canPost: false, canVend: false, isSuperAdmin: false,
   },
   founder: {
     label: 'Founder',   labelEs: 'Fundador',
     icon: '⚡', color: '#F7F1EE',
     desc: 'Core team + equity',        descEs: 'Equipo fundador + equity',
-    minUsd: 0,
-  },
-  colono: {
-    label: 'Settler',   labelEs: 'Colono',
-    icon: '🏡', color: '#F1A91E',
-    desc: 'Regional pioneer backer',   descEs: 'Pionero regional',
-    minUsd: 100,
+    minUsd: 0, discount: 0, canPost: true, canVend: true, isSuperAdmin: true,
   },
   creyente: {
     label: 'Believer',  labelEs: 'Creyente',
     icon: '🌱', color: '#91A63B',
     desc: 'Community early adopter',   descEs: 'Early adopter comunitario',
-    minUsd: 20,
+    minUsd: 20, discount: 0.15, canPost: false, canVend: false, isSuperAdmin: false,
   },
   nativo: {
     label: 'Native',    labelEs: 'Nativo',
     icon: '🌿', color: '#8D2679',
     desc: 'Heritage guardian',         descEs: 'Guardián del territorio',
-    minUsd: 10,
+    minUsd: 10, discount: 0.25, canPost: false, canVend: false, isSuperAdmin: false,
   },
   farmer: {
     label: 'Farmer',    labelEs: 'Guardián',
     icon: '🫘', color: '#DB5527',
     desc: 'Supplies fresh mucilage',   descEs: 'Proveedor de mucílago fresco',
-    minUsd: 0,
+    minUsd: 0, discount: 0, canPost: true, canVend: true, isSuperAdmin: false,
   },
 }
 
@@ -120,4 +114,15 @@ export const ELEMENT_COLORS: Record<string, string> = {
   Fuego:  '#DB5527',
   Agua:   '#004E64',
   Aire:   '#00A3CD',
+}
+
+export const TOKEN_RATES = {
+  ritual_draw: { beans: 0.5, mazorcas: 0 },
+  streak_7: { beans: 3.5, mazorcas: 1 },
+  streak_30: { beans: 15, mazorcas: 5 },
+  purchase_per_usd: { beans: 2, mazorcas: 0 },
+  lot_per_lot: { beans: 5, mazorcas: 2 },
+  blog_read: { beans: 0.2, mazorcas: 0 },
+  blog_share: { beans: 1, mazorcas: 0 },
+  referral: { beans: 10, mazorcas: 3 },
 }

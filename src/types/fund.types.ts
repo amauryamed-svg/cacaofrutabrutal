@@ -1,6 +1,6 @@
 // ── Crowdfunding Types ────────────────────────────────────────────────────────
 
-export type CauaRole = 'investor' | 'creyente' | 'colono' | 'nativo' | 'farmer' | 'founder'
+export type CauaRole = 'investor' | 'creyente' | 'nativo' | 'farmer' | 'founder'
 
 export interface RoleConfig {
   label: string
@@ -10,6 +10,10 @@ export interface RoleConfig {
   desc: string
   descEs: string
   minUsd: number
+  discount: number         // 0–1 multiplier off price
+  canPost: boolean        // blog post creation
+  canVend: boolean        // vendor listing
+  isSuperAdmin: boolean   // full CRM + admin access
 }
 
 export const ROLE_CONFIG: Record<CauaRole, RoleConfig> = {
@@ -17,37 +21,31 @@ export const ROLE_CONFIG: Record<CauaRole, RoleConfig> = {
     label: 'Investor',  labelEs: 'Inversor',
     icon: '💼', color: '#00A3CD',
     desc: 'Angel capital + returns',   descEs: 'Capital ángel + retornos',
-    minUsd: 1000,
+    minUsd: 1000, discount: 0.5, canPost: false, canVend: false, isSuperAdmin: false,
   },
   founder: {
     label: 'Founder',   labelEs: 'Fundador',
     icon: '⚡', color: '#F7F1EE',
     desc: 'Core team + equity',        descEs: 'Equipo fundador + equity',
-    minUsd: 0,
-  },
-  colono: {
-    label: 'Settler',   labelEs: 'Colono',
-    icon: '🏡', color: '#F1A91E',
-    desc: 'Regional pioneer backer',   descEs: 'Pionero regional',
-    minUsd: 100,
+    minUsd: 0, discount: 0, canPost: true, canVend: true, isSuperAdmin: true,
   },
   creyente: {
     label: 'Believer',  labelEs: 'Creyente',
     icon: '🌱', color: '#91A63B',
     desc: 'Community early adopter',   descEs: 'Early adopter comunitario',
-    minUsd: 20,
+    minUsd: 20, discount: 0.15, canPost: false, canVend: false, isSuperAdmin: false,
   },
   nativo: {
     label: 'Native',    labelEs: 'Nativo',
     icon: '🌿', color: '#8D2679',
     desc: 'Heritage guardian',         descEs: 'Guardián del territorio',
-    minUsd: 10,
+    minUsd: 10, discount: 0.25, canPost: false, canVend: false, isSuperAdmin: false,
   },
   farmer: {
     label: 'Farmer',    labelEs: 'Guardián',
     icon: '🫘', color: '#DB5527',
     desc: 'Supplies fresh mucilage',   descEs: 'Proveedor de mucílago fresco',
-    minUsd: 0,
+    minUsd: 0, discount: 0, canPost: true, canVend: true, isSuperAdmin: false,
   },
 }
 
