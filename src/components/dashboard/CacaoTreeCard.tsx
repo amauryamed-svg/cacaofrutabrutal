@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import CauaCard from '../ui/CauaCard'
 import CauaButton from '../ui/CauaButton'
 import { BRAND, FONTS, GUARDIANS } from '../../utils/constants'
@@ -23,6 +24,7 @@ export function CacaoTreeCard({
   onViewUpdate,
   isLoading = false,
 }: CacaoTreeCardProps) {
+  const navigate = useNavigate()
   const [showUpdates, setShowUpdates] = useState(false)
   const guardian = GUARDIANS[tree.guardian_id]
   const emoji = STAGE_EMOJI[tree.stage] || '🌱'
@@ -43,6 +45,7 @@ export function CacaoTreeCard({
   return (
     <CauaCard
       glow="green"
+      onClick={() => navigate(`/tree/${tree.id}`)}
       style={{
         background: '#132B1C',
         cursor: 'pointer',
@@ -50,6 +53,13 @@ export function CacaoTreeCard({
         display: 'flex',
         flexDirection: 'column',
         gap: '1rem',
+        transition: 'transform 0.2s, box-shadow 0.2s',
+      }}
+      onMouseEnter={e => {
+        (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)'
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
       }}
     >
       {/* Stage Visual */}

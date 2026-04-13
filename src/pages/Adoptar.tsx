@@ -135,8 +135,8 @@ export default function Adoptar() {
               textTransform: 'uppercase'
             }}
           >
-            Apadrina tu <br/>
-            <span style={{ color: BRAND.pod }}>árbol digital</span>
+            Adopta tu <br/>
+            <span style={{ color: BRAND.pod }}>árbol de cacao</span>
           </h1>
           <p style={{ color: '#999', fontSize: '1.125rem', lineHeight: '1.6' }}>
             Conecta con un Guardián del Cacao Criollo colombiano. Observa tu árbol crecer,
@@ -146,107 +146,71 @@ export default function Adoptar() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-12">
-        {/* My Trees Grid */}
-        {!treesLoading && trees.length > 0 && (
+
+        {/* Guardian Selector — always visible when selecting, regardless of tree count */}
+        {state.phase === 'selecting-guardian' && (
+          <div className="mb-12" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: '700', fontFamily: FONTS.display, color: BRAND.heirloom, marginBottom: '0.5rem' }}>
+              Elige tu Guardián
+            </h2>
+            <p style={{ color: '#999', marginBottom: '2rem', fontSize: '0.875rem' }}>→ Desliza a la derecha para adoptar · ← Izquierda para pasar</p>
+            <div style={{ position: 'relative', width: '100%', maxWidth: 380, height: 520 }}>
+              {state.cardsLeft.map(idx => (
+                <SwipeableTreeCard
+                  key={idx}
+                  guardian={GUARDIANS[idx]}
+                  imageIndex={idx}
+                  onSwipeLeft={() => handleSwipeLeft()}
+                  onSwipeRight={() => handleSwipeRight(idx)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* My Trees Grid — only in browse phase */}
+        {state.phase === 'browse' && !treesLoading && trees.length > 0 && (
           <div className="mb-16">
-            <h2
-              style={{
-                fontSize: '1.5rem',
-                fontWeight: '700',
-                fontFamily: FONTS.display,
-                color: BRAND.heirloom,
-                marginBottom: '2rem',
-              }}
-            >
+            <h2 style={{ fontSize: '1.5rem', fontWeight: '700', fontFamily: FONTS.display, color: BRAND.heirloom, marginBottom: '2rem' }}>
               Mis Árboles ({trees.length})
             </h2>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {trees.map(tree => (
-                <CacaoTreeCard key={tree.id} tree={tree} />
+                <CacaoTreeCard key={tree.id} tree={tree} onViewUpdate={() => {}} />
               ))}
             </div>
             <div className="mt-8 pt-8 border-t" style={{ borderColor: BRAND.bgCard }}>
-              <CauaButton
-                variant="primary"
-                size="lg"
-                onClick={startAdoption}
-                style={{ width: '100%' }}
-              >
-                Adoptar Otro Árbol
+              <CauaButton variant="primary" size="lg" onClick={startAdoption} style={{ width: '100%' }}>
+                + Adoptar Otro Árbol
               </CauaButton>
             </div>
           </div>
         )}
 
-        {/* Empty State or Browse Phase */}
-        {(state.phase === 'browse' || (treesLoading === false && trees.length === 0)) && (
-          <>
-            {trees.length === 0 && (
-              <div
-                style={{
-                  background: BRAND.bgCard,
-                  border: `2px solid ${BRAND.pod}`,
-                  borderRadius: '1rem',
-                  padding: '3rem 2rem',
-                  textAlign: 'center',
-                  marginBottom: '3rem',
-                }}
-              >
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌱</div>
-                <h3
-                  style={{
-                    fontSize: '1.5rem',
-                    fontWeight: '700',
-                    fontFamily: FONTS.display,
-                    color: BRAND.heirloom,
-                    marginBottom: '0.5rem',
-                  }}
-                >
-                  Sin árboles aún
-                </h3>
-                <p style={{ color: '#999', marginBottom: '2rem' }}>
-                  Empieza tu viaje ahora adoptando tu primer árbol de cacao.
-                </p>
-                <CauaButton
-                  variant="primary"
-                  size="lg"
-                  onClick={startAdoption}
-                  style={{ width: '100%' }}
-                >
-                  Adoptar Mi Primer Árbol
-                </CauaButton>
-              </div>
-            )}
-
-            {/* Guardian Selector (Tinder-like Swiper) */}
-            {state.phase === 'selecting-guardian' && (
-              <div className="mb-12 relative" style={{ height: 600, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <h2
-                  style={{
-                    fontSize: '1.5rem',
-                    fontWeight: '700',
-                    fontFamily: FONTS.display,
-                    color: BRAND.heirloom,
-                    marginBottom: '1rem',
-                  }}
-                >
-                  Desliza para Adoptar
-                </h2>
-                <p style={{ color: '#999', marginBottom: '2rem' }}>Dcha: Adoptar · Izq: Pasar</p>
-                <div style={{ position: 'relative', width: '100%', maxWidth: 380, height: 520 }}>
-                  {state.cardsLeft.map((idx, zIndex) => (
-                    <SwipeableTreeCard
-                      key={idx}
-                      guardian={GUARDIANS[idx]}
-                      imageIndex={idx}
-                      onSwipeLeft={() => handleSwipeLeft()}
-                      onSwipeRight={() => handleSwipeRight(idx)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
+        {/* Empty State — no trees yet */}
+        {state.phase === 'browse' && !treesLoading && trees.length === 0 && (
+          <div style={{
+            background: BRAND.bgCard,
+            border: `2px solid ${BRAND.pod}`,
+            borderRadius: '1rem',
+            padding: '3rem 2rem',
+            textAlign: 'center',
+            marginBottom: '3rem',
+          }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌱</div>
+            <h3 style={{ fontSize: '1.5rem', fontWeight: '700', fontFamily: FONTS.display, color: BRAND.heirloom, marginBottom: '0.5rem' }}>
+              Sin árboles adoptados
+            </h3>
+            <p style={{ color: '#999', marginBottom: '1rem' }}>
+              Conecta con un Guardián y adopta tu primer árbol de cacao Fino y de Aroma — el 1% de la producción mundial.
+            </p>
+            <p style={{ color: `${BRAND.pod}`, fontSize: '0.875rem', marginBottom: '2rem' }}>
+              🫘 Ganas 10 granos + 3 mazorcas al adoptar · Canjea por chocolate 100% del market
+            </p>
+            <CauaButton variant="primary" size="lg" onClick={startAdoption} style={{ width: '100%' }}>
+              Adoptar Mi Primer Árbol
+            </CauaButton>
+          </div>
         )}
 
         {/* Confirmation Phase */}
@@ -282,7 +246,7 @@ export default function Adoptar() {
                     marginBottom: '2rem',
                   }}
                 >
-                  Confirma tu Adopción
+                  Confirma tu Selección
                 </h2>
 
                 {/* Guardian Summary */}
@@ -313,24 +277,47 @@ export default function Adoptar() {
                   </div>
                 </div>
 
-                {/* Genetics Auto Display */}
-                <div className="mb-8" style={{ borderBottom: `1px solid ${BRAND.amazon}44`, paddingBottom: '1rem' }}>
-                  <div
-                    style={{
-                      fontSize: '0.75rem',
-                      color: BRAND.mazorca,
-                      marginBottom: '0.5rem',
-                      fontWeight: '600',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.1em'
-                    }}
-                  >
-                    Clase Genética del Árbol
-                  </div>
-                  <div style={{ fontFamily: FONTS.body, color: BRAND.heirloom, fontSize: '1.125rem' }}>
-                    🧬 {GUARDIANS[state.selectedGuardian].varieties[0]}
-                  </div>
-                </div>
+                {/* Variety + Territory Benefits */}
+                {(() => {
+                  const g = GUARDIANS[state.selectedGuardian]
+                  return (
+                    <>
+                      <div style={{ background: `${BRAND.pod}11`, border: `1px solid ${BRAND.pod}44`, borderRadius: '0.75rem', padding: '1rem', marginBottom: '1rem' }}>
+                        <div style={{ fontSize: '0.75rem', color: BRAND.pod, fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>
+                          🧬 {g.varieties[0]} — Fine Flavor
+                        </div>
+                        <p style={{ fontSize: '0.875rem', color: '#ddd', lineHeight: '1.5', margin: 0 }}>
+                          {g.variety_benefit}
+                        </p>
+                      </div>
+
+                      <div style={{ background: BRAND.bgCard, border: `1px solid ${BRAND.amazon}44`, borderRadius: '0.75rem', padding: '1rem', marginBottom: '1rem' }}>
+                        <div style={{ fontSize: '0.75rem', color: BRAND.mazorca, fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>
+                          Vainas
+                        </div>
+                        <div style={{ fontSize: '0.875rem', color: '#bbb' }}>{g.pods}</div>
+                      </div>
+
+                      <div style={{ background: BRAND.bgCard, border: `1px solid ${BRAND.amazon}44`, borderRadius: '0.75rem', padding: '1rem', marginBottom: '1.5rem' }}>
+                        <div style={{ fontSize: '0.75rem', color: '#888', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>
+                          Usos del mercado
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
+                          {g.market_uses.map(use => (
+                            <span key={use} style={{
+                              background: `${BRAND.pod}22`, color: BRAND.pod,
+                              padding: '3px 8px', borderRadius: 20, fontSize: '0.75rem', fontWeight: 600
+                            }}>{use}</span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div style={{ fontSize: '0.75rem', color: BRAND.mazorca, textAlign: 'center', marginBottom: '1rem' }}>
+                        🫘 +10 granos · 🌽 +3 mazorcas al confirmar
+                      </div>
+                    </>
+                  )
+                })()}
 
                 {/* Confirm Button */}
                 <CauaButton
@@ -340,7 +327,7 @@ export default function Adoptar() {
                   disabled={isAdopting}
                   style={{ width: '100%', marginBottom: '0.5rem' }}
                 >
-                  {isAdopting ? 'Sincronizando Adopción...' : 'CONFIRMAR ADOPCIÓN'}
+                  {isAdopting ? 'Adoptando árbol...' : '🌱 ADOPTAR ESTE ÁRBOL'}
                 </CauaButton>
 
                 <CauaButton

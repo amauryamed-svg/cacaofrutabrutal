@@ -60,7 +60,6 @@ export function useCocoaTrees() {
       .single()
 
     if (insertErr) {
-      console.error('Supabase DB Insert Error:', insertErr)
       throw new Error(insertErr.message || 'Error inserting row into cacao_trees')
     }
 

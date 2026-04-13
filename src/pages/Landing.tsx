@@ -167,12 +167,6 @@ export default function Landing() {
             <CauaButton size="lg" onClick={() => navigate('/adoptar')}>
               {T('land_cta1')}
             </CauaButton>
-            <CauaButton size="lg" variant="secondary" onClick={() => navigate('/ritual')}>
-              {T('land_cta2')}
-            </CauaButton>
-            <CauaButton size="lg" variant="accent" onClick={() => navigate('/marketplace')}>
-              {T('land_cta3')}
-            </CauaButton>
           </div>
 
           {/* Secondary links */}
@@ -371,10 +365,7 @@ export default function Landing() {
         }}>{T('land_join')}</p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
           <CauaButton size="lg" onClick={() => navigate('/adoptar')}>
-            {lang === 'es' ? 'Adoptar un Árbol' : 'Adopt a Tree'}
-          </CauaButton>
-          <CauaButton size="lg" variant="secondary" onClick={() => navigate('/fund')}>
-            {lang === 'es' ? 'Invertir' : 'Invest'}
+            {lang === 'es' ? 'Seleccionar Clase Genética' : 'Choose Genetic Class'}
           </CauaButton>
         </div>
       </div>

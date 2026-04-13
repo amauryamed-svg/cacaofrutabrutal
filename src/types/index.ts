@@ -26,6 +26,11 @@ export interface Guardian {
   companions: string[]
   character: string
   emoji: string
+  variety_benefit: string   // Main benefit description for this variety
+  territory: string         // Territory / heritage story
+  market_uses: string[]     // End-product use cases
+  pods: string              // Pod color/description
+  heritage: string          // Heritage note (awards, recognition, legacy)
 }
 
 export interface UserProfile {

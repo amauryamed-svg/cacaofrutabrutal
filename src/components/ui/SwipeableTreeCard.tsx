@@ -1,12 +1,7 @@
 import { useState } from 'react'
 import { motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion'
 import { BRAND, FONTS } from '../../utils/constants'
-
-interface Guardian {
-  name: string
-  region: string
-  power: string
-}
+import type { Guardian } from '../../types'
 
 interface SwipeableTreeCardProps {
   guardian: Guardian
@@ -124,7 +119,7 @@ export default function SwipeableTreeCard({
       {/* Card Content Overlay */}
       <div
         style={{
-          background: 'rgba(4, 12, 6, 0.6)',
+          background: 'rgba(4, 12, 6, 0.75)',
           backdropFilter: 'blur(12px)',
           borderRadius: 16,
           padding: 20,
@@ -132,25 +127,37 @@ export default function SwipeableTreeCard({
           border: `1px solid rgba(255,255,255,0.1)`
         }}
       >
-        <div style={{ fontFamily: FONTS.display, fontSize: 32, fontWeight: 900, color: BRAND.heirloom, lineHeight: 1.1 }}>
+        <div style={{ fontFamily: FONTS.display, fontSize: 28, fontWeight: 900, color: BRAND.heirloom, lineHeight: 1.1 }}>
           {guardian.name}
         </div>
-        <div style={{ fontFamily: FONTS.body, fontSize: 14, color: '#aaa', margin: '4px 0 12px 0' }}>
-          📍 {guardian.region}
+        <div style={{ fontFamily: FONTS.body, fontSize: 13, color: '#aaa', margin: '4px 0 8px 0' }}>
+          📍 {guardian.town}, {guardian.region}
         </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+
+        {/* Variety Badge */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
           <span style={{
-            background: `${BRAND.pod}33`, color: BRAND.pod,
-            padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 700
+            background: `${BRAND.pod}44`, color: BRAND.pod,
+            padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700
           }}>
-            {guardian.power}
+            🧬 {guardian.varieties[0]}
           </span>
           <span style={{
             background: `${BRAND.mazorca}33`, color: BRAND.mazorca,
-            padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 700
+            padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700
           }}>
-           Árbol #{1000 + imageIndex}
+            Fine Flavor
           </span>
+        </div>
+
+        {/* Variety Benefit */}
+        <p style={{ fontFamily: FONTS.body, fontSize: 12, color: '#ccc', lineHeight: 1.4, marginBottom: 10 }}>
+          {guardian.variety_benefit.split('.')[0]}.
+        </p>
+
+        {/* Heritage */}
+        <div style={{ fontSize: 11, color: BRAND.pod, fontWeight: 600 }}>
+          {guardian.heritage}
         </div>
       </div>
     </motion.div>
