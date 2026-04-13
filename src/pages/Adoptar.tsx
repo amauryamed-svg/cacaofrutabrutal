@@ -5,6 +5,7 @@ import { CacaoTreeCard } from '../components/dashboard/CacaoTreeCard'
 import TokenReward from '../components/ritual/TokenReward'
 import CauaButton from '../components/ui/CauaButton'
 import CauaCard from '../components/ui/CauaCard'
+import SwipeableTreeCard from '../components/ui/SwipeableTreeCard'
 import { BRAND, FONTS, GUARDIANS, TOKEN_RATES } from '../utils/constants'
 
 type AdoptarPhase = 'browse' | 'selecting-guardian' | 'confirming' | 'adopted'
@@ -14,6 +15,7 @@ interface AdoptarState {
   selectedGuardian: number | null
   selectedVariety: string | null
   tokenReward: { beans: number; mazorcas: number } | null
+  cardsLeft: number[]
 }
 
 export default function Adoptar() {
@@ -24,12 +26,13 @@ export default function Adoptar() {
     selectedGuardian: null,
     selectedVariety: null,
     tokenReward: null,
+    cardsLeft: GUARDIANS.map((_, i) => i) // indices of GUARDIANS
   })
   const [isAdopting, setIsAdopting] = useState(false)
 
 
   const startAdoption = () => {
-    setState(prev => ({ ...prev, phase: 'selecting-guardian' }))
+    setState(prev => ({ ...prev, phase: 'selecting-guardian', cardsLeft: GUARDIANS.map((_, i) => i) }))
   }
 
   const selectGuardian = (guardianId: number) => {
@@ -38,6 +41,22 @@ export default function Adoptar() {
       selectedGuardian: guardianId,
       phase: 'confirming',
     }))
+  }
+
+  const handleSwipeLeft = () => {
+    setState(prev => {
+      const newCards = [...prev.cardsLeft]
+      newCards.pop() // remove top card
+      if (newCards.length === 0) {
+        // they rejected all, loop back
+        return { ...prev, cardsLeft: GUARDIANS.map((_, i) => i) }
+      }
+      return { ...prev, cardsLeft: newCards }
+    })
+  }
+
+  const handleSwipeRight = (guardianId: number) => {
+    selectGuardian(guardianId)
   }
 
   const selectVariety = (variety: string) => {
@@ -194,73 +213,30 @@ export default function Adoptar() {
               </div>
             )}
 
-            {/* Guardian Selector */}
+            {/* Guardian Selector (Tinder-like Swiper) */}
             {state.phase === 'selecting-guardian' && (
-              <div className="mb-12">
+              <div className="mb-12 relative" style={{ height: 600, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <h2
                   style={{
                     fontSize: '1.5rem',
                     fontWeight: '700',
                     fontFamily: FONTS.display,
                     color: BRAND.heirloom,
-                    marginBottom: '2rem',
+                    marginBottom: '1rem',
                   }}
                 >
-                  Elige tu Guardián
+                  Desliza para Adoptar
                 </h2>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-                  {GUARDIANS.map((guardian, idx) => (
-                    <button
+                <p style={{ color: '#999', marginBottom: '2rem' }}>Dcha: Adoptar · Izq: Pasar</p>
+                <div style={{ position: 'relative', width: '100%', maxWidth: 380, height: 520 }}>
+                  {state.cardsLeft.map((idx, zIndex) => (
+                    <SwipeableTreeCard
                       key={idx}
-                      onClick={() => selectGuardian(idx)}
-                      style={{
-                        background: BRAND.bgCard,
-                        border: `2px solid ${
-                          state.selectedGuardian === idx ? BRAND.pod : 'transparent'
-                        }`,
-                        borderRadius: '0.75rem',
-                        padding: '1rem',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                      }}
-                      onMouseEnter={e => {
-                        if (state.selectedGuardian !== idx) {
-                          (e.currentTarget as HTMLElement).style.borderColor =
-                            BRAND.pod
-                        }
-                        ;(e.currentTarget as HTMLElement).style.background = '#1A3520'
-                      }}
-                      onMouseLeave={e => {
-                        if (state.selectedGuardian !== idx) {
-                          (e.currentTarget as HTMLElement).style.borderColor = 'transparent'
-                        }
-                        ;(e.currentTarget as HTMLElement).style.background = BRAND.bgCard
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: '1.25rem',
-                          fontWeight: '700',
-                          fontFamily: FONTS.display,
-                          color: BRAND.heirloom,
-                          marginBottom: '0.5rem',
-                        }}
-                      >
-                        {guardian.name}
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: '#999', marginBottom: '0.5rem' }}>
-                        {guardian.region}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: '0.675rem',
-                          color: BRAND.pod,
-                          fontWeight: '600',
-                        }}
-                      >
-                        {guardian.power}
-                      </div>
-                    </button>
+                      guardian={GUARDIANS[idx]}
+                      imageIndex={idx}
+                      onSwipeLeft={() => handleSwipeLeft()}
+                      onSwipeRight={() => handleSwipeRight(idx)}
+                    />
                   ))}
                 </div>
               </div>

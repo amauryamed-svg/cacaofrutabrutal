@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import HubspotLeadForm from '../components/ui/HubspotLeadForm'
 import { useLang } from '../context/LangContext'
 import { makeT } from '../utils/i18n'
+import CauaGotchi from '../components/dashboard/CauaGotchi'
 
 export default function Dashboard() {
   const { profile } = useAuth()
@@ -46,6 +47,15 @@ export default function Dashboard() {
           fontSize: 'clamp(36px, 8vw, 56px)', color: BRAND.heirloom,
           textTransform: 'uppercase', margin: '0 0 32px', lineHeight: 0.95,
         }}>{T('dash_title').split(' ')[0]} <span style={{ color: BRAND.pod }}>{T('dash_title').split(' ')[1]}</span></h2>
+
+        {/* Cacao-Gotchi Embedded Panel */}
+        <CauaGotchi 
+          health={85} 
+          moisture={60} 
+          sunlight={90} 
+          stageText="Árbol Joven - Crecimiento Óptimo" 
+          treeName="Criollo #1024"
+        />
 
         {/* Metrics */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 45%), 1fr))', gap: 16, marginBottom: 48 }}>
