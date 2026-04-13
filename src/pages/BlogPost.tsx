@@ -226,8 +226,167 @@ export default function BlogPost() {
         </div>
       </article>
 
+      {/* CTA Section - Connected Resources */}
+      <div style={{
+        maxWidth: 680,
+        margin: '80px auto 0',
+        padding: '0 var(--space-page) 80px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 20,
+      }}>
+        {/* Linked Technology → Fund */}
+        {post.linkedTech && (
+          <button
+            onClick={() => navigate('/fund')}
+            style={{
+              background: `linear-gradient(135deg, ${BRAND.criollo}22, ${BRAND.amazon}11)`,
+              border: `1px solid ${BRAND.criollo}44`,
+              borderRadius: 16,
+              padding: '24px',
+              cursor: 'pointer',
+              transition: 'all 0.3s',
+              textAlign: 'left',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = BRAND.criollo
+              e.currentTarget.style.background = `linear-gradient(135deg, ${BRAND.criollo}33, ${BRAND.amazon}22)`
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = `${BRAND.criollo}44`
+              e.currentTarget.style.background = `linear-gradient(135deg, ${BRAND.criollo}22, ${BRAND.amazon}11)`
+            }}
+          >
+            <div style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 700,
+              color: BRAND.pod,
+              fontSize: 11,
+              letterSpacing: '0.1em',
+              marginBottom: 8,
+              textTransform: 'uppercase',
+            }}>🧬 {lang === 'es' ? 'Invertir en esta tecnología' : 'Invest in this technology'}</div>
+            <div style={{
+              fontFamily: FONTS.display,
+              fontWeight: 700,
+              color: BRAND.heirloom,
+              fontSize: 18,
+              marginBottom: 8,
+            }}>FONDO · Crowdfunding</div>
+            <div style={{
+              fontFamily: FONTS.body,
+              color: `${BRAND.heirloom}77`,
+              fontSize: 13,
+              lineHeight: 1.5,
+            }}>
+              {lang === 'es'
+                ? 'Descubre cómo financiar la investigación y desarrollo de esta innovación biotecnológica.'
+                : 'Learn how to fund the research and development of this biotechnology innovation.'}
+            </div>
+          </button>
+        )}
+
+        {/* Marketplace CTA */}
+        <button
+          onClick={() => navigate('/marketplace')}
+          style={{
+            background: `linear-gradient(135deg, ${BRAND.amazon}22, ${BRAND.theobroma}11)`,
+            border: `1px solid ${BRAND.amazon}44`,
+            borderRadius: 16,
+            padding: '24px',
+            cursor: 'pointer',
+            transition: 'all 0.3s',
+            textAlign: 'left',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.borderColor = BRAND.amazon
+            e.currentTarget.style.background = `linear-gradient(135deg, ${BRAND.amazon}33, ${BRAND.theobroma}22)`
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.borderColor = `${BRAND.amazon}44`
+            e.currentTarget.style.background = `linear-gradient(135deg, ${BRAND.amazon}22, ${BRAND.theobroma}11)`
+          }}
+        >
+          <div style={{
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontWeight: 700,
+            color: BRAND.criollo,
+            fontSize: 11,
+            letterSpacing: '0.1em',
+            marginBottom: 8,
+            textTransform: 'uppercase',
+          }}>🫘 {lang === 'es' ? 'Probar estos bioactivos' : 'Try these bioactives'}</div>
+          <div style={{
+            fontFamily: FONTS.display,
+            fontWeight: 700,
+            color: BRAND.heirloom,
+            fontSize: 18,
+            marginBottom: 8,
+          }}>MERCADO · Ediciones limitadas</div>
+          <div style={{
+            fontFamily: FONTS.body,
+            color: `${BRAND.heirloom}77`,
+            fontSize: 13,
+            lineHeight: 1.5,
+          }}>
+            {lang === 'es'
+              ? 'Explora nuestras ediciones limitadas de cacao y productos derivados.'
+              : 'Explore our limited-edition cacao and derived products.'}
+          </div>
+        </button>
+
+        {/* Impact CTA */}
+        <button
+          onClick={() => navigate('/impacto')}
+          style={{
+            background: `linear-gradient(135deg, ${BRAND.muisca}22, ${BRAND.heirloom}11)`,
+            border: `1px solid ${BRAND.muisca}44`,
+            borderRadius: 16,
+            padding: '24px',
+            cursor: 'pointer',
+            transition: 'all 0.3s',
+            textAlign: 'left',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.borderColor = BRAND.muisca
+            e.currentTarget.style.background = `linear-gradient(135deg, ${BRAND.muisca}33, ${BRAND.heirloom}22)`
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.borderColor = `${BRAND.muisca}44`
+            e.currentTarget.style.background = `linear-gradient(135deg, ${BRAND.muisca}22, ${BRAND.heirloom}11)`
+          }}
+        >
+          <div style={{
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontWeight: 700,
+            color: BRAND.muisca,
+            fontSize: 11,
+            letterSpacing: '0.1em',
+            marginBottom: 8,
+            textTransform: 'uppercase',
+          }}>🌍 {lang === 'es' ? 'Ver el impacto' : 'See the impact'}</div>
+          <div style={{
+            fontFamily: FONTS.display,
+            fontWeight: 700,
+            color: BRAND.heirloom,
+            fontSize: 18,
+            marginBottom: 8,
+          }}>IMPACTO · Triple enfoque</div>
+          <div style={{
+            fontFamily: FONTS.body,
+            color: `${BRAND.heirloom}77`,
+            fontSize: 13,
+            lineHeight: 1.5,
+          }}>
+            {lang === 'es'
+              ? 'Conoce el impacto real: social, ambiental y económico de CAUA.'
+              : 'Discover the real impact: social, environmental, and economic outcomes.'}
+          </div>
+        </button>
+      </div>
+
       {/* Footer spacing */}
-      <div style={{ height: 80 }} />
+      <div style={{ height: 40 }} />
     </div>
   )
 }
