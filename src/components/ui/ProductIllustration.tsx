@@ -251,6 +251,90 @@ const ILLUSTRATIONS: Record<number, () => ReactElement> = {
         fontWeight="700" fontSize="9" fill="#00A3CD" letterSpacing="3" opacity="0.7">FERMENTADO EN FRÍO</text>
     </svg>
   ),
+
+  // HIDROSOL™ — spray botánico, cosmético + alimentario
+  7: () => (
+    <svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+      <defs>
+        <linearGradient id="bottle7" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#91A63B" stopOpacity="0.8"/>
+          <stop offset="100%" stopColor="#1C3B26" stopOpacity="0.6"/>
+        </linearGradient>
+        <radialGradient id="glow7" cx="50%" cy="50%" r="60%">
+          <stop offset="0%" stopColor="#91A63B" stopOpacity="0.15"/>
+          <stop offset="100%" stopColor="#040C06" stopOpacity="0"/>
+        </radialGradient>
+      </defs>
+      <rect width="320" height="200" fill="#0D1A0F"/>
+      <ellipse cx="160" cy="100" rx="110" ry="80" fill="url(#glow7)"/>
+      {/* Spray bottle — main vessel */}
+      <path d="M 135 55 L 130 165 Q 130 172 160 172 Q 190 172 190 165 L 185 55 Z"
+        fill="url(#bottle7)" stroke="#91A63B" strokeWidth="0.8" strokeOpacity="0.6"/>
+      {/* Pump cap */}
+      <rect x="150" y="35" width="20" height="20" rx="3" fill="#1C3B26" stroke="#91A63B" strokeWidth="1" opacity="0.9"/>
+      <rect x="152" y="33" width="16" height="4" rx="2" fill="#91A63B" opacity="0.7"/>
+      {/* Mist spray — animated particles */}
+      {[[180,42],[195,52],[210,55],[185,30],[202,40],[175,48]].map(([x,y],i) => (
+        <circle key={i} cx={x} cy={y} r={1.5-i*0.2} fill="#91A63B" opacity={0.6-i*0.08}/>
+      ))}
+      {/* Botanical leaves inside bottle */}
+      {[0,1,2].map(i => {
+        const y = 80 + i*25
+        return <g key={i}>
+          <ellipse cx={145-i*3} cy={y} rx="6" ry="10"
+            transform={`rotate(${20+i*15} ${145-i*3} ${y})`}
+            fill="#91A63B" opacity={0.3-i*0.05}/>
+          <line x1={145-i*3} y1={y-10} x2={145-i*3} y2={y+10}
+            stroke="#91A63B" strokeWidth="0.4" opacity="0.4"/>
+        </g>
+      })}
+      {/* Liquid level indicator */}
+      <path d="M 132 130 Q 160 128 188 130" fill="none" stroke="#91A63B" strokeWidth="0.8" opacity="0.4"/>
+      <text x="160" y="185" textAnchor="middle" fontFamily="'Barlow Condensed',sans-serif"
+        fontWeight="700" fontSize="9" fill="#91A63B" letterSpacing="3" opacity="0.7">HIDROSOL™ · SPRAY</text>
+    </svg>
+  ),
+
+  // ACEITE ESENCIAL — aromaterapia, 5mL concentrado
+  8: () => (
+    <svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+      <defs>
+        <linearGradient id="oil8" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#F1A91E" stopOpacity="0.9"/>
+          <stop offset="100%" stopColor="#DB5527" stopOpacity="0.7"/>
+        </linearGradient>
+        <radialGradient id="glow8" cx="50%" cy="50%" r="55%">
+          <stop offset="0%" stopColor="#F1A91E" stopOpacity="0.12"/>
+          <stop offset="100%" stopColor="#040C06" stopOpacity="0"/>
+        </radialGradient>
+      </defs>
+      <rect width="320" height="200" fill="#0A0E12"/>
+      <ellipse cx="160" cy="100" rx="100" ry="80" fill="url(#glow8)"/>
+      {/* Bottle — small amber vial */}
+      <path d="M 150 48 L 145 168 Q 145 175 160 175 Q 175 175 175 168 L 170 48 Z"
+        fill="url(#oil8)" stroke="#F1A91E" strokeWidth="0.8" strokeOpacity="0.8"/>
+      {/* Cork/Cap */}
+      <ellipse cx="160" cy="46" rx="11" ry="4" fill="#7A4E1F" stroke="#F1A91E" strokeWidth="0.8" opacity="0.9"/>
+      <rect x="156" y="42" width="8" height="4" rx="1" fill="#583915" opacity="0.8"/>
+      {/* Oil shine inside bottle */}
+      <path d="M 148 60 Q 148 120 150 165" fill="none" stroke="#F7F1EE" strokeWidth="1" opacity="0.15"/>
+      {/* Aromatherapy wisps — rising essential oil vapors */}
+      {[0,1,2,3].map(i => (
+        <path key={i}
+          d={`M ${160 + i*8} ${40} Q ${160 + i*15} ${20} ${160 + i*20} ${0}`}
+          fill="none" stroke="#F1A91E" strokeWidth="0.6" opacity={0.5 - i*0.1}
+          strokeLinecap="round"/>
+      ))}
+      {/* Botanical droplets floating */}
+      {[[140,110],[180,95],[145,135],[175,125]].map(([x,y],i) => (
+        <circle key={i} cx={x} cy={y} r="1.5" fill="#F1A91E" opacity={0.4-i*0.08}/>
+      ))}
+      {/* Refinement line */}
+      <path d="M 147 145 Q 160 143 173 145" fill="none" stroke="#F1A91E" strokeWidth="0.6" opacity="0.3"/>
+      <text x="160" y="185" textAnchor="middle" fontFamily="'Barlow Condensed',sans-serif"
+        fontWeight="700" fontSize="9" fill="#F1A91E" letterSpacing="3" opacity="0.7">ESENCIAL · CONCENTRADO</text>
+    </svg>
+  ),
 }
 
 export default function ProductIllustration({ productId, imageSrc, height = 160 }: Props) {
