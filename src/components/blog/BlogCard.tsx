@@ -163,7 +163,7 @@ export default function BlogCard({
         </div>
 
         {/* CTA */}
-        <div style{{
+        <div style={{
           marginTop: 12,
           padding: '10px 0',
           borderTop: `1px solid ${BRAND.amazon}44`,
