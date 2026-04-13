@@ -276,7 +276,7 @@ export default function Ritual() {
               }}>
                 {T('rit_cer_desc')}
               </p>
-              <button style={{
+              <button onClick={() => window.open('https://open.spotify.com/playlist/0fu5LFh6NsOQguG6kT0PQN', '_blank')} style={{
                 background: 'transparent',
                 border: `1px solid ${BRAND.criollo}55`,
                 color: `${BRAND.heirloom}cc`, padding: '10px 22px', borderRadius: 999,

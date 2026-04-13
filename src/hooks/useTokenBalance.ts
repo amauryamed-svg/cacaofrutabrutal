@@ -29,7 +29,7 @@ export function useTokenBalance(): TokenBalance & { loading: boolean; error: str
         const { data, error: err } = await supabase
           .from('user_profiles')
           .select('beans_balance, mazorcas_balance, beans_lifetime')
-          .eq('user_id', user.id)
+          .eq('user_id', user)
           .single()
 
         if (err) throw err
@@ -48,23 +48,9 @@ export function useTokenBalance(): TokenBalance & { loading: boolean; error: str
 
     fetchBalance()
 
-    // Subscribe to realtime updates
-    const subscription = supabase
-      .from('user_profiles')
-      .on('*', payload => {
-        if (payload.new) {
-          setBalance({
-            beans: payload.new.beans_balance || 0,
-            mazorcas: payload.new.mazorcas_balance || 0,
-            beansLifetime: payload.new.beans_lifetime || 0,
-          })
-        }
-      })
-      .subscribe()
-
-    return () => {
-      subscription.unsubscribe()
-    }
+    // Poll for updates every 5 seconds
+    const interval = setInterval(fetchBalance, 5000)
+    return () => clearInterval(interval)
   }, [user])
 
   return { ...balance, loading, error }
