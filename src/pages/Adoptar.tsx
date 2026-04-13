@@ -59,20 +59,22 @@ export default function Adoptar() {
     selectGuardian(guardianId)
   }
 
-  const selectVariety = (variety: string) => {
-    setState(prev => ({
-      ...prev,
-      selectedVariety: variety,
-    }))
-  }
 
   const confirmAdoption = async () => {
-    if (state.selectedGuardian === null || !state.selectedVariety) return
+    if (state.selectedGuardian === null) return
 
     setIsAdopting(true)
     try {
       const guardian = GUARDIANS[state.selectedGuardian]
-      await adoptTree(state.selectedGuardian, state.selectedVariety, guardian.region)
+      
+      // Auto-map guardian's descriptive variety to DB Enum
+      const displayVar = guardian.varieties[0]
+      let dbEnum = 'Criollo'
+      if (displayVar.includes('Trinitario')) dbEnum = 'Trinitario'
+      if (displayVar.includes('Forastero')) dbEnum = 'Forastero'
+      if (displayVar.includes('Nacional')) dbEnum = 'Nacional'
+      
+      await adoptTree(state.selectedGuardian, dbEnum, guardian.region)
 
       // Show token reward animation
       const reward = TOKEN_RATES.tree_adoption
@@ -94,7 +96,7 @@ export default function Adoptar() {
       }, 3000)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Error desconocido'
-      alert(`No se pudo adoptar el árbol: ${msg}`)
+      alert(`No se pudo adoptar el árbol: ${msg}\n\nRevisa si ya corriste las migraciones de Base de Datos en Supabase.`)
       setState(prev => ({ ...prev, phase: 'browse' }))
     } finally {
       setIsAdopting(false)
@@ -123,15 +125,17 @@ export default function Adoptar() {
           </div>
           <h1
             style={{
-              fontSize: 'clamp(2rem, 8vw, 4rem)',
+              fontSize: 'clamp(2.5rem, 8vw, 4.5rem)',
               fontWeight: '900',
               fontFamily: FONTS.display,
               color: BRAND.heirloom,
-              lineHeight: '1.1',
+              lineHeight: '1',
               marginBottom: '1rem',
+              letterSpacing: '0.02em',
+              textTransform: 'uppercase'
             }}
           >
-            Apadrina un{' '}
+            Apadrina tu <br/>
             <span style={{ color: BRAND.pod }}>árbol digital</span>
           </h1>
           <p style={{ color: '#999', fontSize: '1.125rem', lineHeight: '1.6' }}>
@@ -285,53 +289,46 @@ export default function Adoptar() {
                 <div
                   style={{
                     background: BRAND.bgCard,
-                    padding: '1rem',
-                    borderRadius: '0.5rem',
+                    padding: '1.5rem',
+                    borderRadius: '0.75rem',
                     marginBottom: '2rem',
+                    border: `1px solid ${BRAND.amazon}44`
                   }}
                 >
-                  <div style={{ fontSize: '0.875rem', color: '#999', marginBottom: '0.5rem' }}>
-                    Guardián
+                  <div style={{ fontSize: '0.75rem', color: BRAND.pod, marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                    GUARDIÁN DEL TERRITORIO
                   </div>
                   <div
                     style={{
-                      fontSize: '1.25rem',
-                      fontWeight: '700',
+                      fontSize: '1.5rem',
+                      fontWeight: '900',
                       fontFamily: FONTS.display,
                       color: BRAND.heirloom,
                     }}
                   >
                     {GUARDIANS[state.selectedGuardian].name}
                   </div>
-                  <div style={{ fontSize: '0.875rem', color: '#bbb', marginTop: '0.5rem' }}>
-                    {GUARDIANS[state.selectedGuardian].region}
+                  <div style={{ fontSize: '0.875rem', color: `${BRAND.heirloom}88`, marginTop: '0.5rem' }}>
+                    📍 {GUARDIANS[state.selectedGuardian].town}, {GUARDIANS[state.selectedGuardian].region}
                   </div>
                 </div>
 
-                {/* Variety Selector */}
-                <div className="mb-6">
+                {/* Genetics Auto Display */}
+                <div className="mb-8" style={{ borderBottom: `1px solid ${BRAND.amazon}44`, paddingBottom: '1rem' }}>
                   <div
                     style={{
-                      fontSize: '0.875rem',
-                      color: '#999',
-                      marginBottom: '1rem',
+                      fontSize: '0.75rem',
+                      color: BRAND.mazorca,
+                      marginBottom: '0.5rem',
                       fontWeight: '600',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.1em'
                     }}
                   >
-                    Elige la Variedad
+                    Clase Genética del Árbol
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {['Criollo', 'Trinitario', 'Forastero', 'Nacional'].map(variety => (
-                      <CauaButton
-                        key={variety}
-                        variant={state.selectedVariety === variety ? 'primary' : 'secondary'}
-                        size="sm"
-                        onClick={() => selectVariety(variety)}
-                        style={{ width: '100%' }}
-                      >
-                        {variety}
-                      </CauaButton>
-                    ))}
+                  <div style={{ fontFamily: FONTS.body, color: BRAND.heirloom, fontSize: '1.125rem' }}>
+                    🧬 {GUARDIANS[state.selectedGuardian].varieties[0]}
                   </div>
                 </div>
 
@@ -340,10 +337,10 @@ export default function Adoptar() {
                   variant="primary"
                   size="lg"
                   onClick={confirmAdoption}
-                  disabled={!state.selectedVariety || isAdopting}
-                  style={{ width: '100%' }}
+                  disabled={isAdopting}
+                  style={{ width: '100%', marginBottom: '0.5rem' }}
                 >
-                  {isAdopting ? 'Adoptando...' : 'Confirmar Adopción'}
+                  {isAdopting ? 'Sincronizando Adopción...' : 'CONFIRMAR ADOPCIÓN'}
                 </CauaButton>
 
                 <CauaButton
