@@ -180,3 +180,26 @@ export interface CookieConsent {
   user_agent: string | null
   created_at: string
 }
+
+export interface CacaoTree {
+  id: string
+  user_id: string
+  guardian_id: number
+  region: string
+  variety: 'Criollo' | 'Trinitario' | 'Forastero' | 'Nacional'
+  stage: 'Semilla' | 'Plántula' | 'Árbol Joven' | 'Árbol Adulto' | 'Cosecha'
+  adopted_at: string
+  predicted_harvest_at: string | null
+  co2_kg: number
+  last_update_at: string
+  created_at: string
+}
+
+export interface TreeUpdate {
+  id: string
+  tree_id: string
+  update_type: 'climate' | 'stage_change' | 'harvest_prediction' | 'co2_update'
+  message: string
+  climate_data: Record<string, unknown> | null
+  created_at: string
+}

@@ -14,6 +14,7 @@ import Blog              from './pages/Blog'
 import BlogPost          from './pages/BlogPost'
 import Marketplace       from './pages/Marketplace'
 import Ritual            from './pages/Ritual'
+import Adoptar           from './pages/Adoptar'
 import Dashboard         from './pages/Dashboard'
 import Fund              from './pages/Fund'
 import AdminCRM          from './pages/AdminCRM'
@@ -44,6 +45,7 @@ function AppShell() {
         {/* Protected — require registration */}
         <Route path="/marketplace" element={<AuthGate><Marketplace /></AuthGate>} />
         <Route path="/ritual"      element={<AuthGate><Ritual /></AuthGate>} />
+        <Route path="/adoptar"     element={<AuthGate><Adoptar /></AuthGate>} />
         <Route path="/dashboard"   element={<AuthGate><Dashboard /></AuthGate>} />
         <Route path="/fund"        element={<AuthGate><Fund /></AuthGate>} />
 

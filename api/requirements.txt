@@ -1,0 +1,2 @@
+supabase==2.3.4
+httpx==0.26.0

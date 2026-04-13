@@ -73,6 +73,8 @@ export default function Adoptar() {
         })
       }, 3000)
     } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error desconocido'
+      alert(`No se pudo adoptar el árbol: ${msg}`)
       setState(prev => ({ ...prev, phase: 'browse' }))
     } finally {
       setIsAdopting(false)
@@ -287,7 +289,6 @@ export default function Adoptar() {
             }}
           >
             <CauaCard
-              onClick={e => e.stopPropagation()}
               style={{ maxWidth: '500px', width: '100%' }}
             >
               <div className="p-6">

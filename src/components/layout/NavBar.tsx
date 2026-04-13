@@ -178,6 +178,7 @@ export default function NavBar() {
     { path: '/blog',        label: T('nav_blog')   },
     { path: '/marketplace', label: T('nav_market') },
     { path: '/ritual',      label: T('nav_ritual') },
+    { path: '/adoptar',     label: T('nav_adoptar') },
     { path: '/fund',        label: T('nav_fund')   },
     { path: '/dashboard',   label: T('nav_impact') },
   ]

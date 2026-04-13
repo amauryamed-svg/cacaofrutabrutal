@@ -125,4 +125,7 @@ export const TOKEN_RATES = {
   blog_read: { beans: 0.2, mazorcas: 0 },
   blog_share: { beans: 1, mazorcas: 0 },
   referral: { beans: 10, mazorcas: 3 },
+  tree_adoption: { beans: 10, mazorcas: 3 },
+  tree_update_read: { beans: 0.5, mazorcas: 0 },
+  tree_harvest_share: { beans: 5, mazorcas: 2 },
 }
