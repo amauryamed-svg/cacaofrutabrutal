@@ -25,6 +25,13 @@ export default function Ritual() {
   const { lang } = useLang()
   const T = makeT(lang)
 
+  const getTranslatedCard = (card: TarotCard) => ({
+    ...card,
+    name: T(`card_${card.id}_name` as any),
+    meaning: T(`card_${card.id}_meaning` as any),
+    advice: T(`card_${card.id}_advice` as any),
+  })
+
   const ELEMENT_LABELS: Record<string, string> = {
     Tierra: T('rit_el_tierra'),
     Fuego:  T('rit_el_fuego'),
@@ -212,53 +219,58 @@ export default function Ritual() {
         )}
 
         {/* REVEAL */}
-        {phase === 'reveal' && selectedCard && (
-          <>
-            {tokenReward && <TokenReward beans={tokenReward.beans} mazorcas={tokenReward.mazorcas} />}
-            {/* Card */}
-            <div className="animate-fade-in-up" style={{
-              width: 'min(220px, 60vw)', aspectRatio: '2/3',
-              filter: `drop-shadow(0 24px 56px ${cardColor}44)`,
-            }}>
-              <TarotCardArt card={selectedCard} revealed />
-            </div>
-
-            {/* Element label */}
-            <div style={{
-              fontFamily: FONTS.body, fontSize: 11, color: cardColor,
-              letterSpacing: '0.2em', textTransform: 'uppercase',
-              opacity: 0.8,
-            }}>
-              {ELEMENT_LABELS[selectedCard.element]}
-            </div>
-
-            {/* Meaning */}
-            <div className="animate-fade-in-up" style={{
-              background: '#0D1A10',
-              border: `1px solid ${cardColor}33`,
-              borderRadius: 14, padding: '22px 24px',
-              width: '100%',
-            }}>
-              <p style={{
-                fontFamily: FONTS.serif, fontStyle: 'italic',
-                color: `${BRAND.heirloom}cc`, fontSize: 14, lineHeight: 1.7,
-                margin: '0 0 16px',
-              }}>"{selectedCard.meaning}"</p>
-
-              <div style={{
-                borderTop: `1px solid ${BRAND.amazon}44`,
-                paddingTop: 16,
+        {phase === 'reveal' && selectedCard && (() => {
+          const translatedCard = getTranslatedCard(selectedCard)
+          return (
+            <>
+              {tokenReward && <TokenReward beans={tokenReward.beans} mazorcas={tokenReward.mazorcas} />}
+              {/* Card */}
+              <div className="animate-fade-in-up" style={{
+                width: 'min(220px, 60vw)', aspectRatio: '2/3',
+                filter: `drop-shadow(0 24px 56px ${cardColor}44)`,
               }}>
-                <div style={{
-                  fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
-                  color: BRAND.pod, fontSize: 10, letterSpacing: '0.2em', marginBottom: 8,
-                }}>{T('rit_invitation')}</div>
-                <p style={{
-                  fontFamily: FONTS.body, color: BRAND.heirloom,
-                  fontSize: 13, lineHeight: 1.65, margin: 0,
-                }}>{selectedCard.advice}</p>
+                <TarotCardArt card={selectedCard} revealed />
               </div>
-            </div>
+
+              {/* Element label */}
+              <div style={{
+                fontFamily: FONTS.body, fontSize: 11, color: cardColor,
+                letterSpacing: '0.2em', textTransform: 'uppercase',
+                opacity: 0.8,
+              }}>
+                {ELEMENT_LABELS[selectedCard.element]}
+              </div>
+
+              {/* Meaning */}
+              <div className="animate-fade-in-up" style={{
+                background: '#0D1A10',
+                border: `1px solid ${cardColor}33`,
+                borderRadius: 14, padding: '22px 24px',
+                width: '100%',
+              }}>
+                <p style={{
+                  fontFamily: FONTS.serif, fontStyle: 'italic',
+                  color: `${BRAND.heirloom}cc`, fontSize: 14, lineHeight: 1.7,
+                  margin: '0 0 16px',
+                }}>"{translatedCard.meaning}"</p>
+
+                <div style={{
+                  borderTop: `1px solid ${BRAND.amazon}44`,
+                  paddingTop: 16,
+                }}>
+                  <div style={{
+                    fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+                    color: BRAND.pod, fontSize: 10, letterSpacing: '0.2em', marginBottom: 8,
+                  }}>{T('rit_invitation')}</div>
+                  <p style={{
+                    fontFamily: FONTS.body, color: BRAND.heirloom,
+                    fontSize: 13, lineHeight: 1.65, margin: 0,
+                  }}>{translatedCard.advice}</p>
+                </div>
+              </div>
+            </>
+          )
+        })()}
 
             {/* Meditation invite */}
             <div className="animate-fade-in-up" style={{
@@ -291,7 +303,8 @@ export default function Ritual() {
             {/* Action row */}
             <div style={{ display: 'flex', gap: 10, width: '100%' }}>
               <button onClick={() => {
-                const text = `${T('rit_share_text')}: ${selectedCard.name} — "${selectedCard.meaning}" · CAUA Ritual`
+                const translatedCard = getTranslatedCard(selectedCard)
+                const text = `${T('rit_share_text')}: ${translatedCard.name} — "${translatedCard.meaning}" · CAUA Ritual`
                 if (navigator.share) navigator.share({ text })
                 else navigator.clipboard.writeText(text)
                 const newShare = shareCount + 1

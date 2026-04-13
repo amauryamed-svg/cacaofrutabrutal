@@ -150,6 +150,95 @@ const translations = {
   tok_mazorcas:  { es: 'Mazorcas',                  en: 'Mazorcas'            },
   tok_earned:    { es: '¡Ganaste',                  en: 'You earned'          },
   rit_tokens:    { es: 'Tu balance de fidelidad',   en: 'Your loyalty balance' },
+
+  // ── Tarot Cards (22 Arcanas) ──────────────────────────────────────────────
+  card_0_name:    { es: 'LA SEMILLA',              en: 'THE SEED'            },
+  card_0_meaning: { es: 'Nuevo comienzo. El cacao que aún no germina guarda todo el potencial del bosque.',          en: 'New beginning. The cacao not yet germinated holds the forest\'s full potential.'      },
+  card_0_advice:  { es: 'Planta una intención hoy. No la juzgues, solo siémbrala.',                                 en: 'Plant an intention today. Don\'t judge it, just sow it.'                             },
+
+  card_1_name:    { es: 'EL CACAOTIER',            en: 'THE CACAOTIER'       },
+  card_1_meaning: { es: 'Dominio del oficio. Tus manos ya conocen el camino — confía en tu proceso.',                 en: 'Mastery of craft. Your hands already know the way—trust your process.'                },
+  card_1_advice:  { es: 'Dedica 30 minutos a tu craft sin distracción. La maestría es repetición consciente.',       en: 'Dedicate 30 minutes to your craft without distraction. Mastery is conscious repetition.' },
+
+  card_2_name:    { es: 'LA GUARDIANA',            en: 'THE GUARDIAN'        },
+  card_2_meaning: { es: 'Sabiduría ancestral susurra. Escucha lo que ya sabes pero has olvidado.',                    en: 'Ancestral wisdom whispers. Listen to what you know but have forgotten.'                },
+  card_2_advice:  { es: 'Siéntate en silencio con una taza de cacao. La respuesta ya está en ti.',                   en: 'Sit in silence with a cup of cacao. The answer is already within you.'                },
+
+  card_3_name:    { es: 'LA MADRE TIERRA',         en: 'MOTHER EARTH'        },
+  card_3_meaning: { es: 'Abundancia que nutre. Todo lo que necesitas ya crece a tu alrededor.',                       en: 'Nourishing abundance. All you need already grows around you.'                        },
+  card_3_advice:  { es: 'Camina descalzo. Toca la tierra. Agradece lo que tienes antes de pedir más.',               en: 'Walk barefoot. Touch the earth. Gratitude before asking for more.'                    },
+
+  card_4_name:    { es: 'EL ANCESTRO',             en: 'THE ANCESTOR'        },
+  card_4_meaning: { es: 'Estructura y tradición. Los que vinieron antes dejaron el mapa.',                            en: 'Structure and tradition. Those before left the map.'                                  },
+  card_4_advice:  { es: 'Honra una tradición familiar hoy. Cocina algo que te conecte con tu origen.',               en: 'Honor a family tradition today. Cook something that connects you with your roots.'     },
+
+  card_5_name:    { es: 'EL PENTÁMERO',            en: 'THE PENTAMER'        },
+  card_5_meaning: { es: 'Los cinco guardianes. La comunidad es tu fuerza — ninguna flor poliniza sola.',              en: 'The five guardians. Community is your strength—no flower pollinates alone.'            },
+  card_5_advice:  { es: 'Contacta a 5 personas importantes en tu vida. Sé el guardián de alguien hoy.',             en: 'Contact 5 important people in your life. Be someone\'s guardian today.'               },
+
+  card_6_name:    { es: 'LA POLINIZACIÓN',         en: 'THE POLLINATION'     },
+  card_6_meaning: { es: 'Conexión profunda. Dos mundos se encuentran y crean algo nuevo.',                            en: 'Deep connection. Two worlds meet and create something new.'                          },
+  card_6_advice:  { es: 'Busca una colaboración inesperada. La magia está en el cruce.',                             en: 'Seek an unexpected collaboration. Magic lives in the crossing.'                      },
+
+  card_7_name:    { es: 'EL CARRO DE COSECHA',     en: 'THE HARVEST CART'    },
+  card_7_meaning: { es: 'Victoria por acción. Muévete con determinación — el fruto ya está maduro.',                  en: 'Victory through action. Move with determination—the fruit is already ripe.'            },
+  card_7_advice:  { es: 'Toma una decisión que has estado postergando. El momento es ahora.',                        en: 'Make a decision you\'ve been postponing. The moment is now.'                          },
+
+  card_8_name:    { es: 'LA FERMENTACIÓN',         en: 'FERMENTATION'        },
+  card_8_meaning: { es: 'Fuerza en la quietud. Lo que parece caos interno es transformación.',                        en: 'Strength in stillness. What seems like inner chaos is transformation.'                },
+  card_8_advice:  { es: 'Abraza la incomodidad. El cacao más fino pasa por la fermentación más intensa.',           en: 'Embrace discomfort. The finest cacao goes through the most intense fermentation.'      },
+
+  card_9_name:    { es: 'EL ERMITAÑO DEL PÁRAMO', en: 'THE HERMIT OF THE MOORLAND' },
+  card_9_meaning: { es: 'Soledad necesaria. Sube al páramo interior — la claridad vive en la altura.',                en: 'Necessary solitude. Climb the inner moorland—clarity lives at the heights.'            },
+  card_9_advice:  { es: 'Retírate del ruido por una hora. Medita. Escribe. Solo tú y el silencio.',                 en: 'Retreat from noise for an hour. Meditate. Write. Just you and silence.'               },
+
+  card_10_name:   { es: 'LA MAZORCA',              en: 'THE CACAO POD'       },
+  card_10_meaning:{ es: 'Ciclos y abundancia. Lo que sembraste está volviendo — recíbelo.',                           en: 'Cycles and abundance. What you planted is returning—receive it.'                      },
+  card_10_advice: { es: 'Celebra un logro reciente. La gratitud amplifica la abundancia.',                           en: 'Celebrate a recent achievement. Gratitude amplifies abundance.'                       },
+
+  card_11_name:   { es: 'EL EQUILIBRIO',           en: 'EQUILIBRIUM'          },
+  card_11_meaning:{ es: 'Justicia natural. El bosque siempre se regula — tú también puedes.',                         en: 'Natural justice. The forest always regulates itself—so can you.'                      },
+  card_11_advice: { es: 'Revisa dónde estás dando de más y recibiendo de menos. Ajusta.',                            en: 'Check where you\'re giving more than receiving. Adjust.'                             },
+
+  card_12_name:   { es: 'LA LIOFILIZACIÓN',        en: 'FREEZE-DRYING'       },
+  card_12_meaning:{ es: 'Pausa sagrada. A veces hay que congelar para preservar lo esencial.',                        en: 'Sacred pause. Sometimes you must freeze to preserve what\'s essential.'                 },
+  card_12_advice: { es: 'Pausa un proyecto. Consérvalo. No todo necesita avanzar al mismo tiempo.',                  en: 'Pause a project. Preserve it. Not everything must advance at once.'                   },
+
+  card_13_name:   { es: 'LA TRANSFORMACIÓN',       en: 'TRANSFORMATION'      },
+  card_13_meaning:{ es: 'Muerte del viejo proceso. Lo que ya no sirve se composta para nutrir lo nuevo.',             en: 'Death of the old way. What no longer serves becomes compost for what\'s new.'         },
+  card_13_advice: { es: 'Suelta algo hoy: una creencia, un hábito, una relación que ya cumplió su ciclo.',           en: 'Release something today: a belief, habit, or relationship that\'s completed its cycle.' },
+
+  card_14_name:   { es: 'LA DESTILACIÓN',          en: 'DISTILLATION'        },
+  card_14_meaning:{ es: 'Paciencia alquímica. Gota a gota, la esencia se revela.',                                   en: 'Alchemical patience. Drop by drop, essence reveals itself.'                           },
+  card_14_advice: { es: 'Reduce. Simplifica. ¿Cuál es la esencia de lo que intentas comunicar?',                    en: 'Reduce. Simplify. What is the essence of what you\'re trying to communicate?'         },
+
+  card_15_name:   { es: 'EL THEOBROMA',            en: 'THEOBROMA'           },
+  card_15_meaning:{ es: 'Alimento de dioses. Lo divino habita en lo terrenal — busca lo sagrado en lo cotidiano.',   en: 'Food of gods. The divine dwells in the earthly—find the sacred in the everyday.'      },
+  card_15_advice: { es: 'Prepara cacao ceremonial. Bébelo con intención. Ofrece una porción a alguien.',            en: 'Prepare ceremonial cacao. Drink it with intention. Offer a portion to someone.'       },
+
+  card_16_name:   { es: 'LA TORMENTA',             en: 'THE STORM'           },
+  card_16_meaning:{ es: 'Destrucción creativa. El rayo que cae fertiliza el suelo.',                                  en: 'Creative destruction. Lightning that falls fertilizes the soil.'                      },
+  card_16_advice: { es: 'No temas el conflicto de hoy. Está limpiando el camino.',                                   en: 'Fear not today\'s conflict. It\'s clearing the way.'                                  },
+
+  card_17_name:   { es: 'THEOBROMA ESTELAR',       en: 'STELLAR THEOBROMA'   },
+  card_17_meaning:{ es: 'Esperanza cósmica. El cacao conecta la tierra con las estrellas.',                          en: 'Cosmic hope. Cacao connects the earth with the stars.'                                },
+  card_17_advice: { es: 'Sueña en grande hoy. Escribe tu visión más ambiciosa sin filtro.',                         en: 'Dream big today. Write your most ambitious vision without filter.'                    },
+
+  card_18_name:   { es: 'LA LUNA DE COSECHA',      en: 'THE HARVEST MOON'    },
+  card_18_meaning:{ es: 'Ilusiones y sombras. No todo lo que brilla en la noche es verdad.',                         en: 'Illusions and shadows. Not everything that shines at night is truth.'                  },
+  card_18_advice: { es: 'Cuestiona una certeza. ¿Y si lo que crees saber es solo la cáscara?',                      en: 'Question a certainty. What if what you think you know is just the shell?'             },
+
+  card_19_name:   { es: 'EL SOL DEL TRÓPICO',     en: 'THE TROPICAL SUN'    },
+  card_19_meaning:{ es: 'Alegría radiante. La energía solar del cacao te llena de vitalidad.',                        en: 'Radiant joy. Cacao\'s solar energy fills you with vitality.'                          },
+  card_19_advice: { es: 'Sal al sol. Mueve el cuerpo. Ríe. La salud empieza con la alegría.',                       en: 'Go into the sun. Move your body. Laugh. Health begins with joy.'                      },
+
+  card_20_name:   { es: 'EL DESPERTAR',            en: 'AWAKENING'           },
+  card_20_meaning:{ es: 'Juicio y renacimiento. Lo que estaba dormido despierta con fuerza.',                         en: 'Judgment and rebirth. What was asleep awakens with strength.'                        },
+  card_20_advice: { es: 'Es momento de actuar sobre esa idea que has guardado. El mundo la necesita.',               en: 'It\'s time to act on that idea you\'ve kept hidden. The world needs it.'               },
+
+  card_21_name:   { es: 'LA COSECHA',              en: 'THE HARVEST'         },
+  card_21_meaning:{ es: 'Plenitud total. El ciclo se completa. Todo el fruto ha sido aprovechado.',                   en: 'Complete fullness. The cycle is complete. All fruit has been used.'                   },
+  card_21_advice: { es: 'Celebra. Comparte. El éxito verdadero es el que se redistribuye.',                         en: 'Celebrate. Share. True success is what redistributes itself.'                        },
 } as const
 
 export type TKey = keyof typeof translations
