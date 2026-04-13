@@ -9,9 +9,14 @@ import BlogTagPill from '../components/blog/BlogTagPill'
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
-  const { lang } = useLang()
+  const { lang, setLang } = useLang()
   const T = makeT(lang)
   const { post, loading } = useBlogPostBySlug(slug || '')
+
+  const title = lang === 'en' ? post?.titleEn || post?.title : post?.title
+  const subtitle = lang === 'en' ? post?.subtitleEn || post?.subtitle : post?.subtitle
+  const body = lang === 'en' ? post?.bodyMdEn || post?.bodyMd : post?.bodyMd
+  const tags = lang === 'en' ? post?.tagsEn || post?.tags : post?.tags
 
   if (loading) {
     return (
@@ -69,11 +74,14 @@ export default function BlogPost() {
       background: BRAND.bgDeep,
       paddingTop: 80,
     }}>
-      {/* Back button + header */}
+      {/* Back button + language toggle */}
       <div style={{
         maxWidth: 680,
         margin: '0 auto',
         padding: 'clamp(20px, 5vw, 40px) var(--space-page)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
       }}>
         <button
           onClick={() => navigate('/blog')}
@@ -84,12 +92,57 @@ export default function BlogPost() {
             cursor: 'pointer',
             fontFamily: FONTS.body,
             fontSize: 12,
-            marginBottom: 24,
             padding: 0,
           }}
         >
-          ← Volver al blog
+          ← {lang === 'es' ? 'Volver al blog' : 'Back to blog'}
         </button>
+
+        {/* Language toggle */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={() => setLang('es')}
+            style={{
+              background: lang === 'es' ? BRAND.pod : 'transparent',
+              border: `1px solid ${BRAND.pod}`,
+              color: lang === 'es' ? BRAND.bgDeep : BRAND.pod,
+              padding: '6px 12px',
+              borderRadius: 999,
+              fontFamily: FONTS.body,
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+          >
+            ES
+          </button>
+          <button
+            onClick={() => setLang('en')}
+            style={{
+              background: lang === 'en' ? BRAND.pod : 'transparent',
+              border: `1px solid ${BRAND.pod}`,
+              color: lang === 'en' ? BRAND.bgDeep : BRAND.pod,
+              padding: '6px 12px',
+              borderRadius: 999,
+              fontFamily: FONTS.body,
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+          >
+            EN
+          </button>
+        </div>
+      </div>
+
+      {/* Header */}
+      <div style={{
+        maxWidth: 680,
+        margin: '0 auto',
+        padding: '0 var(--space-page)',
+      }}>
 
         {/* Cover emoji */}
         <div style={{
@@ -109,11 +162,11 @@ export default function BlogPost() {
           lineHeight: 1.1,
           letterSpacing: '0.02em',
         }}>
-          {post.title}
+          {title}
         </h1>
 
         {/* Subtitle */}
-        {post.subtitle && (
+        {subtitle && (
           <p style={{
             fontFamily: FONTS.serif,
             fontStyle: 'italic',
@@ -122,7 +175,7 @@ export default function BlogPost() {
             margin: '0 0 24px',
             lineHeight: 1.6,
           }}>
-            {post.subtitle}
+            {subtitle}
           </p>
         )}
 
@@ -143,18 +196,18 @@ export default function BlogPost() {
         }}>
           <span>{dateStr}</span>
           <span>·</span>
-          <span>{Math.ceil(post.bodyMd.length / 200)} min de lectura</span>
+          <span>{Math.ceil(body.length / 200)} min {lang === 'es' ? 'de lectura' : 'read'}</span>
         </div>
 
         {/* Tags */}
-        {post.tags.length > 0 && (
+        {tags && tags.length > 0 && (
           <div style={{
             display: 'flex',
             gap: 6,
             flexWrap: 'wrap',
             marginBottom: 40,
           }}>
-            {post.tags.map(tag => (
+            {tags.map(tag => (
               <BlogTagPill key={tag} tag={tag} />
             ))}
           </div>
@@ -174,7 +227,7 @@ export default function BlogPost() {
           lineHeight: 1.8,
           color: BRAND.heirloom,
         }}>
-          {post.bodyMd.split('\n').map((line, i) => {
+          {body.split('\n').map((line, i) => {
             if (line.startsWith('# ')) {
               return (
                 <h2

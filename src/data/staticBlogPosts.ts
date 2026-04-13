@@ -5,10 +5,14 @@ export interface BlogPost {
   authorRole: string
   authorBio?: string
   title: string
+  titleEn: string
   subtitle: string
+  subtitleEn: string
   bodyMd: string
+  bodyMdEn: string
   coverEmoji: string
   tags: string[]
+  tagsEn: string[]
   linkedTech?: string
   publishedAt: string
 }
@@ -21,8 +25,11 @@ export const STATIC_BLOG_POSTS: BlogPost[] = [
     authorRole: 'Founder',
     authorBio: 'Co-Founder de CAUA · Investigador en nutrición y regeneración celular',
     title: 'La soberanía individual comienza por la salud',
+    titleEn: 'Individual Sovereignty Begins with Health',
     subtitle: 'Cómo el cacao regenera tus células y devuelve el poder a tu cuerpo',
+    subtitleEn: 'How cacao regenerates your cells and returns power to your body',
     tags: ['nutriómica', 'regeneración', 'polifenoles', 'soberanía'],
+    tagsEn: ['nutrigenomics', 'regeneration', 'polyphenols', 'sovereignty'],
     coverEmoji: '🫘',
     linkedTech: 'mucilage-extract',
     bodyMd: `# La soberanía individual comienza por la salud
@@ -67,6 +74,48 @@ No puedes crear si estás agotado.
 Tu salud. Tu poder. Tu libertad.
 
 — David`,
+    bodyMdEn: `# Individual Sovereignty Begins with Health
+
+True freedom is not political—it's physiological.
+
+In a world where our bodies have become battlegrounds for the food industry, individual sovereignty begins where we least expect to find it: **in cellular health**.
+
+It's not a pretty phrase. It's biology.
+
+## Cacao as an act of resistance
+
+For 3,000 years, Mesoamerican cultures knew something the West forgot: cacao is not a dessert. It's a sacred food that **regenerates**.
+
+Fresh cacao mucilage contains:
+- **Epicatechin** (polyphenol): regulates blood pressure and regenerates mitochondria
+- **Theobromine**: dilates blood vessels, improves cellular oxygenation
+- **Magnesium**: restores the mineral balance that modern stress steals from you
+
+When you consume regenerative cacao, you're not buying a product. **You're reclaiming your metabolic power**.
+
+## Nutrigenomics: the language your body understands
+
+Nutrigenomics is the science of how nutrients speak to your DNA. Every food molecule is an instruction for your cells:
+
+- Do you regenerate or degenerate?
+- Do you reduce inflammation or increase it?
+- Do you age or rejuvenate?
+
+Regenerative cacao is elite nutrigenomics. **Every bean of the Criollo Hybrid from Huila that we cultivate has been nurtured to maximize this conversation between food and cell**.
+
+## The revolution is cellular, not political
+
+You cannot vote for freedom if your body is imprisoned in chronic inflammation.
+
+You cannot think clearly if your mitochondrial energy is shut down.
+
+You cannot create if you're exhausted.
+
+**Individual sovereignty begins when you reclaim control of what enters your body.** And at CAUA, every batch of cacao is an act of liberation.
+
+Your health. Your power. Your freedom.
+
+— David`,
     publishedAt: new Date().toISOString(),
   },
   {
@@ -76,8 +125,11 @@ Tu salud. Tu poder. Tu libertad.
     authorRole: 'Founder',
     authorBio: 'Co-Founder de CAUA · Investigador en nutrición y regeneración celular',
     title: 'Nutriómica: el cacao que regenera tus células madre',
+    titleEn: 'Nutrigenomics: The Cacao That Regenerates Your Stem Cells',
     subtitle: 'La ciencia detrás del rejuvenecimiento celular a través del mucílago de cacao',
+    subtitleEn: 'The science behind cellular rejuvenation through cacao mucilage',
     tags: ['nutriómica', 'células madre', 'epicatequina', 'regeneración'],
+    tagsEn: ['nutrigenomics', 'stem cells', 'epicatechin', 'regeneration'],
     coverEmoji: '🧬',
     linkedTech: 'mucilage-extract',
     bodyMd: `# Nutriómica: el cacao que regenera tus células madre
@@ -128,6 +180,54 @@ Tu cuerpo te dirá la verdad en 2 semanas:
 **Eso no es placebo. Es mitocondrias nuevas**.
 
 — David`,
+    bodyMdEn: `# Nutrigenomics: The Cacao That Regenerates Your Stem Cells
+
+## What are stem cells? The fountain of youth
+
+Your body is born with the capacity to self-repair. That capacity lives in your **stem cells**: undifferentiated cells that can become anything your body needs.
+
+When you're 20, your stem cells are active.
+
+When you're 40, many are asleep.
+
+**The nutrigenomics question is: what foods awaken those dormant cells?**
+
+## Epicatechin: the key that unlocks stem cells
+
+In 2014, research by Dr. Norman Hollenberg from Harvard revealed something revolutionary:
+
+**Epicatechin (a polyphenol from cacao) crosses the blood-brain barrier and activates new mitochondria**.
+
+It's not regeneration. It's **creation of new mitochondria**.
+
+Every mitochondrion you awaken is new energy. Every stem cell you activate is new potential.
+
+## The mucilage: where the magic lives
+
+Not all cacaos are created equal.
+
+The fresh mucilage of elite Criollo cacao (what we cultivate at CAUA) has:
+- **10X more epicatechin** than commercial cacao
+- **Living enzymes** your gut can metabolize
+- **Chelated minerals** (magnesium, zinc, iron) your body absorbs directly
+
+When we talk about "nutrigenomics," we're talking about **how the molecular language of food impacts your genetic expression**.
+
+Regenerative cacao mucilage is a dictionary of cellular youth.
+
+## The proof is in your energy
+
+You don't have to believe in nutrigenomics.
+
+Your body will tell you the truth in 2 weeks:
+- Deeper sleep
+- More stable energy
+- Mental clarity without crashes
+- Improved physical endurance
+
+**That's not placebo. That's new mitochondria**.
+
+— David`,
     publishedAt: new Date(Date.now() - 86400000).toISOString(),
   },
   {
@@ -137,8 +237,11 @@ Tu cuerpo te dirá la verdad en 2 semanas:
     authorRole: 'Founder',
     authorBio: 'Co-Founder de CAUA · Investigador en polifenoles y salud cardiovascular',
     title: 'Polifenoles diméricos y salud cardiovascular',
+    titleEn: 'Dimeric Polyphenols and Cardiovascular Health',
     subtitle: 'Por qué los procantocianidinas del cacao protegen tu corazón',
+    subtitleEn: 'Why cacao procyanidins protect your heart',
     tags: ['polifenoles', 'cardiovascular', 'salud', 'procantocianidinas'],
+    tagsEn: ['polyphenols', 'cardiovascular', 'health', 'procyanidins'],
     coverEmoji: '❤️',
     linkedTech: 'mucilage-extract',
     bodyMd: `# Polifenoles diméricos y salud cardiovascular
@@ -199,6 +302,64 @@ No tienes que temer tu próximo chequeo cardiovascular si estás regenerando tu 
 En CAUA, esa votación tiene peso. Literal y químicamente.
 
 — Amaury`,
+    bodyMdEn: `# Dimeric Polyphenols and Cardiovascular Health
+
+## The silent disease: endothelial dysfunction
+
+50% of heart attacks occur in people with "normal" cholesterol.
+
+Why?
+
+Because cholesterol isn't the culprit. **It's endothelial inflammation** (the layer that lines your arteries).
+
+An inflamed endothelium is a highway with no signals: immune cells enter, plaques form, and the result is occlusion.
+
+## Dimeric polyphenols: endothelial defense
+
+Not all cacao polyphenols are created equal.
+
+**Dimeric polyphenols** (two-molecule procyanidins) have a unique property:
+
+1. **They cross the intestinal barrier** (most polyphenols don't)
+2. **They deposit in the endothelium** (they adhere directly to the cells that form it)
+3. **They reduce systemic inflammation** (they inhibit NF-kB, the pro-inflammatory transcription factor)
+4. **They restore endothelial function** (they improve vasodilation via nitric oxide)
+
+## Controlled fermentation: the key
+
+At CAUA, fermentation processes in Huila are not arbitrary.
+
+**They're designed to maximize dimeric polyphenols**:
+
+- Slow fermentation (5-7 days) preserves epicatechin
+- Controlled drying at 55°C maintains molecular structure
+- Storage without oxidation prevents dimer breakdown
+
+Commercial cacao loses 70% of its polyphenols in processing.
+
+**Ours retains 85%**.
+
+## The numbers: cardiovascular evidence
+
+Recent studies (2022-2024) show:
+
+- **Epicatechin + procyanidins**: blood pressure reduction of 7-12 mmHg
+- **Daily consumption**: reversal of endothelial dysfunction in 8-12 weeks
+- **Cardioprotective effect**: 20-30% reduction in cardiovascular risk
+
+That's comparable to some pharmaceuticals—without side effects.
+
+## Your heart is a daily choice
+
+You don't need statins if your endothelium is healthy.
+
+You don't need to fear your next cardiovascular checkup if you're regenerating your vasculature.
+
+**Every cacao bean you consume is a vote for your heart health**.
+
+At CAUA, that vote carries weight. Literally and chemically.
+
+— Amaury`,
     publishedAt: new Date(Date.now() - 172800000).toISOString(),
   },
   {
@@ -208,8 +369,11 @@ En CAUA, esa votación tiene peso. Literal y químicamente.
     authorRole: 'Guardian, Finca Santamaría',
     authorBio: 'Guardian de cacao · Finca Santamaría, Huila · 30 años de tradición familiar',
     title: 'Fermentaciones controladas en el Huila: el fino y aroma del Híbrido acriollado',
+    titleEn: 'Controlled Fermentation in Huila: The Fine Flavor and Aroma of Criollo Hybrid',
     subtitle: 'Cómo 7 días de fermentación despiertan el potencial de 3 generaciones de cacao',
+    subtitleEn: 'How 7 days of fermentation awakens the potential of 3 generations of cacao',
     tags: ['fermentación', 'huila', 'híbrido acriollado', 'aroma'],
+    tagsEn: ['fermentation', 'huila', 'criollo hybrid', 'aroma'],
     coverEmoji: '🌾',
     linkedTech: 'theobroma-brew',
     bodyMd: `# Fermentaciones controladas en el Huila: el fino y aroma del Híbrido acriollado
@@ -284,6 +448,80 @@ Es el que plantó mi abuelo.
 Es el que cuidó mi papá.
 
 Es el que mi hijo va a heredar.
+
+— Lucho, Finca Santamaría`,
+    bodyMdEn: `# Controlled Fermentation in Huila: The Fine Flavor and Aroma of Criollo Hybrid
+
+## Three generations in one week
+
+My grandfather planted the first Criollo Hybrid tree at Finca Santamaría in 1992.
+
+My father cared for it for 20 years.
+
+I inherited it with a mission: **to show the world what this cacao can become**.
+
+This isn't commercial cacao. It's the result of 30 years of selection, care, and respect for the tree.
+
+## Fermentation: where cacao decides who it will become
+
+Many people believe cacao quality comes from the tree.
+
+**It doesn't. It comes from fermentation**.
+
+For 7 days after harvest, fresh mucilage hosts bacteria and yeasts that transform the bean's molecules:
+
+- Aroma precursors become esters and aldehydes (floral, fruity notes)
+- Polyphenols partially oxidize (developing balanced astringency)
+- Sugars become complex acids (caramel, natural roasting)
+
+**Ferment for 3 days: flat cacao.**
+
+**Ferment for 5 days: ordinary cacao.**
+
+**Ferment for 7 days with controlled temperature (26-28°C): fine cacao.**
+
+## Our process: living temperature
+
+At Finca Santamaría, we don't use machines. We use 500 kg wooden boxes, covered with plantain leaves, monitored every 12 hours.
+
+During those 7 days:
+
+1. **Hour 0-24**: Saccharomyces yeast dominates (produces alcohol, aroma)
+2. **Hour 24-72**: Acetobacter acetic bacteria take over (create acids, floral notes)
+3. **Hour 72-168**: slow fermentation (stabilization, depth)
+
+**On day 7**, we open the box and smell the work of 3 generations.
+
+Red fruit notes, wildflowers, honey... that's Criollo Hybrid from Huila.
+
+## Drying: the final test
+
+Then comes drying at 55°C for 10-12 days. This is where many fine cacaos are lost:
+
+- Too-high temperatures (>60°C) destroy aroma
+- Too much time loses complexity
+
+We dry slowly, on wooden racks, turning 3 times a day.
+
+**It's manual work. It's tradition. It's why our cacao is never forgotten**.
+
+## The result: who we ferment for
+
+We don't sell cacao. We sell **7 days of controlled fermentation**.
+
+Every bean that reaches your cup is the result of:
+
+- 30 years of genetic selection (my family)
+- 7 days of chemical transformation (the bacteria)
+- 12 days of respected drying (our hands)
+
+**That's why at CAUA you won't find "good cacao." You'll find Criollo Hybrid. Period.**
+
+It's what my grandfather planted.
+
+It's what my father nurtured.
+
+It's what my son will inherit.
 
 — Lucho, Finca Santamaría`,
     publishedAt: new Date(Date.now() - 259200000).toISOString(),
