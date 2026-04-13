@@ -20,8 +20,12 @@ export interface TarotCard {
 export interface Guardian {
   name: string
   region: string
+  town: string
   power: string
-  heritage: string
+  varieties: string[]
+  companions: string[]
+  character: string
+  emoji: string
 }
 
 export interface UserProfile {

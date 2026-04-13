@@ -97,11 +97,51 @@ export const TAROT_CARDS: TarotCard[] = [
 ]
 
 export const GUARDIANS: Guardian[] = [
-  { name: 'Lucho',           region: 'Huila',    power: 'Escala + Complejidad Aromática',    heritage: 'Campesina'              },
-  { name: 'Familia Masmela', region: 'Arauca',   power: 'Floral Premium / Miel',             heritage: 'Indígena + Campesina'   },
-  { name: 'Rafael',          region: 'Arbeláez', power: 'Polifenoles + Estabilidad',         heritage: 'Campesina'              },
-  { name: 'Coy',             region: 'Meta',     power: 'Fruity / Wine-like',                heritage: 'Indígena'               },
-  { name: 'Ricardo',         region: 'Santander',power: 'Procesamiento + Cadena de Frío',    heritage: 'Campesina'              },
+  {
+    name: 'Lucho',
+    region: 'Huila', town: 'Hobo',
+    power: 'Escala · Complejidad Aromática · Mucílago fresco',
+    varieties: ['Híbrido Acriollado'],
+    companions: ['Plátano Dominico', 'Cedro Rosado', 'Guanábana'],
+    character: 'El Maestro de la Sombra. Lucho domina el arte del secado solar y la fermentación en cajones de madera. Su finca en Hobo es la más grande del colectivo — 4 ha de cacao bajo dosel de cedros.',
+    emoji: '🌳',
+  },
+  {
+    name: 'Marta',
+    region: 'Arauca', town: 'Arauca',
+    power: 'Fine-Flavor Floral · Notas de Miel y Frutas Tropicales',
+    varieties: ['Criollo Élite'],
+    companions: ['Plátano Hartón', 'Mango Tommy', 'Aguacate Hass'],
+    character: 'La Alquimista del Llano. Marta trabaja en el ecosistema más diverso del colectivo — la sabana inundable del Arauca le da a su cacao un perfil floral único, con notas de maracuyá y flor blanca.',
+    emoji: '🌸',
+  },
+  {
+    name: 'Rafael',
+    region: 'Cundinamarca', town: 'Arbeláez',
+    power: 'Polifenoles Premium · Estabilidad · Mango Técnificado',
+    varieties: ['Criollo Élite'],
+    companions: ['Plátano Dominico', 'Mango Tommy Técnico', 'Guayabo'],
+    character: 'El Ingeniero del Sabor. Rafael combina agronomía de precisión con tradición. Su programa de mangos Tommy técnificados genera ingresos mientras el cacao crece — modelo de diversificación pura.',
+    emoji: '🥭',
+  },
+  {
+    name: 'Fernando',
+    region: 'Meta', town: 'Guamal',
+    power: 'Fine-Flavor Frutal · Notas de Vino y Ciruela',
+    varieties: ['Criollo Élite'],
+    companions: ['Plátano Hartón', 'Nogal Cafetero', 'Guamo'],
+    character: 'El Explorador del Piedemonte. Fernando cultiva en la transición entre los Andes y el llano — el microclima de Guamal produce cacaos con un perfil frutal único, casi vinoso. Especialista en fermentaciones largas.',
+    emoji: '🍇',
+  },
+  {
+    name: 'Ricardo',
+    region: 'Santander', town: 'Landázuri',
+    power: 'Procesamiento · Cadena de Frío · Certificación',
+    varieties: ['Trinitario'],
+    companions: ['Plátano Dominico', 'Caucho', 'Cedro Negro'],
+    character: 'El Certificador. Ricardo opera el centro de acopio más avanzado del colectivo — con cuartos de frío, laboratorio de Brix y trazabilidad lote a lote. Su Trinitario en Landázuri tiene una robustez chocolatosa con acidez controlada.',
+    emoji: '⚗️',
+  },
 ]
 
 export const TAROT_EMOJIS = [

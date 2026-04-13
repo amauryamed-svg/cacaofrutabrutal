@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BRAND, FONTS, GUARDIANS } from '../utils/constants'
 import CauaButton from '../components/ui/CauaButton'
-import CauaLogo from '../components/ui/CauaLogo'
-import HubspotLeadForm from '../components/ui/HubspotLeadForm'
 import { useLang } from '../context/LangContext'
 import { makeT } from '../utils/i18n'
 
@@ -271,17 +269,20 @@ export default function Landing() {
                 fontSize: 11, lineHeight: 1.5, marginBottom: 12,
               }}>{g.power}</div>
 
-              <div style={{
-                display: 'inline-flex', alignItems: 'center', gap: 4,
-                padding: '3px 10px', borderRadius: 999,
-                background: `${BRAND.criollo}18`,
-                border: `1px solid ${BRAND.criollo}28`,
-              }}>
-                <span style={{
-                  fontFamily: FONTS.body, fontSize: 9,
-                  color: `${BRAND.criollo}cc`, letterSpacing: '0.04em',
-                }}>{g.heritage}</span>
-              </div>
+              {g.varieties.map(v => (
+                <div key={v} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  padding: '3px 10px', borderRadius: 999,
+                  background: `${BRAND.pod}10`,
+                  border: `1px solid ${BRAND.pod}25`,
+                  marginRight: 4,
+                }}>
+                  <span style={{
+                    fontFamily: FONTS.body, fontSize: 9,
+                    color: `${BRAND.pod}cc`, letterSpacing: '0.04em',
+                  }}>{v}</span>
+                </div>
+              ))}
             </div>
           ))}
         </div>
@@ -356,19 +357,26 @@ export default function Landing() {
             : '"From the Colombian genome to the world. Fruit. Brutal."'
           }
         </p>
-        <div style={{ marginTop: 24, display: 'inline-flex', justifyContent: 'center' }}>
-          <CauaLogo size={22} variant="secondary" />
-        </div>
       </div>
 
-      {/* ── Lead capture ── */}
-      <div style={{ padding: 'clamp(48px,8vw,80px) var(--space-page) clamp(64px,10vw,120px)', maxWidth: 480, margin: '0 auto' }}>
+      {/* ── Únete / CTA final ── */}
+      <div style={{
+        padding: 'clamp(48px,8vw,80px) var(--space-page) clamp(64px,10vw,120px)',
+        maxWidth: 480, margin: '0 auto', textAlign: 'center',
+      }}>
         <p style={{
           fontFamily: FONTS.serif, fontStyle: 'italic',
           color: BRAND.mazorca, fontSize: 13, letterSpacing: '0.2em',
-          marginBottom: 20, textAlign: 'center',
+          marginBottom: 28,
         }}>{T('land_join')}</p>
-        <HubspotLeadForm />
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <CauaButton size="lg" onClick={() => navigate('/adoptar')}>
+            {lang === 'es' ? 'Adoptar un Árbol' : 'Adopt a Tree'}
+          </CauaButton>
+          <CauaButton size="lg" variant="secondary" onClick={() => navigate('/fund')}>
+            {lang === 'es' ? 'Invertir' : 'Invest'}
+          </CauaButton>
+        </div>
       </div>
     </div>
   )
