@@ -7,6 +7,7 @@
 <link rel="canonical" href="https://cacaofrutabrutal.com">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.adobe.com/css2?font-family=adobe-acumin-pro" rel="stylesheet">
 <style>
 :root{
   --pod:#91A63B;--pod2:#A8BF4A;--pod3:#C5DB6A;
@@ -22,6 +23,7 @@
   --bdr-a:rgba(201,149,42,.22);
   --red:#C44040;--green:#44B870;
   --FD:'Cormorant Garamond',Georgia,serif;
+  --FA:'adobe-acumin-pro','DM Sans',system-ui,sans-serif;
   --FB:'DM Sans',system-ui,sans-serif;
   --FM:'Space Mono',monospace;
 }
@@ -75,7 +77,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .ptxt{font-family:var(--FM);font-size:.54rem;letter-spacing:.24em;color:var(--pod);text-transform:uppercase}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
 .hero-eye{font-family:var(--FM);font-size:.58rem;letter-spacing:.3em;color:var(--tx2);text-transform:uppercase;margin-bottom:18px;animation:up .9s .3s both}
-.hero-h1{font-family:var(--FD);font-size:clamp(3.2rem,9vw,7.5rem);font-weight:700;line-height:.88;letter-spacing:-.01em;color:var(--heirloom);margin-bottom:20px;animation:up .9s .42s both}
+.hero-h1{font-family:var(--FA);font-size:clamp(3.2rem,9vw,7.5rem);font-weight:700;line-height:.88;letter-spacing:-.01em;color:var(--heirloom);margin-bottom:20px;animation:up .9s .42s both}
 .hero-h1 .g{color:var(--pod2);font-style:italic}
 .hero-h1 .c{color:var(--cosmic2)}
 .hero-h1 .sub{display:block;font-family:var(--FM);font-size:clamp(.62rem,1.5vw,.9rem);font-weight:400;font-style:normal;letter-spacing:.18em;color:var(--tx2);margin-top:12px;line-height:1.55}
@@ -390,7 +392,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.4);box-shadow:0 
 .ph-hero-in{position:relative;z-index:2;max-width:940px;padding:108px 0 80px}
 .ph-pill{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--bdra);padding:8px 22px;margin-bottom:34px;animation:up .9s .1s both;background:rgba(145,166,59,.06)}
 .ph-hero-kicker{font-family:var(--FM);font-size:.58rem;letter-spacing:.3em;color:var(--tx2);text-transform:uppercase;margin-bottom:14px;animation:up .9s .32s both}
-.ph-hero-title{font-family:var(--FD);font-size:clamp(3.6rem,10.5vw,8rem);font-weight:700;line-height:.86;letter-spacing:-.02em;color:var(--heirloom);margin-bottom:18px;animation:up .9s .44s both}
+.ph-hero-title{font-family:var(--FA);font-size:clamp(3.6rem,10.5vw,8rem);font-weight:700;line-height:.86;letter-spacing:-.02em;color:var(--heirloom);margin-bottom:18px;animation:up .9s .44s both}
 .ph-g{color:var(--pod2);font-style:italic}.ph-c{color:var(--cosmic2)}
 .ph-hero-sub{display:block;font-family:var(--FM);font-size:clamp(.6rem,1.4vw,.84rem);font-weight:400;font-style:normal;letter-spacing:.18em;color:var(--tx2);margin-top:12px;line-height:1.5}
 .ph-hero-lead{font-size:.98rem;color:var(--tx2);max-width:660px;margin:0 auto 38px;line-height:1.84;animation:up .9s .56s both}
