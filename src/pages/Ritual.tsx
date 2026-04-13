@@ -268,94 +268,92 @@ export default function Ritual() {
                   }}>{translatedCard.advice}</p>
                 </div>
               </div>
+
+              {/* Meditation invite */}
+              <div className="animate-fade-in-up" style={{
+                background: `linear-gradient(135deg, ${BRAND.criollo}12, ${BRAND.muisca}10)`,
+                border: `1px solid ${BRAND.criollo}25`,
+                borderRadius: 14, padding: '20px 24px', width: '100%', textAlign: 'center',
+              }}>
+                <div style={{
+                  fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+                  color: BRAND.heirloom, fontSize: 13, letterSpacing: '0.1em', marginBottom: 6,
+                }}>{T('rit_ceremony')}</div>
+                <p style={{
+                  fontFamily: FONTS.body, color: `${BRAND.heirloom}66`,
+                  fontSize: 12, margin: '0 0 14px', lineHeight: 1.5,
+                }}>
+                  {T('rit_cer_desc')}
+                </p>
+                <button onClick={() => window.open('https://open.spotify.com/playlist/0fu5LFh6NsOQguG6kT0PQN', '_blank')} style={{
+                  background: 'transparent',
+                  border: `1px solid ${BRAND.criollo}55`,
+                  color: `${BRAND.heirloom}cc`, padding: '10px 22px', borderRadius: 999,
+                  cursor: 'pointer',
+                  fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+                  fontSize: 11, letterSpacing: '0.12em',
+                }}>
+                  {T('rit_spotify')}
+                </button>
+              </div>
+
+              {/* Action row */}
+              <div style={{ display: 'flex', gap: 10, width: '100%' }}>
+                <button onClick={() => {
+                  const translatedCard = getTranslatedCard(selectedCard)
+                  const text = `${T('rit_share_text')}: ${translatedCard.name} — "${translatedCard.meaning}" · CAUA Ritual`
+                  if (navigator.share) navigator.share({ text })
+                  else navigator.clipboard.writeText(text)
+                  const newShare = shareCount + 1
+                  setShareCount(newShare)
+                  awardTokens('blog_share')
+                  if (profile?.email) {
+                    hsUpdateRitual({ email: profile.email, ritual_share_count: String(newShare) })
+                  }
+                }} style={{
+                  flex: 1, padding: '12px', borderRadius: 10,
+                  background: '#132B1C', border: `1px solid ${BRAND.amazon}66`,
+                  color: `${BRAND.heirloom}cc`, cursor: 'pointer',
+                  fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+                  fontSize: 11, letterSpacing: '0.1em',
+                }}>{T('rit_share')}</button>
+
+                <button onClick={() => { setPhase('intro'); setCard(null) }} style={{
+                  flex: 1, padding: '12px', borderRadius: 10,
+                  background: `${BRAND.pod}18`, border: `1px solid ${BRAND.pod}40`,
+                  color: BRAND.pod, cursor: 'pointer',
+                  fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+                  fontSize: 11, letterSpacing: '0.1em',
+                }}>{T('rit_new_draw')}</button>
+              </div>
+
+              {/* Upsell — subtle */}
+              <div style={{
+                padding: '16px 20px', borderRadius: 12, width: '100%',
+                background: '#0A1A0C', border: `1px solid ${BRAND.amazon}33`,
+                display: 'flex', alignItems: 'center', gap: 12,
+              }}>
+                <span style={{ fontSize: 22 }}>🫘</span>
+                <div>
+                  <div style={{
+                    fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
+                    color: BRAND.heirloom, fontSize: 12, letterSpacing: '0.08em',
+                  }}>{T('rit_upsell')}</div>
+                  <button
+                    onClick={() => navigate('/marketplace')}
+                    style={{
+                      background: 'none', border: 'none', padding: 0,
+                      fontFamily: FONTS.body, fontSize: 11,
+                      color: BRAND.pod, cursor: 'pointer', textDecoration: 'underline',
+                    }}
+                  >
+                    {T('rit_upsell_cta')}
+                  </button>
+                </div>
+              </div>
             </>
           )
         })()}
-
-            {/* Meditation invite */}
-            <div className="animate-fade-in-up" style={{
-              background: `linear-gradient(135deg, ${BRAND.criollo}12, ${BRAND.muisca}10)`,
-              border: `1px solid ${BRAND.criollo}25`,
-              borderRadius: 14, padding: '20px 24px', width: '100%', textAlign: 'center',
-            }}>
-              <div style={{
-                fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
-                color: BRAND.heirloom, fontSize: 13, letterSpacing: '0.1em', marginBottom: 6,
-              }}>{T('rit_ceremony')}</div>
-              <p style={{
-                fontFamily: FONTS.body, color: `${BRAND.heirloom}66`,
-                fontSize: 12, margin: '0 0 14px', lineHeight: 1.5,
-              }}>
-                {T('rit_cer_desc')}
-              </p>
-              <button onClick={() => window.open('https://open.spotify.com/playlist/0fu5LFh6NsOQguG6kT0PQN', '_blank')} style={{
-                background: 'transparent',
-                border: `1px solid ${BRAND.criollo}55`,
-                color: `${BRAND.heirloom}cc`, padding: '10px 22px', borderRadius: 999,
-                cursor: 'pointer',
-                fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
-                fontSize: 11, letterSpacing: '0.12em',
-              }}>
-                {T('rit_spotify')}
-              </button>
-            </div>
-
-            {/* Action row */}
-            <div style={{ display: 'flex', gap: 10, width: '100%' }}>
-              <button onClick={() => {
-                const translatedCard = getTranslatedCard(selectedCard)
-                const text = `${T('rit_share_text')}: ${translatedCard.name} — "${translatedCard.meaning}" · CAUA Ritual`
-                if (navigator.share) navigator.share({ text })
-                else navigator.clipboard.writeText(text)
-                const newShare = shareCount + 1
-                setShareCount(newShare)
-                awardTokens('blog_share')
-                if (profile?.email) {
-                  hsUpdateRitual({ email: profile.email, ritual_share_count: String(newShare) })
-                }
-              }} style={{
-                flex: 1, padding: '12px', borderRadius: 10,
-                background: '#132B1C', border: `1px solid ${BRAND.amazon}66`,
-                color: `${BRAND.heirloom}cc`, cursor: 'pointer',
-                fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
-                fontSize: 11, letterSpacing: '0.1em',
-              }}>{T('rit_share')}</button>
-
-              <button onClick={() => { setPhase('intro'); setCard(null) }} style={{
-                flex: 1, padding: '12px', borderRadius: 10,
-                background: `${BRAND.pod}18`, border: `1px solid ${BRAND.pod}40`,
-                color: BRAND.pod, cursor: 'pointer',
-                fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
-                fontSize: 11, letterSpacing: '0.1em',
-              }}>{T('rit_new_draw')}</button>
-            </div>
-
-            {/* Upsell — subtle */}
-            <div style={{
-              padding: '16px 20px', borderRadius: 12, width: '100%',
-              background: '#0A1A0C', border: `1px solid ${BRAND.amazon}33`,
-              display: 'flex', alignItems: 'center', gap: 12,
-            }}>
-              <span style={{ fontSize: 22 }}>🫘</span>
-              <div>
-                <div style={{
-                  fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
-                  color: BRAND.heirloom, fontSize: 12, letterSpacing: '0.08em',
-                }}>{T('rit_upsell')}</div>
-                <button
-                  onClick={() => navigate('/marketplace')}
-                  style={{
-                    background: 'none', border: 'none', padding: 0,
-                    fontFamily: FONTS.body, fontSize: 11,
-                    color: BRAND.pod, cursor: 'pointer', textDecoration: 'underline',
-                  }}
-                >
-                  {T('rit_upsell_cta')}
-                </button>
-              </div>
-            </div>
-          </>
-        )}
       </div>
     </div>
   )
