@@ -164,7 +164,7 @@ export default function Landing() {
 
           {/* Primary CTAs */}
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 20 }}>
-            <CauaButton size="lg" onClick={() => navigate('/marketplace')}>
+            <CauaButton size="lg" onClick={() => navigate('/adoptar')}>
               {T('land_cta1')}
             </CauaButton>
             <CauaButton size="lg" variant="secondary" onClick={() => navigate('/ritual')}>

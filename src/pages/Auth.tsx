@@ -234,15 +234,7 @@ export default function Auth() {
               {loading ? '…' : `${T('auth_continue')} Google`}
             </button>
 
-            {/* Forgot password link */}
-            <div style={{ textAlign: 'center', marginTop: 8 }}>
-              <span
-                onClick={() => { setMode('forgot'); setError(''); setSuccess('') }}
-                style={{ fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}44`, cursor: 'pointer' }}
-              >
-                {es ? '¿Olvidaste tu contraseña?' : 'Forgot your password?'}
-              </span>
-            </div>
+
           </>
         )}
 
