@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion'
+import { useState } from 'react'
+import { motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion'
 import { BRAND, FONTS } from '../../utils/constants'
 
 interface Guardian {

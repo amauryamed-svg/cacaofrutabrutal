@@ -57,7 +57,7 @@ export default function CauaGotchi({ health, moisture, sunlight, stageText, tree
         }}
       />
 
-      <div style={{ display: 'flex', flexDirection: 'column', md: { flexDirection: 'row' }, gap: 32 }}>
+      <div style={{ display: 'flex', flexDirection: 'row', gap: 32, flexWrap: 'wrap' }}>
 
         {/* Console Screen (Avatar side) */}
         <div

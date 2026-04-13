@@ -46,7 +46,7 @@ export default function Ritual() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await user.getSession())?.access_token}`,
+          'Authorization': `Bearer ${(await import('../lib/supabase').then(m => m.supabase.auth.getSession())).data.session?.access_token}`,
         },
         body: JSON.stringify({ event_type: eventType, amount }),
       })

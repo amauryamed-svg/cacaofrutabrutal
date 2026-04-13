@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { BRAND, FONTS, ROLE_CONFIG } from '../../utils/constants'
 import { supabase } from '../../lib/supabase'
 import PaymentSelector from './PaymentSelector'
-import type { Technology, Mvp, PaymentMethod, Currency, InvestMode, UserProfile } from '../../types/fund.types'
+import type { Technology, Mvp, PaymentMethod, Currency, InvestMode } from '../../types/fund.types'
+import type { UserProfile } from '../../lib/database.types'
 
 interface Props {
   technology: Technology

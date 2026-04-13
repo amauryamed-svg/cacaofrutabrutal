@@ -89,6 +89,7 @@ export default function Adoptar() {
           selectedGuardian: null,
           selectedVariety: null,
           tokenReward: null,
+          cardsLeft: GUARDIANS.map((_, i) => i)
         })
       }, 3000)
     } catch (err) {

@@ -196,7 +196,7 @@ export default function BlogPost() {
         }}>
           <span>{dateStr}</span>
           <span>·</span>
-          <span>{Math.ceil(body.length / 200)} min {lang === 'es' ? 'de lectura' : 'read'}</span>
+          <span>{Math.ceil((body || '').length / 200)} min {lang === 'es' ? 'de lectura' : 'read'}</span>
         </div>
 
         {/* Tags */}
@@ -227,7 +227,7 @@ export default function BlogPost() {
           lineHeight: 1.8,
           color: BRAND.heirloom,
         }}>
-          {body.split('\n').map((line, i) => {
+          {(body || '').split('\n').map((line, i) => {
             if (line.startsWith('# ')) {
               return (
                 <h2

@@ -376,7 +376,7 @@ function EditUserPanel({ user, onClose, onSave }: { user: UserProfile; onClose: 
             <input
               type="text"
               value={formData.region || ''}
-              onChange={(e) => setFormData({ ...formData, region: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, region: e.target.value as "EU" | "US" | "CO" | "OTHER" })}
               style={{ width: '100%', padding: '8px 12px', borderRadius: 8, background: BRAND.bgCard, border: `1px solid ${BRAND.amazon}44`, color: BRAND.heirloom, fontFamily: FONTS.body, fontSize: 12 }}
             />
           </div>

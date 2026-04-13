@@ -4,7 +4,8 @@ import SupplyChainFlow from './SupplyChainFlow'
 import FundingProgress from './FundingProgress'
 import MvpCard from './MvpCard'
 import InvestModal from './InvestModal'
-import type { Technology, Mvp, InvestMode, UserProfile } from '../../types/fund.types'
+import type { Technology, Mvp, InvestMode } from '../../types/fund.types'
+import type { UserProfile } from '../../lib/database.types'
 
 const CATEGORY_COLORS: Record<string, string> = {
   extract:    BRAND.pod,
