@@ -146,7 +146,7 @@ function MobileDrawer({
                 background: `linear-gradient(135deg, ${BRAND.criollo}, ${BRAND.theobroma})`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 13, fontWeight: 700, color: BRAND.heirloom,
-              }}>{user[0].toUpperCase()}</div>
+              }}>{(user && user.length > 0) ? user[0].toUpperCase() : 'U'}</div>
               <button onClick={() => { onLogout(); onClose() }} style={{
                 background: 'none', border: 'none', color: `${BRAND.heirloom}66`,
                 fontSize: 12, cursor: 'pointer', fontFamily: FONTS.body,
@@ -264,7 +264,7 @@ export default function NavBar() {
                   background: `linear-gradient(135deg, ${BRAND.criollo}, ${BRAND.theobroma})`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 12, fontWeight: 700, color: BRAND.heirloom,
-                }}>{user[0].toUpperCase()}</div>
+                }}>{(user && user.length > 0) ? user[0].toUpperCase() : 'U'}</div>
                 <button onClick={() => setUser(null)} style={{
                   background: 'none', border: 'none', color: `${BRAND.heirloom}66`,
                   fontSize: 10, cursor: 'pointer',

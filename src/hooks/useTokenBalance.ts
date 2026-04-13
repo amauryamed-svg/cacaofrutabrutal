@@ -9,7 +9,7 @@ interface TokenBalance {
 }
 
 export function useTokenBalance(): TokenBalance & { loading: boolean; error: string | null } {
-  const { user } = useAuth()
+  const { userId } = useAuth()
   const [balance, setBalance] = useState<TokenBalance>({
     beans: 0,
     mazorcas: 0,
@@ -19,7 +19,7 @@ export function useTokenBalance(): TokenBalance & { loading: boolean; error: str
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!user) {
+    if (!userId) {
       setLoading(false)
       return
     }
@@ -29,7 +29,7 @@ export function useTokenBalance(): TokenBalance & { loading: boolean; error: str
         const { data, error: err } = await supabase
           .from('user_profiles')
           .select('beans_balance, mazorcas_balance, beans_lifetime')
-          .eq('user_id', user)
+          .eq('user_id', userId)
           .single()
 
         if (err) throw err
@@ -51,7 +51,7 @@ export function useTokenBalance(): TokenBalance & { loading: boolean; error: str
     // Poll for updates every 5 seconds
     const interval = setInterval(fetchBalance, 5000)
     return () => clearInterval(interval)
-  }, [user])
+  }, [userId])
 
   return { ...balance, loading, error }
 }

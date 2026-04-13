@@ -8,6 +8,7 @@ const SUPER_ADMINS = ['amauryamed@gmail.com', 'amaury@cauaculture.co']
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface AuthState {
   user:       string | null
+  userId:     string | null
   email:      string | null        // raw email — used for admin CRM guard
   isAdmin:    boolean              // true only for SUPER_ADMIN
   profile:    UserProfile | null
@@ -17,7 +18,7 @@ interface AuthState {
 }
 
 const AuthContext = createContext<AuthState>({
-  user: null, email: null, isAdmin: false,
+  user: null, userId: null, email: null, isAdmin: false,
   profile: null, loading: true,
   setUser: () => {}, signOut: async () => {},
 })
@@ -27,6 +28,7 @@ export const useAuth = () => useContext(AuthContext)
 // ── Provider ──────────────────────────────────────────────────────────────────
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user,    setUserState] = useState<string | null>(null)
+  const [userId,  setUserId]    = useState<string | null>(null)
   const [email,   setEmail]     = useState<string | null>(null)
   const [profile, setProfile]   = useState<UserProfile | null>(null)
   const [loading, setLoading]   = useState(true)
@@ -65,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const display = session.user.user_metadata?.full_name
           ?? session.user.email?.split('@')[0] ?? 'usuario'
         setUserState(display)
+        setUserId(session.user.id)
         setEmail(session.user.email ?? null)
         fetchProfile(session.user.id, session.user.email ?? '')
       }
@@ -77,10 +80,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const display = session.user.user_metadata?.full_name
             ?? session.user.email?.split('@')[0] ?? 'usuario'
           setUserState(display)
+          setUserId(session.user.id)
           setEmail(session.user.email ?? null)
           fetchProfile(session.user.id, session.user.email ?? '')
         } else {
           setUserState(null)
+          setUserId(null)
           setEmail(null)
           setProfile(null)
         }
@@ -94,12 +99,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     await supabase.auth.signOut()
     setUserState(null)
+    setUserId(null)
     setEmail(null)
     setProfile(null)
   }
 
   return (
-    <AuthContext.Provider value={{ user, email, isAdmin, profile, loading, setUser, signOut }}>
+    <AuthContext.Provider value={{ user, userId, email, isAdmin, profile, loading, setUser, signOut }}>
       {children}
     </AuthContext.Provider>
   )
