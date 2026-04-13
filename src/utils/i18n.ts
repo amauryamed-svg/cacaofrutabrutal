@@ -6,7 +6,7 @@ const translations = {
   nav_market:    { es: 'MERCADO',  en: 'MARKET' },
   nav_blog:      { es: 'BLOG',     en: 'BLOG'   },
   nav_ritual:    { es: 'RITUAL',   en: 'RITUAL' },
-  nav_adoptar:   { es: 'GENÉTICA',  en: 'GENETICS'  },
+  nav_adoptar:   { es: 'ADOPTAR',   en: 'ADOPT'     },
   nav_impact:    { es: 'IMPACTO',  en: 'IMPACT' },
   nav_enter:     { es: 'ENTRAR',   en: 'SIGN IN' },
   nav_exit:      { es: 'Salir',    en: 'Sign out' },
