@@ -432,7 +432,10 @@ export default function ProposalAndreaRojas() {
             justifyContent: 'space-between',
             alignItems: 'flex-start',
             gap: 40,
-          }}
+            position: 'static',
+            top: 'auto',
+            zIndex: 'auto',
+          } as React.CSSProperties}
         >
           <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
             {/* Logo */}
