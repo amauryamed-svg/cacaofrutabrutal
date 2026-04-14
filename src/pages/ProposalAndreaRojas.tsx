@@ -444,16 +444,19 @@ export default function ProposalAndreaRojas() {
               style={{
                 width: 60,
                 height: 60,
-                background: BRAND.heirloom,
+                background: BRAND.amazon,
                 borderRadius: 4,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: 40,
                 flexShrink: 0,
               }}
             >
-              🫘
+              <img
+                src="/caua-logo-white.png"
+                alt="CAUA Logo"
+                style={{ width: '90%', height: '90%', objectFit: 'contain' }}
+              />
             </div>
             {/* Company Info */}
             <div style={{ fontSize: 14, lineHeight: 1.6 }}>
