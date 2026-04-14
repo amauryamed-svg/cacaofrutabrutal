@@ -186,7 +186,6 @@ export default function Catacion() {
       const message = err instanceof Error ? err.message : 'Error desconocido'
       setFormError(message)
       setFormPhase('error')
-      console.error('Form submission error:', err)
     }
   }
 
