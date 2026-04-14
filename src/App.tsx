@@ -21,6 +21,7 @@ import Dashboard         from './pages/Dashboard'
 import Fund              from './pages/Fund'
 import AdminCRM          from './pages/AdminCRM'
 import CincoTiemposProposal from './pages/CincoTiemposProposal'
+import ProposalAndreaRojas from './pages/ProposalAndreaRojas'
 import { hsTrackPage }   from './lib/hubspot'
 
 function AppShell() {
@@ -45,6 +46,7 @@ function AppShell() {
         <Route path="/blog"       element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/cinco-tiempos" element={<CincoTiemposProposal />} />
+        <Route path="/cotizacion/andrea-rojas" element={<ProposalAndreaRojas />} />
 
         {/* Protected — require registration */}
         <Route path="/marketplace" element={<AuthGate><Marketplace /></AuthGate>} />
