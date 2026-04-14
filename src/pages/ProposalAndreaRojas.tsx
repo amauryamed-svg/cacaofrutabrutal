@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase'
 import { hsTrackEvent } from '../lib/hubspotTracking'
 import { BRAND, FONTS } from '../utils/constants'
 
-const ALLOWED_EMAIL = 'amauryamed@gmail.com' // TEST MODE - cambiar a 'andrea.rojas@cesa.edu.co' después
+const ALLOWED_EMAIL = 'andrea.rojas@cesa.edu.co'
 
 // ============================================================================
 // HOOK: useReveal — Scroll-reveal con IntersectionObserver
