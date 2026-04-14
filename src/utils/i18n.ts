@@ -18,7 +18,7 @@ const translations = {
                    en: 'Choose your genetic class. Follow its growth. Receive its harvest.' },
   land_sub2:     { es: 'Fine-flavor colombiano rumbo a Whole Foods Austin.',
                    en: 'Colombian fine-flavor cacao, on its way to Whole Foods Austin.' },
-  land_cta1:     { es: 'SELECCIONAR CLASE GENÉTICA', en: 'CHOOSE GENETIC CLASS'    },
+  land_cta1:     { es: 'ADOPTA UN ÁRBOL', en: 'ADOPT A TREE'    },
   land_cta2:     { es: 'RITUAL DEL DÍA',   en: 'DAILY RITUAL'    },
   land_cta3:     { es: '↗ SIEMBRA',        en: '↗ SIEMBRA'       },
   land_petals:   { es: 'Los 5 Guardianes del Cacao Criollo',
