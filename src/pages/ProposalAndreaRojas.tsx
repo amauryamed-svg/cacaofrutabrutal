@@ -479,6 +479,7 @@ export default function ProposalAndreaRojas() {
             <div>Catación Cinco Tiempos</div>
             <div style={{ marginTop: 8, opacity: 0.7 }}>Válida 30 días</div>
           </div>
+          </div>
         </header>
 
         {/* CONTENIDO */}
