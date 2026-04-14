@@ -420,23 +420,29 @@ export default function ProposalAndreaRojas() {
           background: BRAND.bgDeep,
           color: BRAND.heirloom,
           minHeight: '100vh',
+          overflow: 'visible',
+          paddingTop: '60px',
         }}
       >
         {/* MEMBRETE */}
-        <div
+        <header
           style={{
             background: `linear-gradient(135deg, ${BRAND.amazon} 0%, #0f1e19 100%)`,
             padding: '40px',
             borderBottom: `8px solid ${BRAND.mazorca}`,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            gap: 40,
-            position: 'static',
-            top: 'auto',
-            zIndex: 'auto',
-          } as React.CSSProperties}
+            display: 'block',
+            position: 'relative',
+            zIndex: 1,
+          }}
         >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              gap: 40,
+            }}
+          >
           <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
             {/* Logo */}
             <div
@@ -473,15 +479,17 @@ export default function ProposalAndreaRojas() {
             <div>Catación Cinco Tiempos</div>
             <div style={{ marginTop: 8, opacity: 0.7 }}>Válida 30 días</div>
           </div>
-        </div>
+        </header>
 
         {/* CONTENIDO */}
-        <div
+        <main
           style={{
             maxWidth: 1000,
             margin: '0 auto',
             padding: '50px 40px',
             width: '100%',
+            position: 'relative',
+            zIndex: 0,
           }}
         >
           {/* Titulo */}
@@ -887,10 +895,10 @@ export default function ProposalAndreaRojas() {
               </a>
             </div>
           </RevealSection>
-        </div>
+        </main>
 
         {/* FOOTER */}
-        <div
+        <footer
           style={{
             background: `linear-gradient(135deg, ${BRAND.amazon} 0%, #0f1e19 100%)`,
             borderTop: `1px solid ${BRAND.pod}`,
@@ -906,7 +914,7 @@ export default function ProposalAndreaRojas() {
           <div style={{ fontSize: 10, opacity: 0.75 }}>
             📧 amaury@cauaculture.co · 📱 +57 310 222 7848 · 🌐 www.cacaofrutabrutal.com
           </div>
-        </div>
+        </footer>
       </div>
     )
   }
