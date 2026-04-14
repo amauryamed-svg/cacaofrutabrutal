@@ -1,7 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { BRAND, FONTS } from '../utils/constants'
 import { useLang } from '../context/LangContext'
-import { makeT } from '../utils/i18n'
 import { useBlogPostBySlug } from '../hooks/useBlogPosts'
 import AuthorChip from '../components/blog/AuthorChip'
 import BlogTagPill from '../components/blog/BlogTagPill'
@@ -10,7 +9,6 @@ export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
   const { lang, setLang } = useLang()
-  const T = makeT(lang)
   const { post, loading } = useBlogPostBySlug(slug || '')
 
   const title = lang === 'en' ? post?.titleEn || post?.title : post?.title

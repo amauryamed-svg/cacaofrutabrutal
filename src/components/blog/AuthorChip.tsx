@@ -6,7 +6,7 @@ interface Props {
   bio?: string
 }
 
-export default function AuthorChip({ name, role, bio }: Props) {
+export default function AuthorChip({ name, role }: Props) {
   const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 
   return (

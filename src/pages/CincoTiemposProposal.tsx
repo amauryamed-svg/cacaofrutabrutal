@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import LogoCaua from '../assets/logo-caua.svg';
 
 export default function CincoTiemposProposal() {

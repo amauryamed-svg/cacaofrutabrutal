@@ -9,7 +9,7 @@ import { Component, type ErrorInfo, type ReactNode } from 'react'
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null }
   static getDerivedStateFromError(error: Error) { return { error } }
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) { /* error caught */ }
+  componentDidCatch(_error: Error, _errorInfo: ErrorInfo) { /* error caught */ }
   render() {
     if (this.state.error) {
       return (

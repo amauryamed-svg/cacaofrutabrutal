@@ -1,14 +1,12 @@
 import { useState } from 'react'
 import { BRAND, FONTS } from '../utils/constants'
 import { useLang } from '../context/LangContext'
-import { makeT } from '../utils/i18n'
 import { useBlogPosts } from '../hooks/useBlogPosts'
 import BlogHero from '../components/blog/BlogHero'
 import BlogCard from '../components/blog/BlogCard'
 
 export default function Blog() {
-  const { lang } = useLang()
-  const T = makeT(lang)
+  const { lang: _lang } = useLang()
   const { posts, loading } = useBlogPosts()
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
 

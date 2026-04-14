@@ -55,10 +55,10 @@ export function CacaoTreeCard({
         gap: '1rem',
         transition: 'transform 0.2s, box-shadow 0.2s',
       }}
-      onMouseEnter={e => {
+      onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
         (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)'
       }}
-      onMouseLeave={e => {
+      onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
         (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
       }}
     >

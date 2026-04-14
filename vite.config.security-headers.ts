@@ -61,7 +61,7 @@ export const securityHeaders = [
 // Middleware para Vite dev server
 export function securityHeadersMiddleware(server: any) {
   return () => {
-    server.middlewares.use((req: any, res: any, next: any) => {
+    server.middlewares.use((_req: any, res: any, next: any) => {
       securityHeaders.forEach(header => {
         res.setHeader(header.key, header.value);
       });

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BRAND, FONTS, ROLE_CONFIG } from '../../utils/constants'
+import { BRAND, FONTS } from '../../utils/constants'
 import { supabase } from '../../lib/supabase'
 import PaymentSelector from './PaymentSelector'
 import type { Technology, Mvp, PaymentMethod, Currency, InvestMode } from '../../types/fund.types'

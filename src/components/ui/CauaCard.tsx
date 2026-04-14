@@ -15,12 +15,16 @@ interface Props {
   glow?: Glow
   style?: CSSProperties
   onClick?: () => void
+  onMouseEnter?: (e: React.MouseEvent<HTMLDivElement>) => void
+  onMouseLeave?: (e: React.MouseEvent<HTMLDivElement>) => void
 }
 
-export default function CauaCard({ children, glow = 'none', style, onClick }: Props) {
+export default function CauaCard({ children, glow = 'none', style, onClick, onMouseEnter, onMouseLeave }: Props) {
   return (
     <div
       onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       style={{
         background: '#132B1C',
         border: `1px solid ${BRAND.amazon}66`,

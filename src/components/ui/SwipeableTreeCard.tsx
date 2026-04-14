@@ -14,7 +14,6 @@ export default function SwipeableTreeCard({
   guardian,
   onSwipeRight,
   onSwipeLeft,
-  imageIndex
 }: SwipeableTreeCardProps) {
   const [exitX, setExitX] = useState<number | string>(0)
   const x = useMotionValue(0)
@@ -28,7 +27,7 @@ export default function SwipeableTreeCard({
   const likeOpacity = useTransform(x, [20, 100], [0, 1])
   const nopeOpacity = useTransform(x, [-20, -100], [0, 1])
 
-  function handleDragEnd(event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) {
+  function handleDragEnd(_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) {
     if (info.offset.x > 100) {
       setExitX(250)
       setTimeout(() => onSwipeRight(), 300)
