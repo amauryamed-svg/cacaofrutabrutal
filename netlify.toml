@@ -2,6 +2,10 @@
 command = "npm run build"
 publish = "dist"
 
+[build.environment]
+VITE_SUPABASE_URL = "https://kjygovuiphbxcdxeduco.supabase.co"
+VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqeWdvdnVpcGhieGNkeGVkdWNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2ODA0NzgsImV4cCI6MjA5MTI1NjQ3OH0.WMlfCLVssh6pAos2vGSx_8aEiOTxb8CUQqG6Zx9npqU"
+
 # SPA routing — rewrite all 404s to index.html
 [[redirects]]
 from = "/*"
