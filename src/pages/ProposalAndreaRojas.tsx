@@ -434,6 +434,8 @@ export default function ProposalAndreaRojas() {
             justifyContent: 'space-between',
             alignItems: 'flex-start',
             gap: 40,
+            position: 'relative',
+            flexShrink: 0,
           }}
         >
           <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
