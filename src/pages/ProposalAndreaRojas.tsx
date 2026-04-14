@@ -420,8 +420,6 @@ export default function ProposalAndreaRojas() {
           background: BRAND.bgDeep,
           color: BRAND.heirloom,
           minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
         }}
       >
         {/* MEMBRETE */}
@@ -434,8 +432,6 @@ export default function ProposalAndreaRojas() {
             justifyContent: 'space-between',
             alignItems: 'flex-start',
             gap: 40,
-            position: 'relative',
-            flexShrink: 0,
           }}
         >
           <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
@@ -483,7 +479,6 @@ export default function ProposalAndreaRojas() {
             margin: '0 auto',
             padding: '50px 40px',
             width: '100%',
-            flex: 1,
           }}
         >
           {/* Titulo */}
