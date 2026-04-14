@@ -4,7 +4,7 @@
     "VITE_SUPABASE_ANON_KEY": "@vite_supabase_anon_key"
   },
   "redirects": [
-    { "source": "/catacion", "destination": "/catacion.html", "permanent": false }
+    { "source": "/catacion", "destination": "/catacion/", "permanent": false }
   ],
   "headers": [
     {
