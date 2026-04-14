@@ -894,6 +894,37 @@ export default function ProposalAndreaRojas() {
               >
                 📧 Escribir correo
               </a>
+              <button
+                onClick={() => {
+                  const link = document.createElement('a')
+                  link.href = '/propuesta-andrea-rojas.html'
+                  link.download = 'Propuesta-Cinco-Tiempos-de-Cacao.pdf'
+                  link.click()
+                }}
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: 8,
+                  background: `${BRAND.pod}20`,
+                  color: BRAND.pod,
+                  fontFamily: FONTS.display,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  border: `1px solid ${BRAND.pod}60`,
+                  transition: 'all 0.3s ease',
+                  cursor: 'pointer',
+                  display: 'inline-block',
+                }}
+                onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
+                  const el = e.currentTarget
+                  el.style.transform = 'scale(1.02)'
+                }}
+                onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
+                  const el = e.currentTarget
+                  el.style.transform = 'scale(1)'
+                }}
+              >
+                📄 Descargar PDF
+              </button>
             </div>
           </RevealSection>
         </main>
