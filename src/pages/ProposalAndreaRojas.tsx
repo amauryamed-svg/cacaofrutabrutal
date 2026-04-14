@@ -420,7 +420,8 @@ export default function ProposalAndreaRojas() {
           background: BRAND.bgDeep,
           color: BRAND.heirloom,
           minHeight: '100vh',
-          paddingBottom: 100,
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         {/* MEMBRETE */}
@@ -476,6 +477,8 @@ export default function ProposalAndreaRojas() {
             maxWidth: 1000,
             margin: '0 auto',
             padding: '50px 40px',
+            width: '100%',
+            flex: 1,
           }}
         >
           {/* Titulo */}
