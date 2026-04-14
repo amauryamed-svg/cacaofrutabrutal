@@ -1,0 +1,22 @@
+🔥 CÓMO GENERAR EL PDF EN 10 SEGUNDOS:
+
+1. Abre: CincoTiemposCacao.html (doble click)
+   O: Arrastra el archivo a un navegador
+
+2. Ctrl+P (Windows) o ⌘+P (Mac)
+
+3. En el print dialog:
+   - Destino: "Guardar como PDF"
+   - Márgenes: "Ninguno"
+   - Escala: "100%"
+   - ✓ Fondos gráficos (activado)
+
+4. Click "Guardar"
+
+✅ PDF A4 listo: Cotizacion_Catacion_Caua.pdf
+
+---
+Si la página /catacion no carga:
+npm run dev
+Abre http://localhost:3002/catacion
+Ctrl+P → PDF
