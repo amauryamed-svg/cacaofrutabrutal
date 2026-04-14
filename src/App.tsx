@@ -19,6 +19,8 @@ import TreeDetail        from './pages/TreeDetail'
 import Dashboard         from './pages/Dashboard'
 import Fund              from './pages/Fund'
 import AdminCRM          from './pages/AdminCRM'
+import CincoTiemposProposal from './pages/CincoTiemposProposal'
+import Catacion          from './pages/Catacion'
 import { hsTrackPage }   from './lib/hubspot'
 
 function AppShell() {
@@ -42,6 +44,8 @@ function AppShell() {
         <Route path="/auth"       element={<Auth />} />
         <Route path="/blog"       element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
+        <Route path="/cinco-tiempos" element={<CincoTiemposProposal />} />
+        <Route path="/catacion"   element={<Catacion />} />
 
         {/* Protected — require registration */}
         <Route path="/marketplace" element={<AuthGate><Marketplace /></AuthGate>} />

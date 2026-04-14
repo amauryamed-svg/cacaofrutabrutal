@@ -1,0 +1,12 @@
+<svg viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg">
+  <!-- Dark background -->
+  <rect width="200" height="80" fill="#1C3B26"/>
+
+  <!-- Text: "caúa" with white color -->
+  <text x="100" y="55" font-family="Cormorant Garamond, serif" font-size="48" font-weight="300" fill="#F7F1EE" text-anchor="middle" letter-spacing="2">caúa</text>
+
+  <!-- Purple accent on "á" - overlay the á in purple -->
+  <text x="100" y="55" font-family="Cormorant Garamond, serif" font-size="48" font-weight="300" fill="#8D2679" text-anchor="middle" letter-spacing="2">
+    <tspan>ca</tspan><tspan fill="#8D2679">ú</tspan><tspan fill="#F7F1EE">a</tspan>
+  </text>
+</svg>

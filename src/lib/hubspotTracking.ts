@@ -45,6 +45,10 @@ export interface HubSpotContactProps {
   last_ritual_draw_streak?:       string   // streak at time of draw
   ritual_draw_count?:             string   // cumulative draws (session + persisted)
   ritual_share_count?:            string   // cumulative shares
+
+  // Tree adoption tracking
+  caua_trees_adopted?:  string   // count of adopted trees (string for HS compat)
+  caua_tree_varieties?: string   // comma-separated varieties, e.g. "Criollo Élite, Híbrido Acriollado"
 }
 
 /** Partial ritual props for contact updates — email required, rest optional. */

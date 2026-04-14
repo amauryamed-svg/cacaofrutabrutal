@@ -1,14 +1,14 @@
 /**
  * AdminCRM — internal CRM dashboard.
  * Only visible to amauryamed@gmail.com (isAdmin from AuthContext).
- * Reads user_profiles + lot_investments + orders from Supabase.
+ * Reads user_profiles + lot_investments + orders + cacao_trees from Supabase.
  */
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BRAND, FONTS } from '../utils/constants'
+import { BRAND, FONTS, GUARDIANS } from '../utils/constants'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
-import type { UserProfile } from '../lib/database.types'
+import type { UserProfile, CacaoTree } from '../lib/database.types'
 
 interface InvestRow {
   id: string
@@ -40,6 +40,17 @@ interface EmailRow {
   created_at: string
 }
 
+interface TreeRow {
+  id: string
+  user_id: string
+  email: string
+  guardian_name: string
+  variety: string
+  stage: string
+  co2_kg: number
+  adopted_at: string
+}
+
 export default function AdminCRM() {
   const { isAdmin, loading } = useAuth()
   const navigate = useNavigate()
@@ -48,7 +59,8 @@ export default function AdminCRM() {
   const [invs,   setInvs]   = useState<InvestRow[]>([])
   const [orders, setOrders] = useState<OrderRow[]>([])
   const [emails, setEmails] = useState<EmailRow[]>([])
-  const [tab,    setTab]    = useState<'users' | 'investments' | 'orders' | 'emails'>('users')
+  const [trees,  setTrees]  = useState<TreeRow[]>([])
+  const [tab,    setTab]    = useState<'users' | 'investments' | 'orders' | 'emails' | 'trees'>('users')
   const [fetching, setFetching] = useState(true)
   const [editUser, setEditUser] = useState<UserProfile | null>(null)
 
@@ -61,11 +73,34 @@ export default function AdminCRM() {
       supabase.from('lot_investments').select('*').order('created_at', { ascending: false }),
       supabase.from('orders').select('*').order('created_at', { ascending: false }),
       supabase.from('email_log').select('*').order('created_at', { ascending: false }),
-    ]).then(([u, i, o, e]) => {
+      supabase.from('cacao_trees').select('*').order('adopted_at', { ascending: false }),
+    ]).then(async ([u, i, o, e, t]) => {
       setUsers((u.data as UserProfile[]) ?? [])
       setInvs((i.data as InvestRow[]) ?? [])
       setOrders((o.data as OrderRow[]) ?? [])
       setEmails((e.data as EmailRow[]) ?? [])
+
+      // Map cacao_trees with user emails
+      const cacaoTrees = (t.data as CacaoTree[]) ?? []
+      const treeRows: TreeRow[] = []
+
+      for (const tree of cacaoTrees) {
+        const user = (u.data as UserProfile[])?.find(up => up.user_id === tree.user_id)
+        const guardian = GUARDIANS[tree.guardian_id] || { name: `Guardian #${tree.guardian_id}` }
+
+        treeRows.push({
+          id: tree.id,
+          user_id: tree.user_id,
+          email: user?.email ?? '—',
+          guardian_name: guardian.name,
+          variety: tree.variety,
+          stage: tree.stage,
+          co2_kg: tree.co2_kg,
+          adopted_at: tree.adopted_at,
+        })
+      }
+
+      setTrees(treeRows)
       setFetching(false)
     })
   }, [isAdmin, loading, navigate])
@@ -75,6 +110,8 @@ export default function AdminCRM() {
 
   const totalRaised = invs.reduce((s, i) => s + i.amount_usd_cents, 0)
   const totalLots   = invs.reduce((s, i) => s + i.lots_count, 0)
+  const totalTrees  = trees.length
+  const usersWithTrees = new Set(trees.map(t => t.user_id)).size
 
   return (
     <div style={{ minHeight: '100vh', background: BRAND.bgDeep, paddingTop: 64 }}>
@@ -93,8 +130,9 @@ export default function AdminCRM() {
             { label: 'Usuarios', value: users.length },
             { label: 'Inversiones', value: invs.length },
             { label: 'Lotes totales', value: totalLots },
+            { label: 'Árboles adoptados', value: totalTrees },
+            { label: 'Usuarios con árboles', value: usersWithTrees },
             { label: 'Capital USD', value: '$' + (totalRaised / 100).toLocaleString('en-US', { maximumFractionDigits: 0 }) },
-            { label: 'Órdenes', value: orders.length },
           ].map(k => (
             <div key={k.label} style={{ background: BRAND.bgCard, border: `1px solid ${BRAND.amazon}44`, borderRadius: 12, padding: '12px 20px' }}>
               <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 22, color: BRAND.pod }}>{k.value}</div>
@@ -107,7 +145,7 @@ export default function AdminCRM() {
       {/* Tabs */}
       <div style={{ padding: '0 var(--space-page)', maxWidth: 1200, margin: '0 auto' }}>
         <div style={{ display: 'flex', gap: 4, borderBottom: `1px solid ${BRAND.amazon}33`, marginBottom: 24, marginTop: 24 }}>
-          {(['users', 'investments', 'orders', 'emails'] as const).map(t => (
+          {(['users', 'investments', 'orders', 'emails', 'trees'] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -120,7 +158,7 @@ export default function AdminCRM() {
                 textTransform: 'uppercase',
               }}
             >
-              {t === 'users' ? `Usuarios (${users.length})` : t === 'investments' ? `Inversiones (${invs.length})` : t === 'orders' ? `Órdenes (${orders.length})` : `Emails (${emails.length})`}
+              {t === 'users' ? `Usuarios (${users.length})` : t === 'investments' ? `Inversiones (${invs.length})` : t === 'orders' ? `Órdenes (${orders.length})` : t === 'emails' ? `Emails (${emails.length})` : `Árboles (${trees.length})`}
             </button>
           ))}
         </div>
@@ -129,6 +167,7 @@ export default function AdminCRM() {
         {tab === 'investments' && <InvestmentsTable rows={invs} />}
         {tab === 'orders' && <OrdersTable rows={orders} />}
         {tab === 'emails' && <EmailsTable rows={emails} />}
+        {tab === 'trees' && <TreesTable rows={trees} />}
 
         {editUser && <EditUserPanel user={editUser} onClose={() => setEditUser(null)} onSave={(u) => { setUsers(users.map(x => x.id === u.id ? u : x)); setEditUser(null) }} />}
       </div>
@@ -242,6 +281,32 @@ function EmailsTable({ rows }: { rows: EmailRow[] }) {
               <TD dim>{r.subject ?? '—'}</TD>
               <TD><EmailStatusBadge status={r.status} /></TD>
               <TD dim>{new Date(r.created_at).toLocaleDateString('es-CO')}</TD>
+            </TR>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function TreesTable({ rows }: { rows: TreeRow[] }) {
+  return (
+    <div style={{ overflowX: 'auto' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: FONTS.body, fontSize: 12 }}>
+        <thead>
+          <TR header>
+            <TD>Email</TD><TD>Guardián</TD><TD>Variedad</TD><TD>Etapa</TD><TD>CO₂ kg</TD><TD>Adoptado</TD>
+          </TR>
+        </thead>
+        <tbody>
+          {rows.map(r => (
+            <TR key={r.id}>
+              <TD>{r.email}</TD>
+              <TD accent>{r.guardian_name}</TD>
+              <TD>{r.variety}</TD>
+              <TD>{r.stage}</TD>
+              <TD accent>{r.co2_kg}</TD>
+              <TD dim>{new Date(r.adopted_at).toLocaleDateString('es-CO')}</TD>
             </TR>
           ))}
         </tbody>
