@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase'
 import { hsTrackEvent } from '../lib/hubspotTracking'
 import { BRAND, FONTS } from '../utils/constants'
 
-const ALLOWED_EMAIL = 'andrea.rojas@cesa.edu.co'
+const ALLOWED_EMAIL = 'amauryamed@gmail.com' // TEST MODE
 
 // ============================================================================
 // HOOK: useReveal — Scroll-reveal con IntersectionObserver
@@ -200,6 +200,7 @@ export default function ProposalAndreaRojas() {
           alignItems: 'center',
           justifyContent: 'center',
           padding: '40px 20px',
+          paddingTop: 'calc(60px + 40px)',
           position: 'relative',
           overflow: 'hidden',
         }}
