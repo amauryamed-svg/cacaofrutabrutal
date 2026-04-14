@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COTIZACIÓN - Catación Cinco Tiempos de Cacao - CAUA COLOMBIA SAS</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        @page { size: A4; margin: 0; }
+        html, body {
+            font-family: 'Lato', 'Segoe UI', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+        .page {
+            width: 210mm;
+            height: 297mm;
+            margin: 10px auto;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        .membrete {
+            background: linear-gradient(135deg, #1C3B26 0%, #0f1e19 100%);
+            padding: 25px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 8px solid #F1A91E;
+            color: white;
+        }
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .logo-placeholder {
+            width: 55px;
+            height: 55px;
+            background: #1C3B26;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .logo-placeholder img {
+            width: 90%;
+            height: 90%;
+            object-fit: contain;
+        }
+        .company-info {
+            font-size: 13px;
+        }
+        .company-info strong {
+            display: block;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+        }
+        .doc-meta {
+            text-align: right;
+            font-size: 11px;
+        }
+        .doc-meta div {
+            margin-bottom: 3px;
+        }
+        .contenido {
+            padding: 35px 40px;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            font-size: 12px;
+        }
+        .titulo-propuesta {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: #1C3B26;
+            margin-bottom: 8px;
+            letter-spacing: -1px;
+        }
+        .subtitulo {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        .intro-text {
+            font-size: 12px;
+            line-height: 1.6;
+            color: #555;
+            margin-bottom: 20px;
+            padding: 12px;
+            background: #f9f9f9;
+            border-left: 3px solid #91A63B;
+        }
+        .description {
+            font-size: 12px;
+            line-height: 1.7;
+            color: #555;
+            margin-bottom: 25px;
+        }
+        .tiempos-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+        .tiempo-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 12px;
+            background: white;
+        }
+        .tiempo-num {
+            display: inline-block;
+            background: #91A63B;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            font-weight: bold;
+            font-size: 11px;
+            margin-bottom: 6px;
+        }
+        .tiempo-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1C3B26;
+            margin-bottom: 4px;
+        }
+        .tiempo-desc {
+            font-size: 11px;
+            line-height: 1.4;
+            color: #666;
+        }
+        .opciones h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 16px;
+            color: #1C3B26;
+            margin-bottom: 12px;
+            margin-top: 15px;
+            border-bottom: 2px solid #F1A91E;
+            padding-bottom: 8px;
+        }
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        .price-card {
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            padding: 14px;
+            background: white;
+        }
+        .price-card.featured {
+            border-color: #8D2679;
+            background: linear-gradient(135deg, rgba(141,38,121,0.05) 0%, rgba(145,166,59,0.05) 100%);
+        }
+        .price-card h4 {
+            color: #1C3B26;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .price {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 22px;
+            color: #91A63B;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+        .price-desc {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        .price-list {
+            font-size: 10px;
+            line-height: 1.5;
+            color: #666;
+            margin: 0;
+            padding-left: 20px;
+        }
+        .price-list li {
+            margin-bottom: 2px;
+        }
+        .terminos {
+            background: #f0f4f1;
+            border-left: 4px solid #91A63B;
+            padding: 12px;
+            margin-top: 12px;
+            font-size: 10px;
+            line-height: 1.5;
+            color: #555;
+        }
+        .terminos strong {
+            color: #1C3B26;
+            display: block;
+            margin-bottom: 6px;
+            font-size: 11px;
+        }
+        .terminos-item {
+            margin-bottom: 3px;
+        }
+        .pie-pagina {
+            background: linear-gradient(135deg, #1C3B26 0%, #0f1e19 100%);
+            color: #F7F1EE;
+            padding: 15px 40px;
+            font-size: 10px;
+            line-height: 1.5;
+            border-top: 1px solid #91A63B;
+            margin-top: auto;
+        }
+        .pie-pagina strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 11px;
+        }
+        .footer-contact {
+            margin-top: 8px;
+            opacity: 0.9;
+        }
+        .badge {
+            display: inline-block;
+            background: #F1A91E;
+            color: #1C3B26;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 9px;
+            font-weight: bold;
+            margin-left: 4px;
+        }
+        @media print {
+            body { margin: 0; background: white; }
+            .page { margin: 0; box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page">
+    <!-- MEMBRETE CORPORATIVO -->
+    <div class="membrete">
+        <div class="logo-section">
+            <div class="logo-placeholder">
+                <img src="caua-logo-white.png" alt="CAUA Logo">
+            </div>
+            <div class="company-info">
+                <strong>CAUA COLOMBIA SAS</strong>
+                NIT: 901213846-7<br>
+                Biotecnología Ancestral del Cacao
+            </div>
+        </div>
+        <div class="doc-meta">
+            <div><strong>COTIZACIÓN</strong></div>
+            <div>Catación Cinco Tiempos</div>
+            <div style="margin-top: 4px; font-size: 10px; color: rgba(255,255,255,0.8);">Válida 30 días</div>
+        </div>
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="contenido">
+
+        <h1 class="titulo-propuesta">CATACIÓN: CINCO TIEMPOS DE CACAO</h1>
+        <p class="subtitulo">Experiencia Sensorial Inmersiva Regenerativa</p>
+
+        <p class="intro-text">
+            <strong>Presentado a:</strong> Andrea Rojas · Turismo Sostenible · Universidad CESA<br>
+            <strong>Facilitador:</strong> Amaury Amed (CTO Caúa) · 📱 3102227848
+        </p>
+
+        <p class="description">
+            Una experiencia inmersiva de 1 a 2 horas a través de la cadena regenerativa del cacao colombiano. Desde el árbol ancestral hasta la preparación ritual, experimenta cinco momentos que desafían la industria tradicional del chocolate, empoderando agricultores y regenerando ecosistemas. Todo incluido.
+        </p>
+
+        <!-- LOS CINCO TIEMPOS -->
+        <div class="tiempos-grid">
+            <div class="tiempo-card">
+                <div class="tiempo-num">1</div>
+                <div class="tiempo-title">🌱 Árbol al Fruto</div>
+                <p class="tiempo-desc">Mazorca fresca recién cosechada. Ciclo natural del Theobroma cacao en ecosistemas regenerativos de Arauca.</p>
+            </div>
+
+            <div class="tiempo-card">
+                <div class="tiempo-num">2</div>
+                <div class="tiempo-title">🌍 Origen Regenerativo</div>
+                <p class="tiempo-desc">Cacao liofilizado desde Arauca. Sabor puro sin procesamiento. Trazabilidad total del agricultor.</p>
+            </div>
+
+            <div class="tiempo-card">
+                <div class="tiempo-num">3</div>
+                <div class="tiempo-title">✨ Mucílago: Oro Molecular</div>
+                <p class="tiempo-desc">Cata de mucílago de cacao granizado. Beneficio antioxidante reutilizable como superalimento molecular.</p>
+            </div>
+
+            <div class="tiempo-card">
+                <div class="tiempo-num">4</div>
+                <div class="tiempo-title">🫘 Refinación Artesanal</div>
+                <p class="tiempo-desc">Hobo Huila · Finca Santa María · 100% Licor · 250gr. Barra artesanal que cierra el círculo regenerativo.</p>
+            </div>
+
+            <div class="tiempo-card">
+                <div class="tiempo-num">5</div>
+                <div class="tiempo-title">☕ Chocolate Ritual</div>
+                <p class="tiempo-desc">Preparación ancestral: chocolate caliente con agua ritualizada, gelatina de pata o panela. Servido ceremonial.</p>
+            </div>
+
+            <div class="tiempo-card">
+                <div class="tiempo-num">6</div>
+                <div class="tiempo-title">🌳 Impacto Regenerativo</div>
+                <p class="tiempo-desc">Narrativa del triple impacto: comunidad, agricultor, ecosistema. Cierre circular de la experiencia inmersiva.</p>
+            </div>
+        </div>
+
+        <!-- OPCIONES DE INVERSIÓN -->
+        <div class="opciones">
+            <h3>Opciones de Inversión</h3>
+            <div class="pricing-grid">
+                <div class="price-card">
+                    <h4>Experiencia Base</h4>
+                    <div class="price">$60.000</div>
+                    <p class="price-desc"><strong>1-2 horas</strong> · 2-4 personas</p>
+                    <ul class="price-list">
+                        <li>✓ Cinco Tiempos de Cacao</li>
+                        <li>✓ Catas guiadas</li>
+                        <li>✓ Narrativa regenerativa</li>
+                        <li>✓ Implementos incluidos</li>
+                    </ul>
+                </div>
+
+                <div class="price-card featured">
+                    <h4>Premium + Barra <span class="badge">⭐ RECOMENDADO</span></h4>
+                    <div class="price">$100.000</div>
+                    <p class="price-desc"><strong>1-2 horas</strong> · Hasta 6 personas</p>
+                    <ul class="price-list">
+                        <li>✓ Todo experiencia Base</li>
+                        <li>✓ <strong>+ Barra 250g Hobo Huila</strong></li>
+                        <li>✓ <strong>+ Kit de productos</strong></li>
+                        <li>✓ Para llevar y recordar</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- TÉRMINOS Y CONDICIONES -->
+            <div class="terminos">
+                <strong>Términos y Condiciones:</strong>
+                <div class="terminos-item">✓ <strong>Validez:</strong> 30 días a partir de hoy</div>
+                <div class="terminos-item">✓ <strong>Pago:</strong> Contraentrega el día del evento</div>
+                <div class="terminos-item">✓ <strong>Documento:</strong> Factura Electrónica de Servicios</div>
+                <div class="terminos-item">✓ <strong>Confirmación:</strong> 3102227848 o amaury@cauaculture.co</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- PIE DE PÁGINA -->
+    <div class="pie-pagina">
+        <strong>CAUA COLOMBIA SAS · NIT 901213846-7</strong>
+        <div>Biotecnología ancestral del cacao colombiano · Del genoma colombiano al mundo</div>
+        <div class="footer-contact">
+            📧 amaury@cauaculture.co · 📱 +57 310 222 7848 · 🌐 www.cacaofrutabrutal.com
+        </div>
+    </div>
+</div>
+
+<script>
+    window.addEventListener('load', function() {
+        console.log('✅ PROPUESTA LISTA PARA DESCARGAR');
+        console.log('Presiona Ctrl+P para descargar como PDF');
+    });
+</script>
+
+</body>
+</html>
