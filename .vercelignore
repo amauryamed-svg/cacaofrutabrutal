@@ -1,0 +1,6 @@
+api/
+scripts/
+.git/
+.env.local
+.env
+*.log
