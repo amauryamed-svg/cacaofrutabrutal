@@ -1,0 +1,30 @@
+[build]
+command = "npm run build"
+publish = "dist"
+
+# SPA routing — rewrite all 404s to index.html
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200
+
+# Cache headers
+[[headers]]
+for = "/assets/*"
+[headers.values]
+Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+for = "/"
+[headers.values]
+Cache-Control = "public, max-age=0, must-revalidate, no-cache"
+
+[[headers]]
+for = "/index.html"
+[headers.values]
+Cache-Control = "public, max-age=0, must-revalidate, no-cache"
+
+[[headers]]
+for = "/api/*"
+[headers.values]
+Cache-Control = "public, s-maxage=3600"
