@@ -1,41 +1,83 @@
 # CAUA Health Report
-Timestamp: 2026-04-14T17:13:41Z
+Timestamp: 2026-04-14T18:07:10Z
 
-## Summary: FAIL (network-blocked — checks could not execute)
+## Summary: ⚠️ INCONCLUSIVE — Egress Proxy Blocked All Checks
+
+All 7 checks were attempted via `curl` and `WebFetch`. Every outbound request to
+`cacaofrutabrutal.com` and `kjygovuiphbxcdxeduco.supabase.co` was rejected by the
+execution environment's egress proxy with HTTP 403 `host_not_allowed`.
+
+This is a **sandbox network restriction**, not a production issue. The CAUA domains are not
+in the proxy's allowlist, so no real connectivity data was collected.
+
+---
 
 | Check | Status | Detail |
 |-------|--------|--------|
-| Site availability | ❌ FAIL | curl 403 — host blocked by egress proxy |
-| Security headers | ❌ FAIL | curl 403 — host blocked by egress proxy |
-| Supabase auth endpoint | ❌ FAIL | curl 403 — host blocked by egress proxy |
-| Supabase REST endpoint | ❌ FAIL | curl 403 — host blocked by egress proxy |
-| HTTPS redirect (HTTP→HTTPS) | ❌ FAIL | curl 403 — host blocked by egress proxy |
-| SSL certificate validity | ❌ FAIL | curl 403 — host blocked by egress proxy |
-| /fund route accessible | ❌ FAIL | curl 403 — host blocked by egress proxy |
+| Site availability | ❓ INCONCLUSIVE | curl exit 56 — proxy blocked (403 host_not_allowed) |
+| Security headers | ❓ INCONCLUSIVE | No response received from origin |
+| Supabase auth endpoint | ❓ INCONCLUSIVE | proxy blocked (403 host_not_allowed) |
+| Supabase REST endpoint | ❓ INCONCLUSIVE | proxy blocked (403 host_not_allowed) |
+| HTTPS redirect (HTTP→HTTPS) | ❓ INCONCLUSIVE | proxy blocked (403 host_not_allowed) |
+| SSL certificate validity | ❓ INCONCLUSIVE | proxy blocked before TLS handshake |
+| /fund route accessible | ❓ INCONCLUSIVE | proxy blocked (403 host_not_allowed) |
 
-## Root Cause
-
-All checks failed with `curl: (56) CONNECT tunnel failed, response 403 / x-deny-reason: host_not_allowed`.
-
-The Claude Code sandbox enforces a strict egress allowlist via an HTTPS proxy. Neither `cacaofrutabrutal.com` nor `kjygovuiphbxcdxeduco.supabase.co` is present in that list, so every outbound request is blocked before it reaches the target servers.
-
-This is **not** a production outage — it is a sandbox environment restriction. The actual site and Supabase project may be fully operational.
+---
 
 ## Issues Found
 
-### BLOCKER — Checks cannot be run from this environment
-- **Cause:** Egress proxy (`http://container_container_...`) denies connections to hosts outside its allowlist.
-- **Resolution options:**
-  1. Run the health checks from a machine / CI runner with unrestricted internet access (e.g., a GitHub Actions workflow, a Vercel cron job, or an external uptime monitor such as Better Uptime / UptimeRobot).
-  2. Request that `cacaofrutabrutal.com` and `kjygovuiphbxcdxeduco.supabase.co` be added to the Claude Code sandbox egress allowlist (contact Anthropic support or adjust the Claude Code network policy if self-hosted).
+### 1. Sandbox egress restriction prevents remote checks
+- **Root cause:** The Claude Code execution environment uses a strict egress proxy that only
+  allows traffic to a fixed allowlist of hosts (npm, PyPI, GitHub, Google APIs, etc.).
+  Neither `cacaofrutabrutal.com` nor `*.supabase.co` are in that list.
+- **Impact:** Zero health data collected for this run.
+- **Recommended action:** Run these checks from outside the sandbox — options:
+  1. **GitHub Actions workflow** — add a scheduled job (e.g. every 6h) that runs the
+     7 `curl` commands and posts results as a PR comment or Slack notification.
+  2. **Vercel cron / Edge Function** — a `/api/health` endpoint that self-probes and writes
+     results to a Supabase `health_logs` table.
+  3. **Local terminal** — paste and run the 7 `curl` commands directly from any machine
+     with unrestricted internet access.
 
-## Recommended Follow-up Actions
+---
 
-1. **Set up an external uptime monitor** (e.g., UptimeRobot, Better Uptime) to run checks 1, 3, 4, 5, 7 continuously.
-2. **Add a GitHub Actions workflow** (e.g., `.github/workflows/health.yml`) that runs these curl checks on a schedule (e.g., every 30 minutes) and posts results to Slack or creates a GitHub issue on failure.
-3. Once accessible, re-run all checks and validate:
-   - `X-Frame-Options` and `Strict-Transport-Security` headers are present.
-   - CSP header is configured (currently assumed missing — common on Vercel SPAs).
-   - HTTP → HTTPS redirect is enforced at the edge.
-   - SSL certificate is valid and not near expiry.
-   - Supabase `user_profiles` table returns 200 or 401 (RLS active), not 404/500.
+## How to Re-run Manually
+
+```bash
+# 1. Site availability
+curl -s -o /dev/null -w '%{http_code} %{time_total}s' https://cacaofrutabrutal.com
+
+# 2. Security headers
+curl -sI https://cacaofrutabrutal.com | grep -iE 'x-frame-options|x-content-type|strict-transport|content-security'
+
+# 3. Supabase auth
+ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqeWdvdnVpcGhieGNkeGVkdWNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2ODA0NzgsImV4cCI6MjA5MTI1NjQ3OH0.WMlfCLVssh6pAos2vGSx_8aEiOTxb8CUQqG6Zx9npqU"
+curl -s -o /dev/null -w '%{http_code}' -H "apikey: $ANON" \
+  https://kjygovuiphbxcdxeduco.supabase.co/auth/v1/settings
+
+# 4. Supabase REST
+curl -s -o /dev/null -w '%{http_code}' \
+  -H "apikey: $ANON" -H "Authorization: Bearer $ANON" \
+  'https://kjygovuiphbxcdxeduco.supabase.co/rest/v1/user_profiles?limit=1'
+
+# 5. HTTPS redirect
+curl -s -o /dev/null -w '%{http_code}' http://cacaofrutabrutal.com
+
+# 6. SSL validity
+curl -sI --max-time 5 https://cacaofrutabrutal.com 2>&1 | grep -i 'expire\|SSL\|certificate' || echo 'SSL OK'
+
+# 7. /fund route
+curl -s -o /dev/null -w '%{http_code}' https://cacaofrutabrutal.com/fund
+```
+
+Expected results:
+
+| Check | Expected |
+|-------|----------|
+| 1. Site availability | `200`, response < 3s |
+| 2. Security headers | `strict-transport-security` + `x-frame-options` present; CSP recommended |
+| 3. Supabase auth | `200` |
+| 4. Supabase REST | `200` or `401` (RLS blocking anon is acceptable — not 404/500) |
+| 5. HTTPS redirect | `301` or `302` |
+| 6. SSL validity | No SSL errors in output |
+| 7. /fund route | `200` (SPA handles routing) |
