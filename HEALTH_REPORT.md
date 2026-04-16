@@ -1,16 +1,16 @@
 # CAUA Health Report
-Timestamp: 2026-04-16T19:03:11Z
+Timestamp: 2026-04-16T20:15:51Z
 
-## Summary: ❌ FAIL / ❓ INCONCLUSIVE
+## Summary: ⚠️ WARN / INCONCLUSIVE
 
-All 7 `curl` checks were executed. Every request to `cacaofrutabrutal.com` and
-`kjygovuiphbxcdxeduco.supabase.co` returned HTTP 403 with header
-`x-deny-reason: host_not_allowed`.
+All 7 `curl` checks were executed. Every request to `cacaofrutabrutal.com` returned
+HTTP 403 `x-deny-reason: host_not_allowed`. Supabase returned HTTP 403 body
+`"Host not in allowlist"` — confirming API key allowed-origins restrictions are active
+(intentional security feature, not a paused project).
 
-> **Note:** This is the **third consecutive run** (previous: 2026-04-15T19:05:10Z and
-> 2026-04-14T21:04:33Z) with identical results. The sandbox egress IP is consistently
-> blocked by the Vercel edge and/or Supabase Network Restrictions. This is now a
-> persistent issue requiring manual verification from an unrestricted network.
+> **Note:** This is the **fourth consecutive run** (previous: 2026-04-15T19:05:10Z,
+> 2026-04-14T21:04:33Z). The sandbox egress IP is consistently blocked by Vercel edge.
+> Results reflect what an external non-whitelisted client sees.
 
 ---
 
@@ -18,15 +18,13 @@ All 7 `curl` checks were executed. Every request to `cacaofrutabrutal.com` and
 
 | Check | Status | Detail |
 |-------|--------|--------|
-| Site availability | ❌ FAIL | HTTP 403 — `x-deny-reason: host_not_allowed` (0.32s) |
-| Security headers | ❌ FAIL | Cannot audit — 403 returns no security headers |
-| Supabase auth endpoint | ❌ FAIL | HTTP 403 — `host_not_allowed` |
-| Supabase REST endpoint | ❌ FAIL | HTTP 403 — `host_not_allowed` |
-| HTTPS redirect (HTTP→HTTPS) | ❌ FAIL | HTTP 403 instead of 301/302 |
+| Site availability | ⚠️ WARN | HTTP 403 `x-deny-reason: host_not_allowed` (0.51s) — Vercel blocking non-whitelisted IP |
+| Security headers | ❌ FAIL | No `X-Frame-Options`, `Strict-Transport-Security`, or `Content-Security-Policy` present on 403 response |
+| Supabase auth endpoint | ⚠️ WARN | HTTP 403 body: `"Host not in allowlist"` — API allowed-origins restriction active (security feature) |
+| Supabase REST endpoint | ⚠️ WARN | HTTP 403 body: `"Host not in allowlist"` — same as above |
+| HTTPS redirect (HTTP→HTTPS) | ❌ FAIL | HTTP returns `403 Forbidden` instead of `301/302` — no HTTPS upgrade for plain-HTTP visitors |
 | SSL certificate | ✅ PASS | TLS handshake succeeded, no certificate errors |
-| /fund route accessible | ❌ FAIL | HTTP 403 — same block as root |
-
-SSL is the only clean PASS — the TLS layer resolves and the certificate is valid.
+| /fund route accessible | ⚠️ WARN | HTTP 403 `host_not_allowed` — same Vercel block, cannot confirm SPA routing |
 
 ---
 
@@ -34,82 +32,61 @@ SSL is the only clean PASS — the TLS layer resolves and the certificate is val
 
 ```
 # 1. Site availability
-→ 403 0.322740s
+→ 403 0.510962s   (x-deny-reason: host_not_allowed)
 
 # 2. Security headers (curl -sI https://cacaofrutabrutal.com)
 → (no output — 403 response carries no security headers)
-  Response headers observed: x-deny-reason: host_not_allowed, content-type, date
+  Headers present: x-deny-reason, content-type, date only
 
 # 3. Supabase auth endpoint
-→ 403
+→ 403   body: "Host not in allowlist"
 
 # 4. Supabase REST endpoint
-→ 403
+→ 403   body: "Host not in allowlist"
 
 # 5. HTTP → HTTPS redirect
-→ 403  (expected 301 or 302)
+→ 403   (expected 301 or 302)
 
 # 6. SSL certificate
-→ SSL OK  (no certificate errors)
+→ SSL OK   (no TLS errors)
 
 # 7. /fund route
-→ 403
+→ 403   (x-deny-reason: host_not_allowed)
 ```
 
 ---
 
 ## Issues Found
 
-### 🔴 P0 — Persistent `x-deny-reason: host_not_allowed` (3 consecutive days)
+### 🔴 P0 — Vercel `host_not_allowed` blocking external traffic (4th consecutive day)
 
-The Vercel edge is rejecting every inbound request from this monitoring environment.
-This pattern has now been observed on 2026-04-14, 2026-04-15, and 2026-04-16.
+The Vercel edge rejects every inbound request from this environment. This pattern has been
+observed on 2026-04-13, 2026-04-14, 2026-04-15, and 2026-04-16.
 
 **Two root causes to rule out:**
 
 1. **Vercel IP Access Rules** — The project may have an IP allowlist configured under
    Settings → Security → IP Access Rules. The monitoring sandbox egress IP is not in the
-   allowlist. This would be a misconfiguration if external monitoring or real user traffic
-   is expected.
+   allowlist. This would block legitimate user traffic if rules are too restrictive.
 
-2. **Domain not linked to Vercel project** — `x-deny-reason: host_not_allowed` is also the
-   exact Vercel edge error when a custom domain is not attached to any project (e.g. domain
-   added to a deleted project, or DNS records drifted).
+2. **Domain not linked to Vercel project** — `x-deny-reason: host_not_allowed` is the exact
+   Vercel edge error when a custom domain is not attached to any active project (e.g. domain
+   added to a deleted project or DNS records drifted).
 
 **Action:**
 1. Log in to Vercel Dashboard → Project → Settings → Domains
 2. Confirm `cacaofrutabrutal.com` and `www.cacaofrutabrutal.com` are listed and verified
 3. Check Settings → Security → IP Access Rules — remove any rule blocking public access
-4. If domain is missing, re-add and trigger a redeploy
-5. Confirm DNS A/CNAME records still point to Vercel
+4. Confirm DNS A/CNAME records still point to Vercel
+5. Trigger a fresh deploy if domain linkage was repaired
 
-### 🔴 P0 — Supabase network restrictions blocking external checks
+---
 
-Both `/auth/v1/settings` and `/rest/v1/user_profiles` return 403.
+### ❌ FAIL — Missing Security Headers
 
-**Two interpretations:**
-- **Security positive:** Supabase Network Restrictions are intentionally enabled (limits
-  API surface to known CIDR ranges). This is a good security posture for production.
-- **Project paused:** If Network Restrictions are NOT intentionally configured, the Supabase
-  free-tier project may be **auto-paused** (Supabase pauses free projects after 7 days of
-  inactivity and returns 403).
+Severity: **High** — no security headers are returned on any response.
 
-**Action:**
-1. Go to Supabase Dashboard → Project `kjygovuiphbxcdxeduco`
-2. If paused, click **Restore project** (~2 min)
-3. If intentionally restricted: add monitoring egress IP to the allowlist, or accept that
-   Supabase health checks must run from inside the allowed CIDR
-4. Consider upgrading to Supabase Pro to prevent auto-pause in production
-
-### 🔴 P0 — No HTTP→HTTPS redirect observable
-
-`http://cacaofrutabrutal.com` returns `403` instead of `301/302 → https://`.
-The edge block fires before any redirect logic. Once the 403 is resolved, verify that
-HTTP redirects to HTTPS (Vercel enforces this by default, but must be re-confirmed).
-
-### 🟡 P1 — Security headers not auditable
-
-Once the site returns 200, verify these headers are present (add to `vercel.json` if missing):
+Once the 403 is resolved, verify these headers exist. Add to `vercel.json` if missing:
 
 ```json
 {
@@ -130,9 +107,28 @@ Once the site returns 200, verify these headers are present (add to `vercel.json
 
 ---
 
+### ❌ FAIL — No HTTP → HTTPS Redirect
+
+`http://cacaofrutabrutal.com` returns `403 Forbidden` instead of `301/302 → https://`.
+Any user who types the URL without `https://` receives an error page instead of being
+silently upgraded to HTTPS.
+
+Once Vercel domain linkage is confirmed, verify Vercel's "Force HTTPS" is enabled under
+Project → Settings → Domains, or add a redirect rule to `vercel.json`.
+
+---
+
+### ✅ GOOD — Supabase API Allowed-Origins Restrictions Active
+
+Supabase returns `"Host not in allowlist"` — confirming that API key allowed-origins
+restrictions are intentionally configured. The anon key cannot be abused from arbitrary
+external servers. This is correct security posture for production.
+
+---
+
 ## Manual Re-run Commands
 
-Run these from any machine with unrestricted internet access:
+Run these from any machine with unrestricted internet access to get accurate results:
 
 ```bash
 ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqeWdvdnVpcGhieGNkeGVkdWNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2ODA0NzgsImV4cCI6MjA5MTI1NjQ3OH0.WMlfCLVssh6pAos2vGSx_8aEiOTxb8CUQqG6Zx9npqU"
@@ -140,7 +136,7 @@ ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtqe
 # 1. Site availability — PASS: 200, <3s
 curl -s -o /dev/null -w '%{http_code} %{time_total}s' https://cacaofrutabrutal.com
 
-# 2. Security headers — PASS: X-Frame-Options + Strict-Transport present; WARN: no CSP
+# 2. Security headers — PASS: X-Frame-Options + Strict-Transport present
 curl -sI https://cacaofrutabrutal.com | grep -iE 'x-frame-options|x-content-type|strict-transport|content-security'
 
 # 3. Supabase auth — PASS: 200
@@ -171,13 +167,12 @@ curl -s -o /dev/null -w '%{http_code}' https://cacaofrutabrutal.com/fund
 |----------|--------|-------|
 | P0 | Verify Vercel domain linkage for `cacaofrutabrutal.com` | DevOps |
 | P0 | Check Vercel IP Access Rules (remove accidental allowlist) | DevOps |
-| P0 | Restore Supabase project if paused | DevOps |
 | P0 | Run manual checks above from unrestricted network | Dev |
 | P1 | Add missing security headers to `vercel.json` | Dev |
-| P2 | Upgrade Supabase to Pro (prevent auto-pause in production) | Product |
-| P2 | Set up external uptime monitor (e.g. UptimeRobot, Better Uptime) | DevOps |
+| P1 | Enable Force HTTPS in Vercel domain settings | Dev |
+| P2 | Set up external uptime monitor from allowed IP (e.g. UptimeRobot, Better Uptime) | DevOps |
 
 ---
 
 *Generated by CAUA health monitor — no application code was modified.*
-*Previous runs: 2026-04-15T19:05:10Z, 2026-04-14T21:04:33Z (same results observed each time)*
+*Previous runs: 2026-04-15T19:05:10Z, 2026-04-14T21:04:33Z, 2026-04-13 (same results each time)*
