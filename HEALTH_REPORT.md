@@ -1,12 +1,18 @@
 # CAUA Health Report
-Timestamp: 2026-04-16T22:17:00Z
+Timestamp: 2026-04-16T23:05:06Z
 
-## Summary: ❌ FAIL — 6th consecutive run blocked by allowlist; site unreachable from monitoring IP
+## Summary: ⚠️ INCONCLUSIVE — Claude Code sandbox blocks all external egress
 
-> **Run history:** 2026-04-16T21:07Z, 2026-04-15T19:05Z, 2026-04-14T21:04Z, 2026-04-13, and prior.
-> **This run:** Supabase 403 body now reads `Host not in allowlist` — same as earlier runs;
-> prior report's "paused" diagnosis was a misread. Core issue remains unchanged: Vercel and
-> Supabase both reject requests from this monitoring IP via `x-deny-reason: host_not_allowed`.
+> **CORRECTION TO PRIOR REPORTS (2026-04-13 through 2026-04-16T21:07Z):**
+> Previous runs diagnosed HTTP 403s as "Vercel IP Access Rules blocking the monitor" or
+> "Supabase origin allowlist." This was incorrect. Verbose curl now reveals:
+> - TLS cert issuer: `O=Anthropic; CN=sandbox-egress-production TLS Inspection CA`
+> - HTTP header: `x-deny-reason: host_not_allowed` (set by sandbox, not Vercel)
+> - Supabase body: `"Host not in allowlist"` (sandbox proxy rejection, not Supabase)
+>
+> **The Claude Code execution environment intercepts and blocks all outbound HTTPS requests
+> to external hosts via a TLS-inspecting egress proxy. No production check can be
+> completed from this environment. The site and Supabase may be fully healthy.**
 
 ---
 
@@ -14,13 +20,13 @@ Timestamp: 2026-04-16T22:17:00Z
 
 | Check | Status | Detail |
 |-------|--------|--------|
-| Site availability | ❌ FAIL | HTTP 403 `host_not_allowed`, 0.398s — Vercel IP allowlist blocking monitor |
-| Security headers | ❌ FAIL | Cannot evaluate — 403 is returned before content headers are set |
-| Supabase auth endpoint | ❌ FAIL | HTTP 403 `host_not_allowed` — Supabase API origin allowlist blocking monitor |
-| Supabase REST endpoint | ❌ FAIL | HTTP 403 `host_not_allowed` — same origin block |
-| HTTPS redirect (HTTP→HTTPS) | ❌ FAIL | HTTP 403 — 301/302 not issued; blocked at Vercel edge before redirect logic |
-| SSL certificate | ✅ PASS | TLS handshake succeeded cleanly; no certificate errors |
-| /fund route | ❌ FAIL | HTTP 403 `host_not_allowed` |
+| Site availability | ⚠️ INCONCLUSIVE | Sandbox egress blocked — `x-deny-reason: host_not_allowed` |
+| Security headers | ⚠️ INCONCLUSIVE | No headers returned; request blocked before origin |
+| Supabase auth endpoint | ⚠️ INCONCLUSIVE | Sandbox blocked — body: `"Host not in allowlist"` |
+| Supabase REST endpoint | ⚠️ INCONCLUSIVE | Sandbox blocked — body: `"Host not in allowlist"` |
+| HTTPS redirect (HTTP→HTTPS) | ⚠️ INCONCLUSIVE | Sandbox blocked on port 80 before redirect could fire |
+| SSL certificate | ⚠️ INCONCLUSIVE | Cert seen is sandbox inspection cert, not real origin cert |
+| /fund route | ⚠️ INCONCLUSIVE | Sandbox blocked — `x-deny-reason: host_not_allowed` |
 
 ---
 
@@ -28,10 +34,10 @@ Timestamp: 2026-04-16T22:17:00Z
 
 ```
 # 1. Site availability
-→ 403  0.397886s   (x-deny-reason: host_not_allowed)
+→ 403  0.644467s
 
 # 2. Security headers (curl -sI https://cacaofrutabrutal.com)
-→ (no output — only header: x-deny-reason: host_not_allowed)
+→ (no output — all blocked)
 
 # 3. Supabase auth endpoint
 → 403   body: "Host not in allowlist"
@@ -39,105 +45,82 @@ Timestamp: 2026-04-16T22:17:00Z
 # 4. Supabase REST endpoint
 → 403   body: "Host not in allowlist"
 
-# 5. HTTP → HTTPS redirect
-→ 403   (expected 301 or 302)
+# 5. HTTP → HTTPS redirect (http://)
+→ 403   x-deny-reason: host_not_allowed
 
 # 6. SSL certificate
-→ SSL OK   (no TLS errors in curl output)
+→ SSL OK (but cert issuer: O=Anthropic; CN=sandbox-egress-production TLS Inspection CA
+          — this is the sandbox inspection cert, NOT the real Vercel/LetsEncrypt cert)
 
 # 7. /fund route
-→ 403   (x-deny-reason: host_not_allowed)
+→ 403   x-deny-reason: host_not_allowed
 ```
 
 ---
 
-## Issues Found
+## Root Cause
 
-### 🔴 P0 — Vercel `host_not_allowed` blocking all site traffic (6th consecutive run)
+The Claude Code agent runs inside an Anthropic sandbox with a **TLS-inspecting egress proxy**.
+All outbound HTTPS connections are intercepted and the proxy substitutes its own certificate.
+Any host not on the sandbox allowlist is rejected with HTTP 403 and `x-deny-reason: host_not_allowed`.
 
-Every request to `cacaofrutabrutal.com` (HTTP and HTTPS, all routes) returns
-`HTTP 403` with `x-deny-reason: host_not_allowed`. The TLS handshake succeeds,
-confirming the domain is live on Vercel's edge — but IP Access Rules are blocking
-all inbound traffic from this monitor's egress IP.
-
-**Possible causes (in order of likelihood):**
-1. Vercel IP Access Rules are configured to allow only specific IPs (e.g., office/home IP),
-   inadvertently blocking the public internet.
-2. The domain is assigned to a Vercel project in Preview mode with protection enabled.
-3. The domain's Vercel project has Deployment Protection (password / Vercel auth) enabled.
-
-**Action:**
-1. Vercel Dashboard → Project → Settings → Security → **Deployment Protection**
-   — disable "Vercel Authentication" or "Password Protection" for the Production environment
-2. Vercel Dashboard → Project → Settings → Security → **IP Access Rules**
-   — check for an allowlist; either remove it or add `0.0.0.0/0` to allow public access
-3. Verify `cacaofrutabrutal.com` is assigned to the correct project under Settings → Domains
+This is a **monitoring environment limitation**, not a production issue.
 
 ---
 
-### 🔴 P0 — Supabase API blocked from monitoring IP (6th consecutive run)
+## Recommended Fix for Monitoring
 
-Both `/auth/v1/settings` and `/rest/v1/user_profiles` return 403 `Host not in allowlist`.
-This is Supabase's API allowed-origins restriction — the project is alive but only
-accepts requests from whitelisted origins (e.g., the production frontend domain).
+Run these checks from an environment with unrestricted outbound access:
 
-**This is actually correct security posture** — the anon key should only work from
-the app's domain. However, it means external health checks using the anon key will
-always fail from an unauthorized IP.
+| Option | How |
+|--------|-----|
+| **Local machine** | Run the curl commands below from a developer laptop |
+| **GitHub Actions** | Add a `.github/workflows/health.yml` cron job (see template below) |
+| **UptimeRobot / Better Uptime** | Set up free external uptime monitoring |
+| **Vercel cron** | Call a `/api/health` serverless function that checks Supabase internally |
 
-**Action (for monitoring):**
-- Use Supabase's built-in health endpoint (no auth required) to check project liveness:
-  `curl https://kjygovuiphbxcdxeduco.supabase.co/health`
-- Or run the API check from the Vercel deployment environment where the origin is allowed
+### GitHub Actions Health Check Template
 
----
+```yaml
+# .github/workflows/health.yml
+name: Health Check
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # every 6 hours
+  workflow_dispatch:
 
-### ❌ FAIL — Security Headers Cannot Be Assessed
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Site availability
+        run: |
+          STATUS=$(curl -s -o /dev/null -w '%{http_code}' https://cacaofrutabrutal.com)
+          echo "Site: $STATUS"
+          [ "$STATUS" = "200" ] || exit 1
 
-Until the Vercel 403 is resolved, security headers cannot be evaluated. Once resolved,
-verify these headers are present. Add to `vercel.json` if missing:
+      - name: Security headers
+        run: |
+          curl -sI https://cacaofrutabrutal.com \
+            | grep -iE 'x-frame-options|strict-transport' \
+            || (echo "WARN: Missing security headers" && exit 1)
 
-```json
-{
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; connect-src 'self' https://*.supabase.co https://api.stripe.com" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
-      ]
-    }
-  ]
-}
+      - name: Supabase auth
+        run: |
+          STATUS=$(curl -s -o /dev/null -w '%{http_code}' \
+            -H 'apikey: ${{ secrets.SUPABASE_ANON_KEY }}' \
+            https://kjygovuiphbxcdxeduco.supabase.co/auth/v1/settings)
+          echo "Supabase auth: $STATUS"
+          [ "$STATUS" = "200" ] || exit 1
+
+      - name: HTTPS redirect
+        run: |
+          STATUS=$(curl -s -o /dev/null -w '%{http_code}' http://cacaofrutabrutal.com)
+          echo "HTTP redirect: $STATUS"
+          [[ "$STATUS" = "301" || "$STATUS" = "302" ]] || exit 1
 ```
 
----
-
-### ❌ FAIL — HTTP → HTTPS Redirect Unconfirmable
-
-`http://cacaofrutabrutal.com` returns 403 before the redirect fires. Once Vercel access
-is restored, confirm **Force HTTPS** is enabled under Project → Settings → Domains.
-
----
-
-## Recommended Next Steps
-
-| Priority | Action | Owner |
-|----------|--------|-------|
-| P0 | Vercel → Security → Deployment Protection → disable for Production | DevOps |
-| P0 | Vercel → Security → IP Access Rules → remove restrictive allowlist | DevOps |
-| P0 | After fix: re-run checks from this monitor to confirm 200 responses | Dev |
-| P1 | Add security headers to `vercel.json` (X-Frame-Options, STS, CSP) | Dev |
-| P1 | Confirm Force HTTPS is enabled in Vercel domain settings | Dev |
-| P2 | Replace anon-key health check with `/health` endpoint for Supabase | Dev |
-| P2 | Set up external uptime monitor (UptimeRobot / Better Uptime) from allowed origin | DevOps |
-
----
-
-## Manual Re-run Commands
+### Manual Re-run Commands (from a local machine)
 
 ```bash
 ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqeWdvdnVpcGhieGNkeGVkdWNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2ODA0NzgsImV4cCI6MjA5MTI1NjQ3OH0.WMlfCLVssh6pAos2vGSx_8aEiOTxb8CUQqG6Zx9npqU"
@@ -148,8 +131,10 @@ curl -s -o /dev/null -w '%{http_code} %{time_total}s' https://cacaofrutabrutal.c
 # 2. Security headers — PASS: X-Frame-Options + Strict-Transport present
 curl -sI https://cacaofrutabrutal.com | grep -iE 'x-frame-options|x-content-type|strict-transport|content-security'
 
-# 3. Supabase liveness (no auth required)
-curl -s -w ' %{http_code}' https://kjygovuiphbxcdxeduco.supabase.co/health
+# 3. Supabase auth — PASS: 200
+curl -s -o /dev/null -w '%{http_code}' \
+  -H "apikey: $ANON" \
+  https://kjygovuiphbxcdxeduco.supabase.co/auth/v1/settings
 
 # 4. Supabase REST — PASS: 200 or 401 (RLS active); FAIL: 404/500
 curl -s -o /dev/null -w '%{http_code}' \
@@ -159,9 +144,8 @@ curl -s -o /dev/null -w '%{http_code}' \
 # 5. HTTPS redirect — PASS: 301 or 302
 curl -s -o /dev/null -w '%{http_code}' http://cacaofrutabrutal.com
 
-# 6. SSL — PASS: no SSL errors
-curl -sI --max-time 5 https://cacaofrutabrutal.com 2>&1 \
-  | grep -i 'expire\|SSL\|certificate' || echo 'SSL OK'
+# 6. SSL — PASS: no SSL errors, real issuer should be Let's Encrypt or Vercel
+curl -sv --max-time 5 https://cacaofrutabrutal.com 2>&1 | grep -i 'issuer\|expire\|SSL'
 
 # 7. /fund route — PASS: 200
 curl -s -o /dev/null -w '%{http_code}' https://cacaofrutabrutal.com/fund
@@ -170,4 +154,4 @@ curl -s -o /dev/null -w '%{http_code}' https://cacaofrutabrutal.com/fund
 ---
 
 *Generated by CAUA health monitor — no application code was modified.*
-*Run history: 2026-04-16T21:07Z · 2026-04-15T19:05Z · 2026-04-14T21:04Z · 2026-04-13*
+*Run history: 2026-04-16T23:05Z · 2026-04-16T21:07Z · 2026-04-15T19:05Z · 2026-04-14T21:04Z · 2026-04-13*
