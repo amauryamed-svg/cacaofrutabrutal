@@ -51,7 +51,7 @@ function AppShell() {
         {/* Protected — require registration */}
         <Route path="/marketplace" element={<AuthGate><Marketplace /></AuthGate>} />
         <Route path="/ritual"      element={<AuthGate><Ritual /></AuthGate>} />
-        <Route path="/adoptar"     element={<AuthGate><Adoptar /></AuthGate>} />
+        <Route path="/adoptar"     element={<Adoptar />} />
         <Route path="/tree/:id"    element={<AuthGate><TreeDetail /></AuthGate>} />
         <Route path="/dashboard"   element={<AuthGate><Dashboard /></AuthGate>} />
         <Route path="/fund"        element={<AuthGate><Fund /></AuthGate>} />

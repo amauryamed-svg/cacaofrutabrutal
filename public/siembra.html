@@ -161,6 +161,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(5,16,10,.9);backdrop-filte
   </div>
   <a href="/pitch_growth.html" style="font-family:var(--SM);font-size:.44rem;letter-spacing:.12em;text-transform:uppercase;color:var(--fg3);text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--g)'" onmouseout="this.style.color='var(--fg3)'">← Pitch</a>
   <div class="progress-bar" id="pbar" style="width:20%"></div>
+  <div id="phase-hint" style="position:absolute;bottom:-28px;left:50%;transform:translateX(-50%);font-family:var(--SM);font-size:.44rem;letter-spacing:.1em;text-transform:uppercase;color:var(--g);white-space:nowrap;opacity:0;transition:opacity .3s;pointer-events:none;background:rgba(5,16,10,.92);padding:4px 12px;border:1px solid var(--bdrA);border-radius:2px"></div>
 </nav>
 
 <!-- ══ PHASE 1: FORESTALES ══ -->
@@ -374,8 +375,13 @@ var animIds={};
 
 // ── PHASE NAV ──
 function gp(n){
-  var allowed={1:true,2:trees1.length>=5,3:platano2.length>=8,4:cacao3.length>=6,5:true};
-  if(!allowed[n])return;
+  var reqs={1:null,2:'5 árboles forestales',3:'8 plantas de plátano',4:'6 plantas de cacao',5:null};
+  var met={1:true,2:trees1.length>=5,3:platano2.length>=8,4:cacao3.length>=6,5:true};
+  if(!met[n]){
+    var h=document.getElementById('phase-hint');
+    if(h){h.textContent='Primero planta '+reqs[n]+' en el mapa';h.style.opacity=1;clearTimeout(h._t);h._t=setTimeout(function(){h.style.opacity=0},2200);}
+    return;
+  }
   document.getElementById('p'+cp).classList.remove('active');
   cp=n;
   document.getElementById('p'+cp).classList.add('active');

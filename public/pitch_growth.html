@@ -1479,11 +1479,15 @@ function switchView(v) {
   if (isInv) { cta.textContent = '← Pitch'; cta.onclick = function() { switchView('pitch'); return false; }; }
   else { cta.textContent = 'Growth →'; cta.onclick = function() { switchView('growth'); return false; }; }
   window.scrollTo(0, 0);
-  if (isInv && !chartsInited) { initCharts(); chartsInited = true; updateGTM(); buildPMFGauge(7); updateCanvasInds(14.1,7,6.4); }
-  // re-trigger observers for new view
-  setTimeout(function() {
-    
-  }, 100);
+  if (isInv && !chartsInited) {
+    setTimeout(function() {
+      initCharts(); chartsInited = true; updateGTM(); buildPMFGauge(7); updateCanvasInds(14.1,7,6.4);
+    }, 80);
+  } else if (isInv && chartsInited) {
+    setTimeout(function() {
+      [chRev,chCF,chROI,chMix,chBE,chScenarios,chVelocity,chImpact].forEach(function(c){if(c)c.resize();});
+    }, 80);
+  }
 }
 
 // Nav scroll
