@@ -1,5 +1,8 @@
 api/
 scripts/
+docs/
+supabase/
+.octogent/
 .git/
 .env.local
 .env

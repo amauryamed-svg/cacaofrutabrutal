@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
-// BUILD: 2026-04-14T01:00Z
 import { AuthProvider }  from './context/AuthContext'
 import { LangProvider }  from './context/LangContext'
 import NavBar            from './components/layout/NavBar'
@@ -29,10 +28,11 @@ function AppShell() {
   const hideChrome   = pathname === '/auth'
 
   useEffect(() => {
-    const consent = localStorage.getItem('caua_cookie_consent')
-    if (consent && JSON.parse(consent).analytics) {
-      hsTrackPage(pathname)
-    }
+    try {
+      const m = document.cookie.match(/caua_consent=([^;]+)/)
+      const consent = m ? JSON.parse(decodeURIComponent(m[1])) : null
+      if (consent?.analytics) hsTrackPage(pathname)
+    } catch { /* malformed cookie — skip tracking */ }
   }, [pathname])
 
   return (
