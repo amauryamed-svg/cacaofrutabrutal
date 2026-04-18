@@ -1,0 +1,60 @@
+{
+  "project": "CacaoFrutaBrutal",
+  "version": "1.0.0",
+  "created": "2026-04-18",
+  "orchestration_model": "fan-out/fan-in",
+  "tentacles": [
+    "cacao-gotchi",
+    "b2b-marketplace",
+    "token-economy",
+    "blog-cms",
+    "supabase-backend",
+    "ml-pipeline",
+    "design-system",
+    "infra-devops"
+  ],
+  "global_constraints": {
+    "backgrounds": "hex-only — never CSS custom properties for color",
+    "gradients": "brutalist-luxury-only — never pastel gradients",
+    "storage": "supabase-or-react-context — never localStorage",
+    "stripe_key": "edge-functions-only — never in src/",
+    "service_role_key": "edge-functions-and-python-ml-only — never in src/",
+    "python_fn_max_lines": 20
+  },
+  "skill_routing": {
+    "architecture_api_design": "plan-eng-review",
+    "design_brand_component": "design-consultation",
+    "visual_polish": "design-review",
+    "bug_broken_feature": "investigate",
+    "qa_testing": "qa",
+    "code_review": "review",
+    "security_rls_secrets": "cso",
+    "deploy_ship_pr": "ship",
+    "supabase_schema_migrations": "supabase",
+    "weekly_quality": "health",
+    "retrospective": "retro",
+    "checkpoint_before_refactor": "checkpoint"
+  },
+  "stack": {
+    "frontend": "React 19 + Vite 8 + TypeScript 6 + React Router DOM v7",
+    "styling": "TailwindCSS v4 (utilities) + inline style objects (primary)",
+    "backend": "Supabase (PostgreSQL + Auth + Edge Functions)",
+    "edge_functions": "Deno (TypeScript) in supabase/functions/",
+    "ml": "Python (FastAPI + scikit-learn) in api/ — Vercel serverless",
+    "payments": "Stripe (USD/EUR) + MercadoPago (COP) + Coinbase Commerce (USDC)",
+    "crm": "HubSpot",
+    "deploy": "Vercel (primary) + Netlify (secondary)"
+  },
+  "brand_palette": {
+    "heirloom": "#F7F1EE",
+    "amazon": "#1C3B26",
+    "pod": "#91A63B",
+    "mazorca": "#F1A91E",
+    "criollo": "#8D2679",
+    "theobroma": "#DB5527",
+    "muisca": "#004E64",
+    "heroic": "#00A3CD",
+    "bgDeep": "#040C06",
+    "bgCard": "#132B1C"
+  }
+}
