@@ -4,16 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <title>CAÚA — Siembra &amp; Cosecha</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Inter:wght@300;400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,700;0,900;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=Cormorant+Garamond:ital,wght@0,400;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{background:#05100A}
-body{background:#05100A;color:rgba(242,237,230,.92);font-family:'Inter',system-ui,sans-serif;font-weight:300;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+body{background:#05100A;color:rgba(242,237,230,.92);font-family:'DM Sans',system-ui,sans-serif;font-weight:300;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 :root{
   --g:#91A63B;--g2:#A8BF4A;--p:#8D2679;--p2:#B040A0;--a:#C9952A;--a2:#E8B84B;--r:#C44040;
   --bg:#05100A;--bg2:#09180C;--bdr:rgba(145,166,59,.15);--bdrA:rgba(145,166,59,.45);
   --fg:rgba(242,237,230,.92);--fg2:rgba(242,237,230,.55);--fg3:rgba(242,237,230,.22);
-  --PD:'Playfair Display',Georgia,serif;--SM:'Space Mono',monospace;
+  --PD:'Barlow Condensed',Impact,sans-serif;--SM:'Space Mono',monospace;--SERIF:'Cormorant Garamond',Georgia,serif;
 }
 body::after{content:'';position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.02'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.6}
 
@@ -159,7 +159,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(5,16,10,.9);backdrop-filte
     <span class="ns" id="ns4" onclick="gp(4)">4 Upcycling</span>
     <span class="ns" id="ns5" onclick="gp(5)">5 Registrarme</span>
   </div>
-  <a href="/" style="font-family:var(--SM);font-size:.44rem;letter-spacing:.12em;text-transform:uppercase;color:var(--fg3);text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--g)'" onmouseout="this.style.color='var(--fg3)'">← Pitch</a>
+  <a href="/pitch_growth.html" style="font-family:var(--SM);font-size:.44rem;letter-spacing:.12em;text-transform:uppercase;color:var(--fg3);text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--g)'" onmouseout="this.style.color='var(--fg3)'">← Pitch</a>
   <div class="progress-bar" id="pbar" style="width:20%"></div>
 </nav>
 
@@ -441,7 +441,9 @@ function initCanvas(n){
     else if(n===2){document.getElementById('p-cnt').textContent=cnt;if(cnt>=8){document.getElementById('btn2').disabled=false;document.getElementById('h2').textContent='✓ '+cnt+' plátanos plantados'}}
     else{document.getElementById('c-cnt').textContent=cnt;if(cnt>=6){document.getElementById('btn3').disabled=false;document.getElementById('h3').textContent='✓ '+cnt+' plantas de cacao élite'}}
   };
-  c.ontouchstart=function(e){e.preventDefault();var t=e.touches[0];c.onclick({clientX:t.clientX,clientY:t.clientY});};
+  c.removeEventListener('touchstart', c._ts);
+    c._ts = function(e){e.preventDefault();var t=e.touches[0];c.onclick({clientX:t.clientX,clientY:t.clientY});};
+    c.addEventListener('touchstart', c._ts, {passive:false});
 
   var t=0;
   function frame(){

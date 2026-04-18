@@ -19,19 +19,22 @@ CREATE TABLE IF NOT EXISTS cotizaciones_b2b (
 ALTER TABLE cotizaciones_b2b ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policy 1: Destinatario ve su cotización
+DROP POLICY IF EXISTS "cotizaciones_b2b_owner_read" ON cotizaciones_b2b;
 CREATE POLICY "cotizaciones_b2b_owner_read" ON cotizaciones_b2b
   FOR SELECT USING (email = auth.email());
 
 -- RLS Policy 2: Service role (admin/backend) puede hacer todo
+DROP POLICY IF EXISTS "cotizaciones_b2b_service" ON cotizaciones_b2b;
 CREATE POLICY "cotizaciones_b2b_service" ON cotizaciones_b2b
   USING (auth.role() = 'service_role');
 
 -- RLS Policy 3: Insert inicial
+DROP POLICY IF EXISTS "cotizaciones_b2b_service_insert" ON cotizaciones_b2b;
 CREATE POLICY "cotizaciones_b2b_service_insert" ON cotizaciones_b2b
   FOR INSERT WITH CHECK (auth.role() = 'service_role');
 
 -- Índice en email para RLS rápida
-CREATE INDEX idx_cotizaciones_b2b_email ON cotizaciones_b2b(email);
+CREATE INDEX IF NOT EXISTS idx_cotizaciones_b2b_email ON cotizaciones_b2b(email);
 
 -- Seed inicial: Andrea Rojas
 INSERT INTO cotizaciones_b2b (slug, destinatario, email, empresa, cargo, monto_base, monto_premium)
