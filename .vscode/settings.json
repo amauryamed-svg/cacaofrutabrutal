@@ -1,0 +1,7 @@
+{
+  "files.exclude": {
+    "dist": true,
+    ".vite": true,
+    "node_modules": true
+  }
+}
