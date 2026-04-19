@@ -1,12 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { hsTrackEvent } from '../lib/hubspotTracking'
 import { BRAND, FONTS } from '../utils/constants'
-
-const ALLOWED_EMAIL = 'andrea.rojas@cesa.edu.co'
 
 // ============================================================================
 // HOOK: useReveal — Scroll-reveal con IntersectionObserver
@@ -107,315 +103,22 @@ const CINCO_TIEMPOS = [
 // COMPONENTE PRINCIPAL: ProposalAndreaRojas
 // ============================================================================
 export default function ProposalAndreaRojas() {
-  const navigate = useNavigate()
-  const { email, loading } = useAuth()
-
-  const [formPhase, setFormPhase] = useState<'idle' | 'loading' | 'sent' | 'error'>('idle')
-  const [formError, setFormError] = useState('')
-  const [heroVisible, setHeroVisible] = useState(false)
-
-  // Guard: solo andrea.rojas@cesa.edu.co puede ver Phase C
+  // Track visit on mount — no auth required
   useEffect(() => {
-    if (!loading && email && email !== ALLOWED_EMAIL) {
-      navigate('/')
-    }
-  }, [email, loading, navigate])
-
-  // Auto-register visit cuando Andrea abre la página autenticada
-  useEffect(() => {
-    if (!loading && email === ALLOWED_EMAIL) {
-      (async () => {
-        try {
-          await supabase
-            .from('cotizaciones_b2b')
-            .update({
-              status: 'vista',
-              vista_en: new Date().toISOString(),
-            })
-            .eq('slug', 'andrea-rojas')
-
-          // Track to Hubspot: B2B Catación viewed
-          hsTrackEvent('B2B Catación Vista', {
-            email: ALLOWED_EMAIL,
-            timestamp: new Date().toISOString(),
-          })
-        } catch {
-          // Silently fail — non-blocking
-        }
-      })()
-    }
-  }, [email, loading])
-
-  // Hero fade-in
-  useEffect(() => {
-    const timer = setTimeout(() => setHeroVisible(true), 50)
-    return () => clearTimeout(timer)
+    ;(async () => {
+      try {
+        await supabase
+          .from('cotizaciones_b2b')
+          .update({ status: 'vista', vista_en: new Date().toISOString() })
+          .eq('slug', 'andrea-rojas')
+        hsTrackEvent('B2B Catación Vista', { timestamp: new Date().toISOString() })
+      } catch {
+        // Silently fail — non-blocking
+      }
+    })()
   }, [])
 
-  // ========================================================================
-  // MANEJADOR: Magic Link OTP
-  // ========================================================================
-  async function handleOtpRequest(e: React.FormEvent) {
-    e.preventDefault()
-    setFormPhase('loading')
-    setFormError('')
-
-    try {
-      const { error: otpError } = await supabase.auth.signInWithOtp({
-        email: ALLOWED_EMAIL,
-        options: {
-          data: { full_name: 'Andrea Rojas' },
-          emailRedirectTo: `${window.location.origin}/cotizacion/andrea-rojas`,
-        },
-      })
-
-      if (otpError) throw new Error(`OTP failed: ${otpError.message}`)
-
-      // Track to Hubspot: B2B Catación form submission
-      hsTrackEvent('B2B Catación Solicitada', {
-        email: ALLOWED_EMAIL,
-        timestamp: new Date().toISOString(),
-      })
-
-      setFormPhase('sent')
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Error desconocido'
-      setFormError(message)
-      setFormPhase('error')
-    }
-  }
-
-  // ========================================================================
-  // PHASE A: PRE-AUTH (sin sesión)
-  // ========================================================================
-  if (!email && !loading) {
-    return (
-      <div
-        style={{
-          background: BRAND.bgDeep,
-          color: BRAND.heirloom,
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '40px 20px',
-          paddingTop: 'calc(60px + 40px)',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Glow */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '30%',
-            left: '50%',
-            transform: 'translate(-50%,-50%)',
-            width: 600,
-            height: 600,
-            background: `radial-gradient(ellipse, ${BRAND.mazorca}08 0%, transparent 70%)`,
-            pointerEvents: 'none',
-          }}
-        />
-
-        {/* Content */}
-        <div
-          style={{
-            position: 'relative',
-            zIndex: 1,
-            maxWidth: 500,
-            textAlign: 'center',
-            opacity: heroVisible ? 1 : 0,
-            transform: heroVisible ? 'translateY(0)' : 'translateY(20px)',
-            transition: 'opacity 0.8s ease, transform 0.8s ease',
-          }}
-        >
-          {/* Logo placeholder */}
-          <div
-            style={{
-              width: 80,
-              height: 80,
-              background: BRAND.heirloom,
-              borderRadius: 8,
-              margin: '0 auto 30px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 48,
-            }}
-          >
-            🫘
-          </div>
-
-          <h1
-            style={{
-              fontFamily: FONTS.serif,
-              fontSize: 'clamp(24px, 6vw, 42px)',
-              fontWeight: 700,
-              marginBottom: 16,
-              color: BRAND.heirloom,
-            }}
-          >
-            Propuesta Exclusiva
-          </h1>
-
-          <p
-            style={{
-              fontFamily: FONTS.body,
-              fontSize: 18,
-              marginBottom: 24,
-              color: BRAND.heirloom,
-              opacity: 0.9,
-            }}
-          >
-            Andrea Rojas
-          </p>
-
-          <p
-            style={{
-              fontFamily: FONTS.body,
-              fontSize: 14,
-              marginBottom: 32,
-              color: BRAND.heirloom,
-              opacity: 0.7,
-              lineHeight: 1.6,
-            }}
-          >
-            Accede a tu propuesta exclusiva de catación "Cinco Tiempos de Cacao" — Caúa.
-          </p>
-
-          {/* Form */}
-          <form
-            onSubmit={handleOtpRequest}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 16,
-            }}
-          >
-            {/* Email (readonly) */}
-            <input
-              type="email"
-              value={ALLOWED_EMAIL}
-              disabled
-              style={{
-                padding: '12px 16px',
-                borderRadius: 8,
-                border: `1px solid ${BRAND.mazorca}40`,
-                background: `${BRAND.amazon}20`,
-                color: BRAND.heirloom,
-                fontFamily: FONTS.body,
-                fontSize: 14,
-                cursor: 'not-allowed',
-                opacity: 0.6,
-              }}
-            />
-
-            {/* CTA Button */}
-            <button
-              type="submit"
-              disabled={formPhase === 'loading' || formPhase === 'sent'}
-              style={{
-                padding: '12px 24px',
-                borderRadius: 8,
-                border: 'none',
-                background: BRAND.mazorca,
-                color: BRAND.amazon,
-                fontFamily: FONTS.display,
-                fontSize: 16,
-                fontWeight: 700,
-                cursor: formPhase === 'loading' ? 'wait' : 'pointer',
-                transition: 'all 0.3s ease',
-                opacity: formPhase === 'loading' ? 0.8 : 1,
-              }}
-              onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
-                const el = e.currentTarget
-                if (formPhase !== 'loading' && formPhase !== 'sent') {
-                  el.style.transform = 'scale(1.02)'
-                }
-              }}
-              onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
-                const el = e.currentTarget
-                el.style.transform = 'scale(1)'
-              }}
-            >
-              {formPhase === 'idle' && 'Acceder a mi propuesta'}
-              {formPhase === 'loading' && 'Enviando enlace...'}
-              {formPhase === 'sent' && '✓ Enlace enviado'}
-              {formPhase === 'error' && 'Error — intenta de nuevo'}
-            </button>
-          </form>
-
-          {/* Error message */}
-          {formError && (
-            <p
-              style={{
-                marginTop: 16,
-                color: BRAND.theobroma,
-                fontSize: 12,
-                fontFamily: FONTS.body,
-              }}
-            >
-              {formError}
-            </p>
-          )}
-
-          {/* Help text */}
-          <p
-            style={{
-              marginTop: 24,
-              color: BRAND.heirloom,
-              opacity: 0.5,
-              fontSize: 12,
-              fontFamily: FONTS.body,
-            }}
-          >
-            Recibirás un enlace mágico por correo para acceder a tu propuesta.
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  // ========================================================================
-  // PHASE B: LOADING
-  // ========================================================================
-  if (loading) {
-    return (
-      <div
-        style={{
-          background: BRAND.bgDeep,
-          color: BRAND.heirloom,
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <div
-          style={{
-            fontSize: 48,
-            animation: 'spin 2s linear infinite',
-          }}
-        >
-          🌱
-        </div>
-        <style>{`
-          @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
-      </div>
-    )
-  }
-
-  // ========================================================================
-  // PHASE C: AUTHENTICATED PROPOSAL (email === ALLOWED_EMAIL)
-  // ========================================================================
-  if (email === ALLOWED_EMAIL) {
-    return (
+  return (
       <div
         style={{
           background: BRAND.bgDeep,
@@ -949,9 +652,5 @@ export default function ProposalAndreaRojas() {
           </div>
         </footer>
       </div>
-    )
-  }
-
-  // Fallback (should not reach here)
-  return null
+  )
 }

@@ -1,20 +1,36 @@
-# Documento de Memoria y Decisiones Arquitectónicas (memory.md)
+# memory.md — Registro de Decisiones Arquitectónicas
 
-Este documento es el cerebro de contexto para Cacao Fruta Brutal. Todo agente y subagente debe leer este archivo antes de comenzar a codificar para asegurar que las decisiones tomadas previamente se respetan.
+> Ambos agentes (Claude Code y Gemini) leen este archivo antes de codificar.
+> Agregar nuevas decisiones con `[YYYY-MM-DD]` al inicio de la sección 2.
 
-## 1. Decisiones Base
-- **Frontend**: Next.js App Router, Tailwind CSS, shadcn/ui.
-- **Backend/DB**: Supabase (PostgreSQL).
-- **ML**: Python (FastAPI/Scikit-learn/TensorFlow).
-- **Arquitectura de UI**: Feature-Sliced Design (FSD). Componentes aislados y reutilizables.
+---
 
-## 2. Registro de Decisiones Importantes
-*(Agrega nuevas decisiones arquitectónicas aquí con fecha, contexto y la decisión tomada)*
+## 1. Stack Activo
 
-- **[2026-04-13]**: Creado el documento `SRS.md` definiendo el ecosistema Multi-Agente ("Vibe Coding") usando Claude Code para Backend/ML/RLS y Antigravity para el maquetado Front-End y gamificación. El modelo de negocio se enfoca en "1-1-1-1" apuntando a Eco-inversores.
+| Capa | Tecnología |
+|------|-----------|
+| Frontend | **React 18 + Vite + TypeScript + TailwindCSS** (NO Next.js) |
+| Routing | React Router v7 |
+| Animaciones | Framer Motion |
+| Auth + DB | Supabase (PostgreSQL + RLS) |
+| Pagos | Stripe Checkout + MercadoPago |
+| Backend ML | Python en `api/` — cacao_predictor.py, iot_receiver.py |
+| Deploy | Vercel (frontend + Python cron `/api/cacao_predictor` cada 6h) |
+| Email | Resend via Edge Functions |
+
+## 2. Registro de Decisiones
+
+- **[2026-04-15]** Árbol de contexto HOT/WARM/COLD en `docs/`. Default load: `CLAUDE.md` + `docs/MAIN.md` = 90 líneas (96% ahorro vs carga naïve). Claude Code = `api/` + `supabase/`. Gemini = `src/`.
+
+- **[2026-04-15]** `vercel.json` requiere `"installCommand": "npm install --ignore-scripts"`. Sin esto, `@playwright/test` y `supabase` CLI fallan en el sandbox de Vercel con exit 127.
+
+- **[2026-04-14]** Phase F (CRM) completada ✅: `blog_posts`, `token_events`, `email_log`. AdminCRM con lead scoring (🫘 mazorcas), EditUserPanel, EmailsTable. Ver `docs/features/crm.md`.
+
+- **[2026-04-13]** Ecosistema Multi-Agente: Claude Code para Backend/ML/RLS, Gemini para Frontend/gamificación. Modelo 1-1-1-1 en `docs/context/1111-model.md`.
 
 ## 3. Tareas Críticas Pendientes
-- Levantar el Dashboard MVP "Cacao-gotchi".
-- Construir el Pipeline ML Python y la API de conexión.
-- Definir de manera exhaustiva las políticas RLS para autenticación segura en Supabase.
-- Crear primeros `SKILLS` dentro de `.claude/skills/`.
+
+- [ ] Dashboard MVP "Cacao-gotchi" — UI del Gemelo Digital → `docs/features/cacao-gotchi.md`
+- [ ] Pipeline ML Python — conectar `api/cacao_predictor.py` a producción
+- [ ] Índices DB faltantes: compound `(caua_role, user_id)` en user_profiles, `(status)` en orders
+- [ ] Auditoría RLS fases 1-4 → ver `docs/arch/database.md`

@@ -46,7 +46,7 @@ function AppShell() {
         <Route path="/blog"       element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/cinco-tiempos" element={<CincoTiemposProposal />} />
-        <Route path="/cotizacion/andrea-rojas" element={<ProposalAndreaRojas />} />
+        <Route path="/caua-coti/andrea-rojas" element={<ProposalAndreaRojas />} />
 
         {/* Protected — require registration */}
         <Route path="/marketplace" element={<AuthGate><Marketplace /></AuthGate>} />

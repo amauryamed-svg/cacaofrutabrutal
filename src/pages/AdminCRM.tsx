@@ -9,6 +9,7 @@ import { BRAND, FONTS, GUARDIANS } from '../utils/constants'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import type { UserProfile, CacaoTree } from '../lib/database.types'
+import B2BPipeline from '../components/dashboard/B2BPipeline'
 
 interface InvestRow {
   id: string
@@ -60,7 +61,7 @@ export default function AdminCRM() {
   const [orders, setOrders] = useState<OrderRow[]>([])
   const [emails, setEmails] = useState<EmailRow[]>([])
   const [trees,  setTrees]  = useState<TreeRow[]>([])
-  const [tab,    setTab]    = useState<'users' | 'investments' | 'orders' | 'emails' | 'trees'>('users')
+  const [tab,    setTab]    = useState<'pipeline' | 'users' | 'investments' | 'orders' | 'emails' | 'trees'>('pipeline')
   const [fetching, setFetching] = useState(true)
   const [editUser, setEditUser] = useState<UserProfile | null>(null)
 
@@ -144,8 +145,15 @@ export default function AdminCRM() {
 
       {/* Tabs */}
       <div style={{ padding: '0 var(--space-page)', maxWidth: 1200, margin: '0 auto' }}>
-        <div style={{ display: 'flex', gap: 4, borderBottom: `1px solid ${BRAND.amazon}33`, marginBottom: 24, marginTop: 24 }}>
-          {(['users', 'investments', 'orders', 'emails', 'trees'] as const).map(t => (
+        <div style={{ display: 'flex', gap: 4, borderBottom: `1px solid ${BRAND.amazon}33`, marginBottom: 24, marginTop: 24, flexWrap: 'wrap' }}>
+          {([
+            { key: 'pipeline', label: '🌱 Pipeline B2B' },
+            { key: 'users',       label: `Usuarios (${users.length})` },
+            { key: 'investments', label: `Inversiones (${invs.length})` },
+            { key: 'orders',      label: `Órdenes (${orders.length})` },
+            { key: 'emails',      label: `Emails (${emails.length})` },
+            { key: 'trees',       label: `Árboles (${trees.length})` },
+          ] as const).map(({ key: t, label }) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -157,17 +165,16 @@ export default function AdminCRM() {
                 color: tab === t ? BRAND.pod : `${BRAND.heirloom}55`,
                 textTransform: 'uppercase',
               }}
-            >
-              {t === 'users' ? `Usuarios (${users.length})` : t === 'investments' ? `Inversiones (${invs.length})` : t === 'orders' ? `Órdenes (${orders.length})` : t === 'emails' ? `Emails (${emails.length})` : `Árboles (${trees.length})`}
-            </button>
+            >{label}</button>
           ))}
         </div>
 
-        {tab === 'users' && <UsersTable users={users} onEdit={setEditUser} />}
+        {tab === 'pipeline'    && <B2BPipeline />}
+        {tab === 'users'       && <UsersTable users={users} onEdit={setEditUser} />}
         {tab === 'investments' && <InvestmentsTable rows={invs} />}
-        {tab === 'orders' && <OrdersTable rows={orders} />}
-        {tab === 'emails' && <EmailsTable rows={emails} />}
-        {tab === 'trees' && <TreesTable rows={trees} />}
+        {tab === 'orders'      && <OrdersTable rows={orders} />}
+        {tab === 'emails'      && <EmailsTable rows={emails} />}
+        {tab === 'trees'       && <TreesTable rows={trees} />}
 
         {editUser && <EditUserPanel user={editUser} onClose={() => setEditUser(null)} onSave={(u) => { setUsers(users.map(x => x.id === u.id ? u : x)); setEditUser(null) }} />}
       </div>

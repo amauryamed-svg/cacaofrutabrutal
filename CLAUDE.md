@@ -1,51 +1,59 @@
-# CAUA Corporation App
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+# CAUA Corporation — Claude Code
+
+> Contexto completo: [[docs/MAIN.md]] | Ownership: `api/` `supabase/` `scripts/`
 
 ## Stack
-React 18 + Vite + TypeScript + TailwindCSS | Supabase Auth + PostgreSQL | Stripe Checkout | Vercel
+React 18 + Vite + TypeScript + TailwindCSS | Supabase Auth + PostgreSQL | Stripe + MercadoPago | Vercel | Python ML (`api/`)
 
-## Commands
-- dev: `npm run dev` (localhost:3000)
-- build: `npm run build`
-- types: `npx supabase gen types typescript --local`
+## Comandos
+```bash
+npm run dev        # localhost:3000
+npm run build      # tsc -b && vite build
+npm run lint       # ESLint
+npx supabase gen types typescript --local   # regenerar tipos DB tras migración
 
-## Non-negotiable constraints (CauaCore §8)
-- Backgrounds: hex values only, NEVER CSS custom properties
-- Python functions: max 20 lines each
-- NEVER pastel gradients — brutalist luxury only
-- NEVER localStorage — use Supabase or React context
-- NEVER commit .env files — use .env.local (gitignored)
-- Stripe secret key: Edge Functions only, never frontend
-- Supabase service_role key: never in client code
+# Python API (api/)
+cd api && pip install -r requirements.txt
+python -c "from cacao_predictor import fetch_climate; print(fetch_climate('2.5359','-75.5277'))"
 
-## Token Budget — Ask-First Pattern (CauaOptimize §1)
-Antes de proceder:
-- **Exploración:** ¿Leo archivos o usamos subagente Explore?
-- **Deploy:** ¿Deployamos ahora o agrupamos 3+ cambios?
-- **Lectura:** ¿Puedo resolverlo sin leer X?
+# Supabase
+npx supabase link --project-ref kjygovuiphbxcdxeduco
+npx supabase db push
+npx supabase functions deploy <nombre>
+```
 
-**Modelos por tarea:**
-- Haiku (default): copy, edits pequeños, config
-- Sonnet: features, componentes, migraciones
-- Opus: bugs reiterativos (≥2 fallos) ó decisiones críticas
+## CauaCore §8 — No negociables
+- Backgrounds: hex values ONLY, nunca CSS custom properties
+- NUNCA pastel gradients — brutalist luxury only
+- NUNCA localStorage — Supabase o React context
+- NUNCA `.env` en commits — usar `.env.local`
+- Stripe secret key: Edge Functions only
+- Supabase `service_role`: nunca en client code
+- Python functions: max 20 líneas cada una
+- RLS: siempre `(select auth.uid())`, nunca `auth.uid()` directo
+- Frontend siempre filtra `.eq('user_id', userId)` — RLS es capa de seguridad, no filtro
 
-**Memory:** Cargar solo HOT/WARM. COLD solo si piden.
+## Token Budget (CauaOptimize §1)
+Antes de proceder: ¿Leo archivos o uso Explore? ¿Agrupo 3+ cambios antes de deploy?
 
-## Pre-commit Hook (CauaOptimize §2)
-- `npm run postinstall` → instala hook Python
-- Corre `python scripts/health.py` en cada commit
-- Bloquea si hay `console.log` en producción
-- Avisa (no bloquea) si archivos >200 líneas o imports no usados
+| Modelo | Cuándo |
+|--------|--------|
+| Haiku  | Copy, edits pequeños, config |
+| Sonnet | Features, componentes, migraciones |
+| Opus   | Bugs reiterativos (≥2 fallos), decisiones críticas |
 
-## Skill routing — invoke FIRST before any other action
-- Architecture / data model / API design     → plan-eng-review
-- Design system / brand / component          → design-consultation
-- Visual polish / live site audit            → design-review
-- Bug / error / broken feature               → investigate
-- QA / test flows / browser testing          → qa
-- Code review / pre-merge check              → review
-- Security / RLS / webhook / secrets         → cso
-- Deploy / ship / create PR                  → ship
-- Supabase schema / migrations / RLS         → supabase
-- Weekly code quality                        → health
-- Sprint retrospective                       → retro
-- Save progress before major refactor        → checkpoint
+## Skill Routing
+| Tarea | Skill |
+|-------|-------|
+| Arquitectura / DB / API | `plan-eng-review` |
+| Bug / error | `investigate` |
+| Seguridad / RLS / secrets | `cso` |
+| Deploy / PR | `ship` |
+| Supabase schema | `supabase` |
+| Design / componentes | `design-consultation` → Gemini |
+| QA / browser | `qa` |
+| Health semanal | `health` |
