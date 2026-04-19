@@ -6,8 +6,7 @@
 <meta name="description" content="CAÚA Colombia SAS · Primer IaaS del Cacao Criollo Élite colombiano para industria EU · BFFood VIII · Galicia">
 <link rel="canonical" href="https://cacaofrutabrutal.com">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-<link href="https://fonts.adobe.com/css2?font-family=adobe-acumin-pro" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,700;0,900;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <style>
 :root{
   --pod:#91A63B;--pod2:#A8BF4A;--pod3:#C5DB6A;
@@ -23,7 +22,8 @@
   --bdr-a:rgba(201,149,42,.22);
   --red:#C44040;--green:#44B870;
   --FD:'Cormorant Garamond',Georgia,serif;
-  --FA:'adobe-acumin-pro','DM Sans',system-ui,sans-serif;
+  --FA:'Barlow Condensed',Impact,sans-serif;
+  --FB-body:'DM Sans',system-ui,sans-serif;
   --FB:'DM Sans',system-ui,sans-serif;
   --FM:'Space Mono',monospace;
 }
@@ -588,6 +588,14 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.4);box-shadow:0 
 .gc-l2{color:rgba(141,38,121,.9)}
 .gc-l1{color:rgba(201,149,42,1);font-size:.52rem!important;line-height:1.4!important}
 .gc-ring.r3{font-size:.5rem}
+
+/* ══ IP TAG CLOUD ══ */
+.ip-tag-cloud{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.ipc{display:inline-block;font-family:var(--FM);font-size:.46rem;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:2px;transition:all .2s}
+.ipc.amber{background:rgba(201,149,42,.15);border:1px solid rgba(201,149,42,.4);color:var(--amber2)}
+.ipc.cosmic{background:rgba(141,38,121,.15);border:1px solid rgba(141,38,121,.4);color:var(--cosmic2)}
+.ipc.pod{background:rgba(145,166,59,.15);border:1px solid rgba(145,166,59,.4);color:var(--pod2)}
+.ipc:hover{transform:translateY(-1px)}
 </style>
 
 </head>
@@ -1433,7 +1441,8 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.4);box-shadow:0 
   </div>
 </footer>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js">
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+<script>
 // Fallback: ensure all .appear elements are visible after 1.5s in case IO fails
 setTimeout(function() {
   document.querySelectorAll('.appear,.pillar,.iw-card,.rm-item').forEach(function(el) {
@@ -1458,8 +1467,8 @@ var chartsInited = false;
 function switchView(v) {
   currentView = v;
   var isInv = v === 'growth';
-  document.querySelectorAll('.ve').forEach(function(el) { el.style.display = isInv ? 'none' : 'block'; });
-  document.querySelectorAll('.vi').forEach(function(el) { el.style.display = isInv ? 'block' : 'none'; });
+  document.querySelectorAll('.ve').forEach(function(el) { el.style.display = isInv ? 'none' : ''; });
+  document.querySelectorAll('.vi').forEach(function(el) { el.style.display = isInv ? 'block' : ''; });
   var be = document.getElementById('vt-pitch');
   var bi = document.getElementById('vt-growth');
   be.className = 'vt-btn' + (isInv ? '' : ' active');
@@ -1469,11 +1478,15 @@ function switchView(v) {
   if (isInv) { cta.textContent = '← Pitch'; cta.onclick = function() { switchView('pitch'); return false; }; }
   else { cta.textContent = 'Growth →'; cta.onclick = function() { switchView('growth'); return false; }; }
   window.scrollTo(0, 0);
-  if (isInv && !chartsInited) { initCharts(); chartsInited = true; updateGTM(); buildPMFGauge(7); updateCanvasInds(14.1,7,6.4); }
-  // re-trigger observers for new view
-  setTimeout(function() {
-    
-  }, 100);
+  if (isInv && !chartsInited) {
+    setTimeout(function() {
+      initCharts(); chartsInited = true; updateGTM(); buildPMFGauge(7); updateCanvasInds(14.1,7,6.4);
+    }, 80);
+  } else if (isInv && chartsInited) {
+    setTimeout(function() {
+      [chRev,chCF,chROI,chMix,chBE,chScenarios,chVelocity,chImpact].forEach(function(c){if(c)c.resize();});
+    }, 80);
+  }
 }
 
 // Nav scroll

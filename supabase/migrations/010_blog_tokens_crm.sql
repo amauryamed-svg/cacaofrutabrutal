@@ -26,11 +26,13 @@ CREATE TABLE IF NOT EXISTS blog_posts (
 ALTER TABLE blog_posts ENABLE ROW LEVEL SECURITY;
 
 -- Blog posts are public read
+DROP POLICY IF EXISTS "blog_posts_public_read" ON blog_posts;
 CREATE POLICY "blog_posts_public_read" ON blog_posts
   FOR SELECT
   USING (published = true);
 
 -- Only farmers and founders can insert
+DROP POLICY IF EXISTS "blog_posts_insert" ON blog_posts;
 CREATE POLICY "blog_posts_insert" ON blog_posts
   FOR INSERT
   WITH CHECK (

@@ -43,13 +43,25 @@ type Lang = 'es' | 'en'
 
 interface Prefs { analytics: boolean; marketing: boolean }
 
-const STORAGE_KEY = 'caua_cookie_consent'
+const CONSENT_COOKIE = 'caua_consent'
 const SESSION_KEY = 'caua_session_id'
 
 function getSessionId() {
   let id = sessionStorage.getItem(SESSION_KEY)
   if (!id) { id = crypto.randomUUID(); sessionStorage.setItem(SESSION_KEY, id) }
   return id
+}
+
+function getConsentCookie(): (Prefs & { analytics: boolean }) | null {
+  try {
+    const m = document.cookie.match(/caua_consent=([^;]+)/)
+    return m ? JSON.parse(decodeURIComponent(m[1])) : null
+  } catch { return null }
+}
+
+function setConsentCookie(consent: Prefs) {
+  const val = encodeURIComponent(JSON.stringify(consent))
+  document.cookie = `${CONSENT_COOKIE}=${val};max-age=31536000;path=/;SameSite=Lax`
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -62,17 +74,14 @@ export default function CookieBanner() {
   const t = T[lang]
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (!stored) { setTimeout(() => setVisible(true), 1200) }
-    else {
-      const saved = JSON.parse(stored) as Prefs & { analytics: boolean }
-      if (saved.analytics) loadHubSpot()
-    }
+    const saved = getConsentCookie()
+    if (!saved) { setTimeout(() => setVisible(true), 1200) }
+    else { if (saved.analytics) loadHubSpot() }
   }, [])
 
   async function save(analytics: boolean, marketing: boolean) {
     const consent = { analytics, marketing }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(consent))
+    setConsentCookie(consent)
     setVisible(false)
 
     if (analytics) loadHubSpot()

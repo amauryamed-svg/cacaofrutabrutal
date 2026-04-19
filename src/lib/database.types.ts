@@ -191,6 +191,9 @@ export interface CacaoTree {
   adopted_at: string
   predicted_harvest_at: string | null
   co2_kg: number
+  health: number
+  moisture: number
+  sunlight: number
   last_update_at: string
   created_at: string
 }

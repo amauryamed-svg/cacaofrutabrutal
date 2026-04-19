@@ -72,6 +72,7 @@ drop policy if exists "updates_founder_select" on tree_updates;
 -- ─────────────────────────────────────────────────────────────────
 
 -- Users can select their own trees, OR if they're a founder
+drop policy if exists "trees_fast_select" on cacao_trees;
 create policy "trees_fast_select" on cacao_trees
   for select using (
     user_id = (select auth.uid())
@@ -79,12 +80,14 @@ create policy "trees_fast_select" on cacao_trees
   );
 
 -- Users can only insert trees under their own user_id
+drop policy if exists "trees_fast_insert" on cacao_trees;
 create policy "trees_fast_insert" on cacao_trees
   for insert with check (
     user_id = (select auth.uid())
   );
 
 -- Users can only update their own trees
+drop policy if exists "trees_fast_update" on cacao_trees;
 create policy "trees_fast_update" on cacao_trees
   for update using (
     user_id = (select auth.uid())
@@ -95,6 +98,7 @@ create policy "trees_fast_update" on cacao_trees
 -- ─────────────────────────────────────────────────────────────────
 
 -- Users can see updates for trees they own, OR if they're a founder
+drop policy if exists "updates_owner_fast_select" on tree_updates;
 create policy "updates_owner_fast_select" on tree_updates
   for select using (
     exists (

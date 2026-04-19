@@ -47,28 +47,33 @@ drop policy if exists "updates_founder_select" on tree_updates;
 -- ── 3. Apply Cache-Friendly RLS ( (select auth.uid()) pattern ) ────
 
 -- Cacao Trees
+drop policy if exists "trees_fast_select" on cacao_trees;
 create policy "trees_fast_select" on cacao_trees
   for select using (
     user_id = (select auth.uid())
     or (select auth.uid()) = ANY(get_founder_user_ids())
   );
 
+drop policy if exists "trees_fast_insert" on cacao_trees;
 create policy "trees_fast_insert" on cacao_trees
   for insert with check (
     user_id = (select auth.uid())
   );
 
+drop policy if exists "trees_fast_update" on cacao_trees;
 create policy "trees_fast_update" on cacao_trees
   for update using (
     user_id = (select auth.uid())
   );
 
 -- Tree Updates
+drop policy if exists "updates_fast_owner_select" on tree_updates;
 create policy "updates_fast_owner_select" on tree_updates
   for select using (
     tree_id = ANY(get_my_tree_ids())
   );
 
+drop policy if exists "updates_fast_founder_select" on tree_updates;
 create policy "updates_fast_founder_select" on tree_updates
   for select using (
     (select auth.uid()) = ANY(get_founder_user_ids())
