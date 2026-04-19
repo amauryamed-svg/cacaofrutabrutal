@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>CAUA — Investor Deck Builder</title>
+<meta name="description" content="CAUA COLOMBIA SAS × CAUA INC · Parametric Investor Deck · Ceremonial Cacao · Cacao Soda · Polyphenol Supplements">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,700;0,900;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{background:#040C06;color:#F7F1EE;font-family:'DM Sans',system-ui,sans-serif;font-weight:300;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+:root{
+  --g:#91A63B;--g2:#A8BF4A;--p:#8D2679;--a:#F1A91E;--b:#004E64;--r:#DB5527;
+  --bg:#040C06;--bg2:#0A1A10;--bg3:#132B1C;
+  --bdr:rgba(145,166,59,.18);--bdra:rgba(145,166,59,.55);
+  --fg:rgba(247,241,238,.95);--fg2:rgba(247,241,238,.6);--fg3:rgba(247,241,238,.25);
+  --FA:'Barlow Condensed',Impact,sans-serif;--SM:'Space Mono',monospace;
+}
+body::after{content:'';position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.015'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.5}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:rgba(4,12,6,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--bdr);padding:10px 20px;display:flex;align-items:center;justify-content:space-between}
+.nav-brand{display:flex;align-items:center;gap:10px}
+.nav-logo{font-family:var(--FA);font-size:1.1rem;font-weight:900;font-style:italic;color:var(--g);letter-spacing:.06em}
+.nav-sep{font-size:.6rem;color:var(--fg3);margin:0 2px}
+.nav-sub{font-family:var(--SM);font-size:.42rem;color:var(--fg3);letter-spacing:.14em;text-transform:uppercase}
+.nav-right{display:flex;align-items:center;gap:8px}
+.lang-btn{background:rgba(145,166,59,.12);border:1px solid var(--bdr);color:var(--g);border-radius:4px;padding:5px 10px;cursor:pointer;font-family:var(--SM);font-size:.42rem;letter-spacing:.1em;transition:all .2s}
+.lang-btn:hover{background:rgba(145,166,59,.22);border-color:var(--bdra)}
+.back-btn{color:var(--fg3);text-decoration:none;font-family:var(--SM);font-size:.4rem;letter-spacing:.1em;transition:color .2s}
+.back-btn:hover{color:var(--g)}
+
+/* MAIN */
+main{max-width:560px;margin:0 auto;padding:32px 20px 80px}
+.eyebrow{font-family:var(--SM);font-size:.44rem;color:var(--g);letter-spacing:.18em;text-transform:uppercase;margin-bottom:8px}
+.page-title{font-family:var(--FA);font-weight:900;font-size:clamp(2rem,8vw,3rem);color:var(--fg);text-transform:uppercase;line-height:.95;margin-bottom:6px}
+.page-sub{font-family:'DM Sans',sans-serif;font-size:.75rem;color:var(--fg2);line-height:1.6;margin-bottom:32px}
+
+/* STEP INDICATOR */
+.steps{display:flex;gap:6px;margin-bottom:32px;align-items:center}
+.step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--FA);font-weight:700;font-size:.55rem;letter-spacing:.04em;transition:all .3s}
+.step-dot.active{background:var(--g);color:#040C06}
+.step-dot.done{background:rgba(145,166,59,.25);color:var(--g);border:1px solid var(--g)}
+.step-dot.pending{background:rgba(247,241,238,.06);color:var(--fg3);border:1px solid rgba(247,241,238,.1)}
+.step-line{flex:1;height:1px;background:rgba(145,166,59,.2)}
+
+/* STEP PANELS */
+.step-panel{display:none}
+.step-panel.active{display:block}
+
+/* CATEGORY CARDS */
+.cat-grid{display:flex;flex-direction:column;gap:12px}
+.cat-card{background:var(--bg2);border:1px solid var(--bdr);border-radius:14px;padding:18px 20px;cursor:pointer;transition:all .25s;display:flex;gap:16px;align-items:flex-start}
+.cat-card:hover{border-color:rgba(145,166,59,.4);background:rgba(145,166,59,.06)}
+.cat-card.selected{border-color:var(--bdra);background:rgba(145,166,59,.1);box-shadow:0 0 0 2px rgba(145,166,59,.25)}
+.cat-icon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0}
+.cat-body{flex:1}
+.cat-name{font-family:var(--FA);font-weight:900;font-size:1.05rem;color:var(--fg);text-transform:uppercase;letter-spacing:.05em;line-height:1;margin-bottom:4px}
+.cat-tagline{font-size:.7rem;color:var(--fg2);line-height:1.5;margin-bottom:8px}
+.cat-pills{display:flex;flex-wrap:wrap;gap:4px}
+.cpill{background:rgba(145,166,59,.12);color:var(--g);border:1px solid rgba(145,166,59,.25);border-radius:20px;padding:2px 8px;font-size:.55rem;font-weight:700;letter-spacing:.06em}
+.cat-card.selected .cat-sel{display:flex}
+.cat-sel{display:none;width:20px;height:20px;border-radius:50%;background:var(--g);align-items:center;justify-content:center;font-size:.6rem;color:#040C06;flex-shrink:0;margin-top:2px}
+
+/* PARAMS */
+.param-section{margin-bottom:24px}
+.param-label{font-family:var(--FA);font-weight:700;font-size:.7rem;color:var(--fg2);letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px}
+.chip-row{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:rgba(247,241,238,.05);border:1px solid rgba(247,241,238,.14);border-radius:6px;padding:7px 14px;cursor:pointer;font-family:var(--SM);font-size:.44rem;color:var(--fg2);letter-spacing:.08em;transition:all .2s;user-select:none}
+.chip:hover{border-color:rgba(145,166,59,.4);color:var(--g)}
+.chip.on{background:rgba(145,166,59,.15);border-color:var(--bdra);color:var(--g)}
+.chip.multi{border-radius:20px}
+.custom-input{background:rgba(247,241,238,.05);border:1px solid rgba(247,241,238,.14);border-radius:6px;padding:8px 14px;color:var(--fg);font-family:var(--SM);font-size:.44rem;width:100%;margin-top:6px;outline:none;transition:border .2s}
+.custom-input:focus{border-color:rgba(145,166,59,.5)}
+.custom-input::placeholder{color:var(--fg3)}
+.cat-params{display:none}
+.cat-params.active{display:block}
+
+/* PREVIEW */
+.preview-card{background:var(--bg2);border:1px solid var(--bdra);border-radius:16px;padding:24px;margin-bottom:24px;position:relative;overflow:hidden}
+.preview-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--g),var(--p),var(--a))}
+.preview-entity{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.entity-pill{background:rgba(0,78,100,.2);border:1px solid rgba(0,78,100,.5);border-radius:4px;padding:4px 10px;font-family:var(--SM);font-size:.42rem;color:#5BC8E0;letter-spacing:.08em}
+.entity-pill.co{background:rgba(141,38,121,.15);border-color:rgba(141,38,121,.5);color:#C77EDB}
+.preview-cat-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(145,166,59,.15);border:1px solid var(--bdra);border-radius:6px;padding:5px 12px;font-family:var(--FA);font-weight:700;font-size:.7rem;color:var(--g);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px}
+.preview-title{font-family:var(--FA);font-weight:900;font-size:1.4rem;color:var(--fg);text-transform:uppercase;line-height:1;margin-bottom:4px}
+.preview-sub{font-size:.7rem;color:var(--fg2);margin-bottom:16px}
+.preview-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.metric-box{background:rgba(247,241,238,.04);border:1px solid rgba(247,241,238,.08);border-radius:8px;padding:10px 12px}
+.metric-val{font-family:var(--FA);font-weight:900;font-size:1.2rem;color:var(--g);line-height:1}
+.metric-lbl{font-size:.55rem;color:var(--fg3);margin-top:2px;text-transform:uppercase;letter-spacing:.08em}
+.use-grid{display:flex;flex-direction:column;gap:4px;margin-bottom:16px}
+.use-row{display:flex;justify-content:space-between;align-items:center;font-size:.65rem}
+.use-label{color:var(--fg2)}
+.use-val{color:var(--g);font-weight:700}
+.use-bar{height:3px;background:rgba(145,166,59,.15);border-radius:2px;overflow:hidden;margin-top:2px;margin-bottom:6px}
+.use-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--g),var(--g2))}
+.preview-kpis{display:flex;gap:6px;flex-wrap:wrap}
+.kpi-tag{background:rgba(145,166,59,.1);border:1px solid rgba(145,166,59,.2);border-radius:20px;padding:3px 10px;font-size:.55rem;color:var(--g);font-weight:600}
+.kpi-tag.amber{background:rgba(241,169,30,.1);border-color:rgba(241,169,30,.3);color:var(--a)}
+.kpi-tag.purple{background:rgba(141,38,121,.12);border-color:rgba(141,38,121,.3);color:#C77EDB}
+
+/* SHARE */
+.share-msg-box{background:rgba(247,241,238,.04);border:1px solid rgba(247,241,238,.1);border-radius:10px;padding:16px;margin-bottom:16px;font-family:var(--SM);font-size:.46rem;color:var(--fg2);line-height:1.8;letter-spacing:.03em}
+.share-btns{display:flex;flex-direction:column;gap:8px}
+.btn-wa{display:flex;align-items:center;gap:10px;background:#25D366;color:#fff;border:none;border-radius:10px;padding:14px 20px;cursor:pointer;font-family:var(--FA);font-weight:700;font-size:.85rem;letter-spacing:.08em;text-transform:uppercase;transition:opacity .2s;text-decoration:none;justify-content:center}
+.btn-wa:hover{opacity:.9}
+.btn-copy{display:flex;align-items:center;gap:10px;background:rgba(145,166,59,.15);border:1px solid var(--bdra);color:var(--g);border-radius:10px;padding:12px 20px;cursor:pointer;font-family:var(--FA);font-weight:700;font-size:.85rem;letter-spacing:.08em;text-transform:uppercase;transition:all .2s;justify-content:center}
+.btn-copy:hover{background:rgba(145,166,59,.25)}
+.btn-full{display:flex;align-items:center;gap:10px;background:transparent;border:1px solid rgba(247,241,238,.15);color:var(--fg2);border-radius:10px;padding:10px 20px;cursor:pointer;font-family:var(--SM);font-size:.46rem;letter-spacing:.08em;text-transform:uppercase;transition:all .2s;justify-content:center;text-decoration:none}
+.btn-full:hover{border-color:rgba(247,241,238,.3);color:var(--fg)}
+.copy-ok{display:none;font-family:var(--SM);font-size:.44rem;color:var(--g);text-align:center;margin-top:6px;letter-spacing:.1em}
+
+/* NAVIGATION BTNS */
+.nav-btns{display:flex;gap:10px;margin-top:24px}
+.btn-next{flex:2;background:var(--g);color:#040C06;border:none;border-radius:10px;padding:14px;cursor:pointer;font-family:var(--FA);font-weight:900;font-size:.9rem;letter-spacing:.1em;text-transform:uppercase;transition:opacity .2s}
+.btn-next:hover{opacity:.88}
+.btn-next:disabled{opacity:.35;cursor:not-allowed}
+.btn-prev{flex:1;background:transparent;border:1px solid rgba(247,241,238,.15);color:var(--fg3);border-radius:10px;padding:14px;cursor:pointer;font-family:var(--SM);font-size:.46rem;letter-spacing:.08em;transition:all .2s}
+.btn-prev:hover{border-color:rgba(247,241,238,.3);color:var(--fg2)}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--bdr);margin:24px 0}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">
+    <span class="nav-logo">CAÚA</span>
+    <span class="nav-sep">×</span>
+    <div>
+      <div class="nav-sub" style="color:#5BC8E0" data-es="COLOMBIA SAS · INC" data-en="COLOMBIA SAS · INC">COLOMBIA SAS · INC</div>
+      <div class="nav-sub" data-es="DECK PARA INVERSIONISTAS" data-en="INVESTOR DECK BUILDER">DECK PARA INVERSIONISTAS</div>
+    </div>
+  </div>
+  <div class="nav-right">
+    <a href="/pitch_growth.html" target="_blank" class="back-btn" data-es="← Deck Completo" data-en="← Full Deck">← Deck Completo</a>
+    <button class="lang-btn" id="lang-btn" onclick="toggleLang()">🌎 EN</button>
+  </div>
+</nav>
+
+<main>
+  <p class="eyebrow" data-es="CAUA COLOMBIA SAS × CAUA INC · 2026" data-en="CAUA COLOMBIA SAS × CAUA INC · 2026">CAUA COLOMBIA SAS × CAUA INC · 2026</p>
+  <h1 class="page-title" data-es="Deck<br>Resumido" data-en="Investor<br>Brief">Deck<br>Resumido</h1>
+  <p class="page-sub" data-es="Selecciona tu categoría, configura los parámetros y recibe un deck personalizado para compartir con inversionistas en USA · México · LatAm." data-en="Select your category, configure parameters, and receive a personalized deck to share with investors across USA · Mexico · LatAm.">Selecciona tu categoría, configura los parámetros y recibe un deck personalizado para compartir con inversionistas en USA · México · LatAm.</p>
+
+  <!-- STEP INDICATORS -->
+  <div class="steps" id="steps-bar">
+    <div class="step-dot active" id="sd1">1</div>
+    <div class="step-line"></div>
+    <div class="step-dot pending" id="sd2">2</div>
+    <div class="step-line"></div>
+    <div class="step-dot pending" id="sd3">3</div>
+    <div class="step-line"></div>
+    <div class="step-dot pending" id="sd4">4</div>
+  </div>
+
+  <!-- STEP 1: CATEGORY -->
+  <div class="step-panel active" id="step1">
+    <p class="param-label" data-es="¿En qué categoría quieres invertir?" data-en="Which category interests you?">¿En qué categoría quieres invertir?</p>
+    <div class="cat-grid">
+
+      <div class="cat-card" id="cat-ceremonial" onclick="selectCat('ceremonial',this)">
+        <div class="cat-icon" style="background:rgba(145,166,59,.15)">🫘</div>
+        <div class="cat-body">
+          <div class="cat-name" data-es="Cacao 100% Ceremonial" data-en="100% Ceremonial Cacao">Cacao 100% Ceremonial</div>
+          <div class="cat-tagline" data-es="Hobo, Huila · Híbrido Acriollado · Guardián Lucho · Ritual wellness market USA · CDMX" data-en="Hobo, Huila · Acriollado Hybrid · Guardian Lucho · Ritual wellness market USA · CDMX">Hobo, Huila · Híbrido Acriollado · Guardián Lucho · Ritual wellness market USA · CDMX</div>
+          <div class="cat-pills">
+            <span class="cpill">$28–$45 / 250g</span>
+            <span class="cpill">Whole Foods</span>
+            <span class="cpill" style="border-color:rgba(219,85,39,.3);color:#DB5527">vs Firefly · Ora Cacao</span>
+          </div>
+        </div>
+        <div class="cat-sel">✓</div>
+      </div>
+
+      <div class="cat-card" id="cat-soda" onclick="selectCat('soda',this)">
+        <div class="cat-icon" style="background:rgba(241,169,30,.12)">🥤</div>
+        <div class="cat-body">
+          <div class="cat-name" data-es="Cacao Soda — Sunrise & Sunset" data-en="Cacao Soda — Sunrise & Sunset">Cacao Soda — Sunrise & Sunset</div>
+          <div class="cat-tagline" data-es="Sunrise 20% mucílago · Sunset 40% mucílago · Bebida funcional premium · Mercado USA · México" data-en="Sunrise 20% mucilage · Sunset 40% mucilage · Premium functional drink · USA · Mexico market">Sunrise 20% mucílago · Sunset 40% mucílago · Bebida funcional premium · Mercado USA · México</div>
+          <div class="cat-pills">
+            <span class="cpill" style="border-color:rgba(241,169,30,.3);color:var(--a)">$4.99 Sunrise</span>
+            <span class="cpill" style="border-color:rgba(241,169,30,.3);color:var(--a)">$6.99 Sunset</span>
+            <span class="cpill" style="border-color:rgba(219,85,39,.3);color:#DB5527">vs Olipop · Poppi</span>
+          </div>
+        </div>
+        <div class="cat-sel">✓</div>
+      </div>
+
+      <div class="cat-card" id="cat-supplements" onclick="selectCat('supplements',this)">
+        <div class="cat-icon" style="background:rgba(141,38,121,.15)">💊</div>
+        <div class="cat-body">
+          <div class="cat-name" data-es="Suplementos · Polifenoles Diméricos" data-en="Supplements · Dimeric Polyphenols">Suplementos · Polifenoles Diméricos</div>
+          <div class="cat-tagline" data-es="Epicatequina dimérica B1/B2 · 800mg/serving · Cápsulas · Polvo · RTD Shot · Gummies · vs CocoaVia (Mars)" data-en="Dimeric epicatechin B1/B2 · 800mg/serving · Caps · Powder · RTD Shot · Gummies · vs CocoaVia (Mars)">Epicatequina dimérica B1/B2 · 800mg/serving · Cápsulas · Polvo · RTD Shot · Gummies · vs CocoaVia (Mars)</div>
+          <div class="cat-pills">
+            <span class="cpill" style="border-color:rgba(141,38,121,.3);color:#C77EDB">$49 / 60ct caps</span>
+            <span class="cpill" style="border-color:rgba(141,38,121,.3);color:#C77EDB">FDA NDI</span>
+            <span class="cpill" style="border-color:rgba(219,85,39,.3);color:#DB5527">vs Mars CocoaVia</span>
+          </div>
+        </div>
+        <div class="cat-sel">✓</div>
+      </div>
+
+    </div>
+    <div class="nav-btns">
+      <button class="btn-next" id="btn-next-1" onclick="goStep(2)" disabled data-es="SIGUIENTE: PARÁMETROS →" data-en="NEXT: PARAMETERS →">SIGUIENTE: PARÁMETROS →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: PARAMETERS -->
+  <div class="step-panel" id="step2">
+    <div class="param-section">
+      <p class="param-label" data-es="Mercado objetivo" data-en="Target market">Mercado objetivo</p>
+      <div class="chip-row" id="chips-market">
+        <div class="chip multi" data-val="USA" onclick="toggleChip(this,'market')" data-es="🇺🇸 USA" data-en="🇺🇸 USA">🇺🇸 USA</div>
+        <div class="chip multi" data-val="Mexico" onclick="toggleChip(this,'market')" data-es="🇲🇽 México" data-en="🇲🇽 Mexico">🇲🇽 México</div>
+        <div class="chip multi" data-val="LatAm" onclick="toggleChip(this,'market')" data-es="🌎 LatAm" data-en="🌎 LatAm">🌎 LatAm</div>
+        <div class="chip multi" data-val="Colombia" onclick="toggleChip(this,'market')" data-es="🇨🇴 Colombia" data-en="🇨🇴 Colombia">🇨🇴 Colombia</div>
+      </div>
+    </div>
+
+    <div class="param-section">
+      <p class="param-label" data-es="Tamaño de inversión" data-en="Investment size">Tamaño de inversión</p>
+      <div class="chip-row" id="chips-raise">
+        <div class="chip" data-val="$250K" onclick="selectChip(this,'raise')">$250K</div>
+        <div class="chip" data-val="$500K" onclick="selectChip(this,'raise')">$500K</div>
+        <div class="chip" data-val="$1M" onclick="selectChip(this,'raise')">$1M</div>
+        <div class="chip" data-val="custom" onclick="selectChip(this,'raise','custom')" data-es="Personalizado" data-en="Custom">Personalizado</div>
+      </div>
+      <input type="text" class="custom-input" id="raise-custom" placeholder="e.g. $750K" style="display:none" oninput="updateCustomRaise(this.value)">
+    </div>
+
+    <div class="param-section">
+      <p class="param-label" data-es="Timeline de despliegue" data-en="Deployment timeline">Timeline de despliegue</p>
+      <div class="chip-row" id="chips-timeline">
+        <div class="chip" data-val="Q2 2026" onclick="selectChip(this,'timeline')">Q2 2026</div>
+        <div class="chip" data-val="Q3 2026" onclick="selectChip(this,'timeline')">Q3 2026</div>
+        <div class="chip" data-val="Q4 2026" onclick="selectChip(this,'timeline')">Q4 2026</div>
+        <div class="chip" data-val="2027" onclick="selectChip(this,'timeline')">2027</div>
+      </div>
+    </div>
+
+    <!-- CATEGORY-SPECIFIC PARAMS -->
+    <div class="cat-params" id="params-ceremonial">
+      <div class="divider"></div>
+      <div class="param-section">
+        <p class="param-label" data-es="Canal de distribución" data-en="Distribution channel">Canal de distribución</p>
+        <div class="chip-row" id="chips-channel-c">
+          <div class="chip" data-val="D2C" onclick="selectChip(this,'channel')">D2C Online</div>
+          <div class="chip" data-val="Wholesale" onclick="selectChip(this,'channel')" data-es="Mayorista" data-en="Wholesale">Mayorista</div>
+          <div class="chip" data-val="Both" onclick="selectChip(this,'channel')" data-es="Ambos" data-en="Both">Ambos</div>
+        </div>
+      </div>
+      <div class="param-section">
+        <p class="param-label" data-es="Certificaciones" data-en="Certifications">Certificaciones</p>
+        <div class="chip-row">
+          <div class="chip multi" data-val="Organic" onclick="toggleChip(this,'cert')" data-es="Orgánico" data-en="Organic">Orgánico</div>
+          <div class="chip multi" data-val="FairTrade" onclick="toggleChip(this,'cert')">Fair Trade</div>
+          <div class="chip multi" data-val="Kosher" onclick="toggleChip(this,'cert')">Kosher</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cat-params" id="params-soda">
+      <div class="divider"></div>
+      <div class="param-section">
+        <p class="param-label" data-es="Versión de producto" data-en="Product version">Versión de producto</p>
+        <div class="chip-row" id="chips-version">
+          <div class="chip" data-val="Sunrise" onclick="selectChip(this,'version')">🌅 Sunrise 20%</div>
+          <div class="chip" data-val="Sunset" onclick="selectChip(this,'version')">🌇 Sunset 40%</div>
+          <div class="chip" data-val="Both" onclick="selectChip(this,'version')" data-es="Ambas versiones" data-en="Both versions">Ambas versiones</div>
+        </div>
+      </div>
+      <div class="param-section">
+        <p class="param-label" data-es="Canal retail" data-en="Retail channel">Canal retail</p>
+        <div class="chip-row">
+          <div class="chip" data-val="WholeFoods" onclick="selectChip(this,'channel')">Whole Foods</div>
+          <div class="chip" data-val="Specialty" onclick="selectChip(this,'channel')" data-es="Tiendas Especializadas" data-en="Specialty Stores">Tiendas Especializadas</div>
+          <div class="chip" data-val="D2C" onclick="selectChip(this,'channel')">D2C</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cat-params" id="params-supplements">
+      <div class="divider"></div>
+      <div class="param-section">
+        <p class="param-label" data-es="Formatos de producto" data-en="Product formats">Formatos de producto</p>
+        <div class="chip-row">
+          <div class="chip multi" data-val="Caps" onclick="toggleChip(this,'format')" data-es="Cápsulas 60ct" data-en="Capsules 60ct">Cápsulas 60ct</div>
+          <div class="chip multi" data-val="Powder" onclick="toggleChip(this,'format')" data-es="Polvo sachet" data-en="Powder sachet">Polvo sachet</div>
+          <div class="chip multi" data-val="RTD" onclick="toggleChip(this,'format')">RTD Shot 60mL</div>
+          <div class="chip multi" data-val="Gummies" onclick="toggleChip(this,'format')">Gummies</div>
+        </div>
+      </div>
+      <div class="param-section">
+        <p class="param-label" data-es="Ruta regulatoria" data-en="Regulatory path">Ruta regulatoria</p>
+        <div class="chip-row">
+          <div class="chip multi" data-val="FDA_NDI" onclick="toggleChip(this,'reg')">FDA NDI (USA)</div>
+          <div class="chip multi" data-val="COFEPRIS" onclick="toggleChip(this,'reg')">COFEPRIS (MX)</div>
+          <div class="chip multi" data-val="INVIMA" onclick="toggleChip(this,'reg')">INVIMA (CO)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn-prev" onclick="goStep(1)" data-es="← ATRÁS" data-en="← BACK">← ATRÁS</button>
+      <button class="btn-next" id="btn-next-2" onclick="goStep(3)" disabled data-es="PREVIEW DEL DECK →" data-en="PREVIEW DECK →">PREVIEW DEL DECK →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: PREVIEW -->
+  <div class="step-panel" id="step3">
+    <p class="param-label" style="margin-bottom:16px" data-es="TU DECK PERSONALIZADO" data-en="YOUR PERSONALIZED DECK">TU DECK PERSONALIZADO</p>
+    <div class="preview-card" id="preview-card">
+      <div class="preview-entity">
+        <span class="entity-pill co">🇨🇴 CAUA COLOMBIA SAS · Bogotá</span>
+        <span class="entity-pill">🇺🇸 CAUA INC · Austin, TX</span>
+      </div>
+      <div class="preview-cat-badge" id="prev-cat-badge">🫘 Ceremonial Cacao</div>
+      <h2 class="preview-title" id="prev-title">CEREMONIAL CACAO STRATEGY</h2>
+      <p class="preview-sub" id="prev-sub">Hobo, Huila · Híbrido Acriollado · Fine-Flavor</p>
+      <div class="preview-metrics" id="prev-metrics">
+        <div class="metric-box"><div class="metric-val" id="prev-raise">$500K</div><div class="metric-lbl" data-es="INVERSIÓN" data-en="INVESTMENT">INVERSIÓN</div></div>
+        <div class="metric-box"><div class="metric-val" id="prev-timeline">Q3 2026</div><div class="metric-lbl" data-es="TIMELINE" data-en="TIMELINE">TIMELINE</div></div>
+        <div class="metric-box"><div class="metric-val" id="prev-market">USA · MX</div><div class="metric-lbl" data-es="MERCADOS" data-en="MARKETS">MERCADOS</div></div>
+        <div class="metric-box"><div class="metric-val" id="prev-kpi1">3.2×</div><div class="metric-lbl" id="prev-kpi1-lbl">LTV/CAC</div></div>
+      </div>
+      <p class="param-label" style="margin-bottom:8px" data-es="USO DE FONDOS" data-en="USE OF FUNDS">USO DE FONDOS</p>
+      <div class="use-grid" id="prev-use-grid"><!-- filled by JS --></div>
+      <div class="preview-kpis" id="prev-kpis"><!-- filled by JS --></div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn-prev" onclick="goStep(2)" data-es="← EDITAR" data-en="← EDIT">← EDITAR</button>
+      <button class="btn-next" onclick="goStep(4)" data-es="COMPARTIR DECK →" data-en="SHARE DECK →">COMPARTIR DECK →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: SHARE -->
+  <div class="step-panel" id="step4">
+    <p class="param-label" style="margin-bottom:14px" data-es="MENSAJE PARA EL INVERSIONISTA" data-en="INVESTOR MESSAGE">MENSAJE PARA EL INVERSIONISTA</p>
+    <div class="share-msg-box" id="share-msg-box"><!-- filled by JS --></div>
+    <div class="share-btns">
+      <a id="wa-link" href="#" target="_blank" class="btn-wa">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        <span data-es="ENVIAR POR WHATSAPP" data-en="SEND VIA WHATSAPP">ENVIAR POR WHATSAPP</span>
+      </a>
+      <button class="btn-copy" onclick="copyMsg()" id="copy-btn">
+        <span>📋</span>
+        <span data-es="COPIAR MENSAJE" data-en="COPY MESSAGE">COPIAR MENSAJE</span>
+      </button>
+      <div class="copy-ok" id="copy-ok" data-es="✓ Copiado al portapapeles" data-en="✓ Copied to clipboard">✓ Copiado al portapapeles</div>
+      <a href="/pitch_growth.html" target="_blank" class="btn-full">
+        <span>📄</span>
+        <span data-es="Ver deck completo" data-en="View full deck">Ver deck completo</span>
+      </a>
+    </div>
+    <div class="nav-btns" style="margin-top:24px">
+      <button class="btn-prev" onclick="goStep(3)" data-es="← PREVIEW" data-en="← PREVIEW">← PREVIEW</button>
+      <button class="btn-next" onclick="resetDeck()" data-es="NUEVO DECK ↺" data-en="NEW DECK ↺">NUEVO DECK ↺</button>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────────
+var state = {
+  cat: null, markets: [], raise: null, timeline: null,
+  channel: null, version: null, cert: [], format: [], reg: [],
+  raiseCustom: null
+};
+var LANG = 'es';
+var STEP = 1;
+
+// ── LANGUAGE TOGGLE ────────────────────────────────────────────────────────
+function toggleLang() {
+  LANG = LANG === 'es' ? 'en' : 'es';
+  document.getElementById('lang-btn').textContent = LANG === 'es' ? '🌎 EN' : '🌎 ES';
+  document.querySelectorAll('[data-es]').forEach(function(el) {
+    if(el.tagName === 'INPUT') return;
+    el.textContent = LANG === 'es' ? el.dataset.es : el.dataset.en;
+  });
+}
+
+// ── STEP NAVIGATION ────────────────────────────────────────────────────────
+function goStep(n) {
+  document.getElementById('step'+STEP).classList.remove('active');
+  STEP = n;
+  document.getElementById('step'+STEP).classList.add('active');
+  ['sd1','sd2','sd3','sd4'].forEach(function(id, i) {
+    var el = document.getElementById(id);
+    el.className = 'step-dot ' + (i+1 < n ? 'done' : i+1 === n ? 'active' : 'pending');
+  });
+  if(n === 3) buildPreview();
+  if(n === 4) buildShareMsg();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ── CATEGORY SELECTION ─────────────────────────────────────────────────────
+function selectCat(cat, el) {
+  state.cat = cat;
+  document.querySelectorAll('.cat-card').forEach(function(c){ c.classList.remove('selected'); });
+  el.classList.add('selected');
+  document.querySelectorAll('.cat-params').forEach(function(p){ p.classList.remove('active'); });
+  var pp = document.getElementById('params-'+cat);
+  if(pp) pp.classList.add('active');
+  document.getElementById('btn-next-1').disabled = false;
+  checkStep2();
+}
+
+// ── CHIPS ─────────────────────────────────────────────────────────────────
+function selectChip(el, group, special) {
+  var row = el.parentElement;
+  row.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('on'); });
+  el.classList.add('on');
+  var custom = document.getElementById('raise-custom');
+  if(custom) custom.style.display = (special === 'custom') ? 'block' : 'none';
+  state[group] = special === 'custom' ? state.raiseCustom : el.dataset.val;
+  checkStep2();
+}
+function toggleChip(el, group) {
+  el.classList.toggle('on');
+  state[group] = [];
+  el.parentElement.querySelectorAll('.chip.on').forEach(function(c){ state[group].push(c.dataset.val); });
+  checkStep2();
+}
+function updateCustomRaise(v) {
+  state.raiseCustom = v;
+  state.raise = v;
+  checkStep2();
+}
+
+// ── STEP 2 VALIDATION ─────────────────────────────────────────────────────
+function checkStep2() {
+  var ok = state.markets.length > 0 && state.raise && state.timeline;
+  document.getElementById('btn-next-2').disabled = !ok;
+}
+
+// ── CATEGORY DATA ─────────────────────────────────────────────────────────
+var CAT_DATA = {
+  ceremonial: {
+    badge: '🫘 Ceremonial Cacao 100%',
+    titleEs: 'ESTRATEGIA CACAO CEREMONIAL', titleEn: 'CEREMONIAL CACAO STRATEGY',
+    subEs: 'Hobo, Huila · Híbrido Acriollado · Fine-Flavor', subEn: 'Hobo, Huila · Acriollado Hybrid · Fine-Flavor',
+    kpi1: '3.2×', kpi1lbl: 'LTV/CAC',
+    useFunds: [
+      {lbl:'Producción & Cacao', pct:35, en:'Production & Cacao'},
+      {lbl:'Go-to-Market USA/MX', pct:30, en:'Go-to-Market USA/MX'},
+      {lbl:'Certificaciones', pct:15, en:'Certifications'},
+      {lbl:'Operaciones', pct:12, en:'Operations'},
+      {lbl:'Reserva', pct:8, en:'Reserve'}
+    ],
+    kpis: [
+      {lbl:'Fine-Flavor 1% mundial', en:'Top 1% Fine-Flavor',col:'green'},
+      {lbl:'Trazabilidad lote a lote', en:'Lot traceability',col:'green'},
+      {lbl:'3 generaciones · Hobo', en:'3 generations · Hobo',col:'amber'},
+      {lbl:'vs Firefly · Ora · Earth',en:'vs Firefly · Ora · Earth',col:'red'}
+    ]
+  },
+  soda: {
+    badge: '🥤 Cacao Soda',
+    titleEs: 'ESTRATEGIA CACAO SODA', titleEn: 'CACAO SODA STRATEGY',
+    subEs: 'Sunrise 20% mucílago · Sunset 40% mucílago · Adaptógeno funcional', subEn: 'Sunrise 20% mucilage · Sunset 40% mucilage · Functional adaptogen',
+    kpi1: '$4.99–$6.99', kpi1lbl: '/330mL',
+    useFunds: [
+      {lbl:'Producción & Envasado', pct:40, en:'Production & Packaging'},
+      {lbl:'Distribución Whole Foods', pct:25, en:'Whole Foods Distribution'},
+      {lbl:'Marketing D2C', pct:20, en:'D2C Marketing'},
+      {lbl:'Regulatorio FDA GRAS', pct:10, en:'FDA GRAS Regulatory'},
+      {lbl:'Reserva', pct:5, en:'Reserve'}
+    ],
+    kpis: [
+      {lbl:'Mucílago 20-40% activo', en:'20-40% active mucilage',col:'amber'},
+      {lbl:'Epicatequina · Teobromina', en:'Epicatechin · Theobromine',col:'green'},
+      {lbl:'vs Olipop · Poppi · Forage', en:'vs Olipop · Poppi · Forage',col:'red'},
+      {lbl:'SXSW Austin Launch', en:'SXSW Austin Launch',col:'purple'}
+    ]
+  },
+  supplements: {
+    badge: '💊 Polifenoles Diméricos',
+    titleEs: 'SUPLEMENTOS POLIFENOLES', titleEn: 'POLYPHENOL SUPPLEMENTS',
+    subEs: 'Epicatequina dimérica B1/B2 · 800mg/serving · vs CocoaVia Mars', subEn: 'Dimeric epicatechin B1/B2 · 800mg/serving · vs CocoaVia Mars',
+    kpi1: '800mg', kpi1lbl: 'dimeric/serving',
+    useFunds: [
+      {lbl:'I+D · Extracción dimérica', pct:30, en:'R&D · Dimeric extraction'},
+      {lbl:'FDA NDI Submission', pct:25, en:'FDA NDI Submission'},
+      {lbl:'Manufactura GMP', pct:25, en:'GMP Manufacturing'},
+      {lbl:'Lanzamiento B2C', pct:15, en:'B2C Launch'},
+      {lbl:'Reserva', pct:5, en:'Reserve'}
+    ],
+    kpis: [
+      {lbl:'800mg vs 500mg CocoaVia', en:'800mg vs 500mg CocoaVia',col:'purple'},
+      {lbl:'Dimérico B1/B2 · Criollo élite', en:'Dimeric B1/B2 · Elite criollo',col:'purple'},
+      {lbl:'FDA NDI · COFEPRIS · INVIMA', en:'FDA NDI · COFEPRIS · INVIMA',col:'green'},
+      {lbl:'Cardiovascular · Longevity', en:'Cardiovascular · Longevity',col:'amber'}
+    ]
+  }
+};
+
+// ── BUILD PREVIEW ─────────────────────────────────────────────────────────
+function buildPreview() {
+  var d = CAT_DATA[state.cat];
+  var mkts = state.markets.join(' · ');
+  var raise = state.raise || state.raiseCustom || '—';
+  var timeline = state.timeline || '—';
+
+  document.getElementById('prev-cat-badge').textContent = d.badge;
+  document.getElementById('prev-title').textContent = LANG === 'es' ? d.titleEs : d.titleEn;
+  document.getElementById('prev-sub').textContent = LANG === 'es' ? d.subEs : d.subEn;
+  document.getElementById('prev-raise').textContent = raise;
+  document.getElementById('prev-timeline').textContent = timeline;
+  document.getElementById('prev-market').textContent = mkts || '—';
+  document.getElementById('prev-kpi1').textContent = d.kpi1;
+  document.getElementById('prev-kpi1-lbl').textContent = d.kpi1lbl;
+
+  // Use of funds
+  var useGrid = document.getElementById('prev-use-grid');
+  useGrid.innerHTML = '';
+  d.useFunds.forEach(function(u) {
+    var lbl = LANG === 'es' ? u.lbl : u.en;
+    var raiseN = parseRaise(raise);
+    var amt = raiseN ? '$' + formatK(Math.round(raiseN * u.pct / 100)) : u.pct + '%';
+    useGrid.innerHTML += '<div class="use-row"><span class="use-label">'+lbl+'</span><span class="use-val">'+amt+'</span></div>' +
+      '<div class="use-bar"><div class="use-fill" style="width:'+u.pct+'%"></div></div>';
+  });
+
+  // KPI tags
+  var kpiEl = document.getElementById('prev-kpis');
+  kpiEl.innerHTML = '';
+  d.kpis.forEach(function(k) {
+    var lbl = LANG === 'es' ? k.lbl : k.en;
+    var cls = k.col === 'purple' ? 'kpi-tag purple' : k.col === 'amber' ? 'kpi-tag amber' : k.col === 'red' ? 'kpi-tag amber' : 'kpi-tag';
+    kpiEl.innerHTML += '<span class="'+cls+'">'+lbl+'</span>';
+  });
+}
+
+function parseRaise(r) {
+  if(!r) return 0;
+  var s = r.replace(/[$,KkMm\s]/g,'');
+  var n = parseFloat(s);
+  if(r.toLowerCase().includes('m')) return n * 1000000;
+  if(r.toLowerCase().includes('k') || r.includes('K')) return n * 1000;
+  return n;
+}
+function formatK(n) {
+  if(n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+  if(n >= 1000) return Math.round(n/1000) + 'K';
+  return n;
+}
+
+// ── BUILD SHARE MESSAGE ────────────────────────────────────────────────────
+function buildShareMsg() {
+  var d = CAT_DATA[state.cat];
+  var cat = LANG === 'es' ? d.titleEs : d.titleEn;
+  var mkts = state.markets.join(' · ') || '—';
+  var raise = state.raise || state.raiseCustom || '—';
+  var timeline = state.timeline || '—';
+
+  var msg = '';
+  if(LANG === 'es') {
+    msg = '🫘 CAÚA — ' + cat + '\n\n' +
+      '🌎 Mercados: ' + mkts + '\n' +
+      '💰 Inversión: ' + raise + ' · ' + timeline + '\n' +
+      '🔬 ' + d.subEs + '\n\n' +
+      '📊 Deck completo: https://cacaofrutabrutal.com/pitch_growth.html\n' +
+      '📱 Deck resumido: https://cacaofrutabrutal.com/deck.html\n\n' +
+      '¿Conversamos? CAÚA COLOMBIA SAS × CAUA INC';
+  } else {
+    msg = '🫘 CAÚA — ' + cat + '\n\n' +
+      '🌎 Markets: ' + mkts + '\n' +
+      '💰 Investment: ' + raise + ' · ' + timeline + '\n' +
+      '🔬 ' + d.subEn + '\n\n' +
+      '📊 Full deck: https://cacaofrutabrutal.com/pitch_growth.html\n' +
+      '📱 Brief: https://cacaofrutabrutal.com/deck.html\n\n' +
+      "Let's talk? CAÚA COLOMBIA SAS × CAUA INC";
+  }
+
+  document.getElementById('share-msg-box').textContent = msg;
+  document.getElementById('wa-link').href = 'https://wa.me/573102227848?text=' + encodeURIComponent(msg);
+}
+
+// ── COPY ──────────────────────────────────────────────────────────────────
+function copyMsg() {
+  var msg = document.getElementById('share-msg-box').textContent;
+  navigator.clipboard.writeText(msg).then(function() {
+    var ok = document.getElementById('copy-ok');
+    ok.style.display = 'block';
+    ok.textContent = LANG === 'es' ? '✓ Copiado al portapapeles' : '✓ Copied to clipboard';
+    setTimeout(function(){ ok.style.display = 'none'; }, 2500);
+  });
+}
+
+// ── RESET ─────────────────────────────────────────────────────────────────
+function resetDeck() {
+  state = { cat:null, markets:[], raise:null, timeline:null, channel:null, version:null, cert:[], format:[], reg:[], raiseCustom:null };
+  document.querySelectorAll('.cat-card').forEach(function(c){ c.classList.remove('selected'); });
+  document.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('on'); });
+  document.querySelectorAll('.cat-params').forEach(function(p){ p.classList.remove('active'); });
+  document.getElementById('raise-custom').style.display = 'none';
+  document.getElementById('btn-next-1').disabled = true;
+  document.getElementById('btn-next-2').disabled = true;
+  goStep(1);
+}
+</script>
+</body>
+</html>
