@@ -1,14 +1,21 @@
-import { BRAND, FONTS } from '../utils/constants'
+import { BRAND, FONTS, GUARDIANS } from '../utils/constants'
 import { useAuth } from '../context/AuthContext'
+import { useCocoaTrees } from '../hooks/useCocoaTrees'
 import HubspotLeadForm from '../components/ui/HubspotLeadForm'
 import { useLang } from '../context/LangContext'
 import { makeT } from '../utils/i18n'
 import CauaGotchi from '../components/dashboard/CauaGotchi'
+import { getStageByDays } from '../utils/growthSystem'
 
 export default function Dashboard() {
   const { profile } = useAuth()
   const { lang } = useLang()
   const T = makeT(lang)
+  const { trees, loading: treesLoading } = useCocoaTrees()
+  const firstTree = trees[0] ?? null
+  const daysSince = firstTree ? (Date.now() - new Date(firstTree.adopted_at).getTime()) / 86400000 : 0
+  const treeStage = getStageByDays(daysSince)
+  const guardian  = firstTree ? GUARDIANS[firstTree.guardian_id] : null
 
   const METRICS = [
     { label: lang === 'es' ? 'Toneladas Desviadas'    : 'Tons Diverted',         value: '2.4', unit: 'ton',  icon: '♻️', color: BRAND.pod     },
@@ -49,13 +56,43 @@ export default function Dashboard() {
         }}>{T('dash_title').split(' ')[0]} <span style={{ color: BRAND.pod }}>{T('dash_title').split(' ')[1]}</span></h2>
 
         {/* Cacao-Gotchi Embedded Panel */}
-        <CauaGotchi 
-          health={85} 
-          moisture={60} 
-          sunlight={90} 
-          stageText="Árbol Joven - Crecimiento Óptimo" 
-          treeName="Criollo #1024"
-        />
+        {treesLoading ? (
+          <div style={{
+            border: `2px dashed ${BRAND.amazon}`, borderRadius: 16, padding: 40,
+            textAlign: 'center', marginBottom: 24, color: `${BRAND.heirloom}44`,
+            fontFamily: FONTS.display, fontSize: 12, letterSpacing: '0.1em',
+          }}>
+            Cargando tu árbol...
+          </div>
+        ) : firstTree && guardian ? (
+          <CauaGotchi
+            health={firstTree.health ?? 80}
+            moisture={firstTree.moisture ?? 70}
+            sunlight={firstTree.sunlight ?? 60}
+            stageText={treeStage.name}
+            treeName={guardian.name}
+            stageEmoji={treeStage.emoji}
+            stageId={treeStage.id}
+          />
+        ) : (
+          <div style={{
+            border: `2px dashed ${BRAND.amazon}`, borderRadius: 16, padding: 40,
+            textAlign: 'center', marginBottom: 24,
+          }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>🌰</div>
+            <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 14, color: BRAND.heirloom, letterSpacing: '0.1em', marginBottom: 8 }}>
+              AÚN NO TIENES UN ÁRBOL
+            </div>
+            <a href="/adoptar" style={{
+              display: 'inline-block', background: `linear-gradient(135deg, ${BRAND.pod}, ${BRAND.amazon})`,
+              color: BRAND.heirloom, borderRadius: 999, padding: '10px 24px',
+              fontFamily: FONTS.display, fontWeight: 700, fontSize: 12,
+              letterSpacing: '0.12em', textDecoration: 'none', textTransform: 'uppercase',
+            }}>
+              Adoptar árbol →
+            </a>
+          </div>
+        )}
 
         {/* Metrics */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 45%), 1fr))', gap: 16, marginBottom: 48 }}>

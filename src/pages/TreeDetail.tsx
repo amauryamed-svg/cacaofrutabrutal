@@ -1,7 +1,7 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { useCocoaTrees } from '../hooks/useCocoaTrees'
+import { useCocoaTrees, type CareAction } from '../hooks/useCocoaTrees'
 import { BRAND, FONTS, GUARDIANS } from '../utils/constants'
 import CauaButton from '../components/ui/CauaButton'
 import CauaGotchi from '../components/dashboard/CauaGotchi'
@@ -31,7 +31,7 @@ export default function TreeDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { trees } = useCocoaTrees()
+  const { trees, careForTree } = useCocoaTrees()
   const [tree, setTree] = useState<CacaoTree | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -50,12 +50,34 @@ export default function TreeDetail() {
   const [tapCount, setTapCount] = useState(0)
   const [lastTapTime, setLastTapTime] = useState(0)
 
+  const initializedTree = useRef<string | null>(null)
+
   useEffect(() => {
     if (!id || !user) return
     const found = trees.find(t => t.id === id)
     if (found) { setTree(found); setLoading(false) }
     else setLoading(false)
   }, [id, trees, user])
+
+  // Seed local game state from DB exactly once per tree
+  useEffect(() => {
+    if (!tree || initializedTree.current === tree.id) return
+    initializedTree.current = tree.id
+    setHealth(tree.health ?? 80)
+    setMoisture(tree.moisture ?? 70)
+    setSunlight(tree.sunlight ?? 60)
+    const last = tree.last_update_at ? new Date(tree.last_update_at) : null
+    if (last) {
+      setLastCareTime(last)
+      const next = getNextCareTime(last)
+      if (Date.now() >= next.getTime()) {
+        setCanCare(true)
+      } else {
+        setCanCare(false)
+        setNextCareIn(formatTimeUntil(next))
+      }
+    }
+  }, [tree])
 
   // Care countdown ticker
   useEffect(() => {
@@ -99,19 +121,39 @@ export default function TreeDetail() {
     setTimeout(() => setActiveEffect(null), 1400)
   }
 
-  const doCare = (action: 'water' | 'sunlight' | 'nutrients' | 'pruning' | 'molasses') => {
+  const CARE_DELTAS: Record<CareAction, { health: number; moisture: number; sunlight: number }> = {
+    water:     { health: 5,  moisture: 20, sunlight:  0 },
+    sunlight:  { health: 5,  moisture: -5, sunlight: 25 },
+    nutrients: { health: 25, moisture: 10, sunlight:  0 },
+    pruning:   { health: 15, moisture:  0, sunlight: 20 },
+    molasses:  { health: 30, moisture:  5, sunlight:  0 },
+  }
+
+  const doCare = (action: CareAction) => {
     const isBasic = action === 'water' || action === 'sunlight'
     if (isBasic && !canCare) return
     if (action === 'nutrients' && inventory.nutrients <= 0) return
-    if (action === 'pruning' && inventory.pruning <= 0) return
-    if (action === 'molasses' && inventory.molasses <= 0) return
+    if (action === 'pruning'   && inventory.pruning   <= 0) return
+    if (action === 'molasses'  && inventory.molasses  <= 0) return
+
+    const d = CARE_DELTAS[action]
+    const clamp = (v: number) => Math.max(0, Math.min(100, v))
+    const newHealth   = clamp(health   + d.health)
+    const newMoisture = clamp(moisture + d.moisture)
+    const newSunlight = clamp(sunlight + d.sunlight)
 
     triggerEffect(action)
     if (isBasic) { setLastCareTime(new Date()); setCanCare(false) }
 
+    setHealth(newHealth)
+    setMoisture(newMoisture)
+    setSunlight(newSunlight)
+
+    if (action === 'nutrients') setInventory(inv => ({ ...inv, nutrients: inv.nutrients - 1 }))
+    if (action === 'pruning')   setInventory(inv => ({ ...inv, pruning:   inv.pruning   - 1 }))
+    if (action === 'molasses')  setInventory(inv => ({ ...inv, molasses:  inv.molasses  - 1 }))
+
     if (action === 'water') {
-      setMoisture(m => Math.min(100, m + 25))
-      setHealth(h => Math.min(100, h + 10))
       if (currentProblem === 'plague' || currentProblem === 'drought') {
         const prob = PLANT_PROBLEMS[currentProblem]
         setCurrentProblem(null)
@@ -120,20 +162,12 @@ export default function TreeDetail() {
         addLog('💧', 'Riego', 'Agua fresca del bosque absorbida. Tu árbol te lo agradece. 🌿', '#3498db')
       }
     } else if (action === 'sunlight') {
-      setSunlight(s => Math.min(100, s + 20))
-      setHealth(h => Math.min(100, h + 5))
       addLog('☀️', 'Exposición solar', 'Fotosíntesis activa — energía del trópico convertida en vida. ✨', '#f1c40f')
     } else if (action === 'nutrients') {
-      setInventory(inv => ({ ...inv, nutrients: inv.nutrients - 1 }))
-      setHealth(h => Math.min(100, h + 25))
       addLog('🌿', 'Nutrientes aplicados', 'Microorganismos amazónicos activados. Crecimiento acelerado. 🚀', '#91A63B')
     } else if (action === 'pruning') {
-      setInventory(inv => ({ ...inv, pruning: inv.pruning - 1 }))
-      setHealth(h => Math.min(100, h + 15))
       addLog('✂️', 'Poda científica', 'Corte estratégico para maximizar floración. Árbol más fuerte. 🌸', '#8D2679')
     } else if (action === 'molasses') {
-      setInventory(inv => ({ ...inv, molasses: inv.molasses - 1 }))
-      setHealth(h => Math.min(100, h + 30))
       if (currentProblem === 'fungus' || currentProblem === 'plague') {
         const prob = PLANT_PROBLEMS[currentProblem]
         setCurrentProblem(null)
@@ -141,6 +175,12 @@ export default function TreeDetail() {
       } else {
         addLog('🍯', 'Melaza anti-hongo', 'Defensa ancestral fermentada aplicada. Árbol blindado. 🛡️', '#F1A91E')
       }
+    }
+
+    // Persist to DB (fire-and-forget)
+    if (tree) {
+      careForTree(tree.id, action, { health, moisture, sunlight, co2_kg: tree.co2_kg ?? 0 })
+        .catch(() => {})
     }
   }
 

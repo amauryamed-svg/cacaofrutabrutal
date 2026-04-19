@@ -3,6 +3,16 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import type { CacaoTree, TreeUpdate } from '../lib/database.types'
 
+const CARE_DELTAS = {
+  water:     { health: 5,  moisture: 20, sunlight:  0 },
+  sunlight:  { health: 5,  moisture: -5, sunlight: 25 },
+  nutrients: { health: 25, moisture: 10, sunlight:  0 },
+  pruning:   { health: 15, moisture:  0, sunlight: 20 },
+  molasses:  { health: 30, moisture:  5, sunlight:  0 },
+} as const
+
+export type CareAction = keyof typeof CARE_DELTAS
+
 export function useCocoaTrees() {
   const { user } = useAuth()
   const [trees, setTrees] = useState<CacaoTree[]>([])
@@ -102,5 +112,38 @@ export function useCocoaTrees() {
     return data || []
   }
 
-  return { trees, loading, error, adoptTree, fetchUpdatesForTree }
+  const careForTree = async (
+    treeId: string,
+    action: CareAction,
+    current: { health: number; moisture: number; sunlight: number; co2_kg: number },
+  ): Promise<{ health: number; moisture: number; sunlight: number }> => {
+    const d = CARE_DELTAS[action]
+    const clamp = (v: number) => Math.max(0, Math.min(100, v))
+    const health   = clamp(current.health   + d.health)
+    const moisture = clamp(current.moisture + d.moisture)
+    const sunlight = clamp(current.sunlight + d.sunlight)
+    const co2_kg   = +(current.co2_kg + 0.02).toFixed(3)
+    const last_update_at = new Date().toISOString()
+
+    const { error: err } = await supabase
+      .from('cacao_trees')
+      .update({ health, moisture, sunlight, co2_kg, last_update_at })
+      .eq('id', treeId)
+
+    if (err) throw new Error(err.message)
+
+    setTrees(prev => prev.map(t =>
+      t.id === treeId ? { ...t, health, moisture, sunlight, co2_kg, last_update_at } : t
+    ))
+
+    supabase.from('tree_updates').insert({
+      tree_id: treeId,
+      update_type: 'co2_update',
+      message: `${action}: HP ${health}% H₂O ${moisture}% ☀️ ${sunlight}%`,
+    }).then(() => {})
+
+    return { health, moisture, sunlight }
+  }
+
+  return { trees, loading, error, adoptTree, careForTree, fetchUpdatesForTree }
 }
