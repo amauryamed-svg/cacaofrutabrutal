@@ -88,7 +88,7 @@
   ],
   "rewrites": [
     { "source": "/api/crm/:path*", "destination": "/api/crm" },
-    { "source": "/((?!.*\\.(html|js|css|json|png|jpg|svg|ico|woff|woff2|ttf|webp|pdf)$).*)", "destination": "/index.html" }
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "crons": [
     { "path": "/api/cacao_predictor", "schedule": "0 6 * * *" }
