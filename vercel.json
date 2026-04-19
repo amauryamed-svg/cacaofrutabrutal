@@ -71,10 +71,24 @@
           "value": "public, max-age=31536000, immutable"
         }
       ]
+    },
+    {
+      "source": "/(.*\\.html)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https: data:; img-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https:; object-src 'none'"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
     }
   ],
   "rewrites": [
-    { "source": "/api/crm/:path*", "destination": "/api/crm" }
+    { "source": "/api/crm/:path*", "destination": "/api/crm" },
+    { "source": "/((?!.*\\.(html|js|css|json|png|jpg|svg|ico|woff|woff2|ttf|webp|pdf)$).*)", "destination": "/index.html" }
   ],
   "crons": [
     { "path": "/api/cacao_predictor", "schedule": "0 6 * * *" }

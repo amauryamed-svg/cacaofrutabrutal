@@ -185,9 +185,9 @@ export default function NavBar() {
   ]
 
   const EXTERNAL = [
-    { href: '/pitch/',            label: 'PITCH',   color: BRAND.heroic  },
-    { href: '/pitch_growth.html', label: 'GROWTH',  color: BRAND.mazorca },
-    { href: '/siembra.html',      label: 'SIEMBRA', color: BRAND.pod     },
+    { href: '/cinco-tiempos-propuesta.html', label: 'PITCH',   color: BRAND.heroic  },
+    { href: '/pitch_growth.html',            label: 'GROWTH',  color: BRAND.mazorca },
+    { href: '/siembra.html',                 label: 'SIEMBRA', color: BRAND.pod     },
   ]
 
   return (
