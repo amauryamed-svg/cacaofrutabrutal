@@ -176,7 +176,7 @@ export default function NavBar() {
   const TABS = [
     { path: '/',            label: T('nav_home')   },
     { path: '/blog',        label: T('nav_blog')   },
-    { path: '/caua-coti',   label: 'CATACIÓN'      },
+    { path: '/catacion',    label: 'CATACIÓN'      },
     { path: '/marketplace', label: T('nav_market') },
     { path: '/ritual',      label: T('nav_ritual') },
     { path: '/adoptar',     label: T('nav_adoptar') },
