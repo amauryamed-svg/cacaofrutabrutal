@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1200px; height: 630px; overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #040C06;
+    display: flex; align-items: stretch;
+  }
+  .left {
+    width: 580px; flex-shrink: 0;
+    background: linear-gradient(160deg, #1C3B26 0%, #0A1A0C 60%, #040C06 100%);
+    padding: 64px 60px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    border-right: 1px solid #335533;
+  }
+  .brand { display: flex; align-items: center; gap: 14px; margin-bottom: 32px; }
+  .logo-box {
+    width: 52px; height: 52px; background: #F1A91E; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+  }
+  .brand-name { font-size: 14px; font-weight: 900; color: #F7F1EE; letter-spacing: 0.2em; text-transform: uppercase; }
+  .brand-sub  { font-size: 10px; color: #91A63B; letter-spacing: 0.12em; margin-top: 2px; }
+  h1 {
+    font-size: 44px; font-weight: 900; color: #F7F1EE;
+    line-height: 1.05; letter-spacing: -1px;
+    margin-bottom: 16px;
+  }
+  h1 span { color: #F1A91E; }
+  .subtitle {
+    font-size: 16px; color: #91A63B; font-style: italic;
+    margin-bottom: 36px; line-height: 1.5;
+  }
+  .tiempos {
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .tiempo {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 13px; color: #F7F1EE; opacity: 0.85;
+  }
+  .num {
+    width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 11px; color: #040C06;
+  }
+  .footer-left {
+    font-size: 11px; color: #91A63B; opacity: 0.7;
+    margin-top: 32px;
+  }
+
+  .right {
+    flex: 1;
+    background: #0A1A0C;
+    padding: 52px 52px;
+    display: flex; flex-direction: column; justify-content: center;
+    gap: 20px;
+  }
+  .tag {
+    display: inline-block;
+    background: #F1A91E22; border: 1px solid #F1A91E44;
+    color: #F1A91E; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    padding: 5px 12px; border-radius: 4px; width: fit-content;
+  }
+  .price-label { font-size: 11px; color: #91A63B; letter-spacing: 0.12em; text-transform: uppercase; }
+  .price { font-size: 52px; font-weight: 900; color: #F1A91E; line-height: 1; }
+  .price-sub { font-size: 13px; color: #F7F1EE; opacity: 0.6; margin-top: 4px; }
+  .divider { height: 1px; background: #1C3B26; }
+  .features { display: flex; flex-direction: column; gap: 10px; }
+  .feat {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: #F7F1EE; opacity: 0.8;
+  }
+  .feat-icon { font-size: 16px; width: 24px; text-align: center; }
+  .cta-box {
+    background: #F1A91E; border-radius: 8px;
+    padding: 14px 24px; text-align: center;
+    font-size: 13px; font-weight: 800; color: #040C06;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    margin-top: 8px;
+  }
+  .url { font-size: 11px; color: #91A63B; text-align: center; opacity: 0.7; }
+</style>
+</head>
+<body>
+
+  <!-- IZQUIERDA -->
+  <div class="left">
+    <div>
+      <div class="brand">
+        <div class="logo-box">🫘</div>
+        <div>
+          <div class="brand-name">CAUA Colombia</div>
+          <div class="brand-sub">Biotecnología Ancestral del Cacao</div>
+        </div>
+      </div>
+      <h1>CATACIÓN<br><span>CINCO TIEMPOS</span><br>DE CACAO</h1>
+      <div class="subtitle">Experiencia Sensorial Inmersiva<br>Guiada por Cacaotier</div>
+      <div class="tiempos">
+        <div class="tiempo"><div class="num" style="background:#5b8a3c">1</div>Árbol al Fruto — Mazorca viva de Arauca</div>
+        <div class="tiempo"><div class="num" style="background:#F1A91E">2</div>Origen Regenerativo — Trazabilidad total</div>
+        <div class="tiempo"><div class="num" style="background:#8D2679">3</div>Mucílago Molecular — Superalimento ancestral</div>
+        <div class="tiempo"><div class="num" style="background:#A0522D">4</div>Refinación Artesanal — Hobo, Huila · 100% Licor</div>
+        <div class="tiempo"><div class="num" style="background:#4a7c59">5</div>Chocolate Ritual — Preparación ceremonial</div>
+      </div>
+    </div>
+    <div class="footer-left">NIT 901213846-7 · amaury@cauaculture.co · +57 310 222 7848</div>
+  </div>
+
+  <!-- DERECHA -->
+  <div class="right">
+    <div class="tag">Cotización Personalizada</div>
+    <div>
+      <div class="price-label">desde</div>
+      <div class="price">$65.000</div>
+      <div class="price-sub">por persona · ajustable por grupo</div>
+    </div>
+    <div class="divider"></div>
+    <div class="features">
+      <div class="feat"><span class="feat-icon">⏱</span>1 a 3 horas según experiencia</div>
+      <div class="feat"><span class="feat-icon">👥</span>2 a 50+ participantes</div>
+      <div class="feat"><span class="feat-icon">✦</span>Upgrade Ceremonial Grade disponible</div>
+      <div class="feat"><span class="feat-icon">📄</span>Cotización instantánea por email</div>
+    </div>
+    <div class="cta-box">Configura tu experiencia — Recibe Tu Coti</div>
+    <div class="url">cacaofrutabrutal.com/caua-coti</div>
+  </div>
+
+</body>
+</html>

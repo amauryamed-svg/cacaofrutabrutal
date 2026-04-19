@@ -76,9 +76,6 @@
   "rewrites": [
     { "source": "/api/crm/:path*", "destination": "/api/crm" }
   ],
-  "functions": {
-    "api/crm.py": { "maxDuration": 30 }
-  },
   "crons": [
     { "path": "/api/cacao_predictor", "schedule": "0 6 * * *" }
   ]

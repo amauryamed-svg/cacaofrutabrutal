@@ -22,6 +22,7 @@ import Fund              from './pages/Fund'
 import AdminCRM          from './pages/AdminCRM'
 import CincoTiemposProposal from './pages/CincoTiemposProposal'
 import ProposalAndreaRojas from './pages/ProposalAndreaRojas'
+import CauaCoti           from './pages/CauaCoti'
 import { hsTrackPage }   from './lib/hubspot'
 
 function AppShell() {
@@ -46,6 +47,7 @@ function AppShell() {
         <Route path="/blog"       element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/cinco-tiempos" element={<CincoTiemposProposal />} />
+        <Route path="/caua-coti" element={<CauaCoti />} />
         <Route path="/caua-coti/andrea-rojas" element={<ProposalAndreaRojas />} />
 
         {/* Protected — require registration */}

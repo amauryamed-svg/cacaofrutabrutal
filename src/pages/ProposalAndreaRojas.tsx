@@ -58,46 +58,309 @@ const CINCO_TIEMPOS = [
   {
     num: '1',
     title: 'Árbol al Fruto',
-    desc: 'Mazorca fresca recién cosechada. Ciclo natural del Theobroma cacao en ecosistemas regenerativos de Arauca.',
+    desc: 'El Cacaotier abre la mazorca fresca. Primer contacto sensorial con el Theobroma cacao vivo — aroma, textura, bioma vivo del ecosistema regenerativo de Arauca.',
     icon: '🌱',
     color: BRAND.pod,
   },
   {
     num: '2',
     title: 'Origen Regenerativo',
-    desc: 'Cacao liofilizado desde Arauca. Sabor puro sin procesamiento. Trazabilidad total del agricultor.',
+    desc: 'Recorrido guiado por la trazabilidad: agricultor, finca, altitud. Cata de cacao liofilizado de Arauca. El Cacaotier narra el ciclo sin intermediarios.',
     icon: '🌍',
     color: BRAND.mazorca,
   },
   {
     num: '3',
     title: 'Mucílago: Oro Molecular',
-    desc: 'Cata de mucílago de cacao granizado. Beneficio antioxidante reutilizable como superalimento molecular. Ancestral & moderno en una cuchara.',
+    desc: 'El Cacaotier sirve mucílago granizado. La pulpa más antioxidante del mundo, reutilizada como superalimento. Ancestral y molecular en una cucharada.',
     icon: '✨',
     color: BRAND.theobroma,
   },
   {
     num: '4',
     title: 'Refinación Artesanal',
-    desc: 'Hobo Huila · Finca Santa María · 100% Licor · 250gr. Barra artesanal que cierra el círculo regenerativo.',
+    desc: 'Hobo · Huila · Finca Santa María · 100% Licor · 250g. El Cacaotier guía la cata de barra de origen único. Notas sensoriales de un cacao que nunca llega al supermercado.',
     icon: '🫘',
     color: BRAND.criollo,
   },
   {
     num: '5',
     title: 'Chocolate Ritual',
-    desc: 'Preparación ancestral: chocolate caliente con agua ritualizada, gelatina de pata estilo prehispánico o panela. Servido en ceremonial.',
+    desc: 'Preparación ancestral en vivo: chocolate con agua ritualizada, panela o gelatina de pata prehispánica. El Cacaotier cierra el círculo con ceremonial colectivo.',
     icon: '☕',
     color: BRAND.muisca,
   },
   {
     num: '6',
     title: 'Impacto Regenerativo',
-    desc: 'Narrativa del triple impacto: comunidad, agricultor, ecosistema. Cierre circular de la experiencia inmersiva.',
+    desc: 'Cierre narrativo del triple impacto: comunidad · agricultor · ecosistema. El grupo visualiza cómo su elección regenera el bosque colombiano.',
     icon: '🌳',
     color: BRAND.leafy,
   },
 ]
+
+// ============================================================================
+// COTIZADOR INTERACTIVO
+// ============================================================================
+const TIEMPOS_OPTIONS = [
+  {
+    key: '3t',
+    label: 'Tres Tiempos',
+    sublabel: '1 hora',
+    desc: 'Árbol al Fruto · Mucílago · Chocolate Ritual',
+    extra: 0,
+  },
+  {
+    key: '5t',
+    label: 'Cinco Tiempos',
+    sublabel: '2 horas',
+    desc: 'Cadena completa del cacao regenerativo',
+    extra: 12_000,
+  },
+  {
+    key: '6t',
+    label: 'Experiencia Completa',
+    sublabel: '3 horas',
+    desc: 'Cinco Tiempos + Cierre de Impacto Regenerativo',
+    extra: 22_000,
+  },
+]
+
+function getBasePerPerson(n: number) {
+  if (n <= 4) return 65_000
+  if (n <= 12) return 58_000
+  if (n <= 25) return 50_000
+  return 45_000
+}
+
+const CEREMONIAL_EXTRA = 35_000
+
+const fmtCOP = (n: number) =>
+  new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    maximumFractionDigits: 0,
+  }).format(n)
+
+function PriceCalculator() {
+  const [participants, setParticipants] = useState(8)
+  const [tiemposKey, setTiemposKey] = useState('5t')
+  const [ceremonial, setCeremonial] = useState(false)
+  const [nombre,   setNombre]   = useState('Andrea Rojas')
+  const [optEmail, setOptEmail] = useState('')
+  const [optPhase, setOptPhase] = useState<'idle' | 'saving' | 'done' | 'error'>('idle')
+
+  const tiempos   = TIEMPOS_OPTIONS.find(t => t.key === tiemposKey)!
+  const basePerP  = getBasePerPerson(participants)
+  const extraPerP = tiempos.extra + (ceremonial ? CEREMONIAL_EXTRA : 0)
+  const perPerson = basePerP + extraPerP
+  const total     = perPerson * participants
+
+  async function handleOptIn(e: React.SyntheticEvent) {
+    e.preventDefault()
+    if (!optEmail.trim() || optPhase !== 'idle') return
+    setOptPhase('saving')
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const fnUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-cotizacion`
+      await fetch(fnUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ nombre, email: optEmail.trim(), participants, tiempos: tiemposKey, ceremonial, perPerson, total }),
+      })
+      await supabase.from('caua_leads').insert({
+        email: optEmail.trim(),
+        source: 'caua-coti/andrea-rojas',
+        metadata: { nombre, participants, tiempos: tiemposKey, ceremonial },
+      })
+      hsTrackEvent('Caua-Coti Opt-In', { email: optEmail.trim(), participants, tiempos: tiemposKey, ceremonial: ceremonial ? 1 : 0 })
+      setOptPhase('done')
+    } catch {
+      setOptPhase('error')
+    }
+  }
+
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+
+      {/* ── Participantes ─────────────────────────────── */}
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+          <p style={{ fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}77`,
+            letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0 }}>
+            Participantes
+          </p>
+          <span style={{ fontFamily: FONTS.display, fontSize: 28, fontWeight: 900,
+            color: BRAND.heirloom }}>{participants}</span>
+        </div>
+        <input
+          type="range" min={2} max={50} value={participants}
+          onChange={e => setParticipants(Number(e.target.value))}
+          style={{ width: '100%', accentColor: BRAND.mazorca, cursor: 'pointer', height: 4 }}
+        />
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+          {[
+            { n: 2, label: '2 · $65k/p' },
+            { n: 5, label: '5 · $58k/p' },
+            { n: 13, label: '13 · $50k/p' },
+            { n: 26, label: '26+ · $45k/p' },
+          ].map(tier => (
+            <span key={tier.n} style={{ fontFamily: FONTS.body, fontSize: 9,
+              color: participants >= tier.n ? `${BRAND.mazorca}cc` : `${BRAND.heirloom}33`,
+              transition: 'color 0.2s' }}>
+              {tier.label}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Tiempos de experiencia ────────────────────── */}
+      <div>
+        <p style={{ fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}77`,
+          letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10, margin: '0 0 10px' }}>
+          Experiencia inmersiva
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {TIEMPOS_OPTIONS.map(opt => (
+            <button key={opt.key} onClick={() => setTiemposKey(opt.key)} style={{
+              textAlign: 'left', padding: '12px 16px', borderRadius: 8, cursor: 'pointer',
+              border: `1.5px solid ${tiemposKey === opt.key ? BRAND.mazorca : `${BRAND.heirloom}18`}`,
+              background: tiemposKey === opt.key ? `${BRAND.mazorca}10` : '#1a1a1a',
+              transition: 'all 0.2s',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span style={{ fontFamily: FONTS.display, fontSize: 12, fontWeight: 700,
+                  color: tiemposKey === opt.key ? BRAND.mazorca : BRAND.heirloom }}>
+                  {opt.label}
+                </span>
+                <span style={{ fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}55` }}>
+                  {opt.sublabel}{opt.extra > 0 ? ` · +${fmtCOP(opt.extra)}/p` : ' · incluido'}
+                </span>
+              </div>
+              <p style={{ fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}55`,
+                margin: '4px 0 0' }}>
+                {opt.desc}
+              </p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Upgrade Ceremonial Grade ──────────────────── */}
+      <div
+        onClick={() => setCeremonial(c => !c)}
+        style={{
+          border: `1.5px solid ${ceremonial ? BRAND.criollo : `${BRAND.heirloom}18`}`,
+          borderRadius: 8, padding: '14px 16px', cursor: 'pointer',
+          background: ceremonial ? `${BRAND.criollo}0d` : '#1a1a1a',
+          transition: 'all 0.2s',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+          <div>
+            <p style={{ fontFamily: FONTS.display, fontSize: 12, fontWeight: 700,
+              color: ceremonial ? BRAND.criollo : BRAND.heirloom, margin: '0 0 4px' }}>
+              ✦ Upgrade Ceremonial Grade
+            </p>
+            <p style={{ fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}77`, margin: 0 }}>
+              Cacao 100% Ceremonial CAUA · Finca Santa María · Hobo, Huila · Origen Único
+            </p>
+            <p style={{ fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}44`,
+              margin: '3px 0 0' }}>
+              Barra artesanal 250g + preparación ceremonial ancestral · +{fmtCOP(CEREMONIAL_EXTRA)}/persona
+            </p>
+          </div>
+          <div style={{
+            width: 22, height: 22, borderRadius: 6, flexShrink: 0, marginTop: 2,
+            border: `2px solid ${ceremonial ? BRAND.criollo : `${BRAND.heirloom}33`}`,
+            background: ceremonial ? BRAND.criollo : 'transparent',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'all 0.2s',
+          }}>
+            {ceremonial && <span style={{ color: BRAND.bgDeep, fontSize: 13, fontWeight: 900,
+              lineHeight: 1 }}>✓</span>}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Tu Coti ───────────────────────────────────── */}
+      <div style={{
+        background: `linear-gradient(135deg, ${BRAND.amazon}1a 0%, ${BRAND.pod}0d 100%)`,
+        border: `1.5px solid ${BRAND.mazorca}40`,
+        borderRadius: 10, padding: '20px 24px',
+      }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 18 }}>
+          {[
+            ['Participantes', `${participants} personas`],
+            ['Precio por persona', fmtCOP(perPerson)],
+            ['Experiencia', tiempos.label],
+            ['Duración estimada', tiempos.sublabel],
+          ].map(([k, v]) => (
+            <div key={k}>
+              <p style={{ fontFamily: FONTS.body, fontSize: 9, color: `${BRAND.heirloom}55`,
+                letterSpacing: '0.1em', textTransform: 'uppercase', margin: '0 0 2px' }}>{k}</p>
+              <p style={{ fontFamily: FONTS.body, fontSize: 12, color: BRAND.heirloom, margin: 0 }}>{v}</p>
+            </div>
+          ))}
+        </div>
+        <div style={{ borderTop: `1px solid ${BRAND.mazorca}25`, paddingTop: 14,
+          display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+          <p style={{ fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}66`,
+            letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0 }}>Total inversión</p>
+          <p style={{ fontFamily: FONTS.display, fontSize: 36, fontWeight: 900,
+            color: BRAND.mazorca, margin: 0 }}>{fmtCOP(total)}</p>
+        </div>
+      </div>
+
+      {/* ── CTA principal: email ──────────────────────── */}
+      {optPhase !== 'done' ? (
+        <form onSubmit={handleOptIn} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <input
+            required placeholder="Nombre"
+            value={nombre} onChange={e => setNombre(e.target.value)}
+            style={{ padding: '12px 16px', borderRadius: 8, fontSize: 13,
+              border: `1px solid ${BRAND.heirloom}25`, background: '#1a1a1a',
+              color: BRAND.heirloom, fontFamily: FONTS.body, outline: 'none' }}
+          />
+          <input
+            type="email" required placeholder="tu@email.com"
+            value={optEmail} onChange={e => setOptEmail(e.target.value)}
+            style={{ padding: '12px 16px', borderRadius: 8, fontSize: 13,
+              border: `1px solid ${BRAND.heirloom}25`, background: '#1a1a1a',
+              color: BRAND.heirloom, fontFamily: FONTS.body, outline: 'none' }}
+          />
+          <button type="submit" disabled={optPhase === 'saving'} style={{
+            padding: '14px', borderRadius: 8, border: 'none', cursor: 'pointer',
+            background: BRAND.mazorca, color: BRAND.amazon,
+            fontFamily: FONTS.display, fontSize: 13, fontWeight: 700,
+          }}>
+            {optPhase === 'saving' ? 'Enviando…' : optPhase === 'error' ? 'Reintentar' : '📩 Recibir Tu Coti por email'}
+          </button>
+          {optPhase === 'error' && (
+            <p style={{ fontFamily: FONTS.body, fontSize: 11, color: BRAND.theobroma,
+              margin: 0, textAlign: 'center' }}>
+              Error al enviar. Intenta de nuevo o escríbenos a amaury@cauaculture.co
+            </p>
+          )}
+        </form>
+      ) : (
+        <div style={{ background: `${BRAND.pod}12`, border: `1px solid ${BRAND.pod}33`,
+          borderRadius: 8, padding: '16px 20px', textAlign: 'center' }}>
+          <p style={{ fontFamily: FONTS.display, fontSize: 14, fontWeight: 700,
+            color: BRAND.pod, margin: '0 0 4px' }}>✓ Tu Coti enviada a {optEmail}</p>
+          <p style={{ fontFamily: FONTS.body, fontSize: 12, color: `${BRAND.heirloom}66`, margin: 0 }}>
+            Revisa tu bandeja de entrada
+          </p>
+        </div>
+      )}
+
+    </div>
+  )
+}
 
 // ============================================================================
 // COMPONENTE PRINCIPAL: ProposalAndreaRojas
@@ -355,7 +618,7 @@ export default function ProposalAndreaRojas() {
             </div>
           </RevealSection>
 
-          {/* PRICING */}
+          {/* COTIZADOR */}
           <RevealSection delay={500}>
             <h2
               style={{
@@ -363,165 +626,29 @@ export default function ProposalAndreaRojas() {
                 fontSize: 24,
                 fontWeight: 700,
                 color: BRAND.heirloom,
-                marginBottom: 24,
+                marginBottom: 8,
                 borderBottom: `2px solid ${BRAND.mazorca}`,
                 paddingBottom: 12,
               }}
             >
-              Opciones de Inversión
+              Configura tu Experiencia
             </h2>
-          </RevealSection>
-
-          <RevealSection delay={600}>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                gap: 20,
-                marginBottom: 40,
-              }}
-            >
-              {/* Base */}
-              <div
-                style={{
-                  border: `2px solid ${BRAND.heirloom}30`,
-                  borderRadius: 8,
-                  padding: 24,
-                  background: BRAND.bgCard,
-                }}
-              >
-                <h4
-                  style={{
-                    fontFamily: FONTS.body,
-                    fontSize: 14,
-                    fontWeight: 700,
-                    color: BRAND.heirloom,
-                    marginBottom: 12,
-                  }}
-                >
-                  Experiencia Base
-                </h4>
-                <div
-                  style={{
-                    fontFamily: FONTS.serif,
-                    fontSize: 32,
-                    fontWeight: 700,
-                    color: BRAND.pod,
-                    marginBottom: 12,
-                  }}
-                >
-                  $60.000
-                </div>
-                <p
-                  style={{
-                    fontFamily: FONTS.body,
-                    fontSize: 12,
-                    color: BRAND.heirloom,
-                    opacity: 0.7,
-                    marginBottom: 16,
-                  }}
-                >
-                  <strong>1-2 horas</strong> · 2-4 personas
-                </p>
-                <ul
-                  style={{
-                    listStyle: 'none',
-                    padding: 0,
-                    fontSize: 12,
-                    lineHeight: 1.8,
-                    color: BRAND.heirloom,
-                  }}
-                >
-                  <li>✓ Cinco Tiempos de Cacao</li>
-                  <li>✓ Catas guiadas</li>
-                  <li>✓ Narrativa regenerativa</li>
-                  <li>✓ Implementos incluidos</li>
-                </ul>
-              </div>
-
-              {/* Premium */}
-              <div
-                style={{
-                  border: `2px solid ${BRAND.criollo}`,
-                  borderRadius: 8,
-                  padding: 24,
-                  background: `linear-gradient(135deg, ${BRAND.criollo}15 0%, ${BRAND.pod}08 100%)`,
-                  boxShadow: `0 4px 16px ${BRAND.criollo}20`,
-                }}
-              >
-                <h4
-                  style={{
-                    fontFamily: FONTS.body,
-                    fontSize: 14,
-                    fontWeight: 700,
-                    color: BRAND.heirloom,
-                    marginBottom: 12,
-                  }}
-                >
-                  Premium + Barra{' '}
-                  <span
-                    style={{
-                      display: 'inline-block',
-                      background: BRAND.mazorca,
-                      color: BRAND.amazon,
-                      padding: '2px 8px',
-                      borderRadius: 4,
-                      fontSize: 10,
-                      fontWeight: 700,
-                      marginLeft: 8,
-                    }}
-                  >
-                    ⭐ RECOMENDADO
-                  </span>
-                </h4>
-                <div
-                  style={{
-                    fontFamily: FONTS.serif,
-                    fontSize: 32,
-                    fontWeight: 700,
-                    color: BRAND.mazorca,
-                    marginBottom: 12,
-                  }}
-                >
-                  $100.000
-                </div>
-                <p
-                  style={{
-                    fontFamily: FONTS.body,
-                    fontSize: 12,
-                    color: BRAND.heirloom,
-                    opacity: 0.7,
-                    marginBottom: 16,
-                  }}
-                >
-                  <strong>2-3 horas</strong> · Hasta 6 personas
-                </p>
-                <ul
-                  style={{
-                    listStyle: 'none',
-                    padding: 0,
-                    fontSize: 12,
-                    lineHeight: 1.8,
-                    color: BRAND.heirloom,
-                  }}
-                >
-                  <li>✓ Todo experiencia Base</li>
-                  <li>✓ <strong>+ Barra 250g Hobo Huila</strong></li>
-                  <li>✓ <strong>+ Kit de productos</strong></li>
-                  <li>✓ Para llevar y recordar</li>
-                </ul>
-              </div>
-            </div>
+            <p style={{ fontFamily: FONTS.body, fontSize: 13, color: `${BRAND.heirloom}77`,
+              marginBottom: 28 }}>
+              Guiada por Amaury Amed · Cacaotier &amp; CTO Caúa · Toda la experiencia incluida
+            </p>
+            <PriceCalculator />
           </RevealSection>
 
           {/* TÉRMINOS */}
-          <RevealSection delay={700}>
+          <RevealSection delay={600}>
             <div
               style={{
                 background: `${BRAND.pod}10`,
                 borderLeft: `4px solid ${BRAND.pod}`,
                 padding: 20,
-                marginBottom: 40,
+                marginTop: 32,
+                marginBottom: 16,
                 fontSize: 12,
                 lineHeight: 1.7,
                 color: BRAND.heirloom,
@@ -537,98 +664,6 @@ export default function ProposalAndreaRojas() {
                 <br />
                 ✓ <strong>Confirmación:</strong> 3102227848 o amaury@cauaculture.co
               </div>
-            </div>
-          </RevealSection>
-
-          {/* CTA */}
-          <RevealSection delay={800}>
-            <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <a
-                href={`https://wa.me/573102227848?text=Hola%20Amaury%2C%20estoy%20interesado%20en%20la%20cataci%C3%B3n%20%22Cinco%20Tiempos%20de%20Cacao%22`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  padding: '12px 24px',
-                  borderRadius: 8,
-                  background: BRAND.mazorca,
-                  color: BRAND.amazon,
-                  fontFamily: FONTS.display,
-                  fontSize: 14,
-                  fontWeight: 700,
-                  textDecoration: 'none',
-                  transition: 'all 0.3s ease',
-                  cursor: 'pointer',
-                  display: 'inline-block',
-                }}
-                onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                  const el = e.currentTarget
-                  el.style.transform = 'scale(1.02)'
-                }}
-                onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                  const el = e.currentTarget
-                  el.style.transform = 'scale(1)'
-                }}
-              >
-                📱 Confirmar por WhatsApp
-              </a>
-              <a
-                href="mailto:amaury@cauaculture.co?subject=Propuesta%20Cinco%20Tiempos%20de%20Cacao"
-                style={{
-                  padding: '12px 24px',
-                  borderRadius: 8,
-                  background: `${BRAND.heirloom}15`,
-                  color: BRAND.heirloom,
-                  fontFamily: FONTS.display,
-                  fontSize: 14,
-                  fontWeight: 700,
-                  textDecoration: 'none',
-                  transition: 'all 0.3s ease',
-                  cursor: 'pointer',
-                  display: 'inline-block',
-                  border: `1px solid ${BRAND.heirloom}40`,
-                }}
-                onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                  const el = e.currentTarget
-                  el.style.transform = 'scale(1.02)'
-                }}
-                onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                  const el = e.currentTarget
-                  el.style.transform = 'scale(1)'
-                }}
-              >
-                📧 Escribir correo
-              </a>
-              <button
-                onClick={() => {
-                  const link = document.createElement('a')
-                  link.href = '/propuesta-andrea-rojas.html'
-                  link.download = 'Propuesta-Cinco-Tiempos-de-Cacao.pdf'
-                  link.click()
-                }}
-                style={{
-                  padding: '12px 24px',
-                  borderRadius: 8,
-                  background: `${BRAND.pod}20`,
-                  color: BRAND.pod,
-                  fontFamily: FONTS.display,
-                  fontSize: 14,
-                  fontWeight: 700,
-                  border: `1px solid ${BRAND.pod}60`,
-                  transition: 'all 0.3s ease',
-                  cursor: 'pointer',
-                  display: 'inline-block',
-                }}
-                onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
-                  const el = e.currentTarget
-                  el.style.transform = 'scale(1.02)'
-                }}
-                onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
-                  const el = e.currentTarget
-                  el.style.transform = 'scale(1)'
-                }}
-              >
-                📄 Descargar PDF
-              </button>
             </div>
           </RevealSection>
         </main>
