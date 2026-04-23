@@ -1,6 +1,6 @@
 # CAUA Health Report
-Timestamp: 2026-04-23T13:30:22Z
-Previous run: 2026-04-21T02:18:21Z
+Timestamp: 2026-04-23T14:09:00Z
+Previous run: 2026-04-23T13:30:22Z
 
 ## Summary: ⚠️ INCONCLUSIVE — Sandbox Egress Block
 
@@ -27,7 +27,7 @@ Previous run: 2026-04-21T02:18:21Z
 - **Note:** Previous run (2026-04-20) showed cert issued by `O=Anthropic; CN=sandbox-egress-production TLS Inspection CA` with expiry `May 20 2026`. That expiry (~27 days from today) applies to the **proxy's inspection cert**, not the real site cert — confirm real expiry locally with `openssl s_client`.
 - **Action:** Run `openssl s_client -connect cacaofrutabrutal.com:443 2>/dev/null | openssl x509 -noout -dates` locally to get the real cert expiry and confirm auto-renewal is working.
 
-### 2. ℹ️ INFO — Sandbox Egress Policy Prevents Health Checks from Claude Code (3rd consecutive run)
+### 2. ℹ️ INFO — Sandbox Egress Policy Prevents Health Checks from Claude Code (4th consecutive run)
 - **Root cause:** The Anthropic sandbox intercepts all HTTPS and blocks non-allowlisted hosts. `x-deny-reason: host_not_allowed` is a sandbox policy response, not a Vercel or production error.
 - **This is NOT a production site failure.** No evidence of a real outage across any of the three runs.
 - **Action:** Move automated health monitoring outside the sandbox (see setup below).
@@ -36,18 +36,18 @@ Previous run: 2026-04-21T02:18:21Z
 
 ## Raw curl Evidence
 
-### 2026-04-23T13:30:22Z run (current)
+### 2026-04-23T14:09:00Z run (current)
 ```
 # Site availability
 $ curl -s -o /dev/null -w '%{http_code} %{time_total}s' https://cacaofrutabrutal.com
-403 1.012178s
+403 0.408932s
 
 # Full headers
 HTTP/2 403
 x-deny-reason: host_not_allowed
 content-length: 21
 content-type: text/plain
-date: Thu, 23 Apr 2026 13:30:22 GMT
+date: Thu, 23 Apr 2026 14:08:54 GMT
 
 # HTTP request
 HTTP/1.1 403 Forbidden
@@ -57,22 +57,25 @@ x-deny-reason: host_not_allowed
 Host not in allowlist
 HTTP_STATUS:403
 
-# Supabase auth with Origin: https://cacaofrutabrutal.com
-Host not in allowlist
-HTTP_STATUS:403
-
-# Supabase REST with Origin: https://cacaofrutabrutal.com
-Host not in allowlist
-HTTP_STATUS:403
+# Supabase REST headers
+HTTP/2 403
+x-deny-reason: host_not_allowed
 
 # HTTP→HTTPS redirect
-403 (no redirect_url)
+403 (no redirect observed)
 
 # SSL check
 SSL OK  (no error strings)
 
 # /fund route
 403
+```
+
+### 2026-04-23T13:30:22Z run
+```
+403 1.012178s
+SSL OK
+(all other endpoints: 403 host_not_allowed)
 ```
 
 ### 2026-04-21T02:18:21Z run
