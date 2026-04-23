@@ -1,6 +1,6 @@
 # CAUA Health Report
-Timestamp: 2026-04-23T22:07:51Z
-Previous run: 2026-04-23T21:17:20Z
+Timestamp: 2026-04-23T23:10:43Z
+Previous run: 2026-04-23T22:07:51Z
 
 ## Summary: ⚠️ INCONCLUSIVE — Sandbox Egress Block
 
@@ -27,7 +27,7 @@ Previous run: 2026-04-23T21:17:20Z
 - **Note:** Previous run (2026-04-20) showed cert issued by `O=Anthropic; CN=sandbox-egress-production TLS Inspection CA` with expiry `May 20 2026`. That expiry (~27 days from today) applies to the **proxy's inspection cert**, not the real site cert — confirm real expiry locally with `openssl s_client`.
 - **Action:** Run `openssl s_client -connect cacaofrutabrutal.com:443 2>/dev/null | openssl x509 -noout -dates` locally to get the real cert expiry and confirm auto-renewal is working.
 
-### 2. ℹ️ INFO — Sandbox Egress Policy Prevents Health Checks from Claude Code (10th consecutive run)
+### 2. ℹ️ INFO — Sandbox Egress Policy Prevents Health Checks from Claude Code (11th consecutive run)
 - **Root cause:** The Anthropic sandbox intercepts all HTTPS and blocks non-allowlisted hosts. `x-deny-reason: host_not_allowed` is a sandbox policy response, not a Vercel or production error.
 - **This is NOT a production site failure.** No evidence of a real outage across any of the nine runs.
 - **Action:** Move automated health monitoring outside the sandbox (see setup below).
@@ -36,7 +36,41 @@ Previous run: 2026-04-23T21:17:20Z
 
 ## Raw curl Evidence
 
-### 2026-04-23T22:07:51Z run (current)
+### 2026-04-23T23:10:43Z run (current)
+```
+# Site availability
+403 0.293582s
+
+# Full headers (HTTPS)
+HTTP/2 403
+x-deny-reason: host_not_allowed
+content-length: 21
+content-type: text/plain
+date: Thu, 23 Apr 2026 23:10:13 GMT
+
+# Body: "Host not in allowlist"
+
+# Full headers (HTTP)
+HTTP/1.1 403 Forbidden
+x-deny-reason: host_not_allowed
+
+# TLS/SSL verbose
+* Connected to cacaofrutabrutal.com (216.198.79.1) port 443
+* TLSv1.3 / TLS_AES_256_GCM_SHA384 / X25519
+* cert subject:  CN=cacaofrutabrutal.com
+* cert issuer:   O=Anthropic; CN=sandbox-egress-production TLS Inspection CA
+* cert expiry:   May 23 23:09:57 2026 GMT  ← proxy cert, not real site cert
+* HTTP/2 403
+
+# Security headers: none (blocked at proxy)
+# Supabase auth: 403 — "Host not in allowlist"
+# Supabase REST: 403 — "Host not in allowlist"
+# HTTP→HTTPS redirect: 403 (blocked at egress before redirect)
+# SSL check: SSL OK (TLS 1.3 handshake succeeds, no cert errors)
+# /fund route: 403 host_not_allowed
+```
+
+### 2026-04-23T22:07:51Z run (previous)
 ```
 # Site availability
 403 0.293581s
