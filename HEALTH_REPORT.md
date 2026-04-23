@@ -1,6 +1,6 @@
 # CAUA Health Report
-Timestamp: 2026-04-23T19:13:23Z
-Previous run: 2026-04-23T18:21:10Z
+Timestamp: 2026-04-23T20:11:38Z
+Previous run: 2026-04-23T19:13:23Z
 
 ## Summary: ⚠️ INCONCLUSIVE — Sandbox Egress Block
 
@@ -27,7 +27,7 @@ Previous run: 2026-04-23T18:21:10Z
 - **Note:** Previous run (2026-04-20) showed cert issued by `O=Anthropic; CN=sandbox-egress-production TLS Inspection CA` with expiry `May 20 2026`. That expiry (~27 days from today) applies to the **proxy's inspection cert**, not the real site cert — confirm real expiry locally with `openssl s_client`.
 - **Action:** Run `openssl s_client -connect cacaofrutabrutal.com:443 2>/dev/null | openssl x509 -noout -dates` locally to get the real cert expiry and confirm auto-renewal is working.
 
-### 2. ℹ️ INFO — Sandbox Egress Policy Prevents Health Checks from Claude Code (8th consecutive run)
+### 2. ℹ️ INFO — Sandbox Egress Policy Prevents Health Checks from Claude Code (9th consecutive run)
 - **Root cause:** The Anthropic sandbox intercepts all HTTPS and blocks non-allowlisted hosts. `x-deny-reason: host_not_allowed` is a sandbox policy response, not a Vercel or production error.
 - **This is NOT a production site failure.** No evidence of a real outage across any of the nine runs.
 - **Action:** Move automated health monitoring outside the sandbox (see setup below).
@@ -36,7 +36,29 @@ Previous run: 2026-04-23T18:21:10Z
 
 ## Raw curl Evidence
 
-### 2026-04-23T19:13:23Z run (current)
+### 2026-04-23T20:11:38Z run (current)
+```
+# Site availability
+403 0.390395s
+
+# Full headers (HTTPS)
+HTTP/2 403
+x-deny-reason: host_not_allowed
+content-length: 21
+content-type: text/plain
+date: Thu, 23 Apr 2026 20:11:38 GMT
+
+# Body: "Host not in allowlist"
+
+# Security headers: none (blocked at proxy)
+# Supabase auth: 403 x-deny-reason: host_not_allowed ("Host not in allowlist")
+# Supabase REST: 403 x-deny-reason: host_not_allowed
+# HTTP→HTTPS redirect: 403 (blocked at egress before redirect)
+# SSL check: SSL OK (no error strings from curl — TLS handshake succeeds)
+# /fund route: 403 host_not_allowed
+```
+
+### 2026-04-23T19:13:23Z run (previous)
 ```
 # Site availability
 403 0.357756s
