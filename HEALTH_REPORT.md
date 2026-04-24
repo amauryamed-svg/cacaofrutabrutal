@@ -1,6 +1,6 @@
 # CAUA Health Report
-Timestamp: 2026-04-24T11:05:00Z
-Previous run: 2026-04-24T10:02:51Z
+Timestamp: 2026-04-24T12:25:40Z
+Previous run: 2026-04-24T11:05:00Z
 
 ## Summary: ⚠️ INCONCLUSIVE — Sandbox Egress Block
 
@@ -10,7 +10,7 @@ Previous run: 2026-04-24T10:02:51Z
 
 | Check | Status | Detail |
 |-------|--------|--------|
-| Site availability | ⚠️ INCONCLUSIVE | 403 `host_not_allowed` — sandbox egress proxy, **0.299s** response time |
+| Site availability | ⚠️ INCONCLUSIVE | 403 `host_not_allowed` — sandbox egress proxy, **0.336s** response time |
 | Security headers | ⚠️ INCONCLUSIVE | No app-layer headers returned; blocked at proxy |
 | Supabase auth endpoint | ⚠️ INCONCLUSIVE | 403 — Supabase: "Host not in allowlist" |
 | Supabase REST endpoint | ⚠️ INCONCLUSIVE | 403 — Supabase: "Host not in allowlist" |
@@ -27,7 +27,7 @@ Previous run: 2026-04-24T10:02:51Z
 - **Note:** Previous run (2026-04-20) showed cert issued by `O=Anthropic; CN=sandbox-egress-production TLS Inspection CA` with expiry `May 20 2026`. That expiry applies to the **proxy's inspection cert**, not the real site cert — confirm real expiry locally with `openssl s_client`.
 - **Action:** Run `openssl s_client -connect cacaofrutabrutal.com:443 2>/dev/null | openssl x509 -noout -dates` locally to get the real cert expiry and confirm auto-renewal is working.
 
-### 2. ℹ️ INFO — Sandbox Egress Policy Prevents Health Checks from Claude Code (20th consecutive run)
+### 2. ℹ️ INFO — Sandbox Egress Policy Prevents Health Checks from Claude Code (21st consecutive run)
 - **Root cause:** The Anthropic sandbox intercepts all HTTPS and blocks non-allowlisted hosts. `x-deny-reason: host_not_allowed` is a sandbox policy response, not a Vercel or production error.
 - **This is NOT a production site failure.** No evidence of a real outage across any of the nineteen prior runs.
 - **Action:** Move automated health monitoring outside the sandbox (see setup below).
@@ -36,7 +36,35 @@ Previous run: 2026-04-24T10:02:51Z
 
 ## Raw curl Evidence
 
-### 2026-04-24T11:05:00Z run (current)
+### 2026-04-24T12:25:40Z run (current)
+```
+# Site availability
+403 0.335926s
+
+# Full headers (HTTPS)
+HTTP/2 403
+x-deny-reason: host_not_allowed
+content-length: 21
+content-type: text/plain
+date: Fri, 24 Apr 2026 12:25:34 GMT
+
+# Full headers (HTTP)
+HTTP/1.1 403 Forbidden
+x-deny-reason: host_not_allowed
+content-length: 21
+content-type: text/plain
+date: Fri, 24 Apr 2026 12:25:36 GMT
+
+# Body: "Host not in allowlist"
+# Security headers: none (blocked at proxy)
+# Supabase auth body: "Host not in allowlist" → 403
+# Supabase REST: 403 host_not_allowed ("Host not in allowlist")
+# HTTP→HTTPS redirect: 403 (blocked before redirect)
+# SSL check: SSL OK (no curl SSL errors — TLS layer healthy)
+# /fund route: 403 host_not_allowed
+```
+
+### 2026-04-24T11:05:00Z run (previous)
 ```
 # Site availability
 403 0.289213s
