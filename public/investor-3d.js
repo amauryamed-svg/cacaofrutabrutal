@@ -222,36 +222,6 @@
     tree.add(p);
   }
 
-  // Branches — a few splayed from trunk top
-  const BRANCHES = [
-    { y: 5.0, a: 0.5, len: 3.2, tilt: 0.8 },
-    { y: 5.3, a: 2.4, len: 2.8, tilt: 0.9 },
-    { y: 4.8, a: 4.1, len: 3.0, tilt: 0.75 },
-    { y: 5.5, a: 5.9, len: 2.6, tilt: 0.95 },
-  ];
-  const branchMat = new THREE.MeshStandardMaterial({
-    color: 0x4A2C18, roughness: 0.95, metalness: 0,
-  });
-  for (const b of BRANCHES) {
-    const br = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.08, 0.22, b.len, 8),
-      branchMat
-    );
-    br.position.set(Math.cos(b.a) * 0.45, b.y, Math.sin(b.a) * 0.45);
-    // Rotate outward + upward
-    br.rotation.z = -Math.cos(b.a) * b.tilt;
-    br.rotation.x = Math.sin(b.a) * b.tilt;
-    // Offset to its centre along its own length (after rotation, tricky — just place near attach pt)
-    br.translateY(b.len / 2);
-    tree.add(br);
-
-    // Leaves at branch tips
-    const tipX = Math.cos(b.a) * (0.45 + Math.sin(b.tilt) * b.len * 0.9);
-    const tipY = b.y + Math.cos(b.tilt) * b.len * 0.9;
-    const tipZ = Math.sin(b.a) * (0.45 + Math.sin(b.tilt) * b.len * 0.9);
-    addLeafCluster(tipX, tipY, tipZ, 6);
-  }
-
   // Leaf shape — oblanceolate, pointed, acute base (real cacao leaf)
   function buildLeafGeometry() {
     const shape = new THREE.Shape();
@@ -279,10 +249,37 @@
       leaf.position.set(cx + Math.cos(ang) * rad, cy + (Math.random() - 0.5) * 0.6, cz + Math.sin(ang) * rad);
       leaf.rotation.y = Math.random() * Math.PI * 2;
       leaf.rotation.z = (Math.random() - 0.5) * 0.9;
-      leaf.rotation.x = -Math.PI / 2 + (Math.random() - 0.5) * 0.4;  // mostly horizontal
+      leaf.rotation.x = -Math.PI / 2 + (Math.random() - 0.5) * 0.4;
       leaf.scale.setScalar(0.55 + Math.random() * 0.45);
       tree.add(leaf);
     }
+  }
+
+  // Branches — a few splayed from trunk top
+  const BRANCHES = [
+    { y: 5.0, a: 0.5, len: 3.2, tilt: 0.8 },
+    { y: 5.3, a: 2.4, len: 2.8, tilt: 0.9 },
+    { y: 4.8, a: 4.1, len: 3.0, tilt: 0.75 },
+    { y: 5.5, a: 5.9, len: 2.6, tilt: 0.95 },
+  ];
+  const branchMat = new THREE.MeshStandardMaterial({
+    color: 0x4A2C18, roughness: 0.95, metalness: 0,
+  });
+  for (const b of BRANCHES) {
+    const br = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.08, 0.22, b.len, 8),
+      branchMat
+    );
+    br.position.set(Math.cos(b.a) * 0.45, b.y, Math.sin(b.a) * 0.45);
+    br.rotation.z = -Math.cos(b.a) * b.tilt;
+    br.rotation.x = Math.sin(b.a) * b.tilt;
+    br.translateY(b.len / 2);
+    tree.add(br);
+
+    const tipX = Math.cos(b.a) * (0.45 + Math.sin(b.tilt) * b.len * 0.9);
+    const tipY = b.y + Math.cos(b.tilt) * b.len * 0.9;
+    const tipZ = Math.sin(b.a) * (0.45 + Math.sin(b.tilt) * b.len * 0.9);
+    addLeafCluster(tipX, tipY, tipZ, 6);
   }
 
   // Crown canopy — leaves clustered above branches
