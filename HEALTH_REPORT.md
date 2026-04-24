@@ -1,6 +1,6 @@
 # CAUA Health Report
-Timestamp: 2026-04-24T03:15:00Z
-Previous run: 2026-04-24T02:08:00Z
+Timestamp: 2026-04-24T04:07:23Z
+Previous run: 2026-04-24T03:15:00Z
 
 ## Summary: ⚠️ INCONCLUSIVE — Sandbox Egress Block
 
@@ -10,7 +10,7 @@ Previous run: 2026-04-24T02:08:00Z
 
 | Check | Status | Detail |
 |-------|--------|--------|
-| Site availability | ⚠️ INCONCLUSIVE | 403 `host_not_allowed` — sandbox egress proxy, **0.29s** response time |
+| Site availability | ⚠️ INCONCLUSIVE | 403 `host_not_allowed` — sandbox egress proxy, **0.254s** response time |
 | Security headers | ⚠️ INCONCLUSIVE | No app-layer headers returned; blocked at proxy |
 | Supabase auth endpoint | ⚠️ INCONCLUSIVE | 403 — Supabase: "Host not in allowlist" |
 | Supabase REST endpoint | ⚠️ INCONCLUSIVE | 403 — Supabase: "Host not in allowlist" |
@@ -24,19 +24,39 @@ Previous run: 2026-04-24T02:08:00Z
 
 ### 1. ✅ SSL Healthy — No Certificate Errors (2026-04-23T15:04Z run)
 - **What:** `curl -sI --max-time 5 https://cacaofrutabrutal.com` returned no SSL/certificate error strings.
-- **Note:** Previous run (2026-04-20) showed cert issued by `O=Anthropic; CN=sandbox-egress-production TLS Inspection CA` with expiry `May 20 2026`. That expiry (~27 days from today) applies to the **proxy's inspection cert**, not the real site cert — confirm real expiry locally with `openssl s_client`.
+- **Note:** Previous run (2026-04-20) showed cert issued by `O=Anthropic; CN=sandbox-egress-production TLS Inspection CA` with expiry `May 20 2026`. That expiry applies to the **proxy's inspection cert**, not the real site cert — confirm real expiry locally with `openssl s_client`.
 - **Action:** Run `openssl s_client -connect cacaofrutabrutal.com:443 2>/dev/null | openssl x509 -noout -dates` locally to get the real cert expiry and confirm auto-renewal is working.
 
-### 2. ℹ️ INFO — Sandbox Egress Policy Prevents Health Checks from Claude Code (13th consecutive run)
+### 2. ℹ️ INFO — Sandbox Egress Policy Prevents Health Checks from Claude Code (14th consecutive run)
 - **Root cause:** The Anthropic sandbox intercepts all HTTPS and blocks non-allowlisted hosts. `x-deny-reason: host_not_allowed` is a sandbox policy response, not a Vercel or production error.
-- **This is NOT a production site failure.** No evidence of a real outage across any of the nine runs.
+- **This is NOT a production site failure.** No evidence of a real outage across any of the fourteen runs.
 - **Action:** Move automated health monitoring outside the sandbox (see setup below).
 
 ---
 
 ## Raw curl Evidence
 
-### 2026-04-24T03:15:00Z run (current)
+### 2026-04-24T04:07:23Z run (current)
+```
+# Site availability
+403 0.254061s
+
+# Full headers (HTTPS)
+HTTP/2 403
+x-deny-reason: host_not_allowed
+content-length: 21
+content-type: text/plain
+date: Fri, 24 Apr 2026 04:07:23 GMT
+
+# Security headers: none (blocked at proxy)
+# Supabase auth body: "Host not in allowlist" → 403
+# Supabase REST: 403 host_not_allowed
+# HTTP→HTTPS redirect: 403 (blocked before redirect)
+# SSL check: SSL OK (no curl SSL errors)
+# /fund route: 403 host_not_allowed
+```
+
+### 2026-04-24T03:15:00Z run (previous)
 ```
 # Site availability
 403 0.317745s
