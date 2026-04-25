@@ -1,6 +1,6 @@
 # CAUA Health Report
-Timestamp: 2026-04-24T13:25:23Z
-Previous run: 2026-04-24T12:25:40Z
+Timestamp: 2026-04-25T00:26:30Z
+Previous run: 2026-04-24T13:25:23Z
 
 ## Summary: ⚠️ INCONCLUSIVE — Sandbox Egress Block
 
@@ -10,7 +10,7 @@ Previous run: 2026-04-24T12:25:40Z
 
 | Check | Status | Detail |
 |-------|--------|--------|
-| Site availability | ⚠️ INCONCLUSIVE | 403 `host_not_allowed` — sandbox egress proxy, **0.443s** response time |
+| Site availability | ⚠️ INCONCLUSIVE | 403 `host_not_allowed` — sandbox egress proxy, **0.252s** response time |
 | Security headers | ⚠️ INCONCLUSIVE | No app-layer headers returned; blocked at proxy |
 | Supabase auth endpoint | ⚠️ INCONCLUSIVE | 403 — Supabase: "Host not in allowlist" |
 | Supabase REST endpoint | ⚠️ INCONCLUSIVE | 403 — Supabase: "Host not in allowlist" |
@@ -36,7 +36,35 @@ Previous run: 2026-04-24T12:25:40Z
 
 ## Raw curl Evidence
 
-### 2026-04-24T13:25:23Z run (current)
+### 2026-04-25T00:26:30Z run (current)
+```
+# Site availability
+403 0.251873s
+
+# Full headers (HTTPS)
+HTTP/2 403
+x-deny-reason: host_not_allowed
+content-length: 21
+content-type: text/plain
+date: Sat, 25 Apr 2026 00:25:57 GMT
+
+# Full headers (HTTP)
+HTTP/1.1 403 Forbidden
+x-deny-reason: host_not_allowed
+content-length: 21
+content-type: text/plain
+date: Sat, 25 Apr 2026 00:25:59 GMT
+
+# Body: "Host not in allowlist"
+# Security headers: none (blocked at proxy)
+# Supabase auth body: "Host not in allowlist" → 403
+# Supabase REST: 403 host_not_allowed ("Host not in allowlist")
+# HTTP→HTTPS redirect: 403 (blocked before redirect)
+# SSL check: SSL OK (no curl SSL errors — TLS layer healthy)
+# /fund route: 403 host_not_allowed
+```
+
+### 2026-04-24T13:25:23Z run (previous)
 ```
 # Site availability
 403 0.442514s
