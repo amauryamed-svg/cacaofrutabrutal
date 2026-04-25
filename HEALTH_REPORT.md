@@ -1,6 +1,6 @@
 # CAUA Health Report
-Timestamp: 2026-04-25T06:25:49Z
-Previous run: 2026-04-25T02:20:10Z
+Timestamp: 2026-04-25T07:14:30Z
+Previous run: 2026-04-25T06:25:49Z
 
 ## Summary: ⚠️ INCONCLUSIVE — Sandbox Egress Block
 
@@ -36,7 +36,34 @@ Previous run: 2026-04-25T02:20:10Z
 
 ## Raw curl Evidence
 
-### 2026-04-25T06:25:49Z run (current)
+### 2026-04-25T07:14:30Z run (current)
+```
+# Site availability
+403 0.284406s
+
+# Full headers (HTTPS)
+HTTP/2 403
+x-deny-reason: host_not_allowed
+content-length: 21
+content-type: text/plain
+date: Sat, 25 Apr 2026 07:14:27 GMT
+
+# Full headers (HTTP)
+HTTP/1.1 403 Forbidden
+x-deny-reason: host_not_allowed
+content-length: 21
+content-type: text/plain
+
+# Body: "Host not in allowlist"
+# Security headers: none (blocked at proxy)
+# Supabase auth: 403 — "Host not in allowlist"
+# Supabase REST: 403 — "Host not in allowlist"
+# HTTP→HTTPS redirect: 403 (blocked before redirect)
+# SSL check: SSL OK (no curl SSL errors — TLS layer healthy)
+# /fund route: 403 host_not_allowed
+```
+
+### 2026-04-25T06:25:49Z run (previous)
 ```
 # Site availability
 403 0.272835s
