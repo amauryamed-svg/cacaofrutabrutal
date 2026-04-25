@@ -1,6 +1,6 @@
 # CAUA Health Report
-Timestamp: 2026-04-25T00:26:30Z
-Previous run: 2026-04-24T13:25:23Z
+Timestamp: 2026-04-25T01:15:30Z
+Previous run: 2026-04-25T00:26:30Z
 
 ## Summary: ⚠️ INCONCLUSIVE — Sandbox Egress Block
 
@@ -27,7 +27,7 @@ Previous run: 2026-04-24T13:25:23Z
 - **Note:** Previous run (2026-04-20) showed cert issued by `O=Anthropic; CN=sandbox-egress-production TLS Inspection CA` with expiry `May 20 2026`. That expiry applies to the **proxy's inspection cert**, not the real site cert — confirm real expiry locally with `openssl s_client`.
 - **Action:** Run `openssl s_client -connect cacaofrutabrutal.com:443 2>/dev/null | openssl x509 -noout -dates` locally to get the real cert expiry and confirm auto-renewal is working.
 
-### 2. ℹ️ INFO — Sandbox Egress Policy Prevents Health Checks from Claude Code (22nd consecutive run)
+### 2. ℹ️ INFO — Sandbox Egress Policy Prevents Health Checks from Claude Code (23rd consecutive run)
 - **Root cause:** The Anthropic sandbox intercepts all HTTPS and blocks non-allowlisted hosts. `x-deny-reason: host_not_allowed` is a sandbox policy response, not a Vercel or production error.
 - **This is NOT a production site failure.** No evidence of a real outage across any of the nineteen prior runs.
 - **Action:** Move automated health monitoring outside the sandbox (see setup below).
@@ -36,7 +36,36 @@ Previous run: 2026-04-24T13:25:23Z
 
 ## Raw curl Evidence
 
-### 2026-04-25T00:26:30Z run (current)
+### 2026-04-25T01:15:30Z run (current)
+```
+# Site availability
+403 0.395266s
+
+# Full headers (HTTPS)
+HTTP/2 403
+x-deny-reason: host_not_allowed
+content-length: 21
+content-type: text/plain
+date: Sat, 25 Apr 2026 01:14:33 GMT
+
+# Full headers (HTTP)
+HTTP/1.1 403 Forbidden
+x-deny-reason: host_not_allowed
+content-length: 21
+content-type: text/plain
+date: Sat, 25 Apr 2026 01:15:04 GMT
+
+# Body: "Host not in allowlist"
+# Security headers: none (blocked at proxy)
+# Supabase auth body: "Host not in allowlist" → 403
+# Supabase REST: 403 host_not_allowed ("Host not in allowlist")
+# HTTP→HTTPS redirect: 403 (blocked before redirect)
+# SSL check: SSL OK (no curl SSL errors — TLS layer healthy)
+# /fund route: 403 host_not_allowed
+# Control: curl https://httpbin.org → 403 host_not_allowed (confirms sandbox egress block, run #23)
+```
+
+### 2026-04-25T00:26:30Z run (previous)
 ```
 # Site availability
 403 0.251873s
