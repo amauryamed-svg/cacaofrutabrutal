@@ -1572,8 +1572,8 @@ window.__soundOn = false;
 const CFB_SUPABASE_URL  = 'https://kjygovuiphbxcdxeduco.supabase.co';
 const CFB_SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqeWdvdnVpcGhieGNkeGVkdWNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2ODA0NzgsImV4cCI6MjA5MTI1NjQ3OH0.WMlfCLVssh6pAos2vGSx_8aEiOTxb8CUQqG6Zx9npqU';
 const CFB_WALLETS = {
-  cto: { role: 'CTO', name: 'Amaury Amed',   eth: '0x7Ca1624e534ebE18F46BBA56229981134945464e' },
-  ceo: { role: 'CEO', name: 'David Montoya', eth: '0x7E9E25cFfc8BC68Fb9E1f4708e761C68a37a846A' },
+  cto: { role: 'CTO', name: 'Amaury Amed',   eth: '0x7Ca1624e534ebE18F46BBA56229981134945464e', custody: 'Bitso' },
+  ceo: { role: 'CEO', name: 'David Montoya', eth: '0x7E9E25cFfc8BC68Fb9E1f4708e761C68a37a846A', custody: 'Coinbase' },
 };
 let cfbWalletState = { email: '', amount: 5000, walletOwner: 'cto', txHash: '', amountSent: 5000 };
 
@@ -1616,8 +1616,9 @@ function cfbRenderStep1(){
           const w = CFB_WALLETS[k];
           const active = cfbWalletState.walletOwner === k;
           return `<button onclick="cfbWalletState.walletOwner='${k}';cfbRenderStep1()"
-            style="flex:1;padding:12px 8px;background:${active?'rgba(145,166,59,0.12)':'transparent'};border:1px solid ${active?'var(--gold)':'var(--line-b)'};color:var(--ink);cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;">
-            ${w.role} · ${w.name}
+            style="flex:1;padding:12px 8px;background:${active?'rgba(145,166,59,0.12)':'transparent'};border:1px solid ${active?'var(--gold)':'var(--line-b)'};color:var(--ink);cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;line-height:1.4;">
+            <div>${w.role} · ${w.name}</div>
+            <div style="font-size:9px;color:var(--ink3);margin-top:2px;font-weight:400;">via ${w.custody}</div>
           </button>`;
         }).join('')}
       </div>
@@ -1645,11 +1646,11 @@ function cfbRenderStep2(){
     ${cfbCloseBtn()}
     <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;">PASO 2 / 4 · TRANSFERIR</div>
     <div class="wallet-title" style="font-size:24px;">Envía $${cfbWalletState.amount.toLocaleString('en-US')} en ETH</div>
-    <div class="wallet-sub">A la wallet de <strong style="color:var(--ink);">${w.role} · ${w.name}</strong> · Ethereum mainnet</div>
+    <div class="wallet-sub">A la wallet de <strong style="color:var(--ink);">${w.role} · ${w.name}</strong> custodiada en <strong style="color:var(--gold);">${w.custody}</strong> · Ethereum mainnet</div>
 
     <div style="background:rgba(231,76,60,0.12);border:1.5px solid #e74c3c;padding:12px 14px;margin-bottom:16px;">
       <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:11px;letter-spacing:1.5px;color:#e74c3c;text-transform:uppercase;margin-bottom:4px;">⚠️ LEE ANTES DE TRANSFERIR</div>
-      <div style="font-size:11px;line-height:1.55;color:var(--ink);">Solo ETH en Ethereum mainnet. NO envíes USDC, USDT, ni ETH en Polygon/Base/Arbitrum — pérdida permanente. Bitso no recupera depósitos mal dirigidos.</div>
+      <div style="font-size:11px;line-height:1.55;color:var(--ink);">Solo ETH en Ethereum mainnet. NO envíes USDC, USDT, ni ETH en Polygon/Base/Arbitrum — pérdida permanente. Ni Bitso ni Coinbase recuperan depósitos mal dirigidos.</div>
     </div>
 
     <div style="background:var(--bg);border:1px solid var(--line-b);padding:12px 14px;margin-bottom:16px;">

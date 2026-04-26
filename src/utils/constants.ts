@@ -182,17 +182,16 @@ export const ELEMENT_COLORS: Record<string, string> = {
 }
 
 /**
- * Public Ethereum deposit addresses for receiving direct ETH from investors via Bitso.
+ * Public Ethereum deposit addresses for receiving direct ETH from investors.
+ * Custody differs per wallet — surfaced in the UI selector so investors know
+ * exactly which platform receives the deposit.
  *
  * 🚨 CRITICAL UX RULE: These wallets accept **ETH on Ethereum mainnet ONLY**.
  * - USDC, USDT, MATIC, or ETH on Polygon/Base/Arbitrum sent here = PERMANENT LOSS.
- * - Bitso does not recover misdirected deposits.
+ * - Neither Bitso nor Coinbase recover misdirected deposits to wrong network/asset.
  * - Always render the warning banner alongside these addresses.
  *
- * For USDC payments use the create-coinbase-charge Edge Function (it generates its own
- * charge address per transaction; do NOT route Coinbase Commerce to these wallets).
- *
- * Private keys live in Bitso, never in this repo. If wallet rotation is needed, update here.
+ * Private keys live in the respective custody platforms, never in this repo.
  */
 export const INVESTOR_WALLETS = {
   cto: {
@@ -207,7 +206,7 @@ export const INVESTOR_WALLETS = {
     role: 'CEO',
     eth:  '0x7E9E25cFfc8BC68Fb9E1f4708e761C68a37a846A',
     network: 'Ethereum mainnet',
-    custody: 'Bitso',
+    custody: 'Coinbase',
   },
 } as const
 

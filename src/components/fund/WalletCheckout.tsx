@@ -118,8 +118,8 @@ export default function WalletCheckout({ amount_usd, kind, context, lang, onClos
             </div>
             <p style={{ fontFamily: FONTS.body, fontSize: 11, color: BRAND.heirloom, lineHeight: 1.55, margin: 0 }}>
               {T(
-                'Solo ETH en Ethereum mainnet. NO envíes USDC, USDT, ni ETH en Polygon/Base/Arbitrum — pérdida permanente.',
-                'ETH on Ethereum mainnet ONLY. Do NOT send USDC, USDT, or ETH on Polygon/Base/Arbitrum — permanent loss.',
+                'Solo ETH en Ethereum mainnet. NO envíes USDC, USDT, ni ETH en Polygon/Base/Arbitrum — pérdida permanente. Ni Bitso ni Coinbase recuperan depósitos mal dirigidos.',
+                'ETH on Ethereum mainnet ONLY. Do NOT send USDC, USDT, or ETH on Polygon/Base/Arbitrum — permanent loss. Neither Bitso nor Coinbase recover misdirected deposits.',
               )}
             </p>
           </div>
@@ -137,10 +137,13 @@ export default function WalletCheckout({ amount_usd, kind, context, lang, onClos
                     background: active ? `${BRAND.mazorca}22` : BRAND.bgCard,
                     border: `1px solid ${active ? BRAND.mazorca : BRAND.amazon}99`,
                     color: BRAND.heirloom, cursor: 'pointer',
-                    fontFamily: FONTS.display, fontWeight: 700, fontSize: 11, letterSpacing: '0.1em',
-                    textTransform: 'uppercase' as const,
+                    fontFamily: FONTS.display, fontWeight: 700, fontSize: 10, letterSpacing: '0.08em',
+                    textTransform: 'uppercase' as const, lineHeight: 1.3,
                   }}>
-                    {w.role} · {w.name}
+                    <div>{w.role} · {w.name}</div>
+                    <div style={{ fontSize: 9, color: `${BRAND.heirloom}77`, fontWeight: 500, marginTop: 3, letterSpacing: '0.06em' }}>
+                      via {w.custody}
+                    </div>
                   </button>
                 )
               })}
