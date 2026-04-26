@@ -112,7 +112,8 @@ export type PaymentMethod =
   | 'mercadopago'        // COP — PSE, Nequi, Daviplata
   | 'stripe_usd'         // USD — Visa/MC/Amex
   | 'stripe_eur'         // EUR — Visa/MC/Amex
-  | 'coinbase_usdc'      // USDC on-chain — Coinbase Commerce
-  | 'coinbase_cop_digital' // COP Digital — en proceso
-  | 'coinbase_eur_digital' // EUR Digital — en proceso
+  | 'wallet_eth_direct'  // ETH directo → wallets CTO/CEO (Bitso/Coinbase Wallet); usa record-investor-transfer Edge Fn
+  | 'coinbase_usdc'      // DEPRECATED — usar wallet_eth_direct (kept por backwards compat con DB enum existente)
+  | 'coinbase_cop_digital' // en proceso
+  | 'coinbase_eur_digital' // en proceso
 export type InvestMode   = 'lot' | 'mvp'
