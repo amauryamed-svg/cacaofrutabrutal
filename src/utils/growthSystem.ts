@@ -2,7 +2,7 @@ export interface GrowthStage {
   id: number
   name: string
   emoji: string
-  dayThreshold: number
+  hoursThreshold: number   // hours after adoption to enter this stage (was dayThreshold; same numeric scale, new unit)
   description: string
   careTip: string
   problemRisk: string[]
@@ -29,60 +29,64 @@ export interface SpecialItem {
   cures?: string[]
 }
 
+/**
+ * 8 etapas de crecimiento, espaciadas para un ciclo total de 5 horas (same-day care).
+ * Thresholds en horas después de la adopción.
+ */
 export const GROWTH_STAGES: GrowthStage[] = [
   {
-    id: 0, name: 'Siembra', emoji: '🌰', dayThreshold: 0,
+    id: 0, name: 'Siembra', emoji: '🌰', hoursThreshold: 0,
     description: 'La semilla de cacao descansa en tierra húmeda colombiana, esperando despertar.',
-    careTip: 'Riega suavemente cada 3 horas para activar la germinación.',
+    careTip: 'Riega suavemente cada 30 minutos para activar la germinación.',
     problemRisk: ['plague'],
     pixel: ['  🌰  ', ' ≈≈≈≈≈', '░░░░░░', '██████'],
   },
   {
-    id: 1, name: 'Germinación', emoji: '🌱', dayThreshold: 0.6,
+    id: 1, name: 'Germinación', emoji: '🌱', hoursThreshold: 0.6,
     description: 'La primera raíz blanca emerge buscando agua y nutrientes.',
     careTip: '¡Las plagas atacan semillas recién germinadas! Vigila de cerca.',
     problemRisk: ['plague', 'drought'],
     pixel: ['  🌱  ', '  ┃   ', ' ≈≈≈≈≈', '░░░░░░'],
   },
   {
-    id: 2, name: 'Plántula', emoji: '🌿', dayThreshold: 1.2,
+    id: 2, name: 'Plántula', emoji: '🌿', hoursThreshold: 1.2,
     description: 'Dos cotiledones verdes asoman hacia la luz tropical del bosque.',
     careTip: 'Evita el hongo — aplica Melaza Orgánica si ves manchas oscuras.',
     problemRisk: ['fungus', 'plague'],
     pixel: [' 🍃🌿🍃', '  ┃   ', ' ≈≈≈≈≈', '░░░░░░'],
   },
   {
-    id: 3, name: 'Crecimiento', emoji: '🌾', dayThreshold: 2,
+    id: 3, name: 'Crecimiento', emoji: '🌾', hoursThreshold: 2,
     description: 'Las primeras hojas verdaderas absorben la luz del sol amazónico.',
     careTip: 'La poda lateral estimula un crecimiento más fuerte y vigoroso.',
     problemRisk: ['plague', 'drought'],
     pixel: ['🍃🌾🍃', ' 🌾🌾 ', '  ┃┃  ', '░░░░░░'],
   },
   {
-    id: 4, name: 'Desarrollo', emoji: '🌳', dayThreshold: 2.8,
+    id: 4, name: 'Desarrollo', emoji: '🌳', hoursThreshold: 2.8,
     description: 'El árbol joven establece su estructura principal y copa.',
     careTip: 'Los nutrientes del suelo son críticos para la estructura final.',
     problemRisk: ['fungus', 'drought'],
     pixel: ['🌳🌳🌳', '🌳🌳🌳', ' ┃┃┃  ', '░░░░░░'],
   },
   {
-    id: 5, name: 'Floración', emoji: '🌸', dayThreshold: 3.5,
+    id: 5, name: 'Floración', emoji: '🌸', hoursThreshold: 3.5,
     description: 'Pequeñas flores blancas brotan directamente del tronco del árbol.',
     careTip: '¡Protege las flores de las plagas — son el futuro del cacao!',
     problemRisk: ['plague'],
     pixel: ['🌸🌳🌸', '🌳🌸🌳', ' ┃┃┃  ', '░░░░░░'],
   },
   {
-    id: 6, name: 'Formación', emoji: '🫘', dayThreshold: 4,
+    id: 6, name: 'Formación', emoji: '🫘', hoursThreshold: 4,
     description: 'Las mazorcas de cacao toman forma en el tronco del árbol.',
     careTip: 'El hongo pod rot es la mayor amenaza — usa Melaza Orgánica.',
     problemRisk: ['fungus'],
     pixel: ['🌳🫘🌳', '🫘🌳🫘', ' ┃┃┃  ', '░░░░░░'],
   },
   {
-    id: 7, name: 'Maduración', emoji: '🍫', dayThreshold: 4.6,
-    description: '¡Las mazorcas de oro están listas! El cacao de mayor calidad del mundo.',
-    careTip: 'Cosecha cuidadosa — cada mazorca es trabajo de años de cuidado.',
+    id: 7, name: 'Maduración', emoji: '🍫', hoursThreshold: 4.6,
+    description: '¡Las mazorcas de oro están listas! Cosecha tu chocolate y canjea por mazorcas.',
+    careTip: 'Pulsa RECOLECTAR para cosechar — recibes mazorcas canjeables por chocolate real.',
     problemRisk: [],
     pixel: ['🌳🍫🌳', '🫘🌳🫘', '🌟✨🌟', '░░░░░░'],
   },
@@ -125,32 +129,58 @@ export const SPECIAL_ITEMS: Record<string, SpecialItem> = {
   },
 }
 
-export const CARE_INTERVAL_HOURS = 3
-export const ADOPTION_DAYS = 5
+/** Ciclo total de adopción: 5 horas (same-day care). */
+export const ADOPTION_HOURS = 5
 
-export function getStageByDays(daysSince: number): GrowthStage {
-  const sorted = [...GROWTH_STAGES].sort((a, b) => b.dayThreshold - a.dayThreshold)
-  return sorted.find(s => daysSince >= s.dayThreshold) ?? GROWTH_STAGES[0]
+/** Cooldown entre cuidados básicos: 30 minutos. Permite ~10 acciones por ciclo. */
+export const CARE_INTERVAL_MIN = 30
+export const CARE_INTERVAL_MS  = CARE_INTERVAL_MIN * 60 * 1000
+
+/** Threshold para que el árbol esté listo a cosechar (hours). Coincide con stage 7 Maduración. */
+export const HARVEST_HOURS_THRESHOLD = 4.6
+
+export function getStageByHours(hoursSince: number): GrowthStage {
+  const sorted = [...GROWTH_STAGES].sort((a, b) => b.hoursThreshold - a.hoursThreshold)
+  return sorted.find(s => hoursSince >= s.hoursThreshold) ?? GROWTH_STAGES[0]
 }
 
 export function getHealthStatus(health: number): { label: string; emoji: string; color: string } {
   if (health >= 80) return { label: 'Excelente', emoji: '😊', color: '#91A63B' }
-  if (health >= 60) return { label: 'Bueno', emoji: '🙂', color: '#F1A91E' }
-  if (health >= 40) return { label: 'Alerta', emoji: '😟', color: '#DB5527' }
-  if (health >= 20) return { label: 'Crítico', emoji: '😰', color: '#8C201D' }
+  if (health >= 60) return { label: 'Bueno',     emoji: '🙂', color: '#F1A91E' }
+  if (health >= 40) return { label: 'Alerta',    emoji: '😟', color: '#DB5527' }
+  if (health >= 20) return { label: 'Crítico',   emoji: '😰', color: '#8C201D' }
   return { label: 'Muriendo', emoji: '💀', color: '#8C201D' }
 }
 
+/** "1h 23m" / "12m" / "45s" / "¡Ahora!" — works with any positive ms-difference. */
 export function formatTimeUntil(targetDate: Date): string {
   const diff = targetDate.getTime() - Date.now()
   if (diff <= 0) return '¡Ahora!'
   const h = Math.floor(diff / 3600000)
   const m = Math.floor((diff % 3600000) / 60000)
-  return h > 0 ? `${h}h ${m}m` : `${m}m`
+  const s = Math.floor((diff % 60000)   / 1000)
+  if (h > 0) return `${h}h ${m}m`
+  if (m > 0) return `${m}m ${s}s`
+  return `${s}s`
 }
 
+/** Próximo momento permitido para cuidar (lastCaredAt + 30min). */
 export function getNextCareTime(lastCaredAt: Date): Date {
-  const next = new Date(lastCaredAt)
-  next.setHours(next.getHours() + CARE_INTERVAL_HOURS)
-  return next
+  return new Date(lastCaredAt.getTime() + CARE_INTERVAL_MS)
+}
+
+/** Horas transcurridas desde la fecha de adopción. */
+export function hoursSinceAdoption(adoptedAt: Date | string): number {
+  const t = typeof adoptedAt === 'string' ? new Date(adoptedAt) : adoptedAt
+  return (Date.now() - t.getTime()) / 3600000
+}
+
+/** Progreso del ciclo 0..1 (capped at 1 cuando el árbol llegó a maduración). */
+export function getCycleProgress(adoptedAt: Date | string): number {
+  return Math.min(1, hoursSinceAdoption(adoptedAt) / ADOPTION_HOURS)
+}
+
+/** True cuando el árbol está listo para cosechar (stage Maduración). */
+export function isHarvestReady(adoptedAt: Date | string): boolean {
+  return hoursSinceAdoption(adoptedAt) >= HARVEST_HOURS_THRESHOLD
 }

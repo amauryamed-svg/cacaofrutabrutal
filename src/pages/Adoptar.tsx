@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCocoaTrees } from '../hooks/useCocoaTrees'
 import SwipeableTreeCard from '../components/ui/SwipeableTreeCard'
@@ -11,10 +11,18 @@ type Phase = 'idle' | 'confirming' | 'adopting' | 'done'
 export default function Adoptar() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { trees, loading: treesLoading, adoptTree } = useCocoaTrees()
 
+  // Deep-link from CauaBonga finca: /adoptar?guardian=2 lands directly on that guardian's card.
+  // Resolved at mount via lazy initializer to avoid setState-in-effect cascades.
+  const initialGuardian = (() => {
+    const g = Number(searchParams.get('guardian'))
+    return Number.isInteger(g) && g >= 0 && g < GUARDIANS.length ? g : 0
+  })()
+
   const [phase,       setPhase]       = useState<Phase>('idle')
-  const [activeIdx,   setActiveIdx]   = useState(0)
+  const [activeIdx,   setActiveIdx]   = useState(initialGuardian)
   const [cardKey,     setCardKey]     = useState(0)
   const [tokenReward, setTokenReward] = useState<{ beans: number; mazorcas: number } | null>(null)
 
@@ -109,7 +117,7 @@ export default function Adoptar() {
               ¡ÁRBOL ADOPTADO!
             </div>
             <p style={{ fontFamily: FONTS.body, color: `${BRAND.heirloom}66`, fontSize: 13, marginTop: 8 }}>
-              Cuídalo cada 3 horas para verlo crecer.
+              Cuídalo cada 30 min durante 5 horas para cosechar 🍫
             </p>
           </div>
         )}

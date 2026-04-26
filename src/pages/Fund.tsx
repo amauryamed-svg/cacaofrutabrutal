@@ -6,6 +6,7 @@ import { useLang } from '../context/LangContext'
 import { useFundData } from '../hooks/useFundData'
 import FundHero from '../components/fund/FundHero'
 import TechnologyCard from '../components/fund/TechnologyCard'
+import InvestorPath from '../components/fund/InvestorPath'
 import type { CauaRole } from '../types/fund.types'
 
 export default function Fund() {
@@ -13,6 +14,7 @@ export default function Fund() {
   const { lang } = useLang()
   const { technologies, totalRaisedUsd, totalGoalUsd, loading, error } = useFundData()
   const [role, setRole] = useState<CauaRole>('creyente')
+  const [investorOpen, setInvestorOpen] = useState(false)
   const [searchParams] = useSearchParams()
   const status = searchParams.get('status')
 
@@ -94,6 +96,40 @@ export default function Fund() {
           </div>
         )}
 
+        {/* "Soy Investor" card — opens InvestorPath modal (equity $5K vs B2B sponsorship) */}
+        {user && (
+          <button
+            onClick={() => setInvestorOpen(true)}
+            style={{
+              width: '100%', textAlign: 'left',
+              background: `linear-gradient(135deg, ${BRAND.mazorca}1a, ${BRAND.bgCard})`,
+              border: `1px solid ${BRAND.mazorca}66`,
+              borderRadius: 18, padding: '20px 22px',
+              cursor: 'pointer', color: BRAND.heirloom,
+              marginBottom: 24,
+              display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
+            }}
+          >
+            <div style={{ fontSize: 36 }}>💼</div>
+            <div style={{ flex: 1, minWidth: 220 }}>
+              <div style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 16, color: BRAND.heirloom, marginBottom: 4, letterSpacing: '0.04em' }}>
+                {lang === 'es' ? 'SOY INVESTOR' : 'I AM AN INVESTOR'}
+              </div>
+              <div style={{ fontFamily: FONTS.body, fontSize: 12, color: `${BRAND.heirloom}88`, lineHeight: 1.5 }}>
+                {lang === 'es'
+                  ? 'Pre-Seed Equity ($5K) o B2B Sponsorship — paga con USDC (Coinbase) o ETH directo.'
+                  : 'Pre-Seed Equity ($5K) or B2B Sponsorship — pay with USDC (Coinbase) or direct ETH.'}
+              </div>
+            </div>
+            <div style={{
+              fontFamily: FONTS.display, fontWeight: 700, fontSize: 11, letterSpacing: '0.15em',
+              color: BRAND.mazorca, textTransform: 'uppercase',
+            }}>
+              {lang === 'es' ? 'Empezar →' : 'Start →'}
+            </div>
+          </button>
+        )}
+
         {/* Tech cards */}
         {!loading && !error && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -102,6 +138,8 @@ export default function Fund() {
             ))}
           </div>
         )}
+
+        <InvestorPath open={investorOpen} onClose={() => setInvestorOpen(false)} lang={lang} />
 
         {/* Supply chain explainer */}
         {!loading && (

@@ -181,6 +181,55 @@ export const ELEMENT_COLORS: Record<string, string> = {
   Aire:   '#00A3CD',
 }
 
+/**
+ * Public Ethereum deposit addresses for receiving direct ETH from investors via Bitso.
+ *
+ * 🚨 CRITICAL UX RULE: These wallets accept **ETH on Ethereum mainnet ONLY**.
+ * - USDC, USDT, MATIC, or ETH on Polygon/Base/Arbitrum sent here = PERMANENT LOSS.
+ * - Bitso does not recover misdirected deposits.
+ * - Always render the warning banner alongside these addresses.
+ *
+ * For USDC payments use the create-coinbase-charge Edge Function (it generates its own
+ * charge address per transaction; do NOT route Coinbase Commerce to these wallets).
+ *
+ * Private keys live in Bitso, never in this repo. If wallet rotation is needed, update here.
+ */
+export const INVESTOR_WALLETS = {
+  cto: {
+    name: 'Amaury Amed',
+    role: 'CTO',
+    eth:  '0x7Ca1624e534ebE18F46BBA56229981134945464e',
+    network: 'Ethereum mainnet',
+    custody: 'Bitso',
+  },
+  ceo: {
+    name: 'David Montoya',
+    role: 'CEO',
+    eth:  '0x7E9E25cFfc8BC68Fb9E1f4708e761C68a37a846A',
+    network: 'Ethereum mainnet',
+    custody: 'Bitso',
+  },
+} as const
+
+export const INVESTOR_PACKAGES = {
+  equity_5k: {
+    label:   'Pre-Seed Equity',
+    labelEs: 'Equity Pre-Semilla',
+    amount_usd: 5000,
+    desc:    'Premium equity tier — first round investors. Subject to subscription agreement.',
+    descEs:  'Equity premium tier — primeros investors. Sujeto a acuerdo de suscripción.',
+  },
+  b2b_sponsorship: {
+    label:   'B2B Sponsorship',
+    labelEs: 'Patrocinio B2B',
+    amount_usd: 0, // variable — investor sets amount
+    desc:    'Direct funding of technology, lots, batches, and tastings. B2B integration.',
+    descEs:  'Financiación directa de tecnología, lotes, baches y cataciones. Integración B2B.',
+  },
+} as const
+
+export type InvestorPackageKind = keyof typeof INVESTOR_PACKAGES
+
 export const TOKEN_RATES = {
   ritual_draw: { beans: 0.5, mazorcas: 0 },
   streak_7: { beans: 3.5, mazorcas: 1 },
