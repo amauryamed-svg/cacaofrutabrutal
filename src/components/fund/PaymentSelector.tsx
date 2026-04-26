@@ -20,7 +20,9 @@ type Option = {
 }
 
 export default function PaymentSelector({ selected, currency, onSelect, onCurrency, lang }: Props) {
-  const [showCrypto, setShowCrypto] = useState(false)
+  // Default expanded: la opción Wallet ETH (Bitso/Coinbase) debe ser inmediatamente
+  // visible sin que el investor tenga que descubrir el toggle colapsable.
+  const [showCrypto, setShowCrypto] = useState(true)
 
   const T = (es: string, en: string) => lang === 'es' ? es : en
 
@@ -119,18 +121,22 @@ export default function PaymentSelector({ selected, currency, onSelect, onCurren
         </div>
       </div>
 
-      {/* Crypto toggle */}
+      {/* Crypto section header — más prominente que el toggle viejo (color heirloom + amarillo) */}
       <button
         onClick={() => setShowCrypto(v => !v)}
         style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          background: 'transparent', border: 'none', cursor: 'pointer',
-          fontFamily: FONTS.display, fontWeight: 700, fontSize: 9,
-          letterSpacing: '0.15em', color: `${BRAND.heirloom}44`, padding: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6,
+          background: `${BRAND.mazorca}10`, border: `1px solid ${BRAND.mazorca}55`,
+          borderRadius: 8, cursor: 'pointer', padding: '8px 12px',
+          fontFamily: FONTS.display, fontWeight: 700, fontSize: 10,
+          letterSpacing: '0.15em', color: BRAND.mazorca,
         }}
       >
-        <span style={{ transform: showCrypto ? 'rotate(90deg)' : 'none', display: 'inline-block', transition: 'transform 0.2s' }}>▶</span>
-        {T('OPCIONES CRYPTO · COINBASE', 'CRYPTO OPTIONS · COINBASE')}
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span>⟠</span>
+          {T('PAGAR EN CRYPTO · WALLET ETH', 'PAY WITH CRYPTO · ETH WALLET')}
+        </span>
+        <span style={{ transform: showCrypto ? 'rotate(90deg)' : 'none', display: 'inline-block', transition: 'transform 0.2s', fontSize: 8 }}>▶</span>
       </button>
 
       {showCrypto && (
