@@ -181,18 +181,20 @@ export default function InvestorPath({ open, onClose, lang }: Props) {
               </motion.div>
             )}
 
-            {step === 'wallet' && kind && networkOpt && (
-              <motion.div key="wallet" {...stepMotion}>
-                <WalletCheckout
-                  amount_usd={amount}
-                  kind={kind}
-                  lang={lang}
-                  onClose={close}
-                />
-              </motion.div>
-            )}
-
           </AnimatePresence>
+
+          {/* Wallet step rendered OUTSIDE AnimatePresence — evita un bug de framer-motion donde
+              el wrapper motion.div con mode="wait" causaba que WalletCheckout no se montara
+              visiblemente. Key prop fuerza remount fresh cada vez que cambia networkOpt. */}
+          {step === 'wallet' && kind && networkOpt && (
+            <WalletCheckout
+              key={`wc-${networkOpt.id}-${amount}`}
+              amount_usd={amount}
+              kind={kind}
+              lang={lang}
+              onClose={close}
+            />
+          )}
         </div>
       </motion.div>
     </>

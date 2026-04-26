@@ -143,6 +143,7 @@ export default function InvestModal({ technology, mvp, mode, onClose, user, prof
               ← {T('Cambiar método', 'Change method')}
             </button>
             <WalletCheckout
+              key={`wc-${technology.id}-${mvp?.id ?? 'lot'}-${lots}`}
               amount_usd={Math.round(totalUsd / 100)}
               kind="b2b_sponsorship"
               context={{
