@@ -74,3 +74,31 @@ native GitHub integration. They were getting auto-canceled from the Vercel
 dashboard, blocking production updates. A single deploy hook from a single
 GitHub Actions workflow eliminates the ambiguity: one source of truth,
 explicit log of every deploy in the Actions tab.
+
+## Project framework setting
+
+Vercel project `caua-mvp` should have `framework: vite` or `framework: null`,
+**NOT** `create-react-app`. The CRA preset auto-applies a `* → /index.html`
+SPA catch-all that overrides the `vercel.json` rewrite `/ → /investor-landing.html`,
+making the apex serve the SPA shell instead of the pitch (visible as a
+black screen because `BRAND.bgDeep #040C06` shows while React fails to mount).
+
+If you ever see the apex serve the SPA instead of the pitch, check:
+
+```
+curl -sS -H "Authorization: Bearer $VERCEL_TOKEN" \
+  "https://api.vercel.com/v9/projects/prj_Fc5Rbha3hlIRAXrevMIoIaBeXWoz?teamId=team_aVPGjM9P30YNoCQKEvdBp4UQ" \
+  | python3 -c "import json,sys;print(json.load(sys.stdin)['framework'])"
+```
+
+To fix:
+
+```
+curl -X PATCH -H "Authorization: Bearer $VERCEL_TOKEN" -H "Content-Type: application/json" \
+  -d '{"framework":null}' \
+  "https://api.vercel.com/v9/projects/prj_Fc5Rbha3hlIRAXrevMIoIaBeXWoz?teamId=team_aVPGjM9P30YNoCQKEvdBp4UQ"
+```
+
+Then trigger a new deploy with a fresh git sha (Vercel dedupes redeploys of
+the same sha so re-running the hook doesn't pick up the new framework setting
+until a new commit lands).
