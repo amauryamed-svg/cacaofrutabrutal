@@ -7,6 +7,9 @@
 <meta name="description" content="Caúa — plataforma funcional de cacao. Brief para inversores — Series Angel 2025.">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
+<!-- Preload hero 3D assets (populated when user uploads). Missing files fail silently. -->
+<link rel="preload" as="fetch" href="/assets/3d/agroforest.glb" type="model/gltf-binary" crossorigin>
+<link rel="preload" as="fetch" href="/assets/3d/hdri/huila-sunrise-1k.hdr" crossorigin>
 
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -24,11 +27,12 @@ body::before{content:'';position:fixed;inset:0;z-index:999;pointer-events:none;o
   background-size:200px 200px;}
 
 #gl-canvas{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none;}
-#anc-canvas{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none;opacity:0.22;transition:opacity 1.2s ease;mix-blend-mode:screen;filter:blur(0.3px);}
 #scroll-root{position:relative;z-index:1;}
 
 .reveal{opacity:0;transform:translateY(20px);transition:opacity 1s var(--enter),transform 1s var(--enter);}
 .reveal.visible{opacity:1;transform:translateY(0);}
+/* Safety net — image-carrying containers always visible, never depend on JS reveal */
+.prod-card.reveal,.hero-stage.reveal{opacity:1!important;transform:none!important;}
 .d1{transition-delay:.12s}.d2{transition-delay:.24s}.d3{transition-delay:.38s}.d4{transition-delay:.52s}
 
 nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:18px 40px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);background:rgba(3,8,3,0.88);backdrop-filter:blur(12px);}
@@ -42,7 +46,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:18px 40px;display:fl
 .nav-app:hover{border-color:var(--olive);color:var(--olive);}
 
 section{position:relative;min-height:100vh;padding:120px 40px 80px;border-bottom:1px solid var(--line);overflow:hidden;}
-section::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(3,8,3,0.55) 0%,rgba(3,8,3,0.85) 70%,var(--bg) 100%);z-index:-1;pointer-events:none;}
+section::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(3,8,3,0.2) 0%,rgba(3,8,3,0.5) 70%,rgba(3,8,3,0.78) 100%);z-index:-1;pointer-events:none;}
 .sec-idx{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--ink3);margin-bottom:48px;display:flex;align-items:center;gap:16px;}
 .sec-idx::after{content:'';flex:1;height:1px;background:var(--line);}
 
@@ -82,19 +86,42 @@ section::before{content:'';position:absolute;inset:0;background:radial-gradient(
 .flow-arrow{padding:0 8px;color:var(--ink3);font-size:12px;flex-shrink:0;}
 
 .prod-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;}
-.prod-card{border:1px solid var(--line);display:grid;grid-template-rows:auto 1fr;}
+@media (max-width:720px){.prod-grid{grid-template-columns:1fr;}}
+/* Per-card scroll progress var + stage palette */
+.prod-card{border:1px solid var(--line);display:grid;grid-template-rows:auto 1fr;--p:0;--stage-a:#0a1006;--stage-b:#030803;--light:145,166,59;--img-tint:1;}
 .prod-card+.prod-card{border-left:none;}
-.prod-img-wrap{position:relative;height:clamp(520px,60vh,720px);display:flex;align-items:center;justify-content:center;padding:clamp(32px,5vw,72px);background:radial-gradient(ellipse at 50% 45%,rgba(145,166,59,0.08) 0%,rgba(6,12,6,0.92) 60%,rgba(3,8,3,1) 100%);border-bottom:1px solid var(--line);overflow:hidden;}
-.prod-img-wrap::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 30% 20%,rgba(145,166,59,0.12),transparent 50%),radial-gradient(circle at 80% 80%,rgba(141,38,121,0.08),transparent 45%);pointer-events:none;z-index:1;}
-.prod-img-wrap::after{content:'';position:absolute;inset:0;box-shadow:inset 0 0 120px rgba(0,0,0,0.75);pointer-events:none;z-index:2;}
-.prod-img-wrap img{position:relative;z-index:3;height:100%;max-height:min(560px,68vh);width:auto;object-fit:contain;filter:drop-shadow(0 28px 56px rgba(0,0,0,0.85)) drop-shadow(0 4px 12px rgba(0,0,0,0.5));animation:prodKenBurns 18s ease-in-out infinite alternate;transition:transform .7s var(--enter),filter .7s var(--enter);will-change:transform;}
-.prod-img-wrap:hover img{transform:scale(1.08) translateY(-6px);filter:drop-shadow(0 40px 80px rgba(145,166,59,0.28)) drop-shadow(0 12px 32px rgba(0,0,0,0.85)) saturate(1.08);}
+/* Third card — Electrolitos, standalone row below, bigger stage */
+.prod-card:nth-child(3){grid-column:1/-1;border-top:none;border-left:1px solid var(--line);}
+@media (max-width:720px){.prod-card+.prod-card{border-left:1px solid var(--line);border-top:none;}}
+
+/* Shade variants — background, light color, and tint (dark=1 / light=0) per product */
+.prod-card[data-shade="cream"]{--stage-a:#F4EDE3;--stage-b:#E6DCCB;--light:235,220,195;--img-tint:0;}
+.prod-card[data-shade="pink"]{--stage-a:#EDD8CC;--stage-b:#D9BEAF;--light:250,218,198;--img-tint:0;}
+.prod-card[data-shade="forest"]{--stage-a:#10301A;--stage-b:#04130A;--light:145,166,59;--img-tint:1;}
+
+.prod-img-wrap{position:relative;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;padding:clamp(32px,5vw,80px);background:radial-gradient(ellipse at 50% 42%,var(--stage-a) 0%,var(--stage-b) 100%);border-bottom:1px solid var(--line);overflow:hidden;}
+/* Electrolitos card — sachet lies horizontally across the full width (de lado) */
+.prod-card:nth-child(3) .prod-img-wrap{aspect-ratio:auto;min-height:clamp(420px,58vh,680px);padding:clamp(32px,4vw,72px);}
+.prod-card:nth-child(3) .prod-img-wrap img{max-width:min(1500px,92%);max-height:min(440px,52vh);width:auto;height:auto;}
+@media (max-width:720px){.prod-img-wrap{aspect-ratio:4/5;}.prod-card:nth-child(3) .prod-img-wrap{min-height:clamp(560px,78vh,780px);}}
+/* Specular sweep — light position moves with scroll progress --p */
+.prod-img-wrap::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at calc(25% + var(--p) * 50%) calc(115% - var(--p) * 90%),rgba(var(--light),calc(0.18 + var(--p) * 0.28)),transparent 55%);pointer-events:none;z-index:1;mix-blend-mode:screen;}
+/* Inner vignette — tightens as product becomes the focus */
+.prod-img-wrap::after{content:'';position:absolute;inset:0;box-shadow:inset 0 0 calc(90px + var(--p) * 80px) rgba(0,0,0,calc(0.25 + var(--img-tint) * 0.45 + var(--p) * 0.15));pointer-events:none;z-index:2;}
+/* Product image — lift, scale, shadow driven by --p */
+.prod-img-wrap img{position:relative;z-index:3;display:block;width:auto;height:auto;max-width:100%;max-height:min(560px,68vh);object-fit:contain;transform:translate3d(0,calc((1 - var(--p)) * 22px),0) scale(calc(0.94 + var(--p) * 0.07));filter:drop-shadow(0 calc(16px + var(--p) * 40px) calc(36px + var(--p) * 52px) rgba(0,0,0,calc(0.35 + var(--img-tint) * 0.25 + var(--p) * 0.3))) saturate(calc(0.92 + var(--p) * 0.14));transition:filter .5s var(--enter);will-change:transform,filter;}
+.prod-img-wrap:hover img{transform:translate3d(0,-10px,0) scale(1.05);filter:drop-shadow(0 56px 100px rgba(0,0,0,0.85)) saturate(1.1);}
 .prod-img-caption{position:absolute;top:24px;left:24px;z-index:4;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(240,237,232,0.55);display:flex;align-items:center;gap:10px;}
 .prod-img-caption::before{content:'';display:block;width:24px;height:1px;background:var(--gold);}
-@keyframes prodKenBurns{
-  0%   {transform:scale(1) translate3d(0,0,0);}
-  50%  {transform:scale(1.04) translate3d(-4px,-8px,0);}
-  100% {transform:scale(1.02) translate3d(6px,4px,0);}
+/* Light-shade cards need dark caption text for legibility */
+.prod-card[data-shade="cream"] .prod-img-caption,
+.prod-card[data-shade="pink"] .prod-img-caption{color:rgba(20,24,18,0.6);}
+.prod-card[data-shade="cream"] .prod-img-caption::before,
+.prod-card[data-shade="pink"] .prod-img-caption::before{background:rgba(20,24,18,0.5);}
+/* Reduced motion — disable scroll-linked transforms, keep baseline */
+@media (prefers-reduced-motion:reduce){
+  .prod-img-wrap img{transform:none;filter:drop-shadow(0 24px 48px rgba(0,0,0,0.5));}
+  .prod-img-wrap::before,.prod-img-wrap::after{transition:none;}
 }
 
 .hero-stage{background:#020601;}
@@ -106,6 +133,22 @@ section::before{content:'';position:absolute;inset:0;background:radial-gradient(
   50%  {transform:scale(1.10) translate3d(-14px,-8px,0);}
   100% {transform:scale(1.06) translate3d(8px,-4px,0);}
 }
+
+/* Kit — full-viewport cinematic photograph with scroll-linked reveal (--sp = 0→1 as section enters/centers) */
+.kit-section{min-height:100vh;height:100vh;padding:0;background:#020601;border-bottom:1px solid var(--line);position:relative;overflow:hidden;display:block;--sp:0;}
+.kit-wrap{position:relative;width:100%;height:100%;margin:0;max-width:none;display:block;}
+.kit-photo-frame{position:absolute;inset:0;width:100%;height:100%;overflow:hidden;background:#020601;opacity:calc(0.2 + var(--sp) * 0.8);transform:scale(calc(1.16 - var(--sp) * 0.16));filter:blur(calc((1 - var(--sp)) * 18px));}
+.kit-photo-frame img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;filter:brightness(calc(0.32 + var(--sp) * 0.3)) saturate(calc(0.6 + var(--sp) * 0.4)) contrast(calc(1 + var(--sp) * 0.08));transform:translate3d(0,calc((1 - var(--sp)) * 60px - var(--sp) * 20px),0) scale(calc(1.08 - var(--sp) * 0.08));}
+.kit-photo-veil{position:absolute;inset:0;z-index:2;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,rgba(0,0,0,0.2) 0%,rgba(0,0,0,0.75) 90%),linear-gradient(to bottom,rgba(3,8,3,0.55) 0%,rgba(3,8,3,0.15) 40%,rgba(3,8,3,0.75) 100%);opacity:calc(0.45 + var(--sp) * 0.55);}
+.kit-photo-frame::after{content:'';position:absolute;inset:0;z-index:3;pointer-events:none;box-shadow:inset 0 0 220px rgba(0,0,0,0.85);}
+.kit-section .sec-idx{position:absolute;top:clamp(80px,9vh,120px);left:clamp(24px,4vw,48px);z-index:5;margin-bottom:0;max-width:clamp(200px,30vw,320px);opacity:calc(0.3 + var(--sp) * 0.7);transform:translateY(calc((1 - var(--sp)) * 24px));}
+.kit-overlay-phrase{position:absolute;inset:0;z-index:4;margin:0;display:flex;align-items:center;justify-content:center;padding:0 clamp(20px,6vw,80px);font-family:'Barlow Condensed',sans-serif;font-size:clamp(64px,12vw,200px);font-weight:900;text-transform:uppercase;line-height:.84;letter-spacing:-4px;text-align:center;color:var(--ink);text-shadow:0 10px 48px rgba(0,0,0,0.95),0 4px 16px rgba(0,0,0,0.85),0 1px 2px rgba(0,0,0,0.6);opacity:var(--sp);transform:translateY(calc((1 - var(--sp)) * 60px)) scale(calc(0.94 + var(--sp) * 0.06));letter-spacing:calc(-4px + (1 - var(--sp)) * 2px);}
+.kit-caption{position:absolute;bottom:clamp(36px,5vh,64px);left:50%;z-index:5;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:rgba(240,237,232,0.7);display:flex;align-items:center;gap:14px;white-space:nowrap;opacity:var(--sp);transform:translateX(-50%) translateY(calc((1 - var(--sp)) * 24px));}
+.kit-caption::before,.kit-caption::after{content:'';display:block;width:32px;height:1px;background:rgba(240,237,232,0.4);}
+@media (prefers-reduced-motion:reduce){
+  .kit-section{--sp:1;}
+}
+
 .prod-info{padding:32px 28px;}
 .prod-tag{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--gold);margin-bottom:14px;display:flex;align-items:center;gap:10px;}
 .prod-tag::before{content:'';display:block;width:16px;height:1px;background:var(--gold);}
@@ -294,12 +337,49 @@ footer a:hover{color:var(--ink2);}
   .nav-mono{display:none;}
   footer{flex-direction:column;gap:12px;text-align:center;}
 }
+
+/* ========== 8.4 Unit Economics — Fortified-style animated counters ========== */
+#unit-economics{padding:140px 40px 120px;position:relative;}
+.ue-head{max-width:1400px;margin:0 auto 80px;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:end;}
+.ue-head .sec-idx{grid-column:1/-1;}
+.ue-lead{font-size:15px;line-height:1.8;color:rgba(240,237,232,0.58);max-width:460px;border-left:1px solid rgba(240,237,232,0.2);padding-left:24px;}
+.ue-grid{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid rgba(240,237,232,0.22);border-left:1px solid rgba(240,237,232,0.22);position:relative;z-index:1;}
+.ue-card{padding:clamp(32px,4vw,56px) clamp(24px,3vw,40px);border-right:1px solid rgba(240,237,232,0.22);border-bottom:1px solid rgba(240,237,232,0.22);display:flex;flex-direction:column;gap:24px;min-height:360px;position:relative;background:rgba(3,8,3,0.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:background .55s var(--enter);}
+.ue-card:hover{background:rgba(145,166,59,0.07);}
+.ue-card::before{content:'';position:absolute;top:0;left:0;width:0;height:1px;background:#91A63B;transition:width .8s var(--enter);}
+.ue-card:hover::before{width:100%;}
+.ue-kicker{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#91A63B;display:flex;align-items:center;gap:12px;}
+.ue-kicker::before{content:'';display:block;width:24px;height:1px;background:#91A63B;}
+.ue-num-row{display:flex;align-items:baseline;gap:10px;font-family:'Barlow Condensed',sans-serif;color:#F0EDE8;margin-top:auto;flex-wrap:wrap;}
+.ue-prefix{font-weight:700;font-size:clamp(32px,3vw,44px);color:#91A63B;line-height:1;}
+.ue-num{font-weight:900;font-size:clamp(64px,8.5vw,128px);line-height:.88;letter-spacing:-3px;font-variant-numeric:tabular-nums;color:#F0EDE8;display:inline-block;transform-origin:left bottom;}
+.ue-num.ue-num-done{animation:ueNumPulse 700ms cubic-bezier(0.16,1,0.3,1);}
+@keyframes ueNumPulse{
+  0%   {transform:scale(1); text-shadow:0 0 0 rgba(145,166,59,0);}
+  35%  {transform:scale(1.04); text-shadow:0 0 24px rgba(145,166,59,0.45);}
+  100% {transform:scale(1); text-shadow:0 0 0 rgba(145,166,59,0);}
+}
+.ue-unit{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(240,237,232,0.55);margin-left:4px;align-self:flex-end;padding-bottom:12px;}
+.ue-body{font-size:13px;line-height:1.7;color:rgba(240,237,232,0.58);max-width:340px;}
+.ue-footnote{max-width:1400px;margin:56px auto 0;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(240,237,232,0.35);display:flex;align-items:center;gap:16px;}
+.ue-footnote::before{content:'';flex:0 0 32px;height:1px;background:rgba(240,237,232,0.2);}
+@media (max-width:960px){
+  .ue-grid{grid-template-columns:repeat(2,1fr);}
+  .ue-head{grid-template-columns:1fr;gap:24px;}
+}
+@media (max-width:600px){
+  .ue-grid{grid-template-columns:1fr;}
+  #unit-economics{padding:96px 24px 80px;}
+  .ue-card{min-height:260px;}
+}
+@media (prefers-reduced-motion:reduce){
+  .ue-card,.ue-card::before{transition:none;}
+}
 </style>
 </head>
 <body>
 
 <canvas id="gl-canvas"></canvas>
-<canvas id="anc-canvas"></canvas>
 
 <nav>
   <a href="#" class="nav-logo" style="display:flex;align-items:center;text-decoration:none;" aria-label="caúa">
@@ -328,7 +408,7 @@ footer a:hover{color:var(--ink2);}
 <!-- 1. HERO -->
 <section id="hero">
   <div>
-    <div class="hero-tag reveal" data-i18n="hero_tag">Caúa · Investor Brief · Series Angel · 2025</div>
+    <div class="hero-tag reveal" data-i18n="hero_tag">Caúa · Investor Brief · Series Angel · 2026</div>
     <h1 class="hero-h1 reveal d1" data-i18n="hero_h1">El<br>problema<br>no es el<br><span class="ac">cacao.</span></h1>
   </div>
   <div class="hero-right reveal d2">
@@ -462,33 +542,48 @@ footer a:hover{color:var(--ink2);}
   </div>
 
   <div class="prod-grid">
-    <div class="prod-card reveal d2">
+    <div class="prod-card reveal d2" data-shade="cream">
       <div class="prod-img-wrap">
-        <div class="prod-img-caption">SKU · 01 / Ritual</div>
-        <img src="/uploads/ritual-can.jpg" alt="Ritual Cacao Fruit" loading="lazy">
+        <div class="prod-img-caption">SKU · 01 / Hidratación</div>
+        <img src="/uploads/ritual-can.jpg" alt="Hidratación Natural — lata 269ml" loading="lazy">
       </div>
       <div class="prod-info">
-        <div class="prod-tag" data-i18n="p1_tag">01 · RTD · Activar + Equilibrar</div>
-        <div class="prod-name" style="color:var(--olive)" data-i18n="p1_name">Ritual<br>Cacao Fruit</div>
-        <div class="prod-desc" data-i18n="p1_desc">Bebida fermentada de cacao. Alto en polifenoles. Soporte microbiota + biodisponibilidad sostenida.</div>
+        <div class="prod-tag" data-i18n="p1_tag">01 · RTD · Sunrise + Sunset</div>
+        <div class="prod-name" style="color:var(--olive)" data-i18n="p1_name">Hidratación<br>Natural</div>
+        <div class="prod-desc" data-i18n="p1_desc">Dos momentos, dos latas. <strong style="color:var(--gold)">Sunrise</strong> — polifenoles + cafeína natural para activar el día. <strong style="color:var(--purple)">Sunset</strong> — mucílago + teobromina para el descanso. Hidratación funcional, mañana y noche.</div>
         <div class="prod-specs">
-          <div class="spec-box"><div class="spec-label">Format</div><div class="spec-val">Can · 269ml</div></div>
-          <div class="spec-box"><div class="spec-label" data-i18n="p1_spec2_lbl">Modelo</div><div class="spec-val" data-i18n="p1_spec2_val">Suscripción</div></div>
+          <div class="spec-box"><div class="spec-label">Format</div><div class="spec-val">2× Can · 269ml</div></div>
+          <div class="spec-box"><div class="spec-label" data-i18n="p1_spec2_lbl">Ritmo</div><div class="spec-val" data-i18n="p1_spec2_val">AM + PM</div></div>
         </div>
       </div>
     </div>
-    <div class="prod-card reveal d3">
+    <div class="prod-card reveal d3" data-shade="pink">
       <div class="prod-img-wrap">
-        <div class="prod-img-caption">SKU · 02 / Fruta Brutal</div>
-        <img src="/uploads/sachet-fruta-brutal.jpg" alt="Cacao Fruta Brutal 100g" loading="lazy">
+        <div class="prod-img-caption">SKU · 02 / FreezeDry</div>
+        <img src="/uploads/sachet-fruta-brutal.jpg" alt="FreezeDry Beans — sachet 100g" loading="lazy">
       </div>
       <div class="prod-info">
         <div class="prod-tag" data-i18n="p2_tag">02 · FREEZE DRY · Regenerar</div>
-        <div class="prod-name" style="color:var(--gold)" data-i18n="p2_name">Cacao<br>Fruta Brutal</div>
-        <div class="prod-desc" data-i18n="p2_desc">Baba entera de cacao liofilizado. Cero pérdida de proceso. 100% retención de bioactivos. Electrolitos diarios. Origen: Huila, Colombia.</div>
+        <div class="prod-name" style="color:var(--gold)" data-i18n="p2_name">Baba<br>Liofilizada</div>
+        <div class="prod-desc" data-i18n="p2_desc">Baba entera de cacao liofilizado. Cero pérdida de proceso. 100% retención de bioactivos. Origen: Huila, Colombia.</div>
         <div class="prod-specs">
           <div class="spec-box"><div class="spec-label">Format</div><div class="spec-val">Sachet · 100g</div></div>
           <div class="spec-box"><div class="spec-label" data-i18n="p2_spec2_lbl">Retención</div><div class="spec-val" style="color:var(--gold)">100%</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="prod-card reveal d4" data-shade="forest">
+      <div class="prod-img-wrap">
+        <div class="prod-img-caption">SKU · 03 / Electrolitos</div>
+        <img src="/uploads/sachet-electrolitos.jpg" alt="Caúa Electrolitos — mucílago de cacao liofilizado 50g" loading="lazy">
+      </div>
+      <div class="prod-info">
+        <div class="prod-tag" data-i18n="p3_tag">03 · DAILY · Reponer</div>
+        <div class="prod-name" style="color:var(--purple)" data-i18n="p3_name">Electrolitos<br>Diarios</div>
+        <div class="prod-desc" data-i18n="p3_desc">Mucílago de cacao liofilizado. Perfil de electrolitos completo — potasio, magnesio, sodio natural. Reposición funcional sin azúcar añadido.</div>
+        <div class="prod-specs">
+          <div class="spec-box"><div class="spec-label">Format</div><div class="spec-val">Sachet · 50g</div></div>
+          <div class="spec-box"><div class="spec-label" data-i18n="p3_spec2_lbl">Uso</div><div class="spec-val" data-i18n="p3_spec2_val">Diario</div></div>
         </div>
       </div>
     </div>
@@ -624,20 +719,90 @@ footer a:hover{color:var(--ink2);}
   </div>
 </section>
 
+<!-- 8.4 UNIT ECONOMICS — Fortified-style animated counters. Placeholder values; update via data-target. -->
+<section id="unit-economics" aria-labelledby="ue-h">
+  <div class="ue-head">
+    <div class="sec-idx reveal" data-i18n="ue_idx">08.4 — Unit Economics</div>
+    <h2 id="ue-h" class="big-h reveal d1" style="max-width:720px;margin:0;" data-i18n="ue_h">Un sistema<br><span style="color:var(--gold);">que se paga</span>.</h2>
+    <p class="ue-lead reveal d2" data-i18n="ue_lead">Cada árbol adoptado es una unidad económica. Cada SKU, un multiplicador. Los números detrás del cacao funcional Caúa — modelo conservador, Q1 2026.</p>
+  </div>
+
+  <div class="ue-grid">
+    <article class="ue-card reveal">
+      <div class="ue-kicker" data-i18n="ue_01_lbl">01 · Ticket promedio D2C</div>
+      <div class="ue-num-row">
+        <span class="ue-prefix">$</span>
+        <span class="ue-num" data-target="87">0</span>
+        <span class="ue-unit" data-i18n="ue_01_unit">USD</span>
+      </div>
+      <p class="ue-body" data-i18n="ue_01_body">Combo Baba · Can · Bar en venta directa. Canasta mixta entre rituales diarios y edición limitada.</p>
+    </article>
+
+    <article class="ue-card reveal d1">
+      <div class="ue-kicker" data-i18n="ue_02_lbl">02 · Gross margin ponderado</div>
+      <div class="ue-num-row">
+        <span class="ue-num" data-target="64">0</span>
+        <span class="ue-unit" data-i18n="ue_02_unit">%</span>
+      </div>
+      <p class="ue-body" data-i18n="ue_02_body">Promedio ponderado línea Caúa. Bar 72% · Baba 58% · Can 61%.</p>
+    </article>
+
+    <article class="ue-card reveal d2">
+      <div class="ue-kicker" data-i18n="ue_03_lbl">03 · Revenue por árbol · año</div>
+      <div class="ue-num-row">
+        <span class="ue-prefix">$</span>
+        <span class="ue-num" data-target="240">0</span>
+        <span class="ue-unit" data-i18n="ue_03_unit">USD</span>
+      </div>
+      <p class="ue-body" data-i18n="ue_03_body">Cuota adopción + producto derivado + recurrencia. El árbol se paga en año 1.</p>
+    </article>
+
+    <article class="ue-card reveal">
+      <div class="ue-kicker" data-i18n="ue_04_lbl">04 · Recurrencia 30 días</div>
+      <div class="ue-num-row">
+        <span class="ue-num" data-target="38">0</span>
+        <span class="ue-unit" data-i18n="ue_04_unit">%</span>
+      </div>
+      <p class="ue-body" data-i18n="ue_04_body">Clientes que repiten dentro de 30 días tras primera compra. Producto de hábito, no de impulso.</p>
+    </article>
+
+    <article class="ue-card reveal d1">
+      <div class="ue-kicker" data-i18n="ue_05_lbl">05 · Árboles activos en red</div>
+      <div class="ue-num-row">
+        <span class="ue-num" data-target="1850">0</span>
+        <span class="ue-unit" data-i18n="ue_05_unit">árboles</span>
+      </div>
+      <p class="ue-body" data-i18n="ue_05_body">Adopciones confirmadas + árboles en producción monitoreada. Proyección 2026: 8 400.</p>
+    </article>
+
+    <article class="ue-card reveal d2">
+      <div class="ue-kicker" data-i18n="ue_06_lbl">06 · ARR proyectado 2026</div>
+      <div class="ue-num-row">
+        <span class="ue-prefix">$</span>
+        <span class="ue-num" data-target="2.4" data-decimals="1">0</span>
+        <span class="ue-unit" data-i18n="ue_06_unit">M USD</span>
+      </div>
+      <p class="ue-body" data-i18n="ue_06_body">1 200 suscripciones + 400 adopciones + wholesale piloto. Base conservadora sin escenario optimista.</p>
+    </article>
+  </div>
+
+  <div class="ue-footnote" data-i18n="ue_foot">Valores indicativos · modelo Caúa · Q1 2026 · revisión auditada pre-term sheet</div>
+</section>
+
 <!-- 8.5 PRODUCT HERO -->
 <section id="product-hero" style="padding:0;min-height:100vh;display:grid;grid-template-rows:auto 1fr;background:#030803;">
   <div style="padding:120px 40px 40px;max-width:1400px;margin:0 auto;width:100%;">
     <div class="sec-idx reveal" data-i18n="s85_idx">08.5 — El Sistema en Producto</div>
     <div style="display:grid;grid-template-columns:1fr auto;align-items:end;gap:40px;margin-top:24px;">
-      <h2 class="big-h reveal d1" style="max-width:720px;margin:0;" data-i18n="ph_h">Dos productos.<br><span style="color:var(--gold)">Un sistema vivo.</span></h2>
+      <h2 class="big-h reveal d1" style="max-width:720px;margin:0;" data-i18n="ph_h">Tres productos.<br><span style="color:var(--gold)">Un sistema vivo.</span></h2>
       <div class="reveal d2" style="text-align:right;">
         <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--ink2);margin-bottom:6px;" data-i18n="ph_caption_lbl">Línea Lanzamiento</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-transform:uppercase;letter-spacing:-0.5px;color:var(--ink);" data-i18n="ph_caption_val">Ritual RTD · Cacao Fruta Brutal</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-transform:uppercase;letter-spacing:-0.5px;color:var(--ink);" data-i18n="ph_caption_val">Hidratación Natural · Baba Liofilizada</div>
       </div>
     </div>
   </div>
   <div class="reveal d2 hero-stage" style="position:relative;overflow:hidden;margin:0 40px 40px;border:1px solid var(--line);min-height:clamp(520px,72vh,820px);">
-    <img class="hero-stage-img" src="/assets/caua-products-hero.jpg" alt="Caúa products — Ritual can, Fruta Brutal can, chocolate bar" loading="lazy">
+    <img class="hero-stage-img" src="/uploads/ritual-can.jpg" alt="Hidratación Natural — Sunrise + Sunset · dos momentos" loading="lazy">
     <!-- Cinematic gradients: bottom depth + left side for caption + right edge fade -->
     <div class="hero-stage-veil"></div>
     <div class="hero-stage-vignette"></div>
@@ -650,15 +815,15 @@ footer a:hover{color:var(--ink2);}
     <div style="position:absolute;bottom:36px;left:36px;right:36px;display:grid;grid-template-columns:repeat(3,1fr);gap:28px;z-index:3;">
       <div>
         <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;">01 · Bar</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:clamp(18px,2vw,24px);font-weight:700;text-transform:uppercase;color:var(--ink);line-height:1.1;" data-i18n="ph_p1">Chocolate origen Huila</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:clamp(18px,2vw,24px);font-weight:700;text-transform:uppercase;color:var(--ink);line-height:1.1;" data-i18n="ph_p1">Cacao Ceremony Origen Huila</div>
       </div>
       <div>
         <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;">02 · RTD</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:clamp(18px,2vw,24px);font-weight:700;text-transform:uppercase;color:var(--ink);line-height:1.1;" data-i18n="ph_p2">Cacao Fruta Brutal · lata</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:clamp(18px,2vw,24px);font-weight:700;text-transform:uppercase;color:var(--ink);line-height:1.1;" data-i18n="ph_p2">Baba Liofilizada · sachet</div>
       </div>
       <div>
         <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;">03 · RTD</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:clamp(18px,2vw,24px);font-weight:700;text-transform:uppercase;color:var(--ink);line-height:1.1;" data-i18n="ph_p3">Ritual Cacao · lata</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:clamp(18px,2vw,24px);font-weight:700;text-transform:uppercase;color:var(--ink);line-height:1.1;" data-i18n="ph_p3">Hidratación Natural · lata</div>
       </div>
     </div>
   </div>
@@ -702,13 +867,39 @@ footer a:hover{color:var(--ink2);}
   </div>
 </section>
 
+<!-- 10.5 KIT — photograph with "En tus manos." typography overlaid on top -->
+<section id="kit" class="kit-section">
+  <div class="kit-wrap">
+    <div class="sec-idx reveal" style="margin-bottom:0;" data-i18n="s105_idx">10.5 — El Kit</div>
+    <div class="kit-photo-frame reveal">
+      <img src="/uploads/founder-secaderos.jpg" alt="David en medio de los secaderos de cacao en Huila" loading="lazy">
+      <div class="kit-photo-veil"></div>
+      <h2 class="kit-overlay-phrase" data-i18n="kit_h">En tus manos.</h2>
+    </div>
+    <div class="kit-caption reveal d2" data-i18n="kit_cap">Un sistema, tres formas.</div>
+  </div>
+</section>
+
+<!-- 10.6 WALK WITH NATURE — second photograph overlay, same dynamic as kit -->
+<section id="walk" class="kit-section">
+  <div class="kit-wrap">
+    <div class="sec-idx reveal" style="margin-bottom:0;" data-i18n="s106_idx">10.6 — Origen</div>
+    <div class="kit-photo-frame reveal">
+      <img src="/uploads/amaury-rafael.jpg" alt="Amaury y Rafael en la finca — With Nature We Walk" loading="lazy">
+      <div class="kit-photo-veil"></div>
+      <h2 class="kit-overlay-phrase" data-i18n="walk_h">Con la<br>naturaleza<br>caminamos.</h2>
+    </div>
+    <div class="kit-caption reveal d2" data-i18n="walk_cap">Arbeláez · Finca La Querencia · 2025</div>
+  </div>
+</section>
+
 <!-- 11. CTA -->
 <section id="cta">
   <div class="cta-left">
     <div class="cta-pre reveal"><div class="cta-dot"></div> <span data-i18n="cta_pre">Early Access · Ronda Limitada</span></div>
     <h2 class="cta-h reveal d1" data-i18n="cta_h">Sé parte<br>del<br>sistema.</h2>
     <p class="cta-body reveal d2" data-i18n="cta_body">
-      Estamos construyendo la primera plataforma funcional de cacao — integración vertical desde Huila hasta el cuerpo. Únete a los fundadores que caminan con la naturaleza, no contra ella.<br><br>
+      Estamos construyendo la primera plataforma funcional de cacao — integración vertical desde el árbol hasta el cuerpo. Únete a los fundadores que caminan con la naturaleza, no contra ella.<br><br>
       Asegura tu posición vía Coinbase Wallet. USDC y ETH aceptados.
     </p>
   </div>
@@ -780,96 +971,19 @@ footer a:hover{color:var(--ink2);}
   </div>
 </div>
 
-<!-- Three.js pod for hero -->
+<!-- Three.js core + post-processing addons for divine reveal bloom (anchored to section 09) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 <script src="/investor-3d.js"></script>
 
-<!-- Ancestral animation -->
-<script>
-(function(){
-  const canvas = document.getElementById('anc-canvas');
-  const ctx = canvas.getContext('2d');
-  let W, H;
-  function resize(){ W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
-  resize(); window.addEventListener('resize', resize);
+<!-- Motion.dev scroll choreography — single scroll source for 3D + pin rail -->
+<script type="module" src="/investor-scroll.js"></script>
 
-  // Section-aware intensity — mandalas visible everywhere including hero,
-  // dimmer on text-heavy sections to keep copy legible
-  const dim = new Set(['problem','truth','differentiation','bizmodel','investment','cta']);
-  let tgt=0.22, live=0.22;
-  ['hero','problem','opportunity','truth','solution','differentiation','bizmodel','impact','investment','vision','cta'].forEach(id=>{
-    const el=document.getElementById(id); if(!el) return;
-    new IntersectionObserver(e=>{
-      if(e[0].isIntersecting) tgt = id==='hero'?0.28 : dim.has(id)?0.12:0.26;
-    },{threshold:0.4}).observe(el);
-  });
-  (function f(){ requestAnimationFrame(f); live+=(tgt-live)*0.025; canvas.style.opacity=live; })();
-
-  const mandalas=[
-    {x:.12,y:.22,r:130,ph:0},{x:.85,y:.18,r:90,ph:1.4},
-    {x:.5,y:.5,r:210,ph:.8},{x:.9,y:.78,r:110,ph:2.2},
-    {x:.06,y:.82,r:95,ph:3.5},{x:.65,y:.88,r:75,ph:1.0},
-  ];
-  const seeds=Array.from({length:24},()=>({
-    x:Math.random()*innerWidth,y:Math.random()*innerHeight,
-    vx:(Math.random()-.5)*.1,vy:(Math.random()-.5)*.1,
-    r:1+Math.random()*2,ph:Math.random()*Math.PI*2,
-    type:Math.random()<.55?'seed':'spiral'
-  }));
-
-  let t=0;
-  function drawMandala(mx,my,r,ph,a){
-    const x=mx*W,y=my*H;
-    [[1,6],[.7,8],[.48,12],[.3,6]].forEach(([s,n],ri)=>{
-      const rr=r*s;
-      ctx.beginPath();ctx.arc(x,y,rr,0,Math.PI*2);
-      ctx.strokeStyle=`rgba(145,166,59,${a*.1})`;ctx.lineWidth=.5;ctx.stroke();
-      for(let i=0;i<n;i++){
-        const ang=(i/n)*Math.PI*2+ph+t*.04*(ri%2?1:-1);
-        ctx.beginPath();
-        ctx.moveTo(x+Math.cos(ang)*rr*.82,y+Math.sin(ang)*rr*.82);
-        ctx.lineTo(x+Math.cos(ang)*rr,y+Math.sin(ang)*rr);
-        ctx.strokeStyle=`rgba(145,166,59,${a*.15})`;ctx.lineWidth=.6;ctx.stroke();
-        ctx.beginPath();ctx.arc(x+Math.cos(ang)*rr,y+Math.sin(ang)*rr,1.4,0,Math.PI*2);
-        ctx.fillStyle=`rgba(145,166,59,${a*.3})`;ctx.fill();
-      }
-    });
-    ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);
-    ctx.fillStyle=`rgba(141,38,121,${a*.55})`;ctx.fill();
-  }
-  function drawSeed(x,y,r,a){
-    ctx.beginPath();ctx.ellipse(x,y,r*.55,r,0,0,Math.PI*2);
-    ctx.fillStyle=`rgba(145,166,59,${a})`;ctx.fill();
-    ctx.beginPath();ctx.arc(x,y,r*.2,0,Math.PI*2);
-    ctx.fillStyle=`rgba(141,38,121,${a*1.3})`;ctx.fill();
-  }
-  function drawSpiral(x,y,maxR,rot,a){
-    ctx.beginPath();
-    for(let i=0;i<80;i++){const ang=(i/80)*Math.PI*4+rot,rr=(i/80)*maxR;i===0?ctx.moveTo(x+Math.cos(ang)*rr,y+Math.sin(ang)*rr):ctx.lineTo(x+Math.cos(ang)*rr,y+Math.sin(ang)*rr);}
-    ctx.strokeStyle=`rgba(145,166,59,${a})`;ctx.lineWidth=.7;ctx.stroke();
-  }
-  function drawTendril(s,a){
-    const cp1x=s.x+Math.cos(s.ph)*55,cp1y=s.y+Math.sin(s.ph)*35;
-    const cp2x=s.x+Math.cos(s.ph+1)*95,cp2y=s.y+Math.sin(s.ph+1)*70;
-    const ex=s.x+Math.cos(s.ph+2)*130,ey=s.y+Math.sin(s.ph+2)*90;
-    ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,ex,ey);
-    ctx.strokeStyle=`rgba(145,166,59,${a*.15})`;ctx.lineWidth=.6;ctx.stroke();
-  }
-  function draw(){
-    requestAnimationFrame(draw);ctx.clearRect(0,0,W,H);t+=.005;
-    mandalas.forEach(m=>drawMandala(m.x,m.y,m.r,m.ph+t*.018,1));
-    seeds.forEach(s=>{
-      s.x+=s.vx+Math.sin(t*.4+s.ph)*.07;s.y+=s.vy+Math.cos(t*.35+s.ph)*.07;
-      if(s.x<-60)s.x=W+60;if(s.x>W+60)s.x=-60;
-      if(s.y<-60)s.y=H+60;if(s.y>H+60)s.y=-60;
-      const p=.5+.5*Math.sin(t+s.ph);
-      s.type==='seed'?( drawSeed(s.x,s.y,s.r*(1+p*.5),.1+p*.07), drawTendril(s,1) ):
-        drawSpiral(s.x,s.y,18+p*11,t*.28+s.ph,.1+p*.05);
-    });
-  }
-  draw();
-})();
-</script>
 
 <script>
 // Reveal
@@ -878,6 +992,61 @@ document.querySelectorAll('.reveal').forEach(el=>{
     if(entries[0].isIntersecting) entries[0].target.classList.add('visible');
   },{threshold:0.1}).observe(el);
 });
+
+// Scroll-linked photo section reveal — writes --sp (0→1) on .kit-section as it approaches viewport center
+(function(){
+  const sections = document.querySelectorAll('.kit-section');
+  if(!sections.length) return;
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches){
+    sections.forEach(s=>s.style.setProperty('--sp','1'));
+    return;
+  }
+  let ticking = false;
+  function update(){
+    const vh = innerHeight;
+    sections.forEach(sec=>{
+      const r = sec.getBoundingClientRect();
+      const secCenter = r.top + r.height/2;
+      const normDist = Math.abs(secCenter - vh/2) / (vh * 0.6);
+      const raw = Math.max(0, Math.min(1, 1 - normDist));
+      // Ease-out-cubic — pushes most of the reveal into the final third of the approach
+      const eased = 1 - Math.pow(1 - raw, 3);
+      sec.style.setProperty('--sp', eased.toFixed(3));
+    });
+    ticking = false;
+  }
+  addEventListener('scroll', ()=>{ if(!ticking){ requestAnimationFrame(update); ticking=true; } }, {passive:true});
+  addEventListener('resize', update, {passive:true});
+  update();
+})();
+
+// Scroll-linked product card lighting — writes --p (0→1) as card approaches viewport center
+(function(){
+  const cards = document.querySelectorAll('.prod-card');
+  if(!cards.length) return;
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches){
+    cards.forEach(c=>c.style.setProperty('--p','1'));
+    return;
+  }
+  let ticking = false;
+  function update(){
+    const vh = innerHeight;
+    cards.forEach(card=>{
+      const r = card.getBoundingClientRect();
+      if(r.bottom < -200 || r.top > vh + 200){ card.style.setProperty('--p','0'); return; }
+      const cardCenter = r.top + r.height/2;
+      const dist = Math.abs(cardCenter - vh/2);
+      const maxDist = vh/2 + r.height/2;
+      const raw = Math.max(0, Math.min(1, 1 - dist/maxDist));
+      const eased = 1 - Math.pow(1 - raw, 2);
+      card.style.setProperty('--p', eased.toFixed(3));
+    });
+    ticking = false;
+  }
+  addEventListener('scroll', ()=>{ if(!ticking){ requestAnimationFrame(update); ticking = true; } }, {passive:true});
+  addEventListener('resize', update, {passive:true});
+  update();
+})();
 
 const ROUND_TARGET = 75;      // $75K target
 const DEFAULT_PROGRESS = 71;  // 71% of $75K ≈ $53K
@@ -897,7 +1066,7 @@ function selToken(el){document.querySelectorAll('.crypto-t').forEach(t=>t.classL
 const T = {
   es: {
     nav_cta:'Invertir Ahora',
-    hero_tag:'Caúa · Brief para Inversores · Series Angel · 2025',
+    hero_tag:'Caúa · Brief para Inversores · Series Angel · 2026',
     hero_h1:'El<br>problema<br>no es el<br><span class="ac">cacao.</span>',
     hero_body:'Es todo lo que hicimos con él.<br><br>Una plataforma de biotecnología que reconstruye la relación entre la biología humana y el sistema funcional vivo más complejo de la tierra.',
     s2_idx:'02 — Estado de Necesidad',
@@ -928,14 +1097,18 @@ const T = {
     s5_idx:'05 — Caúa System',
     s5_h:'No vendemos chocolate.<br><span style="color:var(--gold)">Diseñamos interacción<br>biológica.</span>',
     flow_1:'Territorio', flow_2:'Genómica', flow_3:'Biotech', flow_4:'Función', flow_5:'Cuerpo',
-    p1_tag:'01 · RTD · Activar + Equilibrar',
-    p1_name:'Ritual<br>Cacao Fruit',
-    p1_desc:'Bebida fermentada de cacao. Alto en polifenoles. Soporte microbiota + biodisponibilidad sostenida.',
-    p1_spec2_lbl:'Modelo', p1_spec2_val:'Suscripción',
+    p1_tag:'01 · RTD · Sunrise + Sunset',
+    p1_name:'Hidratación<br>Natural',
+    p1_desc:'Dos momentos, dos latas. <strong style="color:var(--gold)">Sunrise</strong> — polifenoles + cafeína natural para activar el día. <strong style="color:var(--purple)">Sunset</strong> — mucílago + teobromina para el descanso. Hidratación funcional, mañana y noche.',
+    p1_spec2_lbl:'Ritmo', p1_spec2_val:'AM + PM',
     p2_tag:'02 · FREEZE DRY · Regenerar',
-    p2_name:'Cacao<br>Fruta Brutal',
+    p2_name:'Baba<br>Liofilizada',
     p2_desc:'Baba entera de cacao liofilizado. Cero pérdida de proceso. 100% retención de bioactivos. Electrolitos diarios. Origen: Huila, Colombia.',
     p2_spec2_lbl:'Retención',
+    p3_tag:'03 · DAILY · Reponer',
+    p3_name:'Electrolitos<br>Diarios',
+    p3_desc:'Mucílago de cacao liofilizado. Perfil de electrolitos completo — potasio, magnesio, sodio natural. Reposición funcional sin azúcar añadido.',
+    p3_spec2_lbl:'Uso', p3_spec2_val:'Diario',
     s6_idx:'06 — Purple Cow',
     s6_h:'Caúa es<br>imposible de<br><span style="color:var(--gold)">comparar<br>directamente.</span>',
     s6_body:'No competimos con chocolate. Competimos con suplementos, bebidas funcionales y wellness. Somos una categoría nueva.',
@@ -960,11 +1133,27 @@ const T = {
     s8_m1_lbl:'Origin Partnership', s8_m1_val:'5 Heritage Farms · 5 Regions',
     s8_m2_lbl:'Valor al origen', s8_m2_val:'3.4× sobre precio commodity',
     s8_m3_lbl:'Modelo', s8_m3_val:'Agroforestería · Co-ownership',
+    ue_idx:'08.4 — Unit Economics',
+    ue_h:'Un sistema<br><span style="color:var(--gold);">que se paga</span>.',
+    ue_lead:'Cada árbol adoptado es una unidad económica. Cada SKU, un multiplicador. Los números detrás del cacao funcional Caúa — modelo conservador, Q1 2026.',
+    ue_01_lbl:'01 · Ticket promedio D2C', ue_01_unit:'USD',
+    ue_01_body:'Combo Baba · Can · Bar en venta directa. Canasta mixta entre rituales diarios y edición limitada.',
+    ue_02_lbl:'02 · Gross margin ponderado', ue_02_unit:'%',
+    ue_02_body:'Promedio ponderado línea Caúa. Bar 72% · Baba 58% · Can 61%.',
+    ue_03_lbl:'03 · Revenue por árbol · año', ue_03_unit:'USD',
+    ue_03_body:'Cuota adopción + producto derivado + recurrencia. El árbol se paga en año 1.',
+    ue_04_lbl:'04 · Recurrencia 30 días', ue_04_unit:'%',
+    ue_04_body:'Clientes que repiten dentro de 30 días tras primera compra. Producto de hábito, no de impulso.',
+    ue_05_lbl:'05 · Árboles activos en red', ue_05_unit:'árboles',
+    ue_05_body:'Adopciones confirmadas + árboles en producción monitoreada. Proyección 2026: 8 400.',
+    ue_06_lbl:'06 · ARR proyectado 2026', ue_06_unit:'M USD',
+    ue_06_body:'1 200 suscripciones + 400 adopciones + wholesale piloto. Base conservadora sin escenario optimista.',
+    ue_foot:'Valores indicativos · modelo Caúa · Q1 2026 · revisión auditada pre-term sheet',
     f_lbl:'Fundadores', f_hint:'Mueve el cursor → revela',
     s85_idx:'08.5 — El Sistema en Producto',
     ph_h:'Dos productos.<br><span style="color:var(--gold)">Un sistema vivo.</span>',
-    ph_caption_lbl:'Línea Lanzamiento', ph_caption_val:'Ritual RTD · Cacao Fruta Brutal',
-    ph_p1:'Chocolate origen Huila', ph_p2:'Cacao Fruta Brutal · lata', ph_p3:'Ritual Cacao · lata',
+    ph_caption_lbl:'Línea Lanzamiento', ph_caption_val:'Hidratación Natural · Baba Liofilizada',
+    ph_p1:'Cacao Ceremony Origen Huila', ph_p2:'Baba Liofilizada · sachet', ph_p3:'Hidratación Natural · lata',
     s9_idx:'09 — La Oportunidad',
     s9_h:'Construyendo<br>la primera<br><span style="color:var(--gold)">plataforma<br>funcional<br>de cacao.</span>',
     s9_sub:'La categoría<br>no existe aún.<br>La estamos<br>construyendo.',
@@ -981,9 +1170,15 @@ const T = {
     vis3_lbl:'Infraestructura', vis3_val:'Entre naturaleza y biotecnología',
     s10_q_lbl:'Para decir en voz alta',
     s10_q:'"El mundo no necesita más productos.<br>Necesita sistemas vivos.<br>Eso es lo que estamos construyendo con Caúa."',
+    s105_idx:'10.5 — El Kit',
+    kit_h:'En tus manos.',
+    kit_cap:'Un sistema · tres formas',
+    s106_idx:'10.6 — Origen',
+    walk_h:'Con la<br>naturaleza<br>caminamos.',
+    walk_cap:'Arbeláez · Finca La Querencia · 2025',
     cta_pre:'Early Access · Ronda Limitada',
     cta_h:'Sé parte<br>del<br>sistema.',
-    cta_body:'Estamos construyendo la primera plataforma funcional de cacao — integración vertical desde Huila hasta el cuerpo. Únete a los fundadores que caminan con la naturaleza, no contra ella.<br><br>Asegura tu posición vía Coinbase Wallet. USDC y ETH aceptados.',
+    cta_body:'Estamos construyendo la primera plataforma funcional de cacao — integración vertical desde el árbol hasta el cuerpo. Únete a los fundadores que caminan con la naturaleza, no contra ella.<br><br>Asegura tu posición vía Coinbase Wallet. USDC y ETH aceptados.',
     round_lbl:'Ronda Activa', round_badge:'Live · Limited',
     prog_lbl:'Progreso de ronda',
     rd_min:'Mínimo', rd_val:'Valoración', rd_ins:'Instrumento', rd_close:'Cierre',
@@ -992,7 +1187,7 @@ const T = {
   },
   en: {
     nav_cta:'Invest Now',
-    hero_tag:'Caúa · Investor Brief · Series Angel · 2025',
+    hero_tag:'Caúa · Investor Brief · Series Angel · 2026',
     hero_h1:'The<br>problem<br>is not<br><span class="ac">cacao.</span>',
     hero_body:"It's what we turned it into.<br><br>A biotech platform rebuilding the relationship between human biology and the most complex functional living system on earth.",
     s2_idx:'02 — State of Need',
@@ -1023,14 +1218,18 @@ const T = {
     s5_idx:'05 — Caúa System',
     s5_h:"We don't sell chocolate.<br><span style=\"color:var(--gold)\">We design biological<br>interaction.</span>",
     flow_1:'Territory', flow_2:'Genomics', flow_3:'Biotech', flow_4:'Function', flow_5:'Body',
-    p1_tag:'01 · RTD · Activate + Balance',
-    p1_name:'Ritual<br>Cacao Fruit',
-    p1_desc:'Fermented cacao fruit beverage. High polyphenols. Microbiome support + sustained bioavailability.',
-    p1_spec2_lbl:'Model', p1_spec2_val:'Subscription',
+    p1_tag:'01 · RTD · Sunrise + Sunset',
+    p1_name:'Hidratación<br>Natural',
+    p1_desc:'Two moments, two cans. <strong style="color:var(--gold)">Sunrise</strong> — polyphenols + natural caffeine to activate the day. <strong style="color:var(--purple)">Sunset</strong> — mucilage + theobromine for rest. Functional hydration, morning and night.',
+    p1_spec2_lbl:'Rhythm', p1_spec2_val:'AM + PM',
     p2_tag:'02 · FREEZE DRY · Regenerate',
-    p2_name:'Cacao<br>Fruta Brutal',
+    p2_name:'FreezeDry<br>Beans',
     p2_desc:'Whole freeze-dried cacao mucilage. Zero processing loss. 100% bioactive retention. Daily electrolytes. Origin: Huila, Colombia.',
     p2_spec2_lbl:'Retention',
+    p3_tag:'03 · DAILY · Replenish',
+    p3_name:'Daily<br>Electrolytes',
+    p3_desc:'Freeze-dried cacao mucilage. Full electrolyte profile — potassium, magnesium, natural sodium. Functional replenishment with no added sugar.',
+    p3_spec2_lbl:'Use', p3_spec2_val:'Daily',
     s6_idx:'06 — Purple Cow',
     s6_h:"Caúa is<br>impossible to<br><span style=\"color:var(--gold)\">directly<br>compare.</span>",
     s6_body:"We don't compete with chocolate. We compete with supplements, functional beverages and wellness. We are a new category.",
@@ -1055,11 +1254,27 @@ const T = {
     s8_m1_lbl:'Origin Partnership', s8_m1_val:'5 Heritage Farms · 5 Regions',
     s8_m2_lbl:'Value to origin', s8_m2_val:'3.4× above commodity price',
     s8_m3_lbl:'Model', s8_m3_val:'Agroforestry · Co-ownership',
+    ue_idx:'08.4 — Unit Economics',
+    ue_h:'A system<br><span style="color:var(--gold);">that pays for itself</span>.',
+    ue_lead:'Every adopted tree is an economic unit. Every SKU, a multiplier. The numbers behind Caúa functional cacao — conservative model, Q1 2026.',
+    ue_01_lbl:'01 · D2C Average Order', ue_01_unit:'USD',
+    ue_01_body:'FreezeDry · Can · Bar combo in direct sale. Mixed basket across daily rituals and limited editions.',
+    ue_02_lbl:'02 · Weighted Gross Margin', ue_02_unit:'%',
+    ue_02_body:'Weighted average across Caúa line. Bar 72% · FreezeDry 58% · Can 61%.',
+    ue_03_lbl:'03 · Revenue per Tree · Year', ue_03_unit:'USD',
+    ue_03_body:'Adoption fee + derived product + recurrence. The tree pays for itself in year 1.',
+    ue_04_lbl:'04 · 30-Day Repeat Rate', ue_04_unit:'%',
+    ue_04_body:'Customers who repeat within 30 days of first purchase. Habit product, not impulse.',
+    ue_05_lbl:'05 · Active Trees in Network', ue_05_unit:'trees',
+    ue_05_body:'Confirmed adoptions + trees in monitored production. 2026 projection: 8,400.',
+    ue_06_lbl:'06 · Projected ARR 2026', ue_06_unit:'M USD',
+    ue_06_body:'1,200 subscriptions + 400 adoptions + wholesale pilot. Conservative base — no upside scenario.',
+    ue_foot:'Indicative figures · Caúa model · Q1 2026 · audited review pre-term sheet',
     f_lbl:'Founders', f_hint:'Move cursor → reveal',
     s85_idx:'08.5 — The System in Product',
     ph_h:'Two products.<br><span style="color:var(--gold)">One living system.</span>',
-    ph_caption_lbl:'Launch Line', ph_caption_val:'Ritual RTD · Cacao Fruta Brutal',
-    ph_p1:'Huila-origin chocolate', ph_p2:'Cacao Fruta Brutal · can', ph_p3:'Ritual Cacao · can',
+    ph_caption_lbl:'Launch Line', ph_caption_val:'Hidratación Natural · FreezeDry Beans',
+    ph_p1:'Cacao Ceremony · Huila origin', ph_p2:'FreezeDry Beans · sachet', ph_p3:'Hidratación Natural · can',
     s9_idx:'09 — The Opportunity',
     s9_h:'Building<br>the first<br><span style="color:var(--gold)">functional<br>cacao<br>platform.</span>',
     s9_sub:"The category<br>doesn't exist yet.<br>We are<br>building it.",
@@ -1076,9 +1291,15 @@ const T = {
     vis3_lbl:'Infrastructure', vis3_val:'Between nature and biotech',
     s10_q_lbl:'Say it out loud',
     s10_q:'"The world doesn\'t need more products.<br>It needs living systems.<br>That\'s what we\'re building with Caúa."',
+    s105_idx:'10.5 — The Kit',
+    kit_h:'In your hands.',
+    kit_cap:'One system · three forms',
+    s106_idx:'10.6 — Origin',
+    walk_h:'With nature,<br>we walk.',
+    walk_cap:'Arbeláez · Finca La Querencia · 2025',
     cta_pre:'Early Access · Limited Round',
     cta_h:'Become<br>part of<br>the system.',
-    cta_body:"We're building the first functional cacao platform — vertical integration from Huila to the body. Join founders walking with nature, not against it.<br><br>Secure your position via Coinbase Wallet. USDC and ETH accepted.",
+    cta_body:"We're building the first functional cacao platform — vertical integration from tree to body. Join founders walking with nature, not against it.<br><br>Secure your position via Coinbase Wallet. USDC and ETH accepted.",
     round_lbl:'Active Round', round_badge:'Live · Limited',
     prog_lbl:'Round progress',
     rd_min:'Minimum', rd_val:'Valuation', rd_ins:'Instrument', rd_close:'Closing',
