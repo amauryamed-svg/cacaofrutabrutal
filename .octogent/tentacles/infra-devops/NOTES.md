@@ -17,6 +17,14 @@ Production secrets are configured via the Vercel UI under Project Settings → E
 **[2026-04-18] No GitHub Actions CI configured**
 The SRS v1 (2026-04-13) referenced GitHub Actions with Claude review. This has not been implemented. There is no `.github/workflows/` directory. Until CI is set up, TypeScript errors and lint failures will only be caught locally.
 
+**[2026-04-24] 3D asset optimization pipeline — scripts owned by this tentacle**
+Three scripts land in `scripts/` for immersive asset prep, all aligned to `docs/context/ui-ux-bar.md §2`:
+- `optimize-gltf.mjs` — `@gltf-transform` pipeline (dedup → weld → simplify 0.75 → Draco → KTX2 WebP). Target GLB ≤ 3MB.
+- `optimize-hdri.mjs` — validates HDRI size (target ≤ 1.5MB @ 1024×512). Emits JPG poster sibling.
+- `optimize-video.mjs` — ffmpeg with `-g 1 -movflags +faststart -pix_fmt yuv420p`. Emits MP4 + WebM + poster JPG. Targets MP4 ≤ 6MB, WebM ≤ 4MB, poster ≤ 200KB.
+
+All three run manually now; should land as pre-commit hook when `public/assets/3d/` diff detected. Requires `ffmpeg` on host (`brew install ffmpeg`) and `openimageio` for full HDR resize (`brew install openimageio`). npm deps: `@gltf-transform/cli`, `gltf-pipeline`, `sharp`, `draco3dgltf`, `meshoptimizer`.
+
 ## Known Risks
 
 - No E2E tests exist. The adoption flow, ritual flow, and lot investment flow are untested outside of manual QA.
