@@ -23,6 +23,15 @@ style={{ background: BRAND.bgDeep, color: BRAND.heirloom }}
 className="bg-gray-950 text-amber-50"
 ```
 
+**[2026-04-24] motion.dev adopted for investor-landing.html (vanilla flavor)**
+`public/investor-landing.html` is a static deck outside the React SPA. It now uses `motion` v12 vanilla (~18KB gz) via esm.sh CDN import for scroll choreography: scroll-linked 3D phase, pinned horizontal rail, and scroll-scrubbed hero video. Framer Motion remains restricted to CauaGotchi per the 2026-04-18 rule. No GSAP, ScrollTrigger, Lenis, or Locomotive — motion.dev `scroll()` primitive handles all cases. See `public/investor-scroll.js`.
+
+**[2026-04-24] 2D botanical canvas ("hilos de existencia") retired from investor-landing.html**
+The `#anc-canvas` 2D drawing layer was replaced by a single WebGL scene (`public/investor-3d.js`) with pinned rail + glass cards on top. Rationale: single visual engine = no dual-render overhead, no opacity fight with text, and HDRI-lit agroforestry reads more immersive than ambient 2D threads. If the engine needs a tester, it lived at `public/canvas-test.html` — also removed.
+
+**[2026-04-24] Immersive Experience Bar ratified** — `docs/context/ui-ux-bar.md`
+Every new page and every refactor meets a minimum bar for performance, motion fidelity, 3D asset pipeline, and accessibility. Authoritative HOT tier doc. SRS §7 points to it. Design-system tentacle owns deviations.
+
 ## Known Risks
 
 - Several components duplicate the progress bar pattern (CauaGotchi, AdminCRM, FundingProgress). Until `CauaProgressBar` is extracted, changes to the retro style must be made in multiple places.
