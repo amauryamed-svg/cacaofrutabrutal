@@ -24,6 +24,7 @@ tags: [hot, navigation, root]
 - [[context/1111-model]] — Estrategia de negocio, reglas de escala, meta 100k usuarios
 - [[context/constraints]] — CauaCore §8 — lo que NUNCA se hace
 - [[context/ownership]] — Quién toca qué: Claude Code vs Gemini
+- [[context/ui-ux-bar]] — Immersive Experience Bar — aplica a toda página nueva
 
 ---
 

@@ -477,6 +477,39 @@ Then no redirect occurs — these routes are publicly accessible.
 
 ---
 
+## 7. UI/UX Experience Standards — Immersive Bar
+
+> **Authoritative source:** [`docs/context/ui-ux-bar.md`](../context/ui-ux-bar.md) (HOT tier, always loaded)
+>
+> Every new page and every refactor must meet the Immersive Experience Bar. Covers: performance budgets (LCP ≤ 2.0s desktop / 2.5s mobile, CLS ≤ 0.05, 60fps desktop / 30fps mobile floor), asset pipeline (GLB ≤ 3MB Draco+KTX2, HDRI ≤ 1.5MB, video ≤ 6MB keyframe-per-frame for scroll scrubbing), motion fidelity (motion.dev for vanilla pages, Framer Motion restricted to CauaGotchi, `prefers-reduced-motion` hard kill switch), 3D policy (IntersectionObserver pause, LOD above 20k tris, HDRI IBL mandatory), accessibility (WCAG 2.1 AA, 44pt touch targets, 4.5:1 contrast), and design coherence (hex + rgba literals, grain overlay permanent).
+
+### AC-11 — Scroll-scrubbed video fidelity
+Given a hero section with scroll-scrubbed video.
+When scrolling through the section.
+Then `video.currentTime` tracks `window.scrollYProgress` within ±1 frame at 60fps sustained.
+When `prefers-reduced-motion: reduce` is set.
+Then the `<video>` element is replaced by the poster `<img>` with zero console errors.
+
+### AC-12 — Rail pin integrity
+Given a pinned horizontal rail (`#stages-rail`) with 4 stages over 400vh.
+When the user scrolls into the section.
+Then the viewport remains sticky until all 4 stages advance; CLS delta < 0.01.
+When viewport < 600px.
+Then stages remain readable without horizontal overflow.
+
+### AC-13 — Reduced-motion fallback
+Given `prefers-reduced-motion: reduce` is set.
+When the page loads.
+Then the WebGL canvas is hidden (`display: none`); the `<video>` hero is replaced by `<img>` poster; the pin rail collapses to vertical stack.
+Zero console warnings, zero partial states.
+
+### AC-14 — Asset budget enforcement
+Given a PR that adds assets to `public/assets/3d/`.
+When CI runs.
+Then pages fail the build if total transfer > 12 MB desktop / 8 MB mobile per `docs/context/ui-ux-bar.md §1`.
+
+---
+
 ## 8. Octogent Orchestration Model
 
 This project uses Octogent to coordinate 8 development domains. The full scaffold is at `.octogent/`.

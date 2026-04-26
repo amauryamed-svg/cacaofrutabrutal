@@ -115,7 +115,7 @@ export default function AdminCRM() {
   const usersWithTrees = new Set(trees.map(t => t.user_id)).size
 
   return (
-    <div style={{ minHeight: '100vh', background: BRAND.bgDeep, paddingTop: 64 }}>
+    <div style={{ minHeight: '100vh', background: BRAND.bgDeep, paddingTop: 'clamp(80px, 10vw, 110px)' }}>
       {/* Header */}
       <div style={{ background: BRAND.bgDark, borderBottom: `1px solid ${BRAND.amazon}44`, padding: '20px var(--space-page)' }}>
         <p style={{ fontFamily: FONTS.serif, fontStyle: 'italic', fontSize: 11, color: BRAND.mazorca, letterSpacing: '0.2em', marginBottom: 6 }}>

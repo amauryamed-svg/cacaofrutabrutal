@@ -38,6 +38,7 @@ npx supabase functions deploy <nombre>
 - Python functions: max 20 líneas cada una
 - RLS: siempre `(select auth.uid())`, nunca `auth.uid()` directo
 - Frontend siempre filtra `.eq('user_id', userId)` — RLS es capa de seguridad, no filtro
+- **UI/UX:** toda página nueva cumple [`docs/context/ui-ux-bar.md`](docs/context/ui-ux-bar.md) — performance, motion, 3D assets, a11y
 
 ## Token Budget (CauaOptimize §1)
 Antes de proceder: ¿Leo archivos o uso Explore? ¿Agrupo 3+ cambios antes de deploy?
