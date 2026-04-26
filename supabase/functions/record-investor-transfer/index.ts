@@ -50,11 +50,18 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
+    // Accepted auth modes:
+    //   1. JWT in Authorization header (auth'd user from /app/fund React flow) → user_id captured
+    //   2. Anonymous + email in body (investor-landing.html static flow) → user_id=null, email in metadata
     const jwt = req.headers.get('Authorization')?.replace('Bearer ', '')
-    const { data: userData } = await supabase.auth.getUser(jwt!)
-    const user = userData?.user
-    if (!user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: corsHeaders })
+    let userId: string | null = null
+    let userEmail: string | null = null
+    if (jwt) {
+      const { data: userData } = await supabase.auth.getUser(jwt)
+      if (userData?.user) {
+        userId = userData.user.id
+        userEmail = userData.user.email ?? null
+      }
     }
 
     const body = await req.json().catch(() => ({}))
@@ -66,6 +73,17 @@ serve(async (req) => {
     const network         = String(body.network || 'ethereum').toLowerCase()
     const asset           = String(body.asset   || 'ETH').toUpperCase()
     const context         = (body.context && typeof body.context === 'object') ? body.context : {}
+    const bodyEmail       = String(body.email || '').trim().toLowerCase()
+
+    // If not authenticated, require valid email in body (investor-landing.html flow)
+    if (!userId) {
+      if (!bodyEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bodyEmail)) {
+        return new Response(JSON.stringify({ error: 'Authentication required OR valid email in body' }), {
+          status: 401, headers: corsHeaders,
+        })
+      }
+      userEmail = bodyEmail
+    }
 
     if (!kind || !PACKAGES[kind]) {
       return new Response(JSON.stringify({ error: 'Invalid kind' }), { status: 400, headers: corsHeaders })
@@ -88,7 +106,7 @@ serve(async (req) => {
     const { data, error } = await supabase
       .from('investor_charges')
       .insert({
-        user_id:         user.id,
+        user_id:         userId,
         kind,
         amount_usd,
         amount_sent_usd,
@@ -99,7 +117,8 @@ serve(async (req) => {
         asset,
         status:          'pending',
         metadata: {
-          email:        user.email ?? '',
+          email:        userEmail ?? '',
+          source:       userId ? 'app_authenticated' : 'landing_anonymous',
           submitted_at: new Date().toISOString(),
           ...(context.tech_id    ? { tech_id:    String(context.tech_id) } : {}),
           ...(context.mvp_id     ? { mvp_id:     String(context.mvp_id)  } : {}),
