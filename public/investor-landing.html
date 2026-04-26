@@ -1561,16 +1561,208 @@ window.__soundOn = false;
   };
 })();
 
+// ── Real wallet flow — replaces previous mock connectWallet().
+// 4 steps inside the same wallet-modal box:
+//   1) email + amount + wallet picker (CTO/CEO)
+//   2) ETH address + copy + warning ("ETH-only mainnet")
+//   3) tx hash + amount sent form
+//   4) "Allocación Asegurada" success with tx hash + Etherscan link
+// Submits anon to record-investor-transfer Edge Fn (which now accepts email-based identity).
+
+const CFB_SUPABASE_URL  = 'https://kjygovuiphbxcdxeduco.supabase.co';
+const CFB_SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqeWdvdnVpcGhieGNkeGVkdWNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2ODA0NzgsImV4cCI6MjA5MTI1NjQ3OH0.WMlfCLVssh6pAos2vGSx_8aEiOTxb8CUQqG6Zx9npqU';
+const CFB_WALLETS = {
+  cto: { role: 'CTO', name: 'Amaury Amed',   eth: '0x7Ca1624e534ebE18F46BBA56229981134945464e' },
+  ceo: { role: 'CEO', name: 'David Montoya', eth: '0x7E9E25cFfc8BC68Fb9E1f4708e761C68a37a846A' },
+};
+let cfbWalletState = { email: '', amount: 5000, walletOwner: 'cto', txHash: '', amountSent: 5000 };
+
+function cfbBox(){ return document.getElementById('wallet-modal').querySelector('.wallet-box'); }
+function cfbCloseModal(){ document.getElementById('wallet-modal').classList.remove('open'); }
+function cfbCloseBtn(){ return '<button class="wallet-close" onclick="cfbCloseModal()">×</button>'; }
+
+function cfbEsc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// Public entrypoint — called by the 3 wallet option buttons (Coinbase Wallet / MetaMask / WalletConnect)
 function connectWallet(){
-  document.getElementById('wallet-modal').querySelector('.wallet-box').innerHTML=`
-    <div style="text-align:center;padding:20px 0;">
-      <div style="width:48px;height:48px;border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;animation:blink 1.5s infinite;">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+  cfbWalletState = { email: '', amount: 5000, walletOwner: 'cto', txHash: '', amountSent: 5000 };
+  cfbRenderStep1();
+}
+
+// STEP 1 — collect email + amount + wallet picker
+function cfbRenderStep1(){
+  cfbBox().innerHTML = `
+    ${cfbCloseBtn()}
+    <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;">PASO 1 / 4 · INFORMACIÓN</div>
+    <div class="wallet-title" style="font-size:24px;">Asegura tu allocación</div>
+    <div class="wallet-sub">ETH directo a wallet CTO/CEO en Bitso. Mínimo $5,000 USD. Verificación on-chain en 24h.</div>
+
+    <div style="margin-bottom:16px;">
+      <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--ink3);text-transform:uppercase;margin-bottom:6px;">EMAIL</div>
+      <input id="cfb-email" type="email" placeholder="tu@email.com" value="${cfbEsc(cfbWalletState.email)}"
+        style="width:100%;padding:12px 14px;background:var(--bg);border:1px solid var(--line-b);color:var(--ink);font-family:'DM Mono',monospace;font-size:13px;outline:none;" />
+    </div>
+
+    <div style="margin-bottom:16px;">
+      <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--ink3);text-transform:uppercase;margin-bottom:6px;">MONTO USD</div>
+      <input id="cfb-amount" type="number" min="5000" step="500" value="${cfbWalletState.amount}"
+        style="width:100%;padding:12px 14px;background:var(--bg);border:1px solid var(--line-b);color:var(--ink);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;outline:none;" />
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--ink3);text-transform:uppercase;margin-bottom:6px;">A QUIÉN ENVIAR</div>
+      <div style="display:flex;gap:8px;">
+        ${Object.keys(CFB_WALLETS).map(k => {
+          const w = CFB_WALLETS[k];
+          const active = cfbWalletState.walletOwner === k;
+          return `<button onclick="cfbWalletState.walletOwner='${k}';cfbRenderStep1()"
+            style="flex:1;padding:12px 8px;background:${active?'rgba(145,166,59,0.12)':'transparent'};border:1px solid ${active?'var(--gold)':'var(--line-b)'};color:var(--ink);cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;">
+            ${w.role} · ${w.name}
+          </button>`;
+        }).join('')}
       </div>
-      <div class="wallet-title" style="font-size:26px;margin-bottom:10px;">Allocación Asegurada</div>
-      <div class="wallet-sub">Nuestro equipo se contactará en 24 horas para completar tu documentación y transferencia.</div>
-      <button class="btn-invest" style="margin-top:24px;" onclick="document.getElementById('wallet-modal').classList.remove('open')">Volver al Overview</button>
-    </div>`;
+    </div>
+
+    <button id="cfb-step1-btn" class="btn-invest" onclick="cfbContinueStep1()">CONTINUAR →</button>
+  `;
+}
+
+function cfbContinueStep1(){
+  const email  = document.getElementById('cfb-email').value.trim().toLowerCase();
+  const amount = Number(document.getElementById('cfb-amount').value) || 0;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { document.getElementById('cfb-email').style.borderColor = '#e74c3c'; return; }
+  if (amount < 5000) { document.getElementById('cfb-amount').style.borderColor = '#e74c3c'; return; }
+  cfbWalletState.email = email;
+  cfbWalletState.amount = amount;
+  cfbWalletState.amountSent = amount;
+  cfbRenderStep2();
+}
+
+// STEP 2 — show address + copy + warning
+function cfbRenderStep2(){
+  const w = CFB_WALLETS[cfbWalletState.walletOwner];
+  cfbBox().innerHTML = `
+    ${cfbCloseBtn()}
+    <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;">PASO 2 / 4 · TRANSFERIR</div>
+    <div class="wallet-title" style="font-size:24px;">Envía $${cfbWalletState.amount.toLocaleString('en-US')} en ETH</div>
+    <div class="wallet-sub">A la wallet de <strong style="color:var(--ink);">${w.role} · ${w.name}</strong> · Ethereum mainnet</div>
+
+    <div style="background:rgba(231,76,60,0.12);border:1.5px solid #e74c3c;padding:12px 14px;margin-bottom:16px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:11px;letter-spacing:1.5px;color:#e74c3c;text-transform:uppercase;margin-bottom:4px;">⚠️ LEE ANTES DE TRANSFERIR</div>
+      <div style="font-size:11px;line-height:1.55;color:var(--ink);">Solo ETH en Ethereum mainnet. NO envíes USDC, USDT, ni ETH en Polygon/Base/Arbitrum — pérdida permanente. Bitso no recupera depósitos mal dirigidos.</div>
+    </div>
+
+    <div style="background:var(--bg);border:1px solid var(--line-b);padding:12px 14px;margin-bottom:16px;">
+      <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--ink3);text-transform:uppercase;margin-bottom:6px;">DIRECCIÓN ETH</div>
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--ink);word-break:break-all;background:var(--bg2);padding:10px;margin-bottom:8px;">${w.eth}</div>
+      <button id="cfb-copy-btn" onclick="cfbCopyAddr('${w.eth}')"
+        style="width:100%;padding:10px;background:transparent;border:1px solid var(--gold);color:var(--gold);cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;">📋 COPIAR ADDRESS</button>
+    </div>
+
+    <button class="btn-invest" onclick="cfbRenderStep3()">YA TRANSFERÍ · CONTINUAR →</button>
+    <button onclick="cfbRenderStep1()" style="width:100%;background:none;border:none;color:var(--ink3);cursor:pointer;margin-top:8px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;">← Volver</button>
+  `;
+}
+
+function cfbCopyAddr(addr){
+  navigator.clipboard?.writeText(addr).then(() => {
+    const b = document.getElementById('cfb-copy-btn');
+    if (b){ b.textContent = '✓ COPIADA'; setTimeout(() => { b.textContent = '📋 COPIAR ADDRESS'; }, 1800); }
+  }).catch(() => {});
+}
+
+// STEP 3 — tx hash + amount sent form
+function cfbRenderStep3(){
+  cfbBox().innerHTML = `
+    ${cfbCloseBtn()}
+    <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;">PASO 3 / 4 · VERIFICAR</div>
+    <div class="wallet-title" style="font-size:24px;">Confirma la transferencia</div>
+    <div class="wallet-sub">Pega el hash de la transacción que aparece en tu wallet o Etherscan.</div>
+
+    <div style="margin-bottom:16px;">
+      <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--ink3);text-transform:uppercase;margin-bottom:6px;">TX HASH (0x + 64 chars)</div>
+      <input id="cfb-tx" type="text" placeholder="0x..." spellcheck="false" autocapitalize="off" autocorrect="off" value="${cfbEsc(cfbWalletState.txHash)}"
+        style="width:100%;padding:12px 14px;background:var(--bg);border:1px solid var(--line-b);color:var(--ink);font-family:'DM Mono',monospace;font-size:11px;outline:none;" />
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--ink3);text-transform:uppercase;margin-bottom:6px;">MONTO ENVIADO USD</div>
+      <input id="cfb-sent" type="number" min="1" step="1" value="${cfbWalletState.amountSent}"
+        style="width:100%;padding:12px 14px;background:var(--bg);border:1px solid var(--line-b);color:var(--ink);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;outline:none;" />
+    </div>
+
+    <div id="cfb-err" style="display:none;background:rgba(231,76,60,0.12);border:1px solid #e74c3c;padding:8px 12px;margin-bottom:12px;font-size:11px;color:#e74c3c;font-family:'DM Mono',monospace;"></div>
+
+    <button id="cfb-submit-btn" class="btn-invest" onclick="cfbSubmit()">CONFIRMAR TRANSFERENCIA →</button>
+    <button onclick="cfbRenderStep2()" style="width:100%;background:none;border:none;color:var(--ink3);cursor:pointer;margin-top:8px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;">← Volver</button>
+  `;
+}
+
+async function cfbSubmit(){
+  const tx   = document.getElementById('cfb-tx').value.trim();
+  const sent = Number(document.getElementById('cfb-sent').value) || 0;
+  const err  = document.getElementById('cfb-err');
+  if (!/^0x[a-fA-F0-9]{64}$/.test(tx)) { err.textContent = 'TX hash inválido — debe empezar con 0x y tener 66 caracteres.'; err.style.display = 'block'; return; }
+  if (sent <= 0) { err.textContent = 'Monto enviado debe ser mayor a 0.'; err.style.display = 'block'; return; }
+  cfbWalletState.txHash = tx;
+  cfbWalletState.amountSent = sent;
+
+  const btn = document.getElementById('cfb-submit-btn');
+  btn.disabled = true; btn.textContent = 'REGISTRANDO...';
+
+  try {
+    const res = await fetch(`${CFB_SUPABASE_URL}/functions/v1/record-investor-transfer`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${CFB_SUPABASE_ANON}`,
+        'apikey': CFB_SUPABASE_ANON,
+      },
+      body: JSON.stringify({
+        kind:            cfbWalletState.amount === 5000 ? 'equity_5k' : 'b2b_sponsorship',
+        destination:     cfbWalletState.walletOwner,
+        amount_usd:      cfbWalletState.amount,
+        amount_sent_usd: cfbWalletState.amountSent,
+        tx_hash:         tx,
+        network:         'ethereum',
+        asset:           'ETH',
+        email:           cfbWalletState.email,
+        context:         { source: 'investor-landing.html' },
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data?.id) throw new Error(data?.error || 'Error registrando');
+    cfbRenderSuccess(data.id, data.etherscan_url || `https://etherscan.io/tx/${tx}`);
+  } catch (e) {
+    err.textContent = e.message || 'Error de conexión';
+    err.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'CONFIRMAR TRANSFERENCIA →';
+  }
+}
+
+// STEP 4 — success
+function cfbRenderSuccess(id, etherscanUrl){
+  cfbBox().innerHTML = `
+    ${cfbCloseBtn()}
+    <div style="text-align:center;padding:8px 0 0;">
+      <div style="width:56px;height:56px;border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;border-radius:50%;">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="wallet-title" style="font-size:28px;color:var(--gold);margin-bottom:10px;">Allocación Asegurada</div>
+      <div class="wallet-sub" style="margin-bottom:24px;">Nuestro equipo se contactará en 24 horas a <strong style="color:var(--ink);">${cfbEsc(cfbWalletState.email)}</strong> para completar tu documentación y transferencia.</div>
+
+      <div style="background:var(--bg);border:1px solid var(--line-b);padding:12px 14px;text-align:left;margin-bottom:20px;">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--ink3);text-transform:uppercase;margin-bottom:4px;">REFERENCIA INTERNA</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--ink2);word-break:break-all;margin-bottom:10px;">${cfbEsc(id)}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--ink3);text-transform:uppercase;margin-bottom:4px;">TX HASH</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--ink);word-break:break-all;margin-bottom:8px;">${cfbEsc(cfbWalletState.txHash)}</div>
+        <a href="${cfbEsc(etherscanUrl)}" target="_blank" rel="noopener noreferrer"
+          style="display:inline-block;font-size:11px;color:var(--gold);text-decoration:none;border-bottom:1px solid var(--gold);">Ver en Etherscan ↗</a>
+      </div>
+
+      <button class="btn-invest" onclick="cfbCloseModal()">Listo</button>
+    </div>
+  `;
 }
 
 // Founders reveal — scroll progress + mouse-tracked spotlight
