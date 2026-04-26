@@ -87,6 +87,7 @@
     }
   ],
   "redirects": [
+    { "source": "/",                      "destination": "/investor-landing.html",     "permanent": false },
     { "source": "/auth",                  "destination": "/app/auth",                  "permanent": true },
     { "source": "/blog",                  "destination": "/app/blog",                  "permanent": true },
     { "source": "/blog/:path*",           "destination": "/app/blog/:path*",           "permanent": true },
@@ -104,7 +105,6 @@
   ],
   "rewrites": [
     { "source": "/api/crm/:path*", "destination": "/api/crm" },
-    { "source": "/",               "destination": "/investor-landing.html" },
     { "source": "/app",            "destination": "/index.html" },
     { "source": "/app/:path*",     "destination": "/index.html" }
   ],
