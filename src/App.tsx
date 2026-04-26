@@ -41,23 +41,23 @@ function AppShell() {
       <GrainOverlay />
       {!hideChrome && <NavBar />}
       <Routes>
-        {/* Public — no auth required */}
-        <Route path="/"           element={<Landing />} />
+        {/* Public — login form only */}
         <Route path="/auth"       element={<Auth />} />
-        <Route path="/blog"       element={<Blog />} />
-        <Route path="/blog/:slug" element={<BlogPost />} />
-        <Route path="/cinco-tiempos" element={<CincoTiemposProposal />} />
-        <Route path="/caua-coti" element={<CauaCoti />} />
-        <Route path="/catacion" element={<CauaCoti />} />
-        <Route path="/caua-coti/andrea-rojas" element={<ProposalAndreaRojas />} />
 
-        {/* Protected — require registration */}
-        <Route path="/marketplace" element={<AuthGate><Marketplace /></AuthGate>} />
-        <Route path="/ritual"      element={<AuthGate><Ritual /></AuthGate>} />
-        <Route path="/adoptar"     element={<Adoptar />} />
-        <Route path="/tree/:id"    element={<AuthGate><TreeDetail /></AuthGate>} />
-        <Route path="/dashboard"   element={<AuthGate><Dashboard /></AuthGate>} />
-        <Route path="/fund"        element={<AuthGate><Fund /></AuthGate>} />
+        {/* Protected — require registration (CRM tracking fires on every pageview) */}
+        <Route path="/"                      element={<AuthGate><Landing /></AuthGate>} />
+        <Route path="/blog"                  element={<AuthGate><Blog /></AuthGate>} />
+        <Route path="/blog/:slug"            element={<AuthGate><BlogPost /></AuthGate>} />
+        <Route path="/cinco-tiempos"         element={<AuthGate><CincoTiemposProposal /></AuthGate>} />
+        <Route path="/caua-coti"             element={<AuthGate><CauaCoti /></AuthGate>} />
+        <Route path="/catacion"              element={<AuthGate><CauaCoti /></AuthGate>} />
+        <Route path="/caua-coti/andrea-rojas" element={<AuthGate><ProposalAndreaRojas /></AuthGate>} />
+        <Route path="/marketplace"           element={<AuthGate><Marketplace /></AuthGate>} />
+        <Route path="/ritual"                element={<AuthGate><Ritual /></AuthGate>} />
+        <Route path="/adoptar"               element={<AuthGate><Adoptar /></AuthGate>} />
+        <Route path="/tree/:id"              element={<AuthGate><TreeDetail /></AuthGate>} />
+        <Route path="/dashboard"             element={<AuthGate><Dashboard /></AuthGate>} />
+        <Route path="/fund"                  element={<AuthGate><Fund /></AuthGate>} />
 
         {/* Super admin only — guarded inside AdminCRM */}
         <Route path="/admin/crm"   element={<AdminCRM />} />
@@ -73,7 +73,7 @@ export default function App() {
   return (
     <LangProvider>
       <AuthProvider>
-        <BrowserRouter>
+        <BrowserRouter basename="/app">
           <AppShell />
         </BrowserRouter>
       </AuthProvider>

@@ -36,25 +36,42 @@ export default function BlogCard({
   return (
     <article
       onClick={() => navigate(`/blog/${slug}`)}
+      className="blog-card"
       style={{
         background: BRAND.bgCard,
         border: `1px solid ${BRAND.amazon}55`,
         borderRadius: 16,
         overflow: 'hidden',
         cursor: 'pointer',
-        transition: 'transform 0.3s, box-shadow 0.3s',
+        transition: 'transform 0.45s cubic-bezier(0.16,1,0.3,1), box-shadow 0.45s cubic-bezier(0.16,1,0.3,1), border-color 0.45s cubic-bezier(0.16,1,0.3,1)',
         display: 'flex',
         flexDirection: 'column',
-      }}
-      onMouseEnter={e => {
-        (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)'
-        ;(e.currentTarget as HTMLElement).style.boxShadow = `0 20px 48px rgba(0,0,0,0.4), 0 0 0 1px ${BRAND.pod}33`
-      }}
-      onMouseLeave={e => {
-        (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
-        ;(e.currentTarget as HTMLElement).style.boxShadow = 'none'
+        position: 'relative',
+        willChange: 'transform',
       }}
     >
+      <style>{`
+        .blog-card:hover {
+          transform: translateY(-8px);
+          border-color: ${BRAND.pod}88 !important;
+          box-shadow: 0 28px 60px rgba(0,0,0,0.55), 0 0 0 1px ${BRAND.pod}44, 0 0 40px ${BRAND.pod}22;
+        }
+        .blog-card:hover .blog-cover-emoji {
+          transform: scale(1.18) rotate(-4deg);
+          filter: drop-shadow(0 8px 24px ${BRAND.pod}55);
+        }
+        .blog-card:hover .blog-cover-sheen {
+          transform: translateX(120%);
+        }
+        .blog-card:hover .blog-cta-arrow {
+          transform: translateX(6px);
+          opacity: 1;
+        }
+        .blog-card:hover .blog-cta-label {
+          letter-spacing: 0.18em;
+        }
+      `}</style>
+
       {/* Cover band */}
       <div style={{
         height: 200,
@@ -65,8 +82,27 @@ export default function BlogCard({
         fontSize: 80,
         fontWeight: 'bold',
         position: 'relative',
+        overflow: 'hidden',
       }}>
-        {coverEmoji}
+        <span className="blog-cover-emoji" style={{
+          display: 'inline-block',
+          transition: 'transform 0.55s cubic-bezier(0.16,1,0.3,1), filter 0.55s cubic-bezier(0.16,1,0.3,1)',
+          willChange: 'transform',
+        }}>
+          {coverEmoji}
+        </span>
+
+        {/* Shimmer sheen — slides across on hover */}
+        <div className="blog-cover-sheen" style={{
+          position: 'absolute',
+          top: 0, left: 0, bottom: 0,
+          width: '40%',
+          background: `linear-gradient(100deg, transparent 0%, ${BRAND.pod}14 50%, transparent 100%)`,
+          transform: 'translateX(-120%)',
+          transition: 'transform 0.9s cubic-bezier(0.16,1,0.3,1)',
+          pointerEvents: 'none',
+        }} />
+
         {/* Gradient overlay */}
         <div style={{
           position: 'absolute',
@@ -170,11 +206,26 @@ export default function BlogCard({
           fontFamily: FONTS.display,
           fontWeight: 700,
           fontSize: 12,
-          letterSpacing: '0.1em',
           color: BRAND.pod,
           textTransform: 'uppercase',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
         }}>
-          {T('blog_read')}
+          <span className="blog-cta-label" style={{
+            letterSpacing: '0.1em',
+            transition: 'letter-spacing 0.4s cubic-bezier(0.16,1,0.3,1)',
+          }}>
+            {T('blog_read')}
+          </span>
+          <span className="blog-cta-arrow" style={{
+            display: 'inline-block',
+            opacity: 0.55,
+            transform: 'translateX(0)',
+            transition: 'transform 0.4s cubic-bezier(0.16,1,0.3,1), opacity 0.4s cubic-bezier(0.16,1,0.3,1)',
+          }}>
+            →
+          </span>
         </div>
       </div>
     </article>

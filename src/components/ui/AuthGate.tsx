@@ -7,7 +7,6 @@
 import { useNavigate } from 'react-router-dom'
 import { BRAND, FONTS } from '../../utils/constants'
 import { useAuth } from '../../context/AuthContext'
-import CauaLogo from './CauaLogo'
 
 interface Props {
   children: React.ReactNode
@@ -77,7 +76,7 @@ export default function AuthGate({ children }: Props) {
 
   // ── Benefits wall ──────────────────────────────────────────────────────────
   return (
-    <div style={{ minHeight: '100vh', background: BRAND.bgDeep, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+    <div style={{ minHeight: '100vh', background: BRAND.bgDeep, display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 'clamp(56px, 8vw, 88px)' }}>
       {/* Hero */}
       <div style={{
         width: '100%', maxWidth: 640,
@@ -85,10 +84,6 @@ export default function AuthGate({ children }: Props) {
         display: 'flex', flexDirection: 'column', alignItems: 'center',
         textAlign: 'center',
       }}>
-        <div style={{ marginBottom: 24 }}>
-          <CauaLogo size={28} variant="white" />
-        </div>
-
         <p style={{
           fontFamily: FONTS.serif, fontStyle: 'italic',
           fontSize: 13, color: BRAND.mazorca,

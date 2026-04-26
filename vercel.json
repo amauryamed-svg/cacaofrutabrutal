@@ -4,7 +4,7 @@
   "outputDirectory": "./dist",
   "headers": [
     {
-      "source": "/catacion/:path*",
+      "source": "/app/catacion/:path*",
       "headers": [
         {
           "key": "Cache-Control",
@@ -86,9 +86,27 @@
       ]
     }
   ],
+  "redirects": [
+    { "source": "/auth",                  "destination": "/app/auth",                  "permanent": true },
+    { "source": "/blog",                  "destination": "/app/blog",                  "permanent": true },
+    { "source": "/blog/:path*",           "destination": "/app/blog/:path*",           "permanent": true },
+    { "source": "/cinco-tiempos",         "destination": "/app/cinco-tiempos",         "permanent": true },
+    { "source": "/caua-coti",             "destination": "/app/caua-coti",             "permanent": true },
+    { "source": "/caua-coti/:path*",      "destination": "/app/caua-coti/:path*",      "permanent": true },
+    { "source": "/catacion",              "destination": "/app/catacion",              "permanent": true },
+    { "source": "/marketplace",           "destination": "/app/marketplace",           "permanent": true },
+    { "source": "/ritual",                "destination": "/app/ritual",                "permanent": true },
+    { "source": "/adoptar",               "destination": "/app/adoptar",               "permanent": true },
+    { "source": "/tree/:path*",           "destination": "/app/tree/:path*",           "permanent": true },
+    { "source": "/dashboard",             "destination": "/app/dashboard",             "permanent": true },
+    { "source": "/fund",                  "destination": "/app/fund",                  "permanent": true },
+    { "source": "/admin/:path*",          "destination": "/app/admin/:path*",          "permanent": true }
+  ],
   "rewrites": [
     { "source": "/api/crm/:path*", "destination": "/api/crm" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/",               "destination": "/investor-landing.html" },
+    { "source": "/app",            "destination": "/index.html" },
+    { "source": "/app/:path*",     "destination": "/index.html" }
   ],
   "crons": [
     { "path": "/api/cacao_predictor", "schedule": "0 6 * * *" }

@@ -232,9 +232,7 @@ export default function TreeDetail() {
       <div style={{
         padding: '1rem 1.25rem 0.75rem',
         borderBottom: `1px solid ${BRAND.bgCard}`,
-        background: `${BRAND.bgDeep}EE`,
-        position: 'sticky', top: 0, zIndex: 40,
-        backdropFilter: 'blur(8px)',
+        background: BRAND.bgDeep,
       }}>
         <button onClick={() => navigate('/adoptar')} style={{
           background: 'transparent', border: 'none', color: BRAND.pod,

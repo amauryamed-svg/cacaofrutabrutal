@@ -3,6 +3,7 @@ import { motion, useMotionValue, useTransform, AnimatePresence, type PanInfo } f
 import { BRAND, FONTS } from '../../utils/constants'
 import type { Guardian } from '../../types'
 import { ADOPTION_DAYS, CARE_INTERVAL_HOURS } from '../../utils/growthSystem'
+import ColombiaMap from './ColombiaMap'
 
 interface SwipeableTreeCardProps {
   guardian: Guardian
@@ -74,13 +75,14 @@ export default function SwipeableTreeCard({
         background: `radial-gradient(ellipse 200px 200px at 50% 30%, ${BRAND.pod}18, transparent)`,
       }} />
 
-      {/* Guardian emoji large background */}
+      {/* Colombia map croquis — center background, department highlighted */}
       <div style={{
-        position: 'absolute', top: 20, left: '50%', transform: 'translateX(-50%)',
-        fontSize: 100, opacity: 0.12, pointerEvents: 'none',
-        userSelect: 'none',
+        position: 'absolute', top: 70, left: '50%', transform: 'translateX(-50%)',
+        pointerEvents: 'none', userSelect: 'none',
+        opacity: 0.85,
+        filter: `drop-shadow(0 6px 20px rgba(0,0,0,0.45))`,
       }}>
-        {guardian.emoji}
+        <ColombiaMap region={guardian.region} size={130} />
       </div>
 
       {/* Guardian name top */}
