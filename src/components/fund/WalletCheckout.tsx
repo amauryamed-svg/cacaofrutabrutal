@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { BRAND, FONTS, INVESTOR_WALLETS } from '../../utils/constants'
 import { supabase } from '../../lib/supabase'
 import { hsTrackEvent } from '../../lib/hubspotTracking'
@@ -89,8 +89,10 @@ export default function WalletCheckout({ amount_usd, kind, context, lang, onClos
     }
   }
 
+  // Render: simple conditional sin AnimatePresence (evita nested-AnimatePresence
+  // con el que envuelve InvestorPath/InvestModal — causaba que el contenido no se montara).
   return (
-    <AnimatePresence mode="wait">
+    <div>
 
       {/* PHASE 1 — Transfer (show address) */}
       {phase === 'transfer' && (
@@ -274,7 +276,7 @@ export default function WalletCheckout({ amount_usd, kind, context, lang, onClos
         </motion.div>
       )}
 
-    </AnimatePresence>
+    </div>
   )
 }
 
