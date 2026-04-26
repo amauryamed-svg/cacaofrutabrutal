@@ -15,6 +15,8 @@ import BlogPost          from './pages/BlogPost'
 import Marketplace       from './pages/Marketplace'
 import Ritual            from './pages/Ritual'
 import Adoptar           from './pages/Adoptar'
+import CauaBonga         from './pages/CauaBonga'
+import CauaBongaFinca    from './pages/CauaBongaFinca'
 import TreeDetail        from './pages/TreeDetail'
 import Dashboard         from './pages/Dashboard'
 import Fund              from './pages/Fund'
@@ -55,6 +57,8 @@ function AppShell() {
         <Route path="/marketplace"           element={<AuthGate><Marketplace /></AuthGate>} />
         <Route path="/ritual"                element={<AuthGate><Ritual /></AuthGate>} />
         <Route path="/adoptar"               element={<AuthGate><Adoptar /></AuthGate>} />
+        <Route path="/caua-bonga"            element={<AuthGate><CauaBonga /></AuthGate>} />
+        <Route path="/caua-bonga/finca/:id"  element={<AuthGate><CauaBongaFinca /></AuthGate>} />
         <Route path="/tree/:id"              element={<AuthGate><TreeDetail /></AuthGate>} />
         <Route path="/dashboard"             element={<AuthGate><Dashboard /></AuthGate>} />
         <Route path="/fund"                  element={<AuthGate><Fund /></AuthGate>} />

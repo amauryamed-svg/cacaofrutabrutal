@@ -2,14 +2,16 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCocoaTrees, type CareAction } from '../hooks/useCocoaTrees'
-import { BRAND, FONTS, GUARDIANS } from '../utils/constants'
+import { supabase } from '../lib/supabase'
+import { BRAND, FONTS, GUARDIANS, TOKEN_RATES } from '../utils/constants'
 import CauaButton from '../components/ui/CauaButton'
 import CauaGotchi from '../components/dashboard/CauaGotchi'
 import type { CacaoTree } from '../lib/database.types'
 import {
   GROWTH_STAGES, PLANT_PROBLEMS, SPECIAL_ITEMS,
-  getStageByDays, getHealthStatus, getNextCareTime, formatTimeUntil,
-  CARE_INTERVAL_HOURS,
+  getStageByHours, getHealthStatus, getNextCareTime, formatTimeUntil,
+  hoursSinceAdoption, getCycleProgress, isHarvestReady,
+  ADOPTION_HOURS, CARE_INTERVAL_MIN,
 } from '../utils/growthSystem'
 
 interface CareLogEntry {
@@ -49,6 +51,9 @@ export default function TreeDetail() {
   const [secretFound, setSecretFound] = useState(false)
   const [tapCount, setTapCount] = useState(0)
   const [lastTapTime, setLastTapTime] = useState(0)
+  const [harvested, setHarvested] = useState(false)
+  const [harvesting, setHarvesting] = useState(false)
+  const [cycleTick, setCycleTick] = useState(0)  // forces re-render every second for live countdown
 
   const initializedTree = useRef<string | null>(null)
 
@@ -79,28 +84,31 @@ export default function TreeDetail() {
     }
   }, [tree])
 
-  // Care countdown ticker
+  // Live cycle ticker — 1s granularity for the 5h cycle's progress bar + countdown
   useEffect(() => {
-    if (!lastCareTime) return
-    const tick = setInterval(() => {
-      const next = getNextCareTime(lastCareTime)
-      if (Date.now() >= next.getTime()) {
-        setCanCare(true)
-        setNextCareIn('¡Ahora!')
-      } else {
-        setCanCare(false)
-        setNextCareIn(formatTimeUntil(next))
-      }
-    }, 15000)
-    return () => clearInterval(tick)
-  }, [lastCareTime])
+    const t = setInterval(() => setCycleTick(n => n + 1), 1000)
+    return () => clearInterval(t)
+  }, [])
 
-  // Health degradation when neglected
+  // Care countdown — derived each tick from lastCareTime
+  useEffect(() => {
+    if (!lastCareTime) { setCanCare(true); setNextCareIn(''); return }
+    const next = getNextCareTime(lastCareTime)
+    if (Date.now() >= next.getTime()) {
+      setCanCare(true)
+      setNextCareIn('¡Ahora!')
+    } else {
+      setCanCare(false)
+      setNextCareIn(formatTimeUntil(next))
+    }
+  }, [lastCareTime, cycleTick])
+
+  // Health degradation when neglected — scaled to 5h cycle (problem fires after 1h without care)
   useEffect(() => {
     if (!lastCareTime) return
     const check = setInterval(() => {
       const hours = (Date.now() - lastCareTime.getTime()) / 3600000
-      if (hours >= 6 && !currentProblem) {
+      if (hours >= 1 && !currentProblem) {
         const problems = ['plague', 'drought', 'fungus']
         const prob = problems[Math.floor(Math.random() * problems.length)]
         setCurrentProblem(prob)
@@ -184,6 +192,34 @@ export default function TreeDetail() {
     }
   }
 
+  // Harvest action — fires at stage 7 (Maduración 🍫). Awards mazorcas via existing
+  // tree_harvest_share token event; user can later canjear by chocolate in Marketplace.
+  const doHarvest = async () => {
+    if (!tree || harvested || harvesting) return
+    setHarvesting(true)
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const accessToken = sessionData?.session?.access_token
+      if (accessToken) {
+        await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/award-tokens`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+            body: JSON.stringify({ event_type: 'tree_harvest_share', ref_id: tree.id }),
+          },
+        )
+      }
+      setHarvested(true)
+      const reward = TOKEN_RATES.tree_harvest_share
+      addLog('🍫✨', '¡COSECHA!', `+${reward.beans} granos · +${reward.mazorcas} mazorcas — canjeables por chocolate.`, BRAND.mazorca)
+    } catch {
+      // best-effort; user can retry
+    } finally {
+      setHarvesting(false)
+    }
+  }
+
   // Triple-tap tree emoji to find secret molasses
   const handleTreeTap = () => {
     const now = Date.now()
@@ -219,11 +255,16 @@ export default function TreeDetail() {
   }
 
   const guardian = GUARDIANS[tree.guardian_id]
-  const daysSince = (Date.now() - new Date(tree.adopted_at).getTime()) / 86400000
-  const stage = getStageByDays(daysSince)
+  const hoursSince = hoursSinceAdoption(tree.adopted_at)
+  const stage = getStageByHours(hoursSince)
   const healthStatus = getHealthStatus(health)
-  const progressPct = ((stage.id + 1) / GROWTH_STAGES.length) * 100
+  const stageProgressPct = ((stage.id + 1) / GROWTH_STAGES.length) * 100
+  const cyclePct = getCycleProgress(tree.adopted_at) * 100
+  const cycleRemaining = formatTimeUntil(new Date(new Date(tree.adopted_at).getTime() + ADOPTION_HOURS * 3600000))
+  const harvestReady = isHarvestReady(tree.adopted_at)
   const prob = currentProblem ? PLANT_PROBLEMS[currentProblem] : null
+  // cycleTick is consumed via the live ticker effect; reference here keeps re-renders in sync
+  void cycleTick
 
   return (
     <div style={{ background: BRAND.bgDeep, minHeight: '100vh', paddingBottom: '5rem' }}>
@@ -250,7 +291,7 @@ export default function TreeDetail() {
               {guardian.name} · <span style={{ color: BRAND.pod }}>{stage.name}</span>
             </h1>
             <div style={{ fontSize: '0.75rem', color: '#888', marginTop: 2 }}>
-              Día {Math.floor(daysSince)} · {Math.round(daysSince * 10) / 10}/5 días · {stage.emoji}
+              {Math.round(hoursSince * 10) / 10}h / {ADOPTION_HOURS}h · {stage.emoji} · {cycleRemaining === '¡Ahora!' ? 'cosecha lista' : cycleRemaining + ' restantes'}
             </div>
           </div>
           <div style={{
@@ -295,6 +336,64 @@ export default function TreeDetail() {
           </div>
         )}
 
+        {/* HARVEST hero — only when stage 7 (Maduración) and not yet harvested */}
+        {harvestReady && !harvested && (
+          <div style={{
+            background: `linear-gradient(135deg, ${BRAND.mazorca}33, ${BRAND.brown}55)`,
+            border: `2px solid ${BRAND.mazorca}`,
+            borderRadius: 16, padding: '1rem 1.25rem', marginBottom: '1rem',
+            display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
+          }}>
+            <div style={{ fontSize: 44, animation: 'bounce 1.4s ease-in-out infinite' }}>🍫</div>
+            <div style={{ flex: 1, minWidth: 160 }}>
+              <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 16, color: BRAND.mazorca, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                ¡Cosecha lista!
+              </div>
+              <div style={{ fontFamily: FONTS.body, fontSize: 12, color: `${BRAND.heirloom}cc`, marginTop: 4, lineHeight: 1.5 }}>
+                Recolecta {TOKEN_RATES.tree_harvest_share.beans} granos + {TOKEN_RATES.tree_harvest_share.mazorcas} mazorcas — canjeables por chocolate real.
+              </div>
+            </div>
+            <button onClick={doHarvest} disabled={harvesting} style={{
+              padding: '14px 22px', borderRadius: 999,
+              background: `linear-gradient(135deg, ${BRAND.mazorca}, ${BRAND.brown})`,
+              color: BRAND.bgDeep, border: 'none', cursor: harvesting ? 'wait' : 'pointer',
+              fontFamily: FONTS.display, fontWeight: 900, fontSize: 12,
+              letterSpacing: '0.12em', textTransform: 'uppercase',
+              opacity: harvesting ? 0.6 : 1,
+            }}>
+              {harvesting ? 'Cosechando…' : '🍫 RECOLECTAR'}
+            </button>
+          </div>
+        )}
+
+        {/* HARVEST done celebration */}
+        {harvested && (
+          <div style={{
+            background: `linear-gradient(135deg, ${BRAND.mazorca}22, ${BRAND.amazon}88)`,
+            border: `1px solid ${BRAND.mazorca}88`,
+            borderRadius: 12, padding: '0.875rem 1rem', marginBottom: '1rem',
+            display: 'flex', alignItems: 'center', gap: 12,
+          }}>
+            <div style={{ fontSize: 28 }}>🍫✨</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 13, color: BRAND.mazorca, letterSpacing: '0.06em' }}>
+                COSECHA RECIBIDA
+              </div>
+              <div style={{ fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}aa`, marginTop: 2 }}>
+                Ve a tu Dashboard para canjear tus mazorcas por chocolate.
+              </div>
+            </div>
+            <button onClick={() => navigate('/dashboard')} style={{
+              padding: '8px 14px', borderRadius: 999,
+              background: `${BRAND.mazorca}33`, color: BRAND.mazorca,
+              border: `1px solid ${BRAND.mazorca}88`, cursor: 'pointer',
+              fontFamily: FONTS.display, fontWeight: 700, fontSize: 10, letterSpacing: '0.12em',
+            }}>
+              Canjear →
+            </button>
+          </div>
+        )}
+
         {/* CauaGotchi */}
         <CauaGotchi
           health={health} moisture={moisture} sunlight={sunlight}
@@ -315,24 +414,52 @@ export default function TreeDetail() {
           <div style={{ color: BRAND.mazorca, fontSize: '0.75rem' }}>💡 {stage.careTip}</div>
         </div>
 
-        {/* Next Care Countdown */}
+        {/* Cycle progress + next-care countdown — UNIFIED CONTROL CARD */}
         <div style={{
-          background: canCare ? `${BRAND.pod}22` : BRAND.bgCard,
-          border: `1px solid ${canCare ? BRAND.pod : BRAND.amazon + '55'}`,
-          borderRadius: 10, padding: '0.75rem 1rem', marginBottom: '1rem',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          transition: 'background 0.5s, border-color 0.5s',
+          background: BRAND.bgCard, border: `1px solid ${BRAND.amazon}66`,
+          borderRadius: 12, padding: '0.875rem 1rem', marginBottom: '1rem',
         }}>
-          <div>
-            <div style={{ fontSize: '0.7rem', color: '#888', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              {canCare ? '⚡ Próximo cuidado' : `⏱ Próximo cuidado en`}
+          {/* Top row: counters */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 10, gap: 12, flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: 140 }}>
+              <div style={{ fontSize: '0.65rem', color: '#888', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+                ⏳ Ciclo {ADOPTION_HOURS}h
+              </div>
+              <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: '1.5rem', color: BRAND.heirloom, lineHeight: 1.1 }}>
+                {cycleRemaining === '¡Ahora!' ? '¡Listo!' : cycleRemaining}
+              </div>
+              <div style={{ fontSize: '0.7rem', color: '#666' }}>
+                {Math.round(cyclePct)}% del ciclo · cosecha al final
+              </div>
             </div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 700, fontFamily: FONTS.display, color: canCare ? BRAND.pod : '#aaa' }}>
-              {canCare ? '¡Listo para cuidar!' : (nextCareIn || `${CARE_INTERVAL_HOURS}h`)}
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '0.65rem', color: '#888', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                {canCare ? '⚡ Cuidado' : '⏱ Próximo cuidado'}
+              </div>
+              <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: '1.15rem', color: canCare ? BRAND.pod : '#aaa', lineHeight: 1.1 }}>
+                {canCare ? '¡Ya!' : (nextCareIn || `${CARE_INTERVAL_MIN}m`)}
+              </div>
+              <div style={{ fontSize: '0.65rem', color: '#666' }}>
+                cada {CARE_INTERVAL_MIN} min
+              </div>
             </div>
           </div>
-          <div style={{ fontSize: '0.7rem', color: '#666', textAlign: 'right' }}>
-            Cada {CARE_INTERVAL_HOURS}h<br />5 días total
+          {/* Cycle progress bar — long, prominent */}
+          <div style={{ background: `${BRAND.amazon}55`, height: 8, borderRadius: 4, overflow: 'hidden', position: 'relative' }}>
+            <div style={{
+              width: `${cyclePct}%`, height: '100%',
+              background: `linear-gradient(90deg, ${BRAND.pod}, ${BRAND.mazorca})`,
+              transition: 'width 1s ease-out',
+            }} />
+            {/* Stage marks on the bar */}
+            {GROWTH_STAGES.map(s => (
+              <div key={s.id} style={{
+                position: 'absolute',
+                left: `${(s.hoursThreshold / ADOPTION_HOURS) * 100}%`,
+                top: -2, bottom: -2, width: 1,
+                background: s.id <= stage.id ? BRAND.heirloom : `${BRAND.heirloom}33`,
+              }} />
+            ))}
           </div>
         </div>
 
@@ -378,7 +505,7 @@ export default function TreeDetail() {
             disabled={!canCare || activeEffect !== null}
             style={{ width: '100%' }}
           >
-            {activeEffect === 'water' ? '💧 Regando...' : `💧 Regar${!canCare ? ' (' + (nextCareIn || '3h') + ')' : ''}`}
+            {activeEffect === 'water' ? '💧 Regando...' : `💧 Regar${!canCare ? ' (' + (nextCareIn || `${CARE_INTERVAL_MIN}m`) + ')' : ''}`}
           </CauaButton>
           <CauaButton
             variant={activeEffect === 'sunlight' ? 'primary' : 'secondary'}
@@ -444,7 +571,7 @@ export default function TreeDetail() {
           <div style={{ background: `${BRAND.amazon}44`, height: 6, borderRadius: 3, overflow: 'hidden', marginBottom: 12 }}>
             <div style={{
               background: `linear-gradient(90deg, ${BRAND.pod}, ${BRAND.mazorca})`,
-              height: '100%', width: `${progressPct}%`,
+              height: '100%', width: `${stageProgressPct}%`,
               transition: 'width 1s ease-out',
             }} />
           </div>
@@ -516,6 +643,10 @@ export default function TreeDetail() {
           0%   { transform: translateY(-20px); opacity: 0; }
           20%  { opacity: 1; }
           100% { transform: translateY(60px); opacity: 0; }
+        }
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50%      { transform: translateY(-8px); }
         }
       `}</style>
     </div>

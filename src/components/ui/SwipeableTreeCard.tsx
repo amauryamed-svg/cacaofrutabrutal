@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, useMotionValue, useTransform, AnimatePresence, type PanInfo } from 'framer-motion'
 import { BRAND, FONTS } from '../../utils/constants'
 import type { Guardian } from '../../types'
-import { ADOPTION_DAYS, CARE_INTERVAL_HOURS } from '../../utils/growthSystem'
+import { ADOPTION_HOURS, CARE_INTERVAL_MIN } from '../../utils/growthSystem'
 import ColombiaMap from './ColombiaMap'
 
 interface SwipeableTreeCardProps {
@@ -82,7 +82,7 @@ export default function SwipeableTreeCard({
         opacity: 0.85,
         filter: `drop-shadow(0 6px 20px rgba(0,0,0,0.45))`,
       }}>
-        <ColombiaMap region={guardian.region} size={130} />
+        <ColombiaMap region={guardian.region} size={130} showTerrain />
       </div>
 
       {/* Guardian name top */}
@@ -211,7 +211,7 @@ export default function SwipeableTreeCard({
               transition={{ duration: 0.35, ease: 'easeOut' }}
             >
               <div style={{ fontSize: 11, color: BRAND.pod, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>
-                Tu viaje de {ADOPTION_DAYS} días
+                Tu viaje de {ADOPTION_HOURS} horas
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4, marginBottom: 8 }}>
                 {['🌰', '🌱', '🌳', '🍫'].map((e, i) => (
@@ -224,7 +224,7 @@ export default function SwipeableTreeCard({
                 ))}
               </div>
               <div style={{ fontSize: 11, color: '#999' }}>
-                ⏱ Cuida tu árbol cada {CARE_INTERVAL_HOURS}h · 🍯 Items secretos disponibles
+                ⏱ Cuida tu árbol cada {CARE_INTERVAL_MIN}min · 🍯 Items secretos · 🍫 Cosecha al final
               </div>
             </motion.div>
           )}

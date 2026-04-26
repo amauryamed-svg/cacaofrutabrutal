@@ -1,21 +1,33 @@
+import { useNavigate } from 'react-router-dom'
 import { BRAND, FONTS, GUARDIANS } from '../utils/constants'
 import { useAuth } from '../context/AuthContext'
 import { useCocoaTrees } from '../hooks/useCocoaTrees'
+import { useTokenBalance } from '../hooks/useTokenBalance'
 import HubspotLeadForm from '../components/ui/HubspotLeadForm'
 import { useLang } from '../context/LangContext'
 import { makeT } from '../utils/i18n'
-import CauaGotchi from '../components/dashboard/CauaGotchi'
-import { getStageByDays } from '../utils/growthSystem'
+import {
+  getStageByHours, hoursSinceAdoption, getCycleProgress, isHarvestReady,
+  ADOPTION_HOURS, formatTimeUntil,
+} from '../utils/growthSystem'
+
+// Unit Economics anchors — keep in sync with public/investor-landing.html §8.4 data-target values.
+const UE_REVENUE_PER_TREE_YEAR_USD = 240
+const UE_NETWORK_TREES_TOTAL       = 1850
 
 export default function Dashboard() {
   const { profile } = useAuth()
   const { lang } = useLang()
   const T = makeT(lang)
+  const navigate = useNavigate()
   const { trees, loading: treesLoading } = useCocoaTrees()
-  const firstTree = trees[0] ?? null
-  const daysSince = firstTree ? (Date.now() - new Date(firstTree.adopted_at).getTime()) / 86400000 : 0
-  const treeStage = getStageByDays(daysSince)
-  const guardian  = firstTree ? GUARDIANS[firstTree.guardian_id] : null
+  const { mazorcas, beans } = useTokenBalance()
+
+  // Per-portfolio rollups anchored to investor-landing Unit Economics
+  const adoptedCount     = trees.length
+  const totalCo2Kg       = trees.reduce((sum, t) => sum + (t.co2_kg ?? 0), 0)
+  const totalRevenueUsd  = trees.reduce((sum, t) => sum + getCycleProgress(t.adopted_at) * UE_REVENUE_PER_TREE_YEAR_USD, 0)
+  const harvestReadyCount = trees.filter(t => isHarvestReady(t.adopted_at)).length
 
   const METRICS = [
     { label: lang === 'es' ? 'Toneladas Desviadas'    : 'Tons Diverted',         value: '2.4', unit: 'ton',  icon: '♻️', color: BRAND.pod     },
@@ -55,42 +67,151 @@ export default function Dashboard() {
           textTransform: 'uppercase', margin: '0 0 32px', lineHeight: 0.95,
         }}>{T('dash_title').split(' ')[0]} <span style={{ color: BRAND.pod }}>{T('dash_title').split(' ')[1]}</span></h2>
 
-        {/* Cacao-Gotchi Embedded Panel */}
+        {/* Tus Árboles · Unit Economics — replaces the embedded CauaGotchi panel.
+            Anchors each adoption to the macro Unit Economics shown in investor-landing.html §8.4
+            (revenue por árbol/año, red total). Cosecha disponible → canjear mazorcas por chocolate. */}
         {treesLoading ? (
           <div style={{
             border: `2px dashed ${BRAND.amazon}`, borderRadius: 16, padding: 40,
             textAlign: 'center', marginBottom: 24, color: `${BRAND.heirloom}44`,
             fontFamily: FONTS.display, fontSize: 12, letterSpacing: '0.1em',
           }}>
-            Cargando tu árbol...
+            {lang === 'es' ? 'Cargando tus árboles...' : 'Loading your trees...'}
           </div>
-        ) : firstTree && guardian ? (
-          <CauaGotchi
-            health={firstTree.health ?? 80}
-            moisture={firstTree.moisture ?? 70}
-            sunlight={firstTree.sunlight ?? 60}
-            stageText={treeStage.name}
-            treeName={guardian.name}
-            stageEmoji={treeStage.emoji}
-            stageId={treeStage.id}
-          />
-        ) : (
+        ) : adoptedCount === 0 ? (
           <div style={{
             border: `2px dashed ${BRAND.amazon}`, borderRadius: 16, padding: 40,
             textAlign: 'center', marginBottom: 24,
           }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>🌰</div>
             <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 14, color: BRAND.heirloom, letterSpacing: '0.1em', marginBottom: 8 }}>
-              AÚN NO TIENES UN ÁRBOL
+              {lang === 'es' ? 'AÚN NO TIENES UN ÁRBOL' : 'YOU HAVE NO TREES YET'}
             </div>
-            <a href="/adoptar" style={{
-              display: 'inline-block', background: `linear-gradient(135deg, ${BRAND.pod}, ${BRAND.amazon})`,
+            <button onClick={() => navigate('/adoptar')} style={{
+              background: `linear-gradient(135deg, ${BRAND.pod}, ${BRAND.amazon})`,
               color: BRAND.heirloom, borderRadius: 999, padding: '10px 24px',
-              fontFamily: FONTS.display, fontWeight: 700, fontSize: 12,
-              letterSpacing: '0.12em', textDecoration: 'none', textTransform: 'uppercase',
+              fontFamily: FONTS.display, fontWeight: 700, fontSize: 12, border: 'none',
+              letterSpacing: '0.12em', cursor: 'pointer', textTransform: 'uppercase',
             }}>
-              Adoptar árbol →
-            </a>
+              {lang === 'es' ? 'Adoptar árbol →' : 'Adopt a tree →'}
+            </button>
+          </div>
+        ) : (
+          <div style={{
+            background: `linear-gradient(135deg, ${BRAND.bgCard}, ${BRAND.amazon}77)`,
+            border: `1px solid ${BRAND.pod}55`,
+            borderRadius: 16, padding: 24, marginBottom: 32,
+          }}>
+            {/* Section header */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontFamily: FONTS.serif, fontStyle: 'italic', color: BRAND.pod, fontSize: 11, letterSpacing: '0.22em', marginBottom: 6 }}>
+                {lang === 'es' ? '08.4 · UNIT ECONOMICS · TU PORTAFOLIO' : '08.4 · UNIT ECONOMICS · YOUR PORTFOLIO'}
+              </div>
+              <h3 style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 'clamp(20px,5vw,28px)', color: BRAND.heirloom, margin: 0, textTransform: 'uppercase', lineHeight: 0.95 }}>
+                {lang === 'es' ? 'Tus árboles · ' : 'Your trees · '}
+                <span style={{ color: BRAND.mazorca }}>{adoptedCount}</span>
+                {lang === 'es' ? ' adoptados' : ' adopted'}
+              </h3>
+              <div style={{ fontFamily: FONTS.body, fontSize: 12, color: `${BRAND.heirloom}77`, marginTop: 6 }}>
+                {lang === 'es'
+                  ? `Parte de ${UE_NETWORK_TREES_TOTAL.toLocaleString('es-CO')} árboles activos en la red CFB.`
+                  : `Part of ${UE_NETWORK_TREES_TOTAL.toLocaleString('en-US')} active trees in the CFB network.`}
+              </div>
+            </div>
+
+            {/* Per-portfolio rollups (anchored to UE) */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 20 }}>
+              <div style={ueTileStyle(BRAND.pod)}>
+                <div style={ueLabelStyle}>{lang === 'es' ? 'Revenue contribución' : 'Revenue contribution'}</div>
+                <div style={ueNumStyle(BRAND.pod)}>${Math.round(totalRevenueUsd).toLocaleString('en-US')}<span style={ueUnitStyle}>USD</span></div>
+                <div style={ueHintStyle}>${UE_REVENUE_PER_TREE_YEAR_USD}/{lang === 'es' ? 'árbol·año' : 'tree·yr'}</div>
+              </div>
+              <div style={ueTileStyle(BRAND.heroic)}>
+                <div style={ueLabelStyle}>CO₂ {lang === 'es' ? 'capturado' : 'captured'}</div>
+                <div style={ueNumStyle(BRAND.heroic)}>{totalCo2Kg.toFixed(2)}<span style={ueUnitStyle}>kg</span></div>
+                <div style={ueHintStyle}>{lang === 'es' ? 'verificado vía IoT' : 'verified via IoT'}</div>
+              </div>
+              <div style={ueTileStyle(BRAND.mazorca)}>
+                <div style={ueLabelStyle}>{lang === 'es' ? 'Cosecha lista' : 'Harvest ready'}</div>
+                <div style={ueNumStyle(BRAND.mazorca)}>{harvestReadyCount}<span style={ueUnitStyle}>🍫</span></div>
+                <div style={ueHintStyle}>{lang === 'es' ? `de ${adoptedCount} totales` : `of ${adoptedCount} total`}</div>
+              </div>
+            </div>
+
+            {/* Cosecha + canjear chocolate CTA */}
+            {(harvestReadyCount > 0 || mazorcas > 0) && (
+              <div style={{
+                background: `${BRAND.mazorca}18`, border: `1px solid ${BRAND.mazorca}66`,
+                borderRadius: 12, padding: '12px 16px', marginBottom: 20,
+                display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+              }}>
+                <div style={{ fontSize: 28 }}>🍫</div>
+                <div style={{ flex: 1, minWidth: 160 }}>
+                  <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 12, color: BRAND.mazorca, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                    {lang === 'es' ? 'Mazorcas para canjear' : 'Mazorcas to redeem'}
+                  </div>
+                  <div style={{ fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}aa`, marginTop: 2 }}>
+                    {lang === 'es'
+                      ? `${mazorcas} mazorcas · ${beans.toFixed(1)} granos. Cánjealas por chocolate ceremonial real en Marketplace.`
+                      : `${mazorcas} mazorcas · ${beans.toFixed(1)} beans. Redeem for real ceremonial chocolate in Marketplace.`}
+                  </div>
+                </div>
+                <button onClick={() => navigate('/marketplace')} style={{
+                  padding: '10px 18px', borderRadius: 999,
+                  background: `linear-gradient(135deg, ${BRAND.mazorca}, ${BRAND.brown})`,
+                  color: BRAND.bgDeep, border: 'none', cursor: 'pointer',
+                  fontFamily: FONTS.display, fontWeight: 700, fontSize: 11, letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                }}>
+                  {lang === 'es' ? 'Canjear →' : 'Redeem →'}
+                </button>
+              </div>
+            )}
+
+            {/* Tree tiles */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 10 }}>
+              {trees.map(t => {
+                const g = GUARDIANS[t.guardian_id]
+                const hours = hoursSinceAdoption(t.adopted_at)
+                const stage = getStageByHours(hours)
+                const cyclePct = getCycleProgress(t.adopted_at) * 100
+                const ready = isHarvestReady(t.adopted_at)
+                const remaining = formatTimeUntil(new Date(new Date(t.adopted_at).getTime() + ADOPTION_HOURS * 3600000))
+                return (
+                  <button key={t.id} onClick={() => navigate(`/tree/${t.id}`)} style={{
+                    background: ready ? `${BRAND.mazorca}1a` : BRAND.bgCard,
+                    border: `1px solid ${ready ? BRAND.mazorca + 'aa' : BRAND.amazon + '88'}`,
+                    borderRadius: 12, padding: '12px 14px', cursor: 'pointer',
+                    color: BRAND.heirloom, textAlign: 'left',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <span style={{ fontSize: 22 }}>{stage.emoji}</span>
+                      {ready && <span style={{ fontFamily: FONTS.display, fontSize: 9, fontWeight: 800, color: BRAND.mazorca, letterSpacing: '0.12em', background: `${BRAND.mazorca}33`, padding: '2px 6px', borderRadius: 4 }}>🍫 LISTO</span>}
+                    </div>
+                    <div style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 13, color: BRAND.heirloom }}>
+                      {g?.name ?? 'Árbol'} · <span style={{ color: BRAND.pod }}>{stage.name}</span>
+                    </div>
+                    <div style={{ fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}66`, marginTop: 2 }}>
+                      {ready ? (lang === 'es' ? 'Cosecha disponible' : 'Harvest available') : `${remaining} ${lang === 'es' ? 'restantes' : 'left'}`}
+                    </div>
+                    <div style={{ marginTop: 8, height: 4, background: `${BRAND.amazon}55`, borderRadius: 2, overflow: 'hidden' }}>
+                      <div style={{ width: `${cyclePct}%`, height: '100%', background: `linear-gradient(90deg, ${BRAND.pod}, ${BRAND.mazorca})` }} />
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Adopt-more CTA */}
+            <div style={{ textAlign: 'center', marginTop: 16 }}>
+              <button onClick={() => navigate('/adoptar')} style={{
+                background: 'transparent', border: `1px solid ${BRAND.pod}66`, color: BRAND.pod,
+                borderRadius: 999, padding: '8px 20px', cursor: 'pointer',
+                fontFamily: FONTS.display, fontWeight: 700, fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase',
+              }}>
+                {lang === 'es' ? '+ Adoptar otro árbol' : '+ Adopt another tree'}
+              </button>
+            </div>
           </div>
         )}
 
@@ -198,4 +319,29 @@ export default function Dashboard() {
       </div>
     </div>
   )
+}
+
+// ── style helpers for the Unit Economics tiles ──
+function ueTileStyle(accent: string): React.CSSProperties {
+  return {
+    background: `${BRAND.bgDeep}aa`,
+    border: `1px solid ${accent}55`,
+    borderRadius: 10, padding: '12px 14px',
+  }
+}
+const ueLabelStyle: React.CSSProperties = {
+  fontFamily: FONTS.display, fontWeight: 700, fontSize: 9, letterSpacing: '0.15em',
+  color: `${BRAND.heirloom}66`, textTransform: 'uppercase', marginBottom: 4,
+}
+function ueNumStyle(accent: string): React.CSSProperties {
+  return {
+    fontFamily: FONTS.display, fontWeight: 900, fontSize: 26, color: accent,
+    lineHeight: 1, display: 'flex', alignItems: 'baseline', gap: 6,
+  }
+}
+const ueUnitStyle: React.CSSProperties = {
+  fontSize: 11, color: `${BRAND.heirloom}66`, fontWeight: 700,
+}
+const ueHintStyle: React.CSSProperties = {
+  fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}55`, marginTop: 4,
 }
