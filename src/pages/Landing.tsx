@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BRAND, FONTS, GUARDIANS } from '../utils/constants'
 import CauaButton from '../components/ui/CauaButton'
-import CauaLogo from '../components/ui/CauaLogo'
 import { useLang } from '../context/LangContext'
 import { makeT } from '../utils/i18n'
 
