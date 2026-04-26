@@ -17,13 +17,14 @@
 
   // UI/UX Bar §3 — reduced-motion hard kill switch
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  // UI/UX Bar §4 — WebGL gated: skip render on narrow viewports or low-core hosts
-  const tooNarrow = window.innerWidth < 768;
+  // Skip on truly low-core hosts (rare); always render for mobile/desktop with motion enabled.
+  // The original ui-ux-bar §4 mobile gate hid the canvas on < 768px viewports — relaxed because
+  // the divine mazorca header hook needs to be visible on every device.
   const lowCore = (navigator.hardwareConcurrency || 4) < 4;
-  if (reduceMotion || tooNarrow || lowCore) { canvas.style.display = 'none'; return; }
+  if (reduceMotion || lowCore) { canvas.style.display = 'none'; return; }
 
-  const isMobile = false;  // gate above ensures we're on a capable device
-  const dprCap = 2;
+  const isMobile = window.innerWidth < 768;
+  const dprCap = isMobile ? 1.25 : 2;
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: !isMobile, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, dprCap));
