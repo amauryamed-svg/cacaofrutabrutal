@@ -48,9 +48,6 @@ interface Slash {
 }
 
 // ── Helpers ───────────────────────────────────────────────────
-const MAZORCA_EMOJIS = ['🍫', '🟤', '🟠'] // visual proxy until real SVG
-const GRAIN_EMOJIS   = ['🫘', '🌰', '🫘']
-
 function dist(ax: number, ay: number, bx: number, by: number) {
   return Math.sqrt((ax - bx) ** 2 + (ay - by) ** 2)
 }
