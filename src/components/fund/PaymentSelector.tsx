@@ -54,22 +54,16 @@ export default function PaymentSelector({ selected, currency, onSelect, onCurren
 
   const CRYPTO_OPTIONS: Option[] = [
     {
-      id: 'coinbase_usdc',
-      label: 'USDC · Coinbase',
-      sub: T('USD Coin en cadena · Coinbase Commerce', 'USD Coin on-chain · Coinbase Commerce'),
-      icon: '🔵', currency: 'USD',
+      id: 'wallet_eth_direct',
+      label: T('Wallet ETH · Bitso/Coinbase', 'Wallet ETH · Bitso/Coinbase'),
+      sub: T('Transferencia directa a wallet CTO/CEO · verificación on-chain', 'Direct transfer to CTO/CEO wallet · on-chain verification'),
+      icon: '⟠', currency: 'USD',
     },
     {
       id: 'coinbase_cop_digital',
-      label: 'COP Digital',
-      sub: T('Peso digital colombiano · en proceso', 'Colombian digital peso · coming soon'),
-      icon: '🟡', currency: 'COP', coming: true,
-    },
-    {
-      id: 'coinbase_eur_digital',
-      label: 'EUR Digital',
-      sub: T('Euro digital CBDC · en proceso', 'Digital euro CBDC · coming soon'),
-      icon: '🟣', currency: 'EUR', coming: true,
+      label: 'USDC · BTC · SOL',
+      sub: T('Multi-chain · próximamente', 'Multi-chain · coming soon'),
+      icon: '🔮', currency: 'USD', coming: true,
     },
   ]
 
@@ -143,7 +137,8 @@ export default function PaymentSelector({ selected, currency, onSelect, onCurren
         <div style={{ display: 'flex', flexDirection: 'column', gap: 5, paddingLeft: 10, borderLeft: `2px solid ${BRAND.amazon}33` }}>
           {CRYPTO_OPTIONS.map(opt => <GatewayRow key={opt.id} opt={opt} selected={selected} onSelect={onSelect} />)}
           <p style={{ fontFamily: FONTS.body, fontSize: 9, color: `${BRAND.heirloom}33`, margin: '4px 0 0' }}>
-            {T('Pagos crypto procesados por Coinbase Commerce. Monedas digitales en proceso de integración.', 'Crypto payments processed by Coinbase Commerce. Digital currencies integration in progress.')}
+            {T('ETH directo a wallets CTO/CEO en Bitso (también compatible con Coinbase Wallet/MetaMask). Tras transferir, pegas el tx hash y nuestro equipo confirma en 24h. Multi-chain (USDC, BTC, SOL) próximamente.',
+               'Direct ETH to CTO/CEO wallets at Bitso (also compatible with Coinbase Wallet/MetaMask). After sending, paste the tx hash and our team confirms within 24h. Multi-chain (USDC, BTC, SOL) coming soon.')}
           </p>
         </div>
       )}

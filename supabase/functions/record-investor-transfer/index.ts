@@ -10,6 +10,7 @@
 //   tx_hash: string,                      // hash on-chain reportado
 //   network?: string,                     // 'ethereum' (default)
 //   asset?:   string,                     // 'ETH' (default)
+//   context?: { tech_id?, mvp_id?, lots_count?, currency? }  // si viene del per-tech InvestModal
 // }
 // Returns: { id: uuid, etherscan_url?: string }
 //
@@ -19,9 +20,12 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { getCorsHeaders, handleCorsPreFlight } from '../cors-config.ts'
 
+// b2b_sponsorship is the catch-all for both standalone B2B sponsorship AND
+// per-tech lot/MVP investments coming from InvestModal. The optional `context`
+// field disambiguates (and stores tech_id/mvp_id/lots_count for back-office reconciliation).
 const PACKAGES = {
   equity_5k:       { min: 5000, max: 5000 },
-  b2b_sponsorship: { min: 100,  max: 50000 },
+  b2b_sponsorship: { min: 1,    max: 50000 },
 } as const
 
 type Kind = keyof typeof PACKAGES
@@ -61,6 +65,7 @@ serve(async (req) => {
     const tx_hash         = String(body.tx_hash || '').trim()
     const network         = String(body.network || 'ethereum').toLowerCase()
     const asset           = String(body.asset   || 'ETH').toUpperCase()
+    const context         = (body.context && typeof body.context === 'object') ? body.context : {}
 
     if (!kind || !PACKAGES[kind]) {
       return new Response(JSON.stringify({ error: 'Invalid kind' }), { status: 400, headers: corsHeaders })
@@ -96,6 +101,10 @@ serve(async (req) => {
         metadata: {
           email:        user.email ?? '',
           submitted_at: new Date().toISOString(),
+          ...(context.tech_id    ? { tech_id:    String(context.tech_id) } : {}),
+          ...(context.mvp_id     ? { mvp_id:     String(context.mvp_id)  } : {}),
+          ...(context.lots_count ? { lots_count: Number(context.lots_count) } : {}),
+          ...(context.currency   ? { currency:   String(context.currency) } : {}),
         },
       })
       .select('id')

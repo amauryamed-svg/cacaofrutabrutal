@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { BRAND, FONTS } from '../../utils/constants'
 import { supabase } from '../../lib/supabase'
 import PaymentSelector from './PaymentSelector'
+import WalletCheckout from './WalletCheckout'
 import type { Technology, Mvp, PaymentMethod, Currency, InvestMode } from '../../types/fund.types'
 import type { UserProfile } from '../../lib/database.types'
 
@@ -20,11 +21,14 @@ const EUR_COP_APPROX = 4500   // 1 EUR ≈ 4 500 COP (display only — server pr
 const EUR_USD_APPROX = 1.10   // 1 EUR ≈ 1.10 USD (display only)
 
 export default function InvestModal({ technology, mvp, mode, onClose, user, profile, lang }: Props) {
-  const [lots,     setLots]    = useState(1)
-  const [payment,  setPayment] = useState<PaymentMethod>('mercadopago')
-  const [currency, setCurrency] = useState<Currency>('COP')
-  const [loading,  setLoading] = useState(false)
-  const [err,      setErr]     = useState<string | null>(null)
+  const [lots,        setLots]        = useState(1)
+  const [payment,     setPayment]     = useState<PaymentMethod>('mercadopago')
+  const [currency,    setCurrency]    = useState<Currency>('COP')
+  const [loading,     setLoading]     = useState(false)
+  const [err,         setErr]         = useState<string | null>(null)
+  // When user picks 'wallet_eth_direct' and clicks Pay, swap the modal content
+  // to the WalletCheckout flow (transfer → verify → Allocación Asegurada · 24h).
+  const [walletOpen,  setWalletOpen]  = useState(false)
   const navigate = useNavigate()
 
   const T = (es: string, en: string) => lang === 'es' ? es : en
@@ -72,13 +76,16 @@ export default function InvestModal({ technology, mvp, mode, onClose, user, prof
   }
 
   const handlePay = async () => {
-    if (payment === 'coinbase_cop_digital' || payment === 'coinbase_eur_digital') return // UI disabled
+    // Crypto via wallet directo → swap a WalletCheckout (no llama a ningún Edge Fn de checkout externo)
+    if (payment === 'wallet_eth_direct') {
+      setWalletOpen(true)
+      return
+    }
+    // Otras opciones crypto disabled (coming soon)
+    if (payment === 'coinbase_usdc' || payment === 'coinbase_cop_digital' || payment === 'coinbase_eur_digital') return
     setLoading(true); setErr(null)
     try {
-      const isCrypto = payment === 'coinbase_usdc'
-      const fn = payment === 'mercadopago'
-        ? 'create-mp-preference'
-        : isCrypto ? 'create-coinbase-charge' : 'create-stripe-checkout'
+      const fn = payment === 'mercadopago' ? 'create-mp-preference' : 'create-stripe-checkout'
 
       const body = {
         technology_id: technology.id,
@@ -101,7 +108,7 @@ export default function InvestModal({ technology, mvp, mode, onClose, user, prof
     if (loading) return T('PROCESANDO...', 'PROCESSING...')
     if (payment === 'mercadopago') return `${T('PAGAR CON MERCADOPAGO', 'PAY WITH MERCADOPAGO')} · ${displayTotal}`
     if (payment === 'stripe_usd' || payment === 'stripe_eur') return `${T('PAGAR CON TARJETA', 'PAY BY CARD')} · ${displayTotal}`
-    if (payment === 'coinbase_usdc') return `${T('PAGAR CON USDC', 'PAY WITH USDC')} · ${fmtUsd(totalUsd)}`
+    if (payment === 'wallet_eth_direct') return `${T('TRANSFERIR ETH DIRECTO', 'TRANSFER ETH DIRECT')} · ${fmtUsd(totalUsd)}`
     return T('PAGAR', 'PAY')
   }
 
@@ -123,6 +130,33 @@ export default function InvestModal({ technology, mvp, mode, onClose, user, prof
       </div>
 
       <div style={{ padding: '20px 24px 24px', display: 'flex', flexDirection: 'column', gap: 20, maxHeight: '70vh', overflowY: 'auto' }}>
+
+        {/* Crypto wallet checkout — swap content cuando user picks wallet_eth_direct + clicks Pay */}
+        {walletOpen ? (
+          <>
+            <button onClick={() => setWalletOpen(false)} style={{
+              alignSelf: 'flex-start', background: 'transparent', border: `1px solid ${BRAND.amazon}aa`,
+              borderRadius: 999, padding: '6px 14px', cursor: 'pointer',
+              fontFamily: FONTS.display, fontWeight: 700, fontSize: 10, letterSpacing: '0.15em',
+              color: `${BRAND.heirloom}88`, textTransform: 'uppercase',
+            }}>
+              ← {T('Cambiar método', 'Change method')}
+            </button>
+            <WalletCheckout
+              amount_usd={Math.round(totalUsd / 100)}
+              kind="b2b_sponsorship"
+              context={{
+                tech_id:    technology.id,
+                mvp_id:     mode === 'mvp' ? (mvp?.id ?? null) : null,
+                lots_count: lots,
+                currency,
+              }}
+              lang={lang}
+              onClose={onClose}
+            />
+          </>
+        ) : (
+          <>
         {/* Qty stepper */}
         <div>
           <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 9, letterSpacing: '0.2em', color: `${BRAND.heirloom}55`, marginBottom: 8 }}>
@@ -188,6 +222,8 @@ export default function InvestModal({ technology, mvp, mode, onClose, user, prof
             {T(`Tasa indicativa 1 EUR ≈ $${EUR_COP_APPROX.toLocaleString('es-CO')} COP. El servidor calcula el precio final.`,
                `Indicative rate 1 EUR ≈ $${EUR_COP_APPROX.toLocaleString('en-US')} COP. Server calculates final price.`)}
           </p>
+        )}
+          </>
         )}
       </div>
     </Overlay>
