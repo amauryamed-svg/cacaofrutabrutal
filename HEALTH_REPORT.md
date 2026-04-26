@@ -1,6 +1,6 @@
 # CAUA Health Report
-Timestamp: 2026-04-26T13:08:30Z
-Previous run: 2026-04-26T12:04:38Z
+Timestamp: 2026-04-26T14:15:00Z
+Previous run: 2026-04-26T13:08:30Z
 
 ## Summary: ⚠️ INCONCLUSIVE — Sandbox Egress Block
 
@@ -30,13 +30,49 @@ Previous run: 2026-04-26T12:04:38Z
 - **Root cause:** The Anthropic sandbox intercepts all HTTPS and blocks non-allowlisted hosts. `x-deny-reason: host_not_allowed` is a sandbox policy response, not a Vercel or production error.
 - **This is NOT a production site failure.** No evidence of a real outage across any of the prior runs.
 - **Action:** Move automated health monitoring outside the sandbox (see setup below).
-- Run count: **44th consecutive blocked run** (first blocked: 2026-04-20T22:08:41Z).
+- Run count: **45th consecutive blocked run** (first blocked: 2026-04-20T22:08:41Z).
 
 ---
 
 ## Raw curl Evidence
 
-### 2026-04-26T13:08:30Z run (current)
+### 2026-04-26T14:15:00Z run (current)
+```
+# Site availability
+403 0.253113s
+
+# Full headers (HTTPS)
+HTTP/2 403
+x-deny-reason: host_not_allowed
+content-length: 21
+content-type: text/plain
+date: Sun, 26 Apr 2026 14:14:58 GMT
+
+# Full headers (HTTP)
+HTTP/1.1 403 Forbidden
+x-deny-reason: host_not_allowed
+content-length: 21
+content-type: text/plain
+date: Sun, 26 Apr 2026 14:14:59 GMT
+
+# TLS/SSL details (verbose)
+* TLSv1.3 / TLS_AES_256_GCM_SHA384 / X25519 — handshake succeeds
+* cert subject:  CN=cacaofrutabrutal.com
+* cert issuer:   O=Anthropic; CN=sandbox-egress-production TLS Inspection CA
+* cert expiry:   May 26 14:14:58 2026 GMT  ← proxy cert, not real site cert
+* HTTP/2 accepted (ALPN: h2)
+
+# Body: "Host not in allowlist"
+# Security headers: none (blocked at proxy)
+# Supabase auth: 403 — host_not_allowed (same proxy block pattern)
+# Supabase REST: 403 — host_not_allowed
+# HTTP→HTTPS redirect: 403 (blocked before redirect, no 301/302 visible)
+# SSL check: SSL OK (TLS 1.3 handshake succeeds, no curl SSL errors)
+# /fund route: 403 host_not_allowed
+# Control: --resolve cacaofrutabrutal.com:443:76.76.21.21 → still 403 host_not_allowed
+```
+
+### 2026-04-26T13:08:30Z run (previous)
 ```
 # Site availability
 403 0.389530s
