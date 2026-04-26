@@ -1,6 +1,6 @@
 # CAUA Health Report
-Timestamp: 2026-04-26T01:14:35Z
-Previous run: 2026-04-25T14:23:10Z
+Timestamp: 2026-04-26T02:02:15Z
+Previous run: 2026-04-26T01:14:35Z
 
 ## Summary: ⚠️ INCONCLUSIVE — Sandbox Egress Block
 
@@ -10,7 +10,7 @@ Previous run: 2026-04-25T14:23:10Z
 
 | Check | Status | Detail |
 |-------|--------|--------|
-| Site availability | ⚠️ INCONCLUSIVE | 403 `host_not_allowed` — sandbox egress proxy, **0.244s** response time |
+| Site availability | ⚠️ INCONCLUSIVE | 403 `host_not_allowed` — sandbox egress proxy, **0.272s** response time |
 | Security headers | ⚠️ INCONCLUSIVE | No app-layer headers returned; blocked at proxy |
 | Supabase auth endpoint | ⚠️ INCONCLUSIVE | 403 — body: "Host not in allowlist" |
 | Supabase REST endpoint | ⚠️ INCONCLUSIVE | 403 — body: "Host not in allowlist" |
@@ -30,13 +30,41 @@ Previous run: 2026-04-25T14:23:10Z
 - **Root cause:** The Anthropic sandbox intercepts all HTTPS and blocks non-allowlisted hosts. `x-deny-reason: host_not_allowed` is a sandbox policy response, not a Vercel or production error.
 - **This is NOT a production site failure.** No evidence of a real outage across any of the prior runs.
 - **Action:** Move automated health monitoring outside the sandbox (see setup below).
-- Run count: **32nd consecutive blocked run** (first blocked: 2026-04-20T22:08:41Z).
+- Run count: **33rd consecutive blocked run** (first blocked: 2026-04-20T22:08:41Z).
 
 ---
 
 ## Raw curl Evidence
 
-### 2026-04-26T01:14:35Z run (current)
+### 2026-04-26T02:02:15Z run (current)
+```
+# Site availability
+403 0.272423s
+
+# Full headers (HTTPS)
+HTTP/2 403
+x-deny-reason: host_not_allowed
+content-length: 21
+content-type: text/plain
+date: Sun, 26 Apr 2026 02:02:11 GMT
+
+# Full headers (HTTP)
+HTTP/1.1 403 Forbidden
+x-deny-reason: host_not_allowed
+content-length: 21
+content-type: text/plain
+date: Sun, 26 Apr 2026 02:02:14 GMT
+
+# Body: "Host not in allowlist"
+# Security headers: none (blocked at proxy)
+# Supabase auth: 403 — "Host not in allowlist"
+# Supabase REST: 403 — "Host not in allowlist"
+# HTTP→HTTPS redirect: 403 (blocked before redirect)
+# SSL check: SSL OK (no curl SSL error strings)
+# /fund route: 403 host_not_allowed
+```
+
+### 2026-04-26T01:14:35Z run (previous)
 ```
 # Site availability
 403 0.244390s
