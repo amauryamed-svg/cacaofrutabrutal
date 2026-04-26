@@ -6,17 +6,20 @@ on:
   workflow_dispatch:
 
 # Single source of truth for production deploys: every push to `main` (or manual
-# dispatch) calls the deploy hook for the caua-mvp Vercel project. No other
-# Vercel project should have GitHub integration enabled — this workflow is the
-# only deployment trigger.
+# dispatch) calls the deploy hook for the caua-mvp Vercel project, then promotes
+# the new READY deployment to the production aliases (cacaofrutabrutal.com and www).
+# No other Vercel project should have GitHub integration enabled.
 #
 # Setup: see docs/deploy-setup.md
 #   1. In Vercel dashboard → caua-mvp → Settings → Git → Deploy Hooks
 #      Create a hook for branch `main`. Copy the URL.
-#   2. In GitHub → Settings → Secrets and variables → Actions → New secret
-#      Name:  VERCEL_DEPLOY_HOOK_URL
-#      Value: <hook URL from step 1>
-#   3. In every other Vercel project that points at this repo:
+#   2. In Vercel dashboard → Account Settings → Tokens → Create Token
+#      Name: github-actions-cfb · Scope: full account · Expires: 1 year
+#      Copy the token (shown ONCE).
+#   3. In GitHub → Settings → Secrets and variables → Actions → New secret
+#      VERCEL_DEPLOY_HOOK_URL = <hook URL from step 1>
+#      VERCEL_TOKEN           = <token from step 2>
+#   4. In every other Vercel project pointed at this repo:
 #      Settings → Git → Disconnect from Git Repository
 
 jobs:
@@ -36,3 +39,62 @@ jobs:
           cat response.json
           echo
           echo "Deploy queued for sha ${GITHUB_SHA}. Check status at https://vercel.com"
+
+  promote-alias:
+    name: Promote latest READY deployment to production alias
+    needs: trigger-vercel-deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for deployment to become READY for this commit
+        id: poll
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "::warning::VERCEL_TOKEN not configured — skipping alias promotion. Add it to GitHub Secrets to enable auto-promote."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Initial wait: hook → build → ready usually takes ~60–120s
+          sleep 45
+          # Poll up to 8 minutes (24 × 20s)
+          for i in $(seq 1 24); do
+            RESP=$(curl -fsS -H "Authorization: Bearer $VERCEL_TOKEN" \
+              "https://api.vercel.com/v6/deployments?app=caua-mvp&limit=5&state=READY&target=production")
+            DEP_ID=$(echo "$RESP" | jq -r '.deployments[0].uid // empty')
+            DEP_URL=$(echo "$RESP" | jq -r '.deployments[0].url // empty')
+            DEP_SHA=$(echo "$RESP" | jq -r '.deployments[0].meta.githubCommitSha // empty')
+            if [ "$DEP_SHA" = "$GITHUB_SHA" ] && [ -n "$DEP_ID" ]; then
+              echo "Found READY deployment for $GITHUB_SHA → $DEP_URL"
+              echo "id=$DEP_ID"   >> "$GITHUB_OUTPUT"
+              echo "url=$DEP_URL" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "Attempt $i/24 — latest READY is for sha ${DEP_SHA:-none}, want $GITHUB_SHA. Retry in 20s."
+            sleep 20
+          done
+          echo "::error::Timed out waiting for READY deployment matching $GITHUB_SHA"
+          exit 1
+
+      - name: Set production aliases
+        if: steps.poll.outputs.skip != 'true'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          DEP_ID: ${{ steps.poll.outputs.id }}
+          DEP_URL: ${{ steps.poll.outputs.url }}
+        run: |
+          for ALIAS in cacaofrutabrutal.com www.cacaofrutabrutal.com; do
+            echo "Aliasing $DEP_URL → $ALIAS"
+            HTTP_CODE=$(curl -sS -o resp.json -w "%{http_code}" \
+              -X POST -H "Authorization: Bearer $VERCEL_TOKEN" \
+              -H "Content-Type: application/json" \
+              "https://api.vercel.com/v2/deployments/$DEP_ID/aliases" \
+              -d "{\"alias\":\"$ALIAS\"}")
+            cat resp.json
+            echo
+            if [ "$HTTP_CODE" -ne 200 ] && [ "$HTTP_CODE" -ne 201 ]; then
+              echo "::error::Alias request for $ALIAS returned HTTP $HTTP_CODE"
+              exit 1
+            fi
+          done
+          echo "✅ Aliases promoted to deployment $DEP_ID for sha $GITHUB_SHA"
