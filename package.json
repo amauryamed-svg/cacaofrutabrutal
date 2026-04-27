@@ -5,9 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/preview-og.mjs --output=public/og.png",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "og:preview": "node scripts/preview-og.mjs",
+    "og:build": "node scripts/preview-og.mjs --output=public/og.png",
     "postinstall": "bash scripts/install-hooks.sh"
   },
   "dependencies": {
