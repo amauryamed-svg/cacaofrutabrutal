@@ -1,0 +1,8 @@
+project_id = "kjygovuiphbxcdxeduco"
+
+# Meta webhook receives signed payloads from Meta — Meta does not include a
+# Supabase JWT, so we must disable Supabase's default JWT verification and
+# instead rely on the function's own HMAC SHA-256 verification of the
+# x-hub-signature-256 header against META_APP_SECRET.
+[functions.meta-webhook]
+verify_jwt = false
