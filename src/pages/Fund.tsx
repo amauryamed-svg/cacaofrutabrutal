@@ -7,6 +7,7 @@ import { useFundData } from '../hooks/useFundData'
 import FundHero from '../components/fund/FundHero'
 import TechnologyCard from '../components/fund/TechnologyCard'
 import InvestorPath from '../components/fund/InvestorPath'
+import CacaoCeremonyCTA from '../components/marketplace/CacaoCeremonyCTA'
 import type { CauaRole } from '../types/fund.types'
 
 export default function Fund() {
@@ -194,6 +195,9 @@ export default function Fund() {
                 </div>
               ))}
             </div>
+
+            {/* Investor perk: Cacao Ceremony cross-sell */}
+            <CacaoCeremonyCTA variant="fondo" />
           </div>
         )}
       </div>

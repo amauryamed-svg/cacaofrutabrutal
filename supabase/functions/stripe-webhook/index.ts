@@ -66,19 +66,16 @@ serve(async (req) => {
         return new Response(JSON.stringify({ error: fetchError.message }), { status: 400 })
       }
 
-      // Get user email
-      const { data: user } = await supabase
-        .from('auth.users')
-        .select('email')
-        .eq('id', order.user_id)
-        .single()
+      // Get user email via Auth admin API (auth.users is not directly queryable as a public table).
+      const { data: userResp } = await supabase.auth.admin.getUserById(order.user_id)
+      const userEmail = userResp?.user?.email
 
       // Send confirmation email
-      if (user?.email) {
+      if (userEmail) {
         await supabase.functions.invoke('send-order-email', {
           body: {
             user_id: order.user_id,
-            email: user.email,
+            email: userEmail,
             type: 'payment_confirmed',
             order_id: order.id,
             amount_usd: order.amount_cents / 100,
