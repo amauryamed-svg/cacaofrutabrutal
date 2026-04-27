@@ -16,7 +16,7 @@ export default function Auth() {
     setLoading(true); setError('')
     const { error: err } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/adoptar` },
+      options: { redirectTo: `${window.location.origin}/app/adoptar` },
     })
     if (err) { setError(err.message); setLoading(false) }
   }
