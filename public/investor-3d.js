@@ -47,18 +47,19 @@
     composer.addPass(bloomPass);
   }
 
-  // Sky palette — tropical-morning → ripening warm → vortex black → underground purple
+  // Sky palette — kept dark throughout so copy reads cleanly. Only the implosion
+  // climax + root realm get a touch of color; the rest sits near-black.
   const SKY_STOPS = [
-    { p: 0.00, c: new THREE.Color(0x081208) },  // green-tropical morning, soft
-    { p: 0.10, c: new THREE.Color(0x0E1A0C) },  // brighter canopy ambient
-    { p: 0.20, c: new THREE.Color(0x1A1408) },  // warmth bleeds in as pod ripens
-    { p: 0.32, c: new THREE.Color(0x140A04) },  // dimming as pod falls
-    { p: 0.40, c: new THREE.Color(0x0A0608) },  // pre-implosion charge
+    { p: 0.00, c: new THREE.Color(0x040804) },  // near-black, faint green hint
+    { p: 0.10, c: new THREE.Color(0x060C06) },  // canopy ambient (still dark)
+    { p: 0.20, c: new THREE.Color(0x0A0805) },  // warmth bleeds in as pod ripens
+    { p: 0.32, c: new THREE.Color(0x080604) },  // dimming as pod falls
+    { p: 0.40, c: new THREE.Color(0x040305) },  // pre-implosion charge
     { p: 0.48, c: new THREE.Color(0x000000) },  // VOID at peak implosion
-    { p: 0.55, c: new THREE.Color(0x040208) },  // post-implosion subterranean dark
-    { p: 0.70, c: new THREE.Color(0x080612) },  // deep purple-black underground
-    { p: 0.85, c: new THREE.Color(0x0C081A) },  // root realm, faint purple
-    { p: 1.00, c: new THREE.Color(0x140C28) },  // ethereal underground glow
+    { p: 0.55, c: new THREE.Color(0x020104) },  // post-implosion subterranean dark
+    { p: 0.70, c: new THREE.Color(0x05040A) },  // deep purple-black underground
+    { p: 0.85, c: new THREE.Color(0x080612) },  // root realm, faint purple
+    { p: 1.00, c: new THREE.Color(0x0E0820) },  // ethereal underground glow (capped)
   ];
   function updateSky(p) {
     let i = 1;
@@ -147,22 +148,24 @@
   }
   const butterflyTex = makeButterflyTexture();
 
-  // ── Lights — warm canopy + dappled feel + roaming accents ──
-  scene.add(new THREE.AmbientLight(0x1A2A14, 0.55));
-  const sun = new THREE.DirectionalLight(0xFFE5B0, 1.40);
+  // ── Lights — DARKER overall so text reads cleanly over the bg.
+  // Implosion lights still flash bright for the climax (handled in loop), but the
+  // ambient/sun/rim/fill levels are kept low so the scene sits as moody backdrop.
+  scene.add(new THREE.AmbientLight(0x0F1A0C, 0.32));
+  const sun = new THREE.DirectionalLight(0xFFE5B0, 0.75);
   sun.position.set(6, 18, 5);
   scene.add(sun);
-  const rim = new THREE.DirectionalLight(0x6B9038, 0.60);
+  const rim = new THREE.DirectionalLight(0x4A6028, 0.32);
   rim.position.set(-8, 4, -6);
   scene.add(rim);
-  const fill = new THREE.PointLight(0xE89A5E, 0.75, 32);
+  const fill = new THREE.PointLight(0xE89A5E, 0.42, 32);
   fill.position.set(0, 4, 6);
   scene.add(fill);
-  // Two roaming warm spot lights — drift through canopy giving dappled feel
-  const roam1 = new THREE.PointLight(0xFFC880, 0.85, 14);
+  // Two roaming warm spot lights — drift through canopy giving dappled feel (dimmer)
+  const roam1 = new THREE.PointLight(0xFFC880, 0.45, 14);
   roam1.position.set(2.5, 7, 3);
   scene.add(roam1);
-  const roam2 = new THREE.PointLight(0xC85838, 0.55, 14);
+  const roam2 = new THREE.PointLight(0xC85838, 0.30, 14);
   roam2.position.set(-2.8, 5.5, 2);
   scene.add(roam2);
   // Implosion light — anchored at hero-pod landing position, pulses during the implosion beat
@@ -875,7 +878,7 @@
 
     // ── Light shafts — present 0.00-0.40, intensify during fall, sucked into vortex 0.40-0.50 ──
     const shaftBase = (1 - smoothstep(0.42, 0.50, p));
-    const shaftIntensity = 0.75 + smoothstep(0.20, 0.32, p) * 0.55;
+    const shaftIntensity = 0.42 + smoothstep(0.20, 0.32, p) * 0.40;
     for (let i = 0; i < lightShafts.children.length; i++) {
       const s = lightShafts.children[i];
       const m = lightShaftMats[i];
@@ -1038,12 +1041,12 @@
     const r1y = lerp(7 + Math.cos(roamPhase * 0.7) * 1.0, HERO_LAND_POS.y, roamSuck);
     const r1z = lerp(3 + Math.cos(roamPhase) * 1.4, HERO_LAND_POS.z, roamSuck);
     roam1.position.set(r1x, r1y, r1z);
-    roam1.intensity = (0.85 + Math.sin(t * 1.2) * 0.15) * roamFade + roamSuck * 1.5;
+    roam1.intensity = (0.42 + Math.sin(t * 1.2) * 0.10) * roamFade + roamSuck * 1.0;
     const r2x = lerp(-2.8 + Math.cos(roamPhase * 0.8) * 1.4, HERO_LAND_POS.x, roamSuck);
     const r2y = lerp(5.5 + Math.sin(roamPhase * 0.6) * 0.8, HERO_LAND_POS.y, roamSuck);
     const r2z = lerp(2 + Math.sin(roamPhase * 1.1) * 1.6, HERO_LAND_POS.z, roamSuck);
     roam2.position.set(r2x, r2y, r2z);
-    roam2.intensity = (0.55 + Math.cos(t * 1.5) * 0.12) * roamFade + roamSuck * 1.0;
+    roam2.intensity = (0.28 + Math.cos(t * 1.5) * 0.08) * roamFade + roamSuck * 0.7;
 
     // ── Reverse growth stages: mature(done) → juvenile → cotyledons → sprout → seed ──
     // Juvenile: 0.50-0.68 (peaks ~0.58, fades to make room for cotyledons)
