@@ -57,7 +57,7 @@ try {
 try {
   const context = await browser.newContext({
     viewport: { width: 1200, height: 630 },
-    deviceScaleFactor: 2,
+    deviceScaleFactor: 1,
   });
   const page = await context.newPage();
   await page.goto(`file://${templatePath}`, { waitUntil: 'networkidle' });
