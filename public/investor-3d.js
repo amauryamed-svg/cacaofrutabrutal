@@ -1,14 +1,12 @@
 // Caúa Investor — scroll-driven narrative
-//   0.00 – 0.18  Purple seed descends from the heavens (trail particles)
-//   0.18 – 0.22  Stage 1 · Semilla — seed lands & half-buries
-//   0.22 – 0.32  Stage 2 · Germinación — sprout tip emerges
-//   0.32 – 0.42  Stage 3 · Cotiledones — first two leaves unfold
-//   0.42 – 0.52  Stage 4 · Plántula — young stem + small leaves
-//   0.52 – 0.62  Stage 5 · Juvenil — trunk forms, first branches
-//   0.62 – 0.72  Stage 6 · Adulto vegetativo — full canopy, no fruit
-//   0.72 – 0.82  Stage 7 · Floración — cauliflorous flowers bloom
-//   0.82 – 0.92  Stage 8 · Fructificación — mazorca pods appear
-//   0.88 – 1.00  Reveal divino — hero mazorca glows, volumetric rays + radial burst
+//   0.00 – 0.10  Sustained — divine mazorca glows, halo pulses, sky warm
+//   0.10 – 0.13  Charge-up — micro-swell, emissive over-charges (last gasp)
+//   0.13 – 0.21  VORTEX collapse — accelerated spin, scale → 0, sky → black, light absorbed
+//   0.21 – 0.225 VOID — total darkness, particles at zero radius, bloom = 0
+//   0.225 – 0.32 EXPLOSION — radial burst unleash, bloom flash, sky re-warms, camera rips back
+//   0.32 – 0.55  Finca emerges — grove fades in, sprout grows
+//   0.55 – 0.80  Tree maturation — trunk, branches, canopy
+//   0.80 – 1.00  Mature ecosystem — flowers + pods + golden hour
 // Finca grove (instanced cacaos + banano + mango) is background context through stages 1-8,
 // fades for the divine closeup.
 (function () {
@@ -54,14 +52,21 @@
     composer.addPass(bloomPass);
   }
 
-  // Sky palette — scroll-driven backdrop. The mazorca-glow tints the void warm at start.
+  // Sky palette — dark-space-first arc.
+  //   Mazorca arrives from the cosmic void → light gathers → vortex collapses → BLACK void → explosion flash → warm dawn.
+  // Most stops kept dark (#000–#0A) so captions read clearly; warm tones reserved for the climactic moments.
   const SKY_STOPS = [
-    { p: 0.00, c: new THREE.Color(0x2A1810) },  // warm divine — mazorca halo bleeds into sky
-    { p: 0.18, c: new THREE.Color(0x1F1208) },  // pre-explosion warmth holds
-    { p: 0.35, c: new THREE.Color(0x140A06) },  // post-explosion cools (cosmic dust settles)
-    { p: 0.55, c: new THREE.Color(0x1A1008) },  // dawn earth as finca emerges
-    { p: 0.80, c: new THREE.Color(0x251812) },  // golden hour
-    { p: 1.00, c: new THREE.Color(0x2E2014) },  // dusk warm
+    { p: 0.00, c: new THREE.Color(0x000000) },  // pure cosmic void — mazorca arrives from here
+    { p: 0.05, c: new THREE.Color(0x040203) },  // still deep dark, faint approach
+    { p: 0.10, c: new THREE.Color(0x0A0506) },  // light gathers around mazorca (very subtle)
+    { p: 0.16, c: new THREE.Color(0x100806) },  // building, but still mostly black
+    { p: 0.21, c: new THREE.Color(0x000000) },  // VOID — total darkness swallows everything
+    { p: 0.225, c: new THREE.Color(0x000000) }, // hold the void for a beat
+    { p: 0.28, c: new THREE.Color(0x140A06) },  // explosion ignites — warmth returns
+    { p: 0.40, c: new THREE.Color(0x0E0704) },  // settles dark again after the burst dissipates
+    { p: 0.55, c: new THREE.Color(0x130A06) },  // dawn earth as finca emerges (still dark)
+    { p: 0.80, c: new THREE.Color(0x1E1208) },  // golden hour, restrained
+    { p: 1.00, c: new THREE.Color(0x251610) },  // dusk warm, capped
   ];
   function updateSky(p) {
     let i = 1;
@@ -80,18 +85,36 @@
     return t * t * (3 - 2 * t);
   };
 
-  // ── Lights ─────────────────────────────────────────────────────
-  scene.add(new THREE.AmbientLight(0x2a1810, 0.55));
-  const sun = new THREE.DirectionalLight(0xFFC888, 1.55);
+  // ── Round flare texture — radial gradient on a CanvasTexture, used for sparkles + lens flares ──
+  function makeFlareTexture() {
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const ctx = c.getContext('2d');
+    const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+    g.addColorStop(0.00, 'rgba(255,255,255,1)');
+    g.addColorStop(0.20, 'rgba(255,238,200,0.85)');
+    g.addColorStop(0.50, 'rgba(255,180,90,0.25)');
+    g.addColorStop(1.00, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 128, 128);
+    const tex = new THREE.CanvasTexture(c);
+    tex.minFilter = THREE.LinearFilter;
+    return tex;
+  }
+  const flareTex = makeFlareTexture();
+
+  // ── Lights — reduced to keep dark space readable behind copy ──
+  scene.add(new THREE.AmbientLight(0x140A06, 0.30));            // was 0x2a1810 / 0.55
+  const sun = new THREE.DirectionalLight(0xFFC888, 0.85);       // was 1.55
   sun.position.set(4, 14, 6);
   scene.add(sun);
-  const rim = new THREE.DirectionalLight(0x8D2679, 0.55);     // Cosmic Criollo rim
+  const rim = new THREE.DirectionalLight(0x8D2679, 0.35);       // was 0.55
   rim.position.set(-6, -2, -4);
   scene.add(rim);
-  const fill = new THREE.PointLight(0xE89A5E, 0.95, 28);
+  const fill = new THREE.PointLight(0xE89A5E, 0.55, 28);        // was 0.95
   fill.position.set(0, 2, 5);
   scene.add(fill);
-  const earthGlow = new THREE.PointLight(0xD86028, 0.6, 14);
+  const earthGlow = new THREE.PointLight(0xD86028, 0.4, 14);    // was 0.6
   earthGlow.position.set(0, 2, 2);
   scene.add(earthGlow);
   // Seed halo — moves with the descending purple seed, extinguishes post-germination
@@ -559,18 +582,70 @@
   });
   scene.add(heroMazorca);
 
-  // ── Divine reveal FX (rays + aura + radial burst) ─────────────
-  // Note: rays/aura live OUTSIDE `mature` so they aren't scaled during growth.
-  // Their world position targets the hero mazorca at stage-8 world coords.
-  const divineRays = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.3, 4.8, 18, 32, 1, true),
-    new THREE.MeshBasicMaterial({
-      color: 0xFFE0A0, transparent: true, opacity: 0,
-      blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false,
-    })
-  );
-  divineRays.position.set(HERO_POS.x, HERO_POS.y + 7, HERO_POS.z);
+  // ── Divine reveal FX (round flares + aura + radial burst + orbiting sparkles) ─────────────
+  // Note: flares/aura/sparkles live OUTSIDE `mature` so they aren't scaled during growth.
+  // ROUND flares replace the old cylinder (which read as a square shaft) — Sprite billboards
+  // with a radial-gradient texture always face the camera and look like soft light bursts.
+  const divineRays = new THREE.Group();
+  const divineRayMats = [];
+  // 5 stacked sprites of varying sizes give a layered "lens flare" feel without clipping
+  const flareConfigs = [
+    { size: 9.5, color: 0xFFE0A0, opacity: 0 },  // outermost soft halo
+    { size: 6.5, color: 0xFFD080, opacity: 0 },  // mid warm
+    { size: 4.0, color: 0xFFC060, opacity: 0 },  // inner bright
+    { size: 2.4, color: 0xFFEFC0, opacity: 0 },  // hot core
+    { size: 1.4, color: 0xFFFFFF, opacity: 0 },  // hottest pinpoint
+  ];
+  for (const cfg of flareConfigs) {
+    const m = new THREE.SpriteMaterial({
+      map: flareTex, color: cfg.color, transparent: true, opacity: cfg.opacity,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    });
+    const s = new THREE.Sprite(m);
+    s.scale.set(cfg.size, cfg.size, 1);
+    divineRays.add(s);
+    divineRayMats.push(m);
+  }
+  divineRays.position.set(HERO_POS.x, HERO_POS.y, HERO_POS.z);
   scene.add(divineRays);
+
+  // ── Orbiting sparkles — destellos around the mazorca that gather + spiral into the vortex ──
+  // Each sparkle has fixed orbit params (radius, axis-tilt, phase, speed). Position is computed
+  // each frame from --p (scroll), not t (time), so motion is tightly coupled to scroll.
+  const SPARKLE_COUNT = 60;
+  const sparkleGeo = new THREE.BufferGeometry();
+  const sparklePos = new Float32Array(SPARKLE_COUNT * 3);
+  const sparkleColors = new Float32Array(SPARKLE_COUNT * 3);
+  // Per-sparkle orbit params: [baseRadius, axisTiltX, axisTiltZ, phaseOffset, speedMultiplier]
+  const sparkleOrbits = [];
+  for (let i = 0; i < SPARKLE_COUNT; i++) {
+    sparkleOrbits.push({
+      r: 1.6 + Math.random() * 2.2,                    // 1.6 – 3.8 base radius
+      tiltX: (Math.random() - 0.5) * 0.9,              // tilt of orbit plane
+      tiltZ: (Math.random() - 0.5) * 0.9,
+      phase: Math.random() * Math.PI * 2,              // starting angle
+      speed: 1.0 + Math.random() * 1.6,                // 1× – 2.6× spin multiplier
+    });
+    sparklePos[i * 3]     = HERO_POS.x;
+    sparklePos[i * 3 + 1] = HERO_POS.y;
+    sparklePos[i * 3 + 2] = HERO_POS.z;
+    // Color split: 70% warm gold, 20% pink, 10% Cosmic Criollo purple
+    const r = Math.random();
+    if (r < 0.70) {
+      sparkleColors[i * 3]     = 1.00; sparkleColors[i * 3 + 1] = 0.88; sparkleColors[i * 3 + 2] = 0.62;
+    } else if (r < 0.90) {
+      sparkleColors[i * 3]     = 0.97; sparkleColors[i * 3 + 1] = 0.78; sparkleColors[i * 3 + 2] = 0.74;
+    } else {
+      sparkleColors[i * 3]     = 0.62; sparkleColors[i * 3 + 1] = 0.22; sparkleColors[i * 3 + 2] = 0.55;
+    }
+  }
+  sparkleGeo.setAttribute('position', new THREE.BufferAttribute(sparklePos, 3));
+  sparkleGeo.setAttribute('color', new THREE.BufferAttribute(sparkleColors, 3));
+  const sparkles = new THREE.Points(sparkleGeo, new THREE.PointsMaterial({
+    map: flareTex, vertexColors: true, size: 0.55, transparent: true, opacity: 0,
+    blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true, alphaTest: 0.01,
+  }));
+  scene.add(sparkles);
 
   const divineAura = new THREE.Mesh(
     new THREE.SphereGeometry(2.9, 24, 16),
@@ -616,8 +691,8 @@
   burstGeo.setAttribute('position', new THREE.BufferAttribute(burstPos, 3));
   burstGeo.setAttribute('color', new THREE.BufferAttribute(burstColors, 3));
   const burst = new THREE.Points(burstGeo, new THREE.PointsMaterial({
-    vertexColors: true, size: 0.11, transparent: true, opacity: 0,
-    blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true,
+    map: flareTex, vertexColors: true, size: 0.18, transparent: true, opacity: 0,
+    blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true, alphaTest: 0.01,
   }));
   scene.add(burst);
 
@@ -701,9 +776,11 @@
     return lerp(6.0, 8.5, (p - 0.80) / 0.20);                          // wide vista
   }
   function cameraZ(p) {
-    if (p < 0.18) return 9.0;                                          // close to mazorca (z=4)
-    if (p < 0.32) return lerp(9.0, 13.0, (p - 0.18) / 0.14);           // pulls back during explosion
-    if (p < 0.55) return lerp(13.0, 15.0, (p - 0.32) / 0.23);          // emerging finca
+    if (p < 0.10) return 9.0;                                          // close to mazorca (sustained)
+    if (p < 0.21) return lerp(9.0, 6.2, smoothstep(0.10, 0.21, p));    // PUSHES IN during vortex (suction)
+    if (p < 0.225) return 6.2;                                         // void hold — frozen close
+    if (p < 0.32) return lerp(6.2, 14.0, smoothstep(0.225, 0.32, p));  // RIPS BACK hard at explosion
+    if (p < 0.55) return lerp(14.0, 15.0, (p - 0.32) / 0.23);          // emerging finca
     if (p < 0.80) return lerp(15.0, 18.0, (p - 0.55) / 0.25);          // wider
     return lerp(18.0, 22.0, (p - 0.80) / 0.20);                        // panoramic
   }
@@ -807,52 +884,121 @@
     const podsAlpha = smoothstep(0.72, 0.82, p);
     for (const mat of podMaterials) mat.opacity = podsAlpha;
 
-    // ── Header hook: hero mazorca = divine entrance, sustained, then explodes ─────
-    // Sustained full from p=0 → p=0.18, swells slightly, then collapses by p=0.32 as it explodes.
-    const heroSustain = 1 - smoothstep(0.18, 0.32, p);                  // 1 → 0
-    const heroSwell = 1 + smoothstep(0.16, 0.24, p) * 0.35              // 1.0 → 1.35
-                        - smoothstep(0.24, 0.32, p) * 1.35;             // → 0
-    const heroScale = Math.max(0.0, heroSwell);
+    // ── Header hook: hero mazorca arrives from cosmic void → orbits gather → vortex → explosion ──
+    // Phase timing (drives every other element below):
+    //   0.00–0.05  cosmic void — mazorca is far back in z, barely visible (arriving)
+    //   0.05–0.10  arrival — mazorca settles into HERO_POS, sparkles begin to gather
+    //   0.10–0.13  charge-up (micro-swell, emissive over-charges)
+    //   0.13–0.21  VORTEX — accelerated spin, scale → 0, sparkles spiral in, light absorbed
+    //   0.21–0.225 VOID — mazorca invisible, total black
+    //   0.225+     EXPLOSION — radial burst unleashes
+    const arrivalProg = smoothstep(0.00, 0.08, p);                         // 0 → 1 across approach
+    const vortexProg = smoothstep(0.10, 0.21, p);                          // 0 → 1 across collapse
+    const explosionProg = smoothstep(0.225, 0.32, p);                      // 0 → 1 across burst
+    const heroMicroSwell = 1 + smoothstep(0.10, 0.13, p) * 0.07;
+    const heroCollapse = 1 - smoothstep(0.13, 0.21, p);
+    const heroScale = Math.max(0, heroMicroSwell * heroCollapse) * arrivalProg;
     heroMazorca.scale.setScalar(heroScale);
     heroMazorca.visible = heroScale > 0.01;
+    // Cosmic z-arrival: mazorca eases from HERO_POS.z - 14 (deep space) to HERO_POS.z by p=0.08
+    const zApproach = lerp(HERO_POS.z - 14, HERO_POS.z, arrivalProg);
+    heroMazorca.position.set(HERO_POS.x, HERO_POS.y, zApproach);
     for (const mat of heroMazorcaMats) {
-      mat.opacity = heroSustain;
+      mat.opacity = heroScale;
       if (mat.emissiveIntensity !== undefined && mat.color && mat.color.getHex && mat.color.getHex() === 0xC24820) {
-        mat.emissiveIntensity = (0.6 + Math.sin(t * 2.4) * 0.25) * heroSustain;
+        // Soft idle glow until charge-up phase, then over-charges into the vortex
+        const emissiveBoost = 1 + smoothstep(0.10, 0.18, p) * 1.6;
+        mat.emissiveIntensity = (0.45 + Math.sin(t * 2.4) * 0.18) * heroScale * emissiveBoost;
       }
     }
-    heroMazorca.rotation.y = 1.2 + t * 0.18;
-    heroMazorca.rotation.x = Math.sin(t * 0.7) * 0.08;     // gentle nutation
+    // Rotation tightly coupled to scroll (--p) so motion = scroll. Time only adds tiny idle drift.
+    //   Idle:  ~1.5 turns across the full landing scroll (p ∈ [0,1] → +9.4 rad)
+    //   Vortex burst: extra +13 rad concentrated in the 0.10–0.21 collapse window
+    heroMazorca.rotation.y = 1.2 + p * 9.4 + Math.pow(vortexProg, 1.3) * 13 + t * 0.04;
+    heroMazorca.rotation.x = Math.sin(t * 0.5) * 0.05 + vortexProg * 0.5;
+    heroMazorca.rotation.z = vortexProg * 0.35;
 
-    // ── Divine rays + aura — sustained during entry, peak at explosion, fade after ──
-    const divineEnvelope = (1 - smoothstep(0.20, 0.40, p));            // 1 sustained → fades by 0.4
-    const explosionPeak = smoothstep(0.10, 0.24, p) * (1 - smoothstep(0.30, 0.42, p));  // bell at explosion
-    const divineActive = Math.max(divineEnvelope * 0.55, explosionPeak); // baseline + peak
-    divineRays.material.opacity = 0.32 * divineActive;
-    divineRays.rotation.y = t * 0.35;
-    divineAura.material.opacity = 0.24 * divineActive * (1 + Math.sin(t * 2.5) * 0.3);
-    divineAura.scale.setScalar(1 + Math.sin(t * 1.8) * 0.06 + explosionPeak * 0.4);
+    // ── Round flare sprites — gather around mazorca → collapse with vortex → flash at explosion ──
+    // Build up gradually during arrival (no flash on page load), peak just before vortex, fade through it.
+    const flareGather = smoothstep(0.04, 0.12, p) * (1 - smoothstep(0.13, 0.21, p));
+    const flareFlash = smoothstep(0.225, 0.255, p) * (1 - smoothstep(0.30, 0.44, p));
+    const flareActive = Math.max(flareGather, flareFlash * 1.2);
+    // Per-flare opacity tiers — outer halos dimmer, hot core brightest
+    const flareOpacityCurve = [0.18, 0.26, 0.38, 0.55, 0.85];
+    for (let i = 0; i < divineRayMats.length; i++) {
+      divineRayMats[i].opacity = flareOpacityCurve[i] * flareActive;
+    }
+    // Lens flare follows the mazorca's z-arrival so it doesn't float in front of empty space
+    divineRays.position.set(HERO_POS.x, HERO_POS.y, zApproach);
+    // Subtle scroll-coupled rotation for the flare group (parallax feel)
+    divineRays.rotation.z = p * 1.2 + Math.pow(vortexProg, 1.5) * 1.6;
 
-    // ── Burst particles — contained pulse during entry, then explosive radial expansion ──
-    // Two regimes: tight halo (p<0.18, rad ≤ 5) → unleashed expansion (p≥0.18, rad up to ~14)
-    const burstUnleash = smoothstep(0.16, 0.32, p);                    // 0 → 1 across explosion
-    const burstAlpha = (1 - smoothstep(0.40, 0.56, p)) * (0.5 + 0.5 * smoothstep(0.06, 0.20, p));
+    divineAura.position.set(HERO_POS.x, HERO_POS.y, zApproach);
+    divineAura.material.opacity = 0.18 * flareActive * (1 + Math.sin(t * 2.0) * 0.25);
+    const auraScale = (1 + Math.sin(t * 1.4) * 0.05) * (1 - vortexProg * 0.85) + flareFlash * 0.6;
+    divineAura.scale.setScalar(Math.max(0.05, auraScale));
+
+    // ── Orbiting sparkles — destellos around mazorca, then spiral into the vortex on scroll ──
+    // Visible only during arrival → vortex (not during void or explosion — burst takes over).
+    const sparkleAlpha = smoothstep(0.04, 0.12, p) * (1 - smoothstep(0.18, 0.215, p));
+    sparkles.material.opacity = sparkleAlpha;
+    if (sparkleAlpha > 0.02) {
+      const sp = sparkles.geometry.attributes.position;
+      // Orbit angle is driven primarily by scroll progress (p) — moves with scroll, not time.
+      // Time contribution is tiny (subtle twinkle/drift only).
+      // Vortex adds extra revolutions (~3 full turns concentrated in the collapse window).
+      const baseOrbitAngle = p * 14;                                        // ~2.2 rev across full scroll
+      const vortexExtra = Math.pow(vortexProg, 1.1) * Math.PI * 6;          // ~3 turns during collapse
+      // Radius scaling: full base radius during gather → collapses to 0.15 by void
+      const radiusScale = (1 - vortexProg * 0.93);
+      for (let i = 0; i < SPARKLE_COUNT; i++) {
+        const o = sparkleOrbits[i];
+        const angle = o.phase + baseOrbitAngle * o.speed + vortexExtra;
+        const r = o.r * radiusScale + 0.03 * Math.sin(t * 1.5 + o.phase);   // tiny twinkle
+        // Compute orbit on XZ plane, then tilt by tiltX/tiltZ
+        const ox = Math.cos(angle) * r;
+        const oz = Math.sin(angle) * r;
+        const oy = ox * o.tiltX + oz * o.tiltZ;                             // tilt projection
+        sp.setXYZ(i, HERO_POS.x + ox, HERO_POS.y + oy, zApproach + oz);
+      }
+      sp.needsUpdate = true;
+    }
+
+    // ── Burst particles — EXPLOSION ONLY (sparkles cover the gather/spiral phase before void) ──
+    const burstFlash = smoothstep(0.225, 0.252, p);                       // sharp ignition
+    const burstDecay = 1 - smoothstep(0.34, 0.52, p);                     // fades out
+    const burstAlpha = burstFlash * burstDecay;
     burst.material.opacity = burstAlpha;
     if (burstAlpha > 0.02) {
       const bp = burst.geometry.attributes.position;
       const radHaloMax = 5;
-      const radExplodeMax = 14;
+      const radExplodeMax = 17;                                         // bigger blast than before
+      // Vortex swirl angle — accumulates during vortex, leaves residual rotation through explosion
+      const swirlAngle = Math.pow(vortexProg, 1.2) * Math.PI * 3.6 + explosionProg * 1.4;
+      const cosS = Math.cos(swirlAngle), sinS = Math.sin(swirlAngle);
       for (let i = 0; i < BURST_COUNT; i++) {
         const dx = burstDir[i * 3];
         const dy = burstDir[i * 3 + 1];
         const dz = burstDir[i * 3 + 2];
-        // Halo regime (p<0.18): pulsing in/out near mazorca
+        // Halo regime — pulsing in/out (visible only pre-vortex)
         const pulsePhase = (t * 0.6 + i * 0.013) % 2;
         const haloRad = pulsePhase < 1 ? pulsePhase * radHaloMax : (2 - pulsePhase) * radHaloMax;
-        // Explosion regime: outward expansion proportional to burstUnleash + per-particle phase offset
-        const explodeRad = radExplodeMax * (burstUnleash + (i % 7) * 0.04);
-        const rad = (1 - burstUnleash) * haloRad + burstUnleash * explodeRad;
-        bp.setXYZ(i, HERO_POS.x + dx * rad, HERO_POS.y + dy * rad, HERO_POS.z + dz * rad);
+        // Suction radius — halo collapses to a near-point during vortex
+        const suckRad = haloRad * (1 - vortexProg) + 0.12 * vortexProg;
+        // Explosion radius — radial outward, accelerated, per-particle stagger
+        const explodeRad = radExplodeMax * Math.pow(explosionProg, 0.65) * (1 + (i % 7) * 0.05);
+        let rad;
+        if (p < 0.21) {
+          rad = suckRad;                                                // pulling in
+        } else if (p < 0.225) {
+          rad = 0.12 * (1 - smoothstep(0.21, 0.225, p));                // collapse to perfect zero
+        } else {
+          rad = explodeRad;                                             // unleash
+        }
+        // Apply swirl: rotate dir vector around Y axis (cluster spirals as it contracts/explodes)
+        const dxR = dx * cosS - dz * sinS;
+        const dzR = dx * sinS + dz * cosS;
+        bp.setXYZ(i, HERO_POS.x + dxR * rad, HERO_POS.y + dy * rad, HERO_POS.z + dzR * rad);
       }
       bp.needsUpdate = true;
     }
@@ -864,10 +1010,11 @@
 
     // Render — composer (with bloom) when available, else plain renderer
     if (composer && bloomPass) {
-      // Bloom is the header hook: max at p=0 (divine entry), sustains, decays by p=0.5
-      const bloomBase = 1.6 * (1 - smoothstep(0.10, 0.40, p));      // 1.6 → 0
-      const bloomExplosion = 0.6 * smoothstep(0.16, 0.26, p) * (1 - smoothstep(0.30, 0.45, p));
-      bloomPass.strength = Math.max(bloomBase, bloomExplosion);
+      // Bloom narrative: dark cosmic start → soft gather glow → light absorbed by vortex → near-zero in void → explosion flash → decay
+      // Capped low overall so captions read; only the explosion gets a bright moment.
+      const bloomGather = 0.55 * smoothstep(0.04, 0.13, p) * (1 - smoothstep(0.13, 0.21, p));
+      const bloomFlash  = 1.2  * smoothstep(0.225, 0.250, p) * (1 - smoothstep(0.30, 0.46, p));
+      bloomPass.strength = Math.max(bloomGather, bloomFlash);
       composer.render();
     } else {
       renderer.render(scene, camera);
