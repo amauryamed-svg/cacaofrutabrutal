@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>caúa — hero intro</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 1920px; height: 1080px;
+        overflow: hidden;
+        background: #081208;
+      }
+
+      #root {
+        position: relative;
+        width: 1920px; height: 1080px;
+        background: #081208;
+      }
+
+      /* Layer 1 — canopy ambient gradient */
+      #canopy-bg {
+        position: absolute; inset: 0;
+        background:
+          radial-gradient(ellipse at 50% 100%, rgba(46,88,32,0.22) 0%, rgba(8,18,8,0) 55%),
+          radial-gradient(ellipse at 50% 0%, rgba(255,229,176,0.14) 0%, rgba(8,18,8,0) 60%);
+        opacity: 0;
+      }
+
+      /* Layer 2 — light shafts piercing the canopy */
+      .shaft {
+        position: absolute;
+        width: 240px; height: 1400px;
+        top: -200px;
+        background: linear-gradient(180deg,
+          rgba(255,229,176,0.65) 0%,
+          rgba(255,210,130,0.32) 40%,
+          rgba(255,180,90,0) 100%);
+        opacity: 0;
+        mix-blend-mode: screen;
+        filter: blur(2px);
+        transform-origin: 50% 0;
+        will-change: opacity, transform;
+      }
+      #shaft-1 { left:  20%; transform: rotate( 12deg); }
+      #shaft-2 { left:  42%; transform: rotate( -6deg); }
+      #shaft-3 { left:  62%; transform: rotate(  8deg); width: 180px; }
+      #shaft-4 { left:  78%; transform: rotate(-14deg); width: 200px; }
+
+      /* Layer 3 — butterflies (2 of them, sinusoidal paths via GSAP) */
+      .butterfly {
+        position: absolute;
+        width: 80px; height: 60px;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+      .butterfly svg { width: 100%; height: 100%; display: block; }
+
+      /* Layer 4 — hero pod (the one that ripens, falls, implodes) */
+      #hero-pod {
+        position: absolute;
+        left: 50%; top: 50%;
+        width: 220px; height: 320px;
+        opacity: 0;
+        will-change: transform, opacity, filter;
+      }
+      #hero-pod .pod-body {
+        width: 100%; height: 100%;
+        display: block;
+      }
+
+      /* Layer 5 — implosion flash radial burst */
+      #flash {
+        position: absolute;
+        left: 50%; top: 50%;
+        width: 1600px; height: 1600px;
+        background: radial-gradient(circle,
+          rgba(255,240,200,0.95) 0%,
+          rgba(255,210,130,0.55) 18%,
+          rgba(232,114,28,0.25) 38%,
+          rgba(141,38,121,0.15) 58%,
+          rgba(8,18,8,0) 78%);
+        opacity: 0;
+        pointer-events: none;
+        mix-blend-mode: screen;
+        will-change: transform, opacity;
+      }
+
+      /* Layer 6 — caúa wordmark */
+      #wordmark-wrap {
+        position: absolute;
+        left: 50%; top: 50%;
+        opacity: 0;
+        text-align: center;
+        will-change: transform, opacity;
+      }
+      #wordmark {
+        width: 720px;
+        height: auto;
+        display: block;
+        filter:
+          drop-shadow(0 0 30px rgba(255,210,130,0.45))
+          drop-shadow(0 0 80px rgba(141,38,121,0.30));
+      }
+      #tagline {
+        margin-top: 36px;
+        font-family: "DM Mono", monospace;
+        font-size: 16px;
+        letter-spacing: 6px;
+        text-transform: uppercase;
+        color: rgba(240,237,232,0.55);
+      }
+
+      /* Layer 7 — final fade to black so live Three.js takes over invisibly */
+      #fade-out {
+        position: absolute;
+        inset: 0;
+        background: #030803;
+        opacity: 0;
+        pointer-events: none;
+        will-change: opacity;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="3"
+      data-width="1920"
+      data-height="1080"
+    >
+      <div id="canopy-bg" class="clip" data-start="0" data-duration="3" data-track-index="1"></div>
+
+      <div id="shaft-1" class="shaft clip" data-start="0" data-duration="2.4" data-track-index="2"></div>
+      <div id="shaft-2" class="shaft clip" data-start="0" data-duration="2.4" data-track-index="3"></div>
+      <div id="shaft-3" class="shaft clip" data-start="0" data-duration="2.4" data-track-index="4"></div>
+      <div id="shaft-4" class="shaft clip" data-start="0" data-duration="2.4" data-track-index="5"></div>
+
+      <div id="butterfly-1" class="butterfly clip" data-start="0" data-duration="2.0" data-track-index="6">
+        <svg viewBox="0 0 80 60" xmlns="http://www.w3.org/2000/svg">
+          <path d="M 40 30 Q 18 8 8 28 Q 14 50 28 48 Q 36 42 40 30 Z" fill="#F8D8D0" opacity="0.88"/>
+          <path d="M 40 30 Q 62 8 72 28 Q 66 50 52 48 Q 44 42 40 30 Z" fill="#F8D8D0" opacity="0.88"/>
+          <path d="M 40 30 Q 26 18 22 32 Q 28 42 34 42 Q 38 38 40 30 Z" fill="#8D2679" opacity="0.65"/>
+          <path d="M 40 30 Q 54 18 58 32 Q 52 42 46 42 Q 42 38 40 30 Z" fill="#8D2679" opacity="0.65"/>
+          <ellipse cx="40" cy="30" rx="2" ry="14" fill="#1c1208"/>
+        </svg>
+      </div>
+
+      <div id="butterfly-2" class="butterfly clip" data-start="0.2" data-duration="1.6" data-track-index="7">
+        <svg viewBox="0 0 80 60" xmlns="http://www.w3.org/2000/svg">
+          <path d="M 40 30 Q 18 8 8 28 Q 14 50 28 48 Q 36 42 40 30 Z" fill="#F8D8D0" opacity="0.88"/>
+          <path d="M 40 30 Q 62 8 72 28 Q 66 50 52 48 Q 44 42 40 30 Z" fill="#F8D8D0" opacity="0.88"/>
+          <path d="M 40 30 Q 26 18 22 32 Q 28 42 34 42 Q 38 38 40 30 Z" fill="#8D2679" opacity="0.65"/>
+          <path d="M 40 30 Q 54 18 58 32 Q 52 42 46 42 Q 42 38 40 30 Z" fill="#8D2679" opacity="0.65"/>
+          <ellipse cx="40" cy="30" rx="2" ry="14" fill="#1c1208"/>
+        </svg>
+      </div>
+
+      <div id="hero-pod" class="clip" data-start="0.4" data-duration="1.7" data-track-index="8">
+        <svg class="pod-body" viewBox="-100 -150 200 300" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="podGreen" cx="50%" cy="40%" r="55%">
+              <stop offset="0%"   stop-color="#7C9E36" stop-opacity="1"/>
+              <stop offset="50%"  stop-color="#4A7028" stop-opacity="1"/>
+              <stop offset="100%" stop-color="#152008" stop-opacity="0.9"/>
+            </radialGradient>
+            <radialGradient id="podOrange" cx="50%" cy="40%" r="55%">
+              <stop offset="0%"   stop-color="#FFC066" stop-opacity="1"/>
+              <stop offset="40%"  stop-color="#E8721C" stop-opacity="1"/>
+              <stop offset="100%" stop-color="#5A2206" stop-opacity="0.9"/>
+            </radialGradient>
+            <filter id="podGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="3"/>
+            </filter>
+          </defs>
+          <g filter="url(#podGlow)">
+            <ellipse id="pod-shape-green"  cx="0" cy="0" rx="58" ry="120" fill="url(#podGreen)"  opacity="1"/>
+            <ellipse id="pod-shape-orange" cx="0" cy="0" rx="58" ry="120" fill="url(#podOrange)" opacity="0"/>
+            <path d="M 0 -120 Q -14 -50 -10 0 Q -14 50 0 120 Q 14 50 10 0 Q 14 -50 0 -120 Z"
+                  fill="rgba(255,255,255,0.10)"/>
+            <path d="M 0 -120 Q -28 -50 -28 0 Q -28 50 0 120"
+                  stroke="rgba(255,255,255,0.18)" stroke-width="1.2" fill="none"/>
+            <path d="M 0 -120 Q  28 -50  28 0 Q  28 50 0 120"
+                  stroke="rgba(255,255,255,0.18)" stroke-width="1.2" fill="none"/>
+          </g>
+        </svg>
+      </div>
+
+      <div id="flash" class="clip" data-start="1.7" data-duration="0.9" data-track-index="9"></div>
+
+      <div id="wordmark-wrap" class="clip" data-start="2.0" data-duration="1.0" data-track-index="10">
+        <svg id="wordmark" viewBox="0 0 234.67 78.01" xmlns="http://www.w3.org/2000/svg" aria-label="caúa">
+          <path fill="#911f70" d="M155.3,2.76c.72,1.43.81,3.08.42,4.63-.29,1.12-.58,2.24-1.17,3.17-2.31,3.64-5.39,6.4-10,6.63-1.46.07-3.12.04-3.87-1.52-.73-1.52.04-2.91,1.08-4.03,1.91-2.08,3.09-4.47,3.8-7.2.88-3.38,2.76-4.71,5.77-4.39,1.87.2,3.16,1.09,3.97,2.71h0Z"/>
+          <path fill="#F7F1EE" d="M55.93,32.31l-6.45,3.55c-1.24.68-2.78.5-3.84-.45-1.7-1.51-3.38-2.62-5.04-3.31-2.22-.92-4.82-1.38-7.79-1.38-5.43,0-9.81,1.62-13.17,4.85-3.35,3.24-5.03,7.38-5.03,12.44s1.61,8.93,4.84,12.04,7.47,4.67,12.72,4.67,9.87-1.56,13.29-4.67c1.18-1.07,2.91-1.27,4.22-.37l5.99,4.1c1.69,1.16,1.99,3.59.56,5.06-5.97,6.11-13.87,9.16-23.71,9.16s-18.13-3.01-23.89-9.03C2.88,62.95,0,55.9,0,47.82c0-5.6,1.4-10.75,4.2-15.46s6.7-8.41,11.72-11.11c5.01-2.69,10.61-4.04,16.81-4.04,5.74,0,10.89,1.14,15.47,3.43,3.28,1.64,6.13,3.78,8.56,6.42,1.48,1.61,1.1,4.19-.82,5.24h-.01Z"/>
+          <path fill="#F7F1EE" d="M113,18.71h-8.43s-.03.02-.05.02c-2.38,0-2.47,2.47-2.47,2.47v3.89c-2.58-2.62-5.4-4.59-8.44-5.9-3.05-1.31-6.3-1.97-9.77-1.97-7.54,0-13.94,2.85-19.21,8.56-5.27,5.7-7.91,13.02-7.91,21.95s2.73,15.81,8.18,21.6c5.44,5.79,11.9,8.68,19.37,8.68,3.32,0,6.41-.59,9.26-1.78s5.69-3.13,8.52-5.82v2.91s-.16,3.14,3.14,3.14c.14,0,.16.05.27.06h7.55c1.96,0,3.55-1.59,3.55-3.55V22.26c0-1.96-1.59-3.55-3.55-3.55h-.01ZM98.18,59.97c-3,3.17-6.78,4.75-11.34,4.75s-8.13-1.61-11.15-4.84c-3.02-3.22-4.53-7.33-4.53-12.33s1.48-9.02,4.45-12.19c2.96-3.17,6.69-4.76,11.17-4.76s8.39,1.56,11.39,4.68c3,3.12,4.5,7.19,4.5,12.22s-1.5,9.29-4.5,12.46h0Z"/>
+          <path fill="#F7F1EE" d="M124.04,18.71h7.44c1.99,0,3.61,1.62,3.61,3.61v24.24c0,5.42.38,9.18,1.12,11.29s1.94,3.75,3.59,4.91c1.65,1.17,3.68,1.75,6.1,1.75s4.46-.57,6.15-1.72c1.68-1.15,2.94-2.84,3.75-5.08.61-1.66.91-5.22.91-10.68v-24.71c0-1.99,1.62-3.61,3.61-3.61h7.28c1.99,0,3.61,1.62,3.61,3.61v20.89c0,10.1-.8,17-2.39,20.72-1.95,4.53-4.82,8.01-8.61,10.44s-8.61,3.64-14.45,3.64c-6.34,0-11.47-1.42-15.38-4.25s-6.67-6.78-8.26-11.85c-1.13-3.51-1.7-9.88-1.7-19.13v-20.46c0-1.99,1.62-3.61,3.61-3.61h.01Z"/>
+          <path fill="#F7F1EE" d="M231.11,18.71h-8.43s-.03.02-.05.02c-2.38,0-2.47,2.47-2.47,2.47v3.89c-2.58-2.62-5.4-4.59-8.44-5.9-3.05-1.31-6.3-1.97-9.77-1.97-7.54,0-13.94,2.85-19.21,8.56-5.27,5.7-7.91,13.02-7.91,21.95s2.73,15.81,8.18,21.6c5.44,5.79,11.9,8.68,19.37,8.68,3.32,0,6.41-.59,9.26-1.78s5.69-3.13,8.52-5.82v2.91s-.16,3.14,3.14,3.14c.14,0,.16.05.27.06h7.55c1.96,0,3.55-1.59,3.55-3.55V22.26c0-1.96-1.59-3.55-3.55-3.55h-.01ZM216.29,59.97c-3,3.17-6.78,4.75-11.34,4.75s-8.13-1.61-11.15-4.84c-3.02-3.22-4.53-7.33-4.53-12.33s1.48-9.02,4.45-12.19c2.96-3.17,6.69-4.76,11.17-4.76s8.39,1.56,11.39,4.68c3,3.12,4.5,7.19,4.5,12.22s-1.5,9.29-4.5,12.46h0Z"/>
+        </svg>
+        <div id="tagline">WITH NATURE WE WALK</div>
+      </div>
+
+      <div id="fade-out" class="clip" data-start="2.7" data-duration="0.3" data-track-index="11"></div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true, defaults: { ease: "power2.out" } });
+
+      // ── Beat 1: 0.0–0.7s — canopy ambient + shafts + butterflies in ──
+      tl.fromTo("#canopy-bg",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.7, ease: "power2.out", overwrite: "auto" },
+        0
+      );
+
+      // Shafts gently emerge with stagger + tiny tilt sway
+      tl.fromTo(".shaft",
+        { opacity: 0 },
+        { opacity: 0.65, duration: 0.6, stagger: 0.08, ease: "power2.out", overwrite: "auto" },
+        0.05
+      );
+      // Subtle ongoing rotation drift on each shaft (small)
+      tl.to("#shaft-1", { rotate:  16, duration: 1.6, ease: "sine.inOut", overwrite: "auto" }, 0.2);
+      tl.to("#shaft-2", { rotate:  -2, duration: 1.6, ease: "sine.inOut", overwrite: "auto" }, 0.2);
+      tl.to("#shaft-3", { rotate:  12, duration: 1.6, ease: "sine.inOut", overwrite: "auto" }, 0.2);
+      tl.to("#shaft-4", { rotate: -10, duration: 1.6, ease: "sine.inOut", overwrite: "auto" }, 0.2);
+
+      // Butterfly 1 — sinusoidal path from upper-left to mid-right
+      tl.fromTo("#butterfly-1",
+        { opacity: 0, xPercent: -50, yPercent: -50, x: 540, y: 240, rotate: -8 },
+        { opacity: 1, xPercent: -50, yPercent: -50,
+          keyframes: [
+            { x: 540,  y: 240, rotate: -8,  duration: 0.0 },
+            { x: 720,  y: 290, rotate:  6,  duration: 0.5 },
+            { x: 920,  y: 250, rotate: -4,  duration: 0.5 },
+            { x: 1180, y: 320, rotate:  8,  duration: 0.5 },
+          ],
+          duration: 1.5, ease: "none", overwrite: "auto" },
+        0.05
+      );
+      tl.to("#butterfly-1", { opacity: 0, duration: 0.4, ease: "power2.in", overwrite: "auto" }, 1.6);
+      tl.set("#butterfly-1", { opacity: 0 }, 2.0);
+
+      // Butterfly 2 — opposite side, lower path
+      tl.fromTo("#butterfly-2",
+        { opacity: 0, xPercent: -50, yPercent: -50, x: 1380, y: 380, rotate: 6 },
+        { opacity: 1, xPercent: -50, yPercent: -50,
+          keyframes: [
+            { x: 1380, y: 380, rotate:  6, duration: 0.0 },
+            { x: 1180, y: 420, rotate: -4, duration: 0.5 },
+            { x: 940,  y: 380, rotate:  8, duration: 0.5 },
+            { x: 700,  y: 460, rotate: -6, duration: 0.4 },
+          ],
+          duration: 1.4, ease: "none", overwrite: "auto" },
+        0.25
+      );
+      tl.to("#butterfly-2", { opacity: 0, duration: 0.4, ease: "power2.in", overwrite: "auto" }, 1.55);
+      tl.set("#butterfly-2", { opacity: 0 }, 1.8);
+      tl.set("#butterfly-2", { opacity: 0 }, 2.0);
+
+      // ── Beat 2: 0.4–1.1s — hero pod appears in upper-center, hangs ──
+      tl.fromTo("#hero-pod",
+        { opacity: 0, xPercent: -50, yPercent: -50, x: 0, y: -180, scale: 0.85, rotate: -6 },
+        { opacity: 1, xPercent: -50, yPercent: -50, x: 0, y: -180, scale: 1.0, rotate: -6,
+          duration: 0.5, ease: "expo.out", overwrite: "auto" },
+        0.4
+      );
+
+      // ── Beat 3: 0.9–1.4s — RIPENING (green → orange) ──
+      tl.to("#pod-shape-green",  { opacity: 0, duration: 0.5, ease: "power2.inOut", overwrite: "auto" }, 0.9);
+      tl.to("#pod-shape-orange", { opacity: 1, duration: 0.5, ease: "power2.inOut", overwrite: "auto" }, 0.9);
+      // Glow pulse during ripen
+      tl.to("#hero-pod", {
+        filter: "drop-shadow(0 0 60px rgba(232,114,28,0.85)) drop-shadow(0 0 140px rgba(255,210,130,0.5))",
+        duration: 0.5, ease: "power2.inOut", overwrite: "auto"
+      }, 0.9);
+
+      // ── Beat 4: 1.4–1.85s — FALL + spin ──
+      tl.to("#hero-pod", {
+        keyframes: [
+          { y: -180, scale: 1.0, rotate:  -6,  duration: 0.0 },
+          { y:  -40, scale: 0.95, rotate:  90, duration: 0.18 },
+          { y:  140, scale: 0.92, rotate: 280, duration: 0.20 },
+        ],
+        duration: 0.45, ease: "power2.in", overwrite: "auto"
+      }, 1.4);
+
+      // ── Beat 5: 1.85–2.2s — SPIN at landing → IMPLOSION ──
+      tl.to("#hero-pod", {
+        keyframes: [
+          { y: 140, scale: 1.05, rotate: 540,  duration: 0.10 },  // landing micro-swell
+          { y: 140, scale: 0.6,  rotate: 980,  duration: 0.10 },  // accelerated spin shrink
+          { y: 140, scale: 0.0,  rotate: 1600, duration: 0.10 },  // implosion to zero
+        ],
+        duration: 0.30, ease: "power3.in", overwrite: "auto"
+      }, 1.85);
+
+      // Flash bursts at the implosion
+      tl.fromTo("#flash",
+        { opacity: 0, xPercent: -50, yPercent: -50, scale: 0.4 },
+        { opacity: 0.95, xPercent: -50, yPercent: -50, scale: 1.0,
+          duration: 0.18, ease: "power3.out", overwrite: "auto" },
+        2.05
+      );
+
+      // ── Beat 6: 2.0–2.7s — wordmark emerges from the flash ──
+      tl.fromTo("#wordmark-wrap",
+        { opacity: 0, xPercent: -50, yPercent: -50, scale: 0.92, y: 12 },
+        { opacity: 1, xPercent: -50, yPercent: -50, scale: 1.0, y: 0,
+          duration: 0.6, ease: "expo.out", overwrite: "auto" },
+        2.05
+      );
+
+      // Flash decays as wordmark settles
+      tl.to("#flash", {
+        opacity: 0.30, scale: 1.4,
+        duration: 0.45, ease: "power2.out", overwrite: "auto"
+      }, 2.23);
+
+      // ── Beat 7: 2.6–3.0s — dim everything to black for the live 3D handoff ──
+      tl.to("#canopy-bg",     { opacity: 0, duration: 0.4, ease: "power2.in" }, 2.6);
+      tl.to(".shaft",         { opacity: 0, duration: 0.4, ease: "power2.in" }, 2.6);
+      tl.to("#flash",         { opacity: 0, duration: 0.4, ease: "power2.in" }, 2.6);
+      tl.to("#wordmark-wrap", { opacity: 0, duration: 0.4, ease: "power2.in" }, 2.6);
+      tl.fromTo("#fade-out",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.3, ease: "power2.in" },
+        2.7
+      );
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

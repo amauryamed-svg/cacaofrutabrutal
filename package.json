@@ -10,6 +10,9 @@
     "preview": "vite preview",
     "og:preview": "node scripts/preview-og.mjs",
     "og:build": "node scripts/preview-og.mjs --output=public/og.png",
+    "video:preview": "cd videos && npx hyperframes preview",
+    "video:render": "cd videos && npx hyperframes render -o ../public/videos/hero-intro.mp4 --quality standard --fps 30 && ffmpeg -y -loglevel error -i ../public/videos/hero-intro.mp4 -ss 00:00:01.5 -frames:v 1 -q:v 4 -vf scale=960:-1 ../public/videos/hero-intro-poster.jpg",
+    "video:lint": "cd videos && npx hyperframes lint",
     "postinstall": "bash scripts/install-hooks.sh"
   },
   "dependencies": {
