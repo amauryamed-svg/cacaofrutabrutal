@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { BRAND, FONTS, PRODUCTS, ROLE_CONFIG } from '../utils/constants'
 import { useAuth } from '../context/AuthContext'
 import ProductCard from '../components/auction/ProductCard'
+import CacaoCeremonyCard from '../components/marketplace/CacaoCeremonyCard'
 import { useLang } from '../context/LangContext'
 import { makeT } from '../utils/i18n'
 import type { Product } from '../types'
@@ -94,6 +95,9 @@ export default function Marketplace() {
             <ProductCard key={p.id} product={p} multiplier={mult} user={user} roleDiscount={roleDiscount} />
           ))}
         </div>
+
+        {/* Cacao Ceremony — Cauaculture cross-sell with adopter discount */}
+        <CacaoCeremonyCard />
 
         {/* Crowdfunding bar */}
         <div style={{

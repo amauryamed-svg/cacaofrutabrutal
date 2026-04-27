@@ -4,6 +4,7 @@ import { BRAND, FONTS, TAROT_CARDS, ELEMENT_COLORS } from '../utils/constants'
 import { useAuth } from '../context/AuthContext'
 import TarotCardArt from '../components/ritual/TarotCardArt'
 import TokenReward from '../components/ritual/TokenReward'
+import CacaoCeremonyCTA from '../components/marketplace/CacaoCeremonyCTA'
 import { useTokenBalance } from '../hooks/useTokenBalance'
 import { hsUpdateRitual } from '../lib/hubspotTracking'
 import { useLang } from '../context/LangContext'
@@ -327,29 +328,9 @@ export default function Ritual() {
                 }}>{T('rit_new_draw')}</button>
               </div>
 
-              {/* Upsell — subtle */}
-              <div style={{
-                padding: '16px 20px', borderRadius: 12, width: '100%',
-                background: '#0A1A0C', border: `1px solid ${BRAND.amazon}33`,
-                display: 'flex', alignItems: 'center', gap: 12,
-              }}>
-                <span style={{ fontSize: 22 }}>🫘</span>
-                <div>
-                  <div style={{
-                    fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
-                    color: BRAND.heirloom, fontSize: 12, letterSpacing: '0.08em',
-                  }}>{T('rit_upsell')}</div>
-                  <button
-                    onClick={() => navigate('/marketplace')}
-                    style={{
-                      background: 'none', border: 'none', padding: 0,
-                      fontFamily: FONTS.body, fontSize: 11,
-                      color: BRAND.pod, cursor: 'pointer', textDecoration: 'underline',
-                    }}
-                  >
-                    {T('rit_upsell_cta')}
-                  </button>
-                </div>
+              {/* Cacao Ceremony cross-sell — Cauaculture.co with adopter discount */}
+              <div style={{ width: '100%' }}>
+                <CacaoCeremonyCTA variant="ritual" />
               </div>
             </>
           )

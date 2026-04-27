@@ -1,0 +1,10 @@
+# Supabase project configuration
+# Webhooks from external services (Stripe, Shopify) cannot send a Supabase JWT,
+# so we disable JWT verification for those endpoints.
+# Signature verification (HMAC) is enforced inside each function body.
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.shopify-webhook]
+verify_jwt = false

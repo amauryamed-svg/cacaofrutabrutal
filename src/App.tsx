@@ -20,6 +20,7 @@ import CauaBongaFinca    from './pages/CauaBongaFinca'
 import TreeDetail        from './pages/TreeDetail'
 import Dashboard         from './pages/Dashboard'
 import Fund              from './pages/Fund'
+import Impacto           from './pages/Impacto'
 import AdminCRM          from './pages/AdminCRM'
 import CincoTiemposProposal from './pages/CincoTiemposProposal'
 import ProposalAndreaRojas from './pages/ProposalAndreaRojas'
@@ -62,6 +63,7 @@ function AppShell() {
         <Route path="/tree/:id"              element={<AuthGate><TreeDetail /></AuthGate>} />
         <Route path="/dashboard"             element={<AuthGate><Dashboard /></AuthGate>} />
         <Route path="/fund"                  element={<AuthGate><Fund /></AuthGate>} />
+        <Route path="/impacto"               element={<AuthGate><Impacto /></AuthGate>} />
 
         {/* Super admin only — guarded inside AdminCRM */}
         <Route path="/admin/crm"   element={<AdminCRM />} />
