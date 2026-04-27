@@ -156,7 +156,7 @@ export default function Dashboard() {
                       : `${mazorcas} mazorcas · ${beans.toFixed(1)} beans. Redeem for real ceremonial chocolate in Marketplace.`}
                   </div>
                 </div>
-                <button onClick={() => navigate('/marketplace')} style={{
+                <button onClick={() => navigate('/marketplace#cacao-ceremony')} style={{
                   padding: '10px 18px', borderRadius: 999,
                   background: `linear-gradient(135deg, ${BRAND.mazorca}, ${BRAND.brown})`,
                   color: BRAND.bgDeep, border: 'none', cursor: 'pointer',

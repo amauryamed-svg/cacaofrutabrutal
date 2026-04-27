@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { BRAND, FONTS, PRODUCTS, ROLE_CONFIG } from '../utils/constants'
 import { useAuth } from '../context/AuthContext'
 import ProductCard from '../components/auction/ProductCard'
@@ -20,6 +21,16 @@ export default function Marketplace() {
   const [filter, setFilter] = useState<Filter>('all')
   const { lang } = useLang()
   const T = makeT(lang)
+  const { hash } = useLocation()
+
+  useEffect(() => {
+    if (hash) {
+      const id = hash.replace('#', '')
+      requestAnimationFrame(() => {
+        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      })
+    }
+  }, [hash])
 
   const FILTERS: { id: Filter; label: string }[] = [
     { id: 'all',          label: T('mkt_all')      },
@@ -52,6 +63,9 @@ export default function Marketplace() {
         }}>
           {T('mkt_desc')}
         </p>
+
+        {/* Cacao Ceremony — Cauaculture cross-sell with adopter discount (TOP placement so users find it) */}
+        <CacaoCeremonyCard />
 
         {/* Multiplier badge */}
         {user && (
@@ -95,9 +109,6 @@ export default function Marketplace() {
             <ProductCard key={p.id} product={p} multiplier={mult} user={user} roleDiscount={roleDiscount} />
           ))}
         </div>
-
-        {/* Cacao Ceremony — Cauaculture cross-sell with adopter discount */}
-        <CacaoCeremonyCard />
 
         {/* Crowdfunding bar */}
         <div style={{
