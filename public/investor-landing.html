@@ -51,6 +51,13 @@ body::before{content:'';position:fixed;inset:0;z-index:999;pointer-events:none;o
 #gl-canvas{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none;}
 #scroll-root{position:relative;z-index:1;}
 
+/* Hero intro video — pre-rendered Hyperframes moment that hands off to the live 3D scene. */
+#hero-intro-video{position:fixed;inset:0;width:100vw;height:100vh;z-index:2;
+  object-fit:cover;pointer-events:none;background:var(--bg);
+  opacity:1;transition:opacity 1.2s var(--enter);}
+#hero-intro-video.fade-out{opacity:0;}
+@media (prefers-reduced-motion: reduce){#hero-intro-video{display:none;}}
+
 .reveal{opacity:0;transform:translateY(20px);transition:opacity 1s var(--enter),transform 1s var(--enter);}
 .reveal.visible{opacity:1;transform:translateY(0);}
 /* Safety net — image-carrying containers always visible, never depend on JS reveal */
@@ -402,6 +409,11 @@ footer a:hover{color:var(--ink2);}
 <body>
 
 <canvas id="gl-canvas"></canvas>
+
+<video id="hero-intro-video" autoplay muted playsinline preload="auto"
+       poster="/videos/hero-intro-poster.jpg" aria-hidden="true">
+  <source src="/videos/hero-intro.mp4" type="video/mp4">
+</video>
 
 <nav>
   <a href="#" class="nav-logo" style="display:flex;align-items:center;text-decoration:none;" aria-label="caúa">

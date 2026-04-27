@@ -26,3 +26,9 @@ dist-ssr
 .vercel
 .gstack/
 tmp/
+
+# Hyperframes workspace — only commit the composition + meta, not deps/caches/raw frames
+videos/node_modules/
+videos/renders/
+videos/.hyperframes/
+videos/out/
