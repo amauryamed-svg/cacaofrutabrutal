@@ -253,6 +253,35 @@ export async function hsUpdateRitual(props: RitualUpdateProps): Promise<void> {
   ).catch(() => {})
 }
 
+// ── HubSpot contact ↔ Supabase user_profiles bridge ──────────────────────────
+
+/**
+ * linkHubSpotContact()
+ *
+ * Best-effort POST to the link-hubspot-contact Edge Function. Looks up the
+ * authenticated user's HubSpot contact by email (server-side, using the
+ * private app token) and writes the resulting contact ID into
+ * user_profiles.hubspot_contact_id. Idempotent. Fire-and-forget — never blocks UX.
+ */
+export async function linkHubSpotContact(accessToken: string): Promise<{ linked: boolean }> {
+  const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
+  if (!url || !accessToken) return { linked: false }
+  try {
+    const res = await fetch(`${url}/functions/v1/link-hubspot-contact`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    })
+    if (!res.ok) return { linked: false }
+    const json = await res.json() as { linked?: boolean }
+    return { linked: !!json.linked }
+  } catch {
+    return { linked: false }
+  }
+}
+
 // ── Main tracking orchestrator ────────────────────────────────────────────────
 
 /**
@@ -264,6 +293,7 @@ export async function hsUpdateRitual(props: RitualUpdateProps): Promise<void> {
  * @param email   User's email from Supabase Auth
  * @param profile Supabase user_profiles row (contains behavioral counters)
  * @param declaredInterests  Set by user interaction — NOT inferred
+ * @param accessToken  Supabase JWT — when provided, links HubSpot contact to user_profiles
  */
 export async function trackLoggedInUser(
   email: string,
@@ -276,7 +306,8 @@ export async function trackLoggedInUser(
   declaredInterests?: {
     organic?:    boolean   // user clicked organic/agroforestry content
     novelFoods?: boolean   // user clicked novel foods / functional content
-  }
+  },
+  accessToken?: string
 ): Promise<TrackingResult> {
   const consent = readConsent()
 
@@ -316,6 +347,11 @@ export async function trackLoggedInUser(
 
   // 2 — Submit via Forms API (creates/updates contact in CRM)
   const formSent = await hsSubmitForm(props)
+
+  // 3 — Bridge HubSpot contact ID into user_profiles (best-effort, fire-and-forget)
+  if (formSent && accessToken) {
+    linkHubSpotContact(accessToken).catch(() => {})
+  }
 
   return { identified: true, formSent, reason: formSent ? undefined : 'form_guid_missing' }
 }

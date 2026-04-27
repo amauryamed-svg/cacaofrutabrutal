@@ -53,12 +53,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq('user_id', userId)
       .then(() => {})
 
-    trackLoggedInUser(userEmail, {
-      region:           p.region,
-      ritual_streak:    p.ritual_streak,
-      completed_orders: p.completed_orders,
-      referral_count:   p.referral_count,
-    })
+    const { data: { session } } = await supabase.auth.getSession()
+    trackLoggedInUser(
+      userEmail,
+      {
+        region:           p.region,
+        ritual_streak:    p.ritual_streak,
+        completed_orders: p.completed_orders,
+        referral_count:   p.referral_count,
+      },
+      undefined,
+      session?.access_token,
+    )
   }, [])
 
   useEffect(() => {
