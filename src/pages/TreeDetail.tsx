@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase'
 import { BRAND, FONTS, GUARDIANS, TOKEN_RATES } from '../utils/constants'
 import CauaButton from '../components/ui/CauaButton'
 import CauaGotchi from '../components/dashboard/CauaGotchi'
+import MintTreeButton from '../components/dashboard/MintTreeButton'
 import type { CacaoTree } from '../lib/database.types'
 import {
   GROWTH_STAGES, PLANT_PROBLEMS, SPECIAL_ITEMS,
@@ -412,6 +413,15 @@ export default function TreeDetail() {
           </div>
           <p style={{ color: '#ddd', fontSize: '0.8rem', lineHeight: 1.5, margin: '0 0 6px' }}>{stage.description}</p>
           <div style={{ color: BRAND.mazorca, fontSize: '0.75rem' }}>💡 {stage.careTip}</div>
+        </div>
+
+        {/* Web3 NFT mint — gated by KYC + linked wallet (handled inside the component) */}
+        <div style={{ marginBottom: '1rem' }}>
+          <MintTreeButton
+            treeId={tree.id}
+            alreadyMintedTokenId={tree.nft_token_id}
+            alreadyMintedContract={tree.nft_contract}
+          />
         </div>
 
         {/* Cycle progress + next-care countdown — UNIFIED CONTROL CARD */}

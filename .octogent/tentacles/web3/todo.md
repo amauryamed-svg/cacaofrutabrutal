@@ -61,7 +61,7 @@
 - [ ] Coinbase Developer Platform account (RPC + Paymaster — Paymaster integration deferred to post-MVP)
 - [ ] Alchemy account + Custom Webhook (Transfer events on `CACAO_TREE_NFT_ADDRESS`)
 - [ ] Set `CACAO_TREE_NFT_ADDRESS` in `src/utils/constants.ts:WEB3_CONTRACTS` + Edge Function env
-- [ ] Wire `MintTreeButton` into `src/pages/TreeDetail.tsx`
+- [x] Wire `MintTreeButton` into `src/pages/TreeDetail.tsx` (between Stage Info and Cycle progress; uses `tree.nft_token_id` for minted state)
 - [ ] Test e2e: mint Sepolia → OpenSea testnet → care action triggers `touch()` → metadata update
 
 ## P2 — Phase 4: Mazorca→$CACAO Redemption (Semanas 5–7) — code-side ✅, deploy ❌
@@ -83,7 +83,7 @@
 - [ ] Set `MAZORCA_REDEMPTION_ADDRESS` + `ORACLE_PRIVATE_KEY` in Supabase Edge Function env
 - [ ] Set `WEB3_CONTRACTS.cacaoToken` + `mazorcaRedemption` in `src/utils/constants.ts`
 - [ ] Schedule pg_cron jobs: `expire_mazorca_redemptions` every 15 min + nightly call to `refund-expired-redemption`
-- [ ] Wire `RedeemMazorcasModal` into Dashboard / TokenBalance UI (next task)
+- [x] Wire `RedeemMazorcasModal` into Dashboard (second CTA "⛓ Burn → $CACAO" alongside chocolate redemption; gated by ≥ MAZORCA_TO_CACAO_RATE)
 - [ ] Test e2e: 1000 mazorcas burn → 1 $CACAO mint → token_events row → refund flow on expired
 
 ## P2 — Phase 5: BTC + Fiat Onramp + Web3 Landing (Semanas 7–8) — code-side ✅, deploy ❌
