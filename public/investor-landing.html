@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>caúa — With Nature We Walk</title>
+<title>caúa — Functional Cacao Ecosystem</title>
 <meta name="description" content="Caúa — plataforma funcional de cacao. Brief para inversores — Series Angel 2025.">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
@@ -1001,9 +1001,8 @@ footer a:hover{color:var(--ink2);}
   <div class="kit-wrap">
     <div class="sec-idx reveal" style="margin-bottom:0;" data-i18n="s106_idx">10.6 — Origen</div>
     <div class="kit-photo-frame reveal">
-      <img src="/uploads/amaury-rafael.jpg" alt="Amaury y Rafael en la finca — With Nature We Walk" loading="lazy">
+      <img src="/uploads/amaury-rafael.jpg" alt="Amaury y Rafael en la finca de cacao — Arbeláez" loading="lazy">
       <div class="kit-photo-veil"></div>
-      <h2 class="kit-overlay-phrase" data-i18n="walk_h">Con la<br>naturaleza<br>caminamos.</h2>
     </div>
     <div class="kit-caption reveal d2" data-i18n="walk_cap">Arbeláez · Finca La Querencia · 2025</div>
   </div>
@@ -1015,7 +1014,7 @@ footer a:hover{color:var(--ink2);}
     <div class="cta-pre reveal"><div class="cta-dot"></div> <span data-i18n="cta_pre">Early Access · Ronda Limitada</span></div>
     <h2 class="cta-h reveal d1" data-i18n="cta_h">Sé parte<br>del<br>sistema.</h2>
     <p class="cta-body reveal d2" data-i18n="cta_body">
-      Estamos construyendo la primera plataforma funcional de cacao — integración vertical desde el árbol hasta el cuerpo. Únete a los fundadores que caminan con la naturaleza, no contra ella.<br><br>
+      Estamos construyendo el primer ecosistema funcional de cacao — integración vertical desde el árbol hasta el cuerpo. Únete a los fundadores que construyen desde el origen.<br><br>
       Asegura tu posición vía Coinbase Wallet. USDC y ETH aceptados.
     </p>
   </div>
@@ -1062,7 +1061,7 @@ footer a:hover{color:var(--ink2);}
       <path fill="#F7F1EE" d="M231.11,18.71h-8.43s-.03.02-.05.02c-2.38,0-2.47,2.47-2.47,2.47v3.89c-2.58-2.62-5.4-4.59-8.44-5.9-3.05-1.31-6.3-1.97-9.77-1.97-7.54,0-13.94,2.85-19.21,8.56-5.27,5.7-7.91,13.02-7.91,21.95s2.73,15.81,8.18,21.6c5.44,5.79,11.9,8.68,19.37,8.68,3.32,0,6.41-.59,9.26-1.78s5.69-3.13,8.52-5.82v2.91s-.16,3.14,3.14,3.14c.14,0,.16.05.27.06h7.55c1.96,0,3.55-1.59,3.55-3.55V22.26c0-1.96-1.59-3.55-3.55-3.55h-.01ZM216.29,59.97c-3,3.17-6.78,4.75-11.34,4.75s-8.13-1.61-11.15-4.84c-3.02-3.22-4.53-7.33-4.53-12.33s1.48-9.02,4.45-12.19c2.96-3.17,6.69-4.76,11.17-4.76s8.39,1.56,11.39,4.68c3,3.12,4.5,7.19,4.5,12.22s-1.5,9.29-4.5,12.46h0Z"/>
     </svg>
   </div>
-  <div class="f-mono">With Nature We Walk · Caúa Colombia SAS · 2025</div>
+  <div class="f-mono">Caúa Colombia SAS · 2026</div>
   <div class="f-mono"><a href="/app">App</a> &nbsp;·&nbsp; <a href="#investment">Deck</a> &nbsp;·&nbsp; <a href="/pitch_growth.html">Growth</a></div>
 </footer>
 
@@ -1095,6 +1094,7 @@ footer a:hover{color:var(--ink2);}
 <script src="https://unpkg.com/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
 <script src="https://unpkg.com/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
 <script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="/cacao-tree-builder.js"></script>
 <script src="/investor-3d.js"></script>
 
 <!-- Motion.dev scroll choreography — single scroll source for 3D + pin rail -->
@@ -1316,11 +1316,11 @@ const T = {
     kit_h:'En tus manos.',
     kit_cap:'Un sistema · tres formas',
     s106_idx:'10.6 — Origen',
-    walk_h:'Con la<br>naturaleza<br>caminamos.',
+    walk_h:'',
     walk_cap:'Arbeláez · Finca La Querencia · 2025',
     cta_pre:'Early Access · Ronda Limitada',
     cta_h:'Sé parte<br>del<br>sistema.',
-    cta_body:'Estamos construyendo la primera plataforma funcional de cacao — integración vertical desde el árbol hasta el cuerpo. Únete a los fundadores que caminan con la naturaleza, no contra ella.<br><br>Asegura tu posición vía Coinbase Wallet. USDC y ETH aceptados.',
+    cta_body:'Estamos construyendo el primer ecosistema funcional de cacao — integración vertical desde el árbol hasta el cuerpo. Únete a los fundadores que construyen desde el origen.<br><br>Asegura tu posición vía Coinbase Wallet. USDC y ETH aceptados.',
     round_lbl:'Ronda Activa', round_badge:'Live · Limited',
     prog_lbl:'Progreso de ronda',
     rd_min:'Mínimo', rd_val:'Valoración', rd_ins:'Instrumento', rd_close:'Cierre',
@@ -1463,11 +1463,11 @@ const T = {
     kit_h:'In your hands.',
     kit_cap:'One system · three forms',
     s106_idx:'10.6 — Origin',
-    walk_h:'With nature,<br>we walk.',
+    walk_h:'',
     walk_cap:'Arbeláez · Finca La Querencia · 2025',
     cta_pre:'Early Access · Limited Round',
     cta_h:'Become<br>part of<br>the system.',
-    cta_body:"We're building the first functional cacao platform — vertical integration from tree to body. Join founders walking with nature, not against it.<br><br>Secure your position via Coinbase Wallet. USDC and ETH accepted.",
+    cta_body:"We're building the first functional cacao ecosystem — vertical integration from tree to body. Join founders building from origin.<br><br>Secure your position via Coinbase Wallet. USDC and ETH accepted.",
     round_lbl:'Active Round', round_badge:'Live · Limited',
     prog_lbl:'Round progress',
     rd_min:'Minimum', rd_val:'Valuation', rd_ins:'Instrument', rd_close:'Closing',

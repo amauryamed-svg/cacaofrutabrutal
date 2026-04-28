@@ -1,17 +1,25 @@
 // Caúa Investor — scroll-driven narrative
 //   0.00 – 0.15  Mature cacao tree, branches full of green pods.
-//                Light shafts pierce the canopy. Butterflies trace sinusoidal paths.
+//                Light shafts pierce the canopy and pollen drifts in the beams.
 //   0.15 – 0.25  ONE pod (the hero) ripens fast: green → orange, emissive boosts.
 //   0.25 – 0.32  The hero pod detaches and falls in a parabola.
 //   0.32 – 0.40  Lands on the ground and starts spinning, accelerating.
 //   0.40 – 0.50  The spin becomes IMPLOSION: pod scales down, sky → black,
-//                butterflies + light shafts get sucked into the vortex.
+//                glints + light shafts get sucked into the vortex.
 //   0.50 – 0.65  REVERSE growth: mature tree de-grows toward juvenile.
 //   0.65 – 0.85  Juvenile → cotyledons → sprout.
 //   0.85 – 1.00  Sprout → seed → ETHERIC ROOTS radiating purple+gold lines.
-(function () {
+(async function () {
   const canvas = document.getElementById('gl-canvas');
   if (!canvas || typeof THREE === 'undefined') return;
+
+  // Fetch the procedural tree spec. If it fails (or the builder didn't load),
+  // we fall back to the legacy in-file tree generation later.
+  let cacaoSpec = null;
+  try {
+    const r = await fetch('/cacao-tree-spec.json', { cache: 'force-cache' });
+    if (r.ok) cacaoSpec = await r.json();
+  } catch (_) { /* offline / dev — fall back below */ }
 
   // UI/UX Bar §3 — reduced-motion hard kill switch
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -121,32 +129,24 @@
   }
   const shaftTex = makeShaftTexture();
 
-  // ── Butterfly wing silhouette texture ──
-  function makeButterflyTexture() {
+  // ── Firefly texture — bright lime-green core with soft yellow-green halo ──
+  function makeFireflyTexture() {
     const c = document.createElement('canvas');
     c.width = 64; c.height = 64;
     const ctx = c.getContext('2d');
-    ctx.fillStyle = 'rgba(0,0,0,0)';
+    const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0.00, 'rgba(255, 255, 220, 1.00)');  // hot white core
+    g.addColorStop(0.18, 'rgba(220, 255, 140, 0.85)');  // lime
+    g.addColorStop(0.45, 'rgba(160, 220,  80, 0.30)');  // green halo
+    g.addColorStop(0.78, 'rgba(120, 180,  50, 0.08)');
+    g.addColorStop(1.00, 'rgba(120, 180,  50, 0.00)');
+    ctx.fillStyle = g;
     ctx.fillRect(0, 0, 64, 64);
-    // Wing silhouette — half oval, slightly indented
-    ctx.beginPath();
-    ctx.moveTo(32, 32);
-    ctx.bezierCurveTo(8, 6, 0, 28, 14, 56);
-    ctx.bezierCurveTo(22, 60, 28, 50, 32, 32);
-    ctx.fillStyle = '#F8D8D0';
-    ctx.fill();
-    // Inner accent
-    ctx.beginPath();
-    ctx.moveTo(32, 32);
-    ctx.bezierCurveTo(20, 18, 14, 32, 22, 50);
-    ctx.bezierCurveTo(28, 52, 30, 44, 32, 32);
-    ctx.fillStyle = '#8D2679';
-    ctx.fill();
     const tex = new THREE.CanvasTexture(c);
     tex.minFilter = THREE.LinearFilter;
     return tex;
   }
-  const butterflyTex = makeButterflyTexture();
+  const sparkleTex = makeFireflyTexture();
 
   // ── Lights — DARKER overall so text reads cleanly over the bg.
   // Implosion lights still flash bright for the climax (handled in loop), but the
@@ -321,49 +321,51 @@
     shaft.rotation.z = def.tilt;
     shaft.rotation.y = Math.atan2(def.x, def.z) * 0.5;
     shaft.scale.setScalar(def.scale);
-    shaft.userData.base = { x: def.x, z: def.z };
+    shaft.userData.base = { x: def.x, z: def.z, tilt: def.tilt };
     lightShafts.add(shaft);
     lightShaftMats.push(mat);
   }
   scene.add(lightShafts);
 
-  // ── Butterflies — small 2-wing meshes with sinusoidal paths ──
-  function buildButterfly() {
-    const g = new THREE.Group();
-    const wingMatL = new THREE.MeshBasicMaterial({
-      map: butterflyTex, transparent: true, opacity: 0.0, side: THREE.DoubleSide, depthWrite: false,
-    });
-    const wingMatR = new THREE.MeshBasicMaterial({
-      map: butterflyTex, transparent: true, opacity: 0.0, side: THREE.DoubleSide, depthWrite: false,
-    });
-    const wingGeo = new THREE.PlaneGeometry(0.42, 0.42);
-    const wingL = new THREE.Mesh(wingGeo, wingMatL);
-    wingL.position.x = -0.18;
-    wingL.userData.isLeft = true;
-    g.add(wingL);
-    const wingR = new THREE.Mesh(wingGeo, wingMatR);
-    wingR.position.x = 0.18;
-    wingR.scale.x = -1;  // mirror
-    g.add(wingR);
-    g.userData.wings = [wingL, wingR];
-    g.userData.mats = [wingMatL, wingMatR];
-    return g;
-  }
-  const butterflies = [];
-  const BUTTERFLY_DEFS = [
-    { cx:  2.4, cy: 5.0, cz:  2.6, ax: 1.6, ay: 1.0, az: 0.9, freq: 0.55, phase: 0.0  },
-    { cx: -2.1, cy: 5.6, cz:  3.0, ax: 1.4, ay: 0.8, az: 1.1, freq: 0.62, phase: 1.6  },
-    { cx:  3.4, cy: 7.2, cz: -0.5, ax: 1.0, ay: 0.7, az: 1.4, freq: 0.48, phase: 3.1  },
-    { cx: -3.0, cy: 6.4, cz: -1.6, ax: 1.2, ay: 0.9, az: 1.0, freq: 0.58, phase: 4.5  },
-    { cx:  0.6, cy: 8.0, cz:  2.2, ax: 1.8, ay: 0.6, az: 0.9, freq: 0.50, phase: 5.8  },
-    { cx: -0.8, cy: 7.6, cz:  0.8, ax: 1.4, ay: 0.7, az: 1.2, freq: 0.66, phase: 2.4  },
+  // ── Fireflies (luciérnagas) — wandering lime-green sprites with personal blink cycles ──
+  // Replaces the prior butterfly system. Each firefly drifts on a slow Lissajous-ish path
+  // and has its own "blink" — a fast on/off envelope (sharp peak, long off) layered on a
+  // slow base envelope. During the implosion (p ≥ 0.40) they curve toward HERO_LAND_POS.
+  const glints = [];
+  const FIREFLY_HUES = [0xC8FF7E, 0xA8FF60, 0xD8FF8E, 0xB8F070, 0xE0FFA0];
+  const FIREFLY_DEFS = [
+    { cx:  2.4, cy: 5.0, cz:  2.6, ax: 1.6, ay: 1.2, az: 0.9, freq: 0.20, phase: 0.0, scale: 0.34, blinkRate: 1.10, blinkPhase: 0.0 },
+    { cx: -2.1, cy: 5.6, cz:  3.0, ax: 1.4, ay: 1.0, az: 1.1, freq: 0.24, phase: 1.6, scale: 0.30, blinkRate: 1.35, blinkPhase: 2.1 },
+    { cx:  3.4, cy: 7.2, cz: -0.5, ax: 1.0, ay: 0.9, az: 1.4, freq: 0.18, phase: 3.1, scale: 0.40, blinkRate: 0.90, blinkPhase: 4.4 },
+    { cx: -3.0, cy: 6.4, cz: -1.6, ax: 1.2, ay: 1.1, az: 1.0, freq: 0.22, phase: 4.5, scale: 0.28, blinkRate: 1.50, blinkPhase: 1.0 },
+    { cx:  0.6, cy: 8.0, cz:  2.2, ax: 1.8, ay: 0.8, az: 0.9, freq: 0.16, phase: 5.8, scale: 0.36, blinkRate: 0.80, blinkPhase: 5.2 },
+    { cx: -0.8, cy: 7.6, cz:  0.8, ax: 1.4, ay: 0.9, az: 1.2, freq: 0.26, phase: 2.4, scale: 0.30, blinkRate: 1.20, blinkPhase: 3.6 },
+    { cx:  1.8, cy: 4.6, cz:  3.4, ax: 0.9, ay: 0.7, az: 0.8, freq: 0.30, phase: 0.8, scale: 0.26, blinkRate: 1.65, blinkPhase: 0.5 },
+    { cx: -1.6, cy: 4.2, cz:  3.0, ax: 1.1, ay: 0.8, az: 0.7, freq: 0.28, phase: 3.7, scale: 0.28, blinkRate: 1.05, blinkPhase: 4.9 },
+    { cx:  2.8, cy: 6.4, cz:  1.0, ax: 0.7, ay: 0.6, az: 0.6, freq: 0.34, phase: 5.1, scale: 0.24, blinkRate: 1.80, blinkPhase: 2.7 },
+    { cx: -2.6, cy: 6.8, cz:  1.2, ax: 0.8, ay: 0.7, az: 0.7, freq: 0.32, phase: 1.2, scale: 0.26, blinkRate: 1.25, blinkPhase: 0.9 },
+    { cx:  0.0, cy: 3.6, cz:  4.0, ax: 1.6, ay: 0.5, az: 0.6, freq: 0.20, phase: 2.8, scale: 0.32, blinkRate: 1.00, blinkPhase: 5.7 },
+    { cx:  1.2, cy: 3.2, cz: -2.5, ax: 0.7, ay: 0.4, az: 1.1, freq: 0.36, phase: 4.0, scale: 0.22, blinkRate: 1.45, blinkPhase: 3.1 },
+    { cx: -1.0, cy: 8.4, cz: -0.4, ax: 0.9, ay: 0.5, az: 0.8, freq: 0.24, phase: 0.4, scale: 0.30, blinkRate: 0.95, blinkPhase: 1.8 },
+    { cx:  3.6, cy: 5.6, cz:  1.8, ax: 0.6, ay: 0.7, az: 0.5, freq: 0.40, phase: 5.6, scale: 0.22, blinkRate: 1.55, blinkPhase: 4.2 },
   ];
-  for (const def of BUTTERFLY_DEFS) {
-    const b = buildButterfly();
-    b.position.set(def.cx, def.cy, def.cz);
-    b.userData.def = def;
-    scene.add(b);
-    butterflies.push(b);
+  for (let i = 0; i < FIREFLY_DEFS.length; i++) {
+    const def = FIREFLY_DEFS[i];
+    const hue = FIREFLY_HUES[i % FIREFLY_HUES.length];
+    const mat = new THREE.SpriteMaterial({
+      map: sparkleTex,
+      color: hue,
+      transparent: true,
+      opacity: 0.0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const sprite = new THREE.Sprite(mat);
+    sprite.position.set(def.cx, def.cy, def.cz);
+    sprite.scale.setScalar(def.scale);
+    sprite.userData = { def, mat };
+    scene.add(sprite);
+    glints.push(sprite);
   }
 
   // ── Protagonist tree — hierarchical stage-gated sub-groups (used for REVERSE growth) ──
@@ -427,121 +429,139 @@
   protagonist.add(juvenileGroup);
 
   // Stage 1 (opening): MATURE tree — full size, visible from p=0
+  // Two paths:
+  //   (a) JSON-driven (preferred): cacao-tree-spec.json + window.CauaCacaoBuilder
+  //   (b) Legacy in-file generation, kept as fallback if either is missing
   const mature = new THREE.Group();
   protagonist.add(mature);
+  const useSpec = !!(cacaoSpec && window.CauaCacaoBuilder);
+  let canopyLeaves = [];
+  let podMaterials = [];
+  let specPods = [];   // populated only on the spec path; carries { material, phase } for the loop
+  const TRUNK_H = 12;  // legacy hero-pod attachment math depends on this; keep visible to both paths
 
-  const TRUNK_H = 12;
-  const trunkGeo = new THREE.CylinderGeometry(0.55, 0.85, TRUNK_H, 20, 48);
-  const tpos = trunkGeo.attributes.position;
-  for (let i = 0; i < tpos.count; i++) {
-    const x = tpos.getX(i), y = tpos.getY(i), z = tpos.getZ(i);
-    const bark = Math.sin(y * 5.1) * 0.04 + Math.cos(y * 11 + x * 3.2) * 0.025
-               + Math.sin(y * 19 + z * 4.3) * 0.015;
-    const ang = Math.atan2(z, x);
-    const r0 = Math.sqrt(x * x + z * z);
-    const nr = r0 + bark;
-    tpos.setX(i, Math.cos(ang) * nr);
-    tpos.setZ(i, Math.sin(ang) * nr);
-  }
-  trunkGeo.computeVertexNormals();
-  const trunkMat = new THREE.MeshStandardMaterial({
-    color: 0x5A3620, emissive: 0x1A0A04, emissiveIntensity: 0.08,
-    roughness: 0.95, metalness: 0, transparent: true, opacity: 1,
-  });
-  const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-  trunk.position.y = TRUNK_H / 2;
-  mature.add(trunk);
-
-  // Branches
-  const branchMat = new THREE.MeshStandardMaterial({
-    color: 0x4A2C18, roughness: 0.95, metalness: 0, transparent: true, opacity: 1,
-  });
-  const BRANCHES = [
-    { y: TRUNK_H * 0.72, a: 0.5, len: 3.2, tilt: 0.8 },
-    { y: TRUNK_H * 0.76, a: 2.4, len: 2.8, tilt: 0.9 },
-    { y: TRUNK_H * 0.68, a: 4.1, len: 3.0, tilt: 0.75 },
-    { y: TRUNK_H * 0.80, a: 5.9, len: 2.6, tilt: 0.95 },
-  ];
-  for (const b of BRANCHES) {
-    const br = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.22, b.len, 8), branchMat);
-    br.position.set(Math.cos(b.a) * 0.45, b.y, Math.sin(b.a) * 0.45);
-    br.rotation.z = -Math.cos(b.a) * b.tilt;
-    br.rotation.x = Math.sin(b.a) * b.tilt;
-    br.translateY(b.len / 2);
-    mature.add(br);
-  }
-
-  // Canopy leaves
-  const canopyMat = new THREE.MeshStandardMaterial({
-    color: 0x2E5820, emissive: 0x0A1A08, emissiveIntensity: 0.20,
-    roughness: 0.75, metalness: 0.02, side: THREE.DoubleSide,
-    transparent: true, opacity: 1,
-  });
-  const canopyLeaves = [];
-  function addCanopyCluster(cx, cy, cz, count) {
-    for (let i = 0; i < count; i++) {
-      const leaf = new THREE.Mesh(LEAF_GEO, canopyMat);
-      const ang = Math.random() * Math.PI * 2;
-      const rad = Math.random() * 0.8;
-      leaf.position.set(cx + Math.cos(ang) * rad, cy + (Math.random() - 0.5) * 0.6, cz + Math.sin(ang) * rad);
-      leaf.rotation.y = Math.random() * Math.PI * 2;
-      const baseRotZ = (Math.random() - 0.5) * 0.9;
-      leaf.rotation.z = baseRotZ;
-      leaf.rotation.x = -Math.PI / 2 + (Math.random() - 0.5) * 0.4;
-      leaf.scale.setScalar(0.55 + Math.random() * 0.45);
-      leaf.userData = {
-        baseRotZ,
-        phase: Math.random() * Math.PI * 2,
-        freq: 0.55 + Math.random() * 0.45,
-        amp: 0.06 + Math.random() * 0.04,
-      };
-      canopyLeaves.push(leaf);
-      mature.add(leaf);
+  if (useSpec) {
+    const tree = window.CauaCacaoBuilder.buildFromSpec(THREE, cacaoSpec, { archetype: 'mature', seed: 1 });
+    // Builder uses metric units; scale up to match the legacy ~12-unit canopy
+    const targetH = TRUNK_H;
+    const specH = cacaoSpec.trunk.height_m;
+    const sceneScale = targetH / specH;
+    tree.scale.setScalar(sceneScale);
+    mature.add(tree);
+    canopyLeaves = tree.userData.leaves || [];
+    specPods = tree.userData.pods || [];
+    podMaterials = specPods.map(p => p.material);
+    // eslint-disable-next-line no-console
+    console.info(`[caua-3d] spec path active — ${specPods.length} pods, ${canopyLeaves.length} leaves, scale ${sceneScale.toFixed(2)}x`);
+  } else {
+    // eslint-disable-next-line no-console
+    console.info('[caua-3d] legacy path (no spec or no builder)');
+    const trunkGeo = new THREE.CylinderGeometry(0.55, 0.85, TRUNK_H, 20, 48);
+    const tpos = trunkGeo.attributes.position;
+    for (let i = 0; i < tpos.count; i++) {
+      const x = tpos.getX(i), y = tpos.getY(i), z = tpos.getZ(i);
+      const bark = Math.sin(y * 5.1) * 0.04 + Math.cos(y * 11 + x * 3.2) * 0.025
+                 + Math.sin(y * 19 + z * 4.3) * 0.015;
+      const ang = Math.atan2(z, x);
+      const r0 = Math.sqrt(x * x + z * z);
+      const nr = r0 + bark;
+      tpos.setX(i, Math.cos(ang) * nr);
+      tpos.setZ(i, Math.sin(ang) * nr);
     }
-  }
-  addCanopyCluster(0, TRUNK_H * 0.96, 0, 22);
-  addCanopyCluster(1.5, TRUNK_H * 0.88, 0.8, 10);
-  addCanopyCluster(-1.2, TRUNK_H * 0.85, -1.0, 10);
-  addCanopyCluster(0.3, TRUNK_H * 0.78, 1.8, 8);
-  for (const b of BRANCHES) {
-    const tipX = Math.cos(b.a) * (0.45 + Math.sin(b.tilt) * b.len * 0.9);
-    const tipY = b.y + Math.cos(b.tilt) * b.len * 0.9;
-    const tipZ = Math.sin(b.a) * (0.45 + Math.sin(b.tilt) * b.len * 0.9);
-    addCanopyCluster(tipX, tipY, tipZ, 8);
-  }
-
-  // Cauliflorous pods on trunk + branches — start GREEN, visible from p=0
-  // (no flower stage; the tree opens already mature with full fruit set)
-  const podsGroup = new THREE.Group();
-  const PODS_LAYOUT = [
-    { y: TRUNK_H * 0.38, a: 0.3, s: 0.32 },
-    { y: TRUNK_H * 0.27, a: 2.1, s: 0.28 },
-    { y: TRUNK_H * 0.20, a: 4.4, s: 0.34 },
-    { y: TRUNK_H * 0.10, a: 1.2, s: 0.30 },
-    { y: TRUNK_H * 0.50, a: 3.5, s: 0.32 },
-    { y: TRUNK_H * 0.60, a: 5.6, s: 0.28 },
-    { y: TRUNK_H * 0.32, a: 5.0, s: 0.26 },
-    { y: TRUNK_H * 0.45, a: 1.8, s: 0.30 },
-  ];
-  const podMaterials = [];
-  for (const c of PODS_LAYOUT) {
-    const p = buildPod(c.s, 'low', POD_GREEN_HEX);
-    const r = 0.68;
-    p.position.set(Math.cos(c.a) * r, c.y, Math.sin(c.a) * r);
-    p.rotation.y = c.a + Math.PI / 2;
-    p.rotation.z = Math.cos(c.a) * 0.35;
-    p.rotation.x = Math.sin(c.a) * 0.35;
-    p.traverse(m => {
-      if (m.material) {
-        m.material = m.material.clone();
-        m.material.transparent = true;
-        m.material.opacity = 1;  // visible from start
-        podMaterials.push(m.material);
-      }
+    trunkGeo.computeVertexNormals();
+    const trunkMat = new THREE.MeshStandardMaterial({
+      color: 0x5A3620, emissive: 0x1A0A04, emissiveIntensity: 0.08,
+      roughness: 0.95, metalness: 0, transparent: true, opacity: 1,
     });
-    podsGroup.add(p);
+    const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+    trunk.position.y = TRUNK_H / 2;
+    mature.add(trunk);
+
+    const branchMat = new THREE.MeshStandardMaterial({
+      color: 0x4A2C18, roughness: 0.95, metalness: 0, transparent: true, opacity: 1,
+    });
+    const BRANCHES = [
+      { y: TRUNK_H * 0.72, a: 0.5, len: 3.2, tilt: 0.8 },
+      { y: TRUNK_H * 0.76, a: 2.4, len: 2.8, tilt: 0.9 },
+      { y: TRUNK_H * 0.68, a: 4.1, len: 3.0, tilt: 0.75 },
+      { y: TRUNK_H * 0.80, a: 5.9, len: 2.6, tilt: 0.95 },
+    ];
+    for (const b of BRANCHES) {
+      const br = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.22, b.len, 8), branchMat);
+      br.position.set(Math.cos(b.a) * 0.45, b.y, Math.sin(b.a) * 0.45);
+      br.rotation.z = -Math.cos(b.a) * b.tilt;
+      br.rotation.x = Math.sin(b.a) * b.tilt;
+      br.translateY(b.len / 2);
+      mature.add(br);
+    }
+
+    const canopyMat = new THREE.MeshStandardMaterial({
+      color: 0x2E5820, emissive: 0x0A1A08, emissiveIntensity: 0.20,
+      roughness: 0.75, metalness: 0.02, side: THREE.DoubleSide,
+      transparent: true, opacity: 1,
+    });
+    function addCanopyCluster(cx, cy, cz, count) {
+      for (let i = 0; i < count; i++) {
+        const leaf = new THREE.Mesh(LEAF_GEO, canopyMat);
+        const ang = Math.random() * Math.PI * 2;
+        const rad = Math.random() * 0.8;
+        leaf.position.set(cx + Math.cos(ang) * rad, cy + (Math.random() - 0.5) * 0.6, cz + Math.sin(ang) * rad);
+        leaf.rotation.y = Math.random() * Math.PI * 2;
+        const baseRotZ = (Math.random() - 0.5) * 0.9;
+        leaf.rotation.z = baseRotZ;
+        leaf.rotation.x = -Math.PI / 2 + (Math.random() - 0.5) * 0.4;
+        leaf.scale.setScalar(0.55 + Math.random() * 0.45);
+        leaf.userData = {
+          baseRotZ,
+          phase: Math.random() * Math.PI * 2,
+          freq: 0.55 + Math.random() * 0.45,
+          amp: 0.06 + Math.random() * 0.04,
+        };
+        canopyLeaves.push(leaf);
+        mature.add(leaf);
+      }
+    }
+    addCanopyCluster(0, TRUNK_H * 0.96, 0, 22);
+    addCanopyCluster(1.5, TRUNK_H * 0.88, 0.8, 10);
+    addCanopyCluster(-1.2, TRUNK_H * 0.85, -1.0, 10);
+    addCanopyCluster(0.3, TRUNK_H * 0.78, 1.8, 8);
+    for (const b of BRANCHES) {
+      const tipX = Math.cos(b.a) * (0.45 + Math.sin(b.tilt) * b.len * 0.9);
+      const tipY = b.y + Math.cos(b.tilt) * b.len * 0.9;
+      const tipZ = Math.sin(b.a) * (0.45 + Math.sin(b.tilt) * b.len * 0.9);
+      addCanopyCluster(tipX, tipY, tipZ, 8);
+    }
+
+    const podsGroup = new THREE.Group();
+    const PODS_LAYOUT = [
+      { y: TRUNK_H * 0.38, a: 0.3, s: 0.32 },
+      { y: TRUNK_H * 0.27, a: 2.1, s: 0.28 },
+      { y: TRUNK_H * 0.20, a: 4.4, s: 0.34 },
+      { y: TRUNK_H * 0.10, a: 1.2, s: 0.30 },
+      { y: TRUNK_H * 0.50, a: 3.5, s: 0.32 },
+      { y: TRUNK_H * 0.60, a: 5.6, s: 0.28 },
+      { y: TRUNK_H * 0.32, a: 5.0, s: 0.26 },
+      { y: TRUNK_H * 0.45, a: 1.8, s: 0.30 },
+    ];
+    for (const c of PODS_LAYOUT) {
+      const p = buildPod(c.s, 'low', POD_GREEN_HEX);
+      const r = 0.68;
+      p.position.set(Math.cos(c.a) * r, c.y, Math.sin(c.a) * r);
+      p.rotation.y = c.a + Math.PI / 2;
+      p.rotation.z = Math.cos(c.a) * 0.35;
+      p.rotation.x = Math.sin(c.a) * 0.35;
+      p.traverse(m => {
+        if (m.material) {
+          m.material = m.material.clone();
+          m.material.transparent = true;
+          m.material.opacity = 1;
+          podMaterials.push(m.material);
+        }
+      });
+      podsGroup.add(p);
+    }
+    mature.add(podsGroup);
   }
-  mature.add(podsGroup);
 
   // ── HERO POD — the one that ripens, falls, spins, implodes ──
   // Starts on a front-facing branch, visible from p=0. Has its own state machine.
@@ -858,11 +878,29 @@
 
     // ── Mature tree visibility — present 0.00-0.50, fades during reverse growth 0.50-0.65 ──
     const matureAlpha = 1 - smoothstep(0.48, 0.62, p);
-    trunkMat.opacity = matureAlpha;
-    branchMat.opacity = matureAlpha;
-    canopyMat.opacity = matureAlpha;
-    for (const mat of podMaterials) mat.opacity = matureAlpha;
+    // Path-agnostic: walk the mature subtree and fade every material the same way.
+    mature.traverse(obj => {
+      if (obj.material) {
+        if (Array.isArray(obj.material)) obj.material.forEach(m => { m.transparent = true; m.opacity = matureAlpha; });
+        else { obj.material.transparent = true; obj.material.opacity = matureAlpha; }
+      }
+    });
     mature.visible = matureAlpha > 0.02;
+
+    // Drive ripening color cycle on spec-built pods (legacy path skips — pods stay green).
+    // Phase offsets are baked into pod.phase so pods ripen out-of-sync, mimicking the canopy.
+    if (useSpec && specPods.length) {
+      const cycleSpeed = 1 / cacaoSpec.pods.ripening_cycle.duration_seconds;
+      const cycleT = (t * cycleSpeed) % 1;
+      for (let i = 0; i < specPods.length; i++) {
+        const pod = specPods[i];
+        const r = window.CauaCacaoBuilder.ripeningColor(THREE, cacaoSpec, cycleT + pod.phase);
+        pod.material.color.copy(r.color);
+        pod.material.emissive.copy(r.color).multiplyScalar(r.emissive);
+        pod.material.emissiveIntensity = r.emissive;
+        pod.material.roughness = 1 - r.gloss * 0.6;
+      }
+    }
 
     // Mature scale — slight implosion suction effect 0.40-0.50
     const matureSuck = 1 - smoothstep(0.42, 0.50, p) * 0.25;
@@ -876,49 +914,66 @@
       }
     }
 
-    // ── Light shafts — present 0.00-0.40, intensify during fall, sucked into vortex 0.40-0.50 ──
+    // ── Light shafts — heightened: stronger peak, per-shaft flicker, breath, sway ──
     const shaftBase = (1 - smoothstep(0.42, 0.50, p));
-    const shaftIntensity = 0.42 + smoothstep(0.20, 0.32, p) * 0.40;
+    const shaftIntensity = 0.55 + smoothstep(0.18, 0.34, p) * 0.55;  // brighter peak (was 0.42 + 0.40)
     for (let i = 0; i < lightShafts.children.length; i++) {
       const s = lightShafts.children[i];
       const m = lightShaftMats[i];
-      m.opacity = shaftBase * shaftIntensity;
+      // Per-shaft flicker — three-octave sine for organic shimmer
+      const flicker =
+        0.86 +
+        0.10 * Math.sin(t * 2.3 + i * 1.7) +
+        0.06 * Math.sin(t * 4.1 + i * 0.9) +
+        0.04 * Math.sin(t * 7.7 + i * 2.4);
+      m.opacity = shaftBase * shaftIntensity * flicker;
       // Suction — shafts tilt and translate toward the impact point during implosion
       const suck = smoothstep(0.40, 0.50, p);
       const targetX = lerp(s.userData.base.x, HERO_LAND_POS.x, suck * 0.85);
       const targetZ = lerp(s.userData.base.z, HERO_LAND_POS.z, suck * 0.85);
-      s.position.x = targetX + Math.sin(t * 0.4 + i) * 0.08;
-      s.position.z = targetZ + Math.cos(t * 0.35 + i * 1.3) * 0.06;
-      s.scale.y = 1 + suck * 0.4;
+      s.position.x = targetX + Math.sin(t * 0.4 + i) * 0.10;
+      s.position.z = targetZ + Math.cos(t * 0.35 + i * 1.3) * 0.08;
+      // Breathing scale + subtle horizontal sway
+      const breathe = 1 + 0.06 * Math.sin(t * 0.9 + i * 0.6);
+      s.scale.x = breathe;
+      s.scale.y = (1 + suck * 0.4) * (1 + 0.04 * Math.sin(t * 1.4 + i));
+      s.rotation.z = s.userData.base.tilt !== undefined
+        ? s.userData.base.tilt + Math.sin(t * 0.5 + i * 0.8) * 0.04
+        : Math.sin(t * 0.5 + i * 0.8) * 0.04;
     }
 
-    // ── Butterflies — present 0.00-0.40, drift toward vortex 0.40-0.48, fade ──
-    const butterflyBase = (1 - smoothstep(0.40, 0.50, p));
-    for (let bi = 0; bi < butterflies.length; bi++) {
-      const b = butterflies[bi];
-      const def = b.userData.def;
-      // Sinusoidal flight path
+    // ── Fireflies — wandering with personal blink cycles, sucked into the vortex on implosion ──
+    // Real fireflies blink: short bright flash, long dark gap. We model that as
+    //   blink(t) = max(0, sin(rate * t + phase))^6
+    // The ^6 makes the wave spike sharply — the firefly is "off" most of the time.
+    const fireflyBase = (1 - smoothstep(0.42, 0.52, p));
+    const fadeIn = smoothstep(0, 0.06, p);
+    for (let gi = 0; gi < glints.length; gi++) {
+      const f = glints[gi];
+      const def = f.userData.def;
+      const m = f.userData.mat;
+      // Slow Lissajous wander
       const orbit = t * def.freq + def.phase;
-      const px = def.cx + Math.sin(orbit) * def.ax;
-      const py = def.cy + Math.sin(orbit * 0.7 + 0.6) * def.ay;
-      const pz = def.cz + Math.cos(orbit * 1.1) * def.az;
-      // Suction toward vortex during implosion
+      const px = def.cx + Math.sin(orbit)         * def.ax
+                       + Math.sin(t * 0.32 + def.phase * 1.7) * 0.25;
+      const py = def.cy + Math.sin(orbit * 0.6 + 0.6) * def.ay
+                       + Math.sin(t * 0.45 + def.phase) * 0.22;
+      const pz = def.cz + Math.cos(orbit * 1.1)   * def.az
+                       + Math.cos(t * 0.28 + def.phase * 0.8) * 0.20;
       const suck = smoothstep(0.40, 0.50, p);
-      const fx = lerp(px, HERO_LAND_POS.x, suck * 0.95);
-      const fy = lerp(py, HERO_LAND_POS.y, suck * 0.95);
-      const fz = lerp(pz, HERO_LAND_POS.z, suck * 0.95);
-      b.position.set(fx, fy, fz);
-      // Face direction of travel
-      b.rotation.y = orbit;
-      b.rotation.z = Math.sin(orbit * 0.8) * 0.25;
-      // Wing flap
-      const flap = Math.sin(t * 18 + def.phase) * 0.9;
-      b.userData.wings[0].rotation.y = -flap;
-      b.userData.wings[1].rotation.y = flap;
-      // Opacity
-      const fade = butterflyBase * smoothstep(0, 0.05, p);  // gentle fade-in
-      b.userData.mats[0].opacity = fade;
-      b.userData.mats[1].opacity = fade;
+      f.position.x = lerp(px, HERO_LAND_POS.x, suck * 0.95);
+      f.position.y = lerp(py, HERO_LAND_POS.y, suck * 0.95);
+      f.position.z = lerp(pz, HERO_LAND_POS.z, suck * 0.95);
+      // Asymmetric blink — sharp on, long off
+      const wave = Math.sin(t * def.blinkRate + def.blinkPhase);
+      const blink = wave > 0 ? Math.pow(wave, 6) : 0;
+      // A subtle ambient floor (0.06) so they're not fully invisible between blinks
+      const intensity = 0.06 + blink * 0.95;
+      m.opacity = fireflyBase * fadeIn * intensity;
+      // Scale slightly larger at the peak of a blink (light bloom illusion)
+      const bloom = 1 + blink * 0.6;
+      const shrink = 1 - suck * 0.6;
+      f.scale.setScalar(def.scale * bloom * shrink);
     }
 
     // ── HERO POD — ripens, falls, spins, implodes ──

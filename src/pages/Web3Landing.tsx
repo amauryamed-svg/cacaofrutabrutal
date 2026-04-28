@@ -183,13 +183,22 @@ const HERO_STATS: HeroStat[] = [
 
 function Inner() {
   // Lazy-load the standalone Three.js hero (already used by /public/investor-landing.html).
-  // We mount it into a fixed canvas overlay; bail if it fails (graceful degrade).
+  // The builder script must load BEFORE investor-3d.js — we use a sequential pattern
+  // (script.onload) instead of two parallel async tags. Bails if either fails (graceful degrade).
   useEffect(() => {
-    const script = document.createElement('script')
-    script.src = '/investor-3d.js'
-    script.async = true
-    document.head.appendChild(script)
-    return () => { document.head.removeChild(script) }
+    const builder = document.createElement('script')
+    builder.src = '/cacao-tree-builder.js'
+    let scene: HTMLScriptElement | null = null
+    builder.onload = () => {
+      scene = document.createElement('script')
+      scene.src = '/investor-3d.js'
+      document.head.appendChild(scene)
+    }
+    document.head.appendChild(builder)
+    return () => {
+      try { document.head.removeChild(builder) } catch { /* already gone */ }
+      if (scene) { try { document.head.removeChild(scene) } catch { /* already gone */ } }
+    }
   }, [])
 
   return (

@@ -37,6 +37,9 @@ function Monitor() {
     if (muted.has(msg)) return
     // Filter out noise
     if (msg.includes('ResizeObserver') || msg.includes('HubSpot')) return
+    // RainbowKit / Reown analytics fetch returns 403 when no WALLETCONNECT_PROJECT_ID is set.
+    // Benign — the wallet connectors still work (Coinbase Smart Wallet + injected). Skip.
+    if (msg.includes('Reown') || msg.includes('WalletConnect') || msg.includes('Lit is in dev mode')) return
     setErrors(prev => [{ ...entry, id: ++_id, time: new Date().toLocaleTimeString('es-CO') }, ...prev].slice(0, 20))
     setOpen(true)
   }, [muted])
