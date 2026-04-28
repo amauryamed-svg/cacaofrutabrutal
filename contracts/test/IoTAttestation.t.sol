@@ -8,7 +8,7 @@ import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol"
 contract IoTAttestationTest is Test {
     IoTAttestation internal att;
     address internal admin    = address(0xA11CE);
-    address internal oracle   = address(0x094CL3);
+    address internal oracle   = address(0x0AC1E0);
     address internal stranger = address(0xC0DE);
 
     bytes32 internal LEAF_A = keccak256(abi.encodePacked("reading-A"));
@@ -63,12 +63,13 @@ contract IoTAttestationTest is Test {
 
     function test_PostRoot_RevertWhenNotOracle() public {
         bytes32 root = _twoLeafRoot(LEAF_A, LEAF_B);
+        bytes32 oracleRole = att.ORACLE_ROLE();
         vm.prank(stranger);
         vm.expectRevert(
             abi.encodeWithSelector(
                 IAccessControl.AccessControlUnauthorizedAccount.selector,
                 stranger,
-                att.ORACLE_ROLE()
+                oracleRole
             )
         );
         att.postRoot(1, root, 2);

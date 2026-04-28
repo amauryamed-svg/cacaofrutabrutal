@@ -1,3 +1,10 @@
+# Env files — never commit secrets
+.env
+.env.*
+!.env.example
+contracts/.env
+contracts/.env.*
+
 # Logs
 logs
 *.log

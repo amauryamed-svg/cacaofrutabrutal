@@ -5,21 +5,18 @@
 
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
-import { JWT } from 'https://deno.land/x/jose@v5.4.1/mod.ts'
 
 const supabaseUrl        = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-const jwtSecret          = Deno.env.get('JWT_SECRET')!
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 async function verifyAuth(authHeader: string): Promise<string> {
   if (!authHeader.startsWith('Bearer ')) throw new Error('missing_bearer')
   const token = authHeader.substring(7)
-  const secret = new TextEncoder().encode(jwtSecret)
-  await JWT.verify(token, secret)
-  const payload = JWT.decode(token)
-  return payload.payload.sub as string
+  const { data: { user }, error } = await supabase.auth.getUser(token)
+  if (error || !user) throw new Error('invalid_jwt')
+  return user.id
 }
 
 function randomNonce(): string {

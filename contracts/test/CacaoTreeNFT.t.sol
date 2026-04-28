@@ -51,12 +51,13 @@ contract CacaoTreeNFTTest is Test {
     }
 
     function test_MintTree_RevertWhenNotMinter() public {
+        bytes32 minterRole = nft.MINTER_ROLE();
         vm.prank(stranger);
         vm.expectRevert(
             abi.encodeWithSelector(
                 IAccessControl.AccessControlUnauthorizedAccount.selector,
                 stranger,
-                nft.MINTER_ROLE()
+                minterRole
             )
         );
         nft.mintTree(user1, TREE_ID, 0, VARIETY_TRINITARIO, GPS_HASH);

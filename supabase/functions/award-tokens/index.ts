@@ -1,6 +1,5 @@
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
-import { JWT } from 'https://deno.land/x/jose@v5.4.1/mod.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -28,15 +27,9 @@ async function verifyAuth(authHeader: string) {
   }
 
   const token = authHeader.substring(7)
-
-  try {
-    const secret = new TextEncoder().encode(Deno.env.get('JWT_SECRET')!)
-    await JWT.verify(token, secret)
-    const payload = JWT.decode(token)
-    return payload.payload.sub as string
-  } catch {
-    throw new Error('Invalid JWT token')
-  }
+  const { data: { user }, error } = await supabase.auth.getUser(token)
+  if (error || !user) throw new Error('Invalid JWT token')
+  return user.id
 }
 
 serve(async (req) => {

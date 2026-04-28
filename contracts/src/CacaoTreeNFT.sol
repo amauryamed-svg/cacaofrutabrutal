@@ -146,6 +146,9 @@ contract CacaoTreeNFT is ERC721, Pausable, AccessControl, IERC4906 {
         override(ERC721, AccessControl, IERC165)
         returns (bool)
     {
-        return interfaceId == type(IERC4906).interfaceId || super.supportsInterface(interfaceId);
+        // ERC-4906 interface ID is defined by the spec as XOR of the two event sigs
+        // (Solidity's `type(IERC4906).interfaceId` only XORs function selectors, so it
+        // returns the wrong value here — marketplaces check 0x49064906 literally).
+        return interfaceId == bytes4(0x49064906) || super.supportsInterface(interfaceId);
     }
 }

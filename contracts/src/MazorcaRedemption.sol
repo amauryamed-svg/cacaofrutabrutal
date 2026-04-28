@@ -97,8 +97,10 @@ contract MazorcaRedemption is EIP712, AccessControl, Pausable {
         returns (uint256 cacaoMinted)
     {
         if (msg.sender != data.user) revert CallerNotUser(data.user, msg.sender);
-        if (data.deadline < block.timestamp) revert DeadlineExpired(data.deadline);
+        // Replay check first: a consumed nonce indicates a prior successful claim,
+        // so it is the most fundamental guard regardless of deadline drift.
         if (consumedNonces[data.nonce]) revert NonceAlreadyUsed(data.nonce);
+        if (data.deadline < block.timestamp) revert DeadlineExpired(data.deadline);
         if (data.mazorcaCount < mazorcasPerToken) revert MazorcaCountTooLow(data.mazorcaCount);
 
         uint256 nextAllowed = lastClaimAt[data.user] + USER_COOLDOWN_SECONDS;

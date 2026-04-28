@@ -12,12 +12,13 @@ contract CacaoTokenTest is Test {
     address internal user     = address(0xB0B);
 
     function setUp() public {
-        vm.prank(admin);
+        vm.startPrank(admin);
         token = new CacaoToken(admin);
-
-        // Admin grants MINTER_ROLE to a single redeemer (simulates MazorcaRedemption).
-        vm.prank(admin);
-        token.grantRole(token.MINTER_ROLE(), redeemer);
+        // Cache the role first — calling `token.MINTER_ROLE()` inline as an arg would
+        // consume the prank before the grantRole call lands.
+        bytes32 minterRole = token.MINTER_ROLE();
+        token.grantRole(minterRole, redeemer);
+        vm.stopPrank();
     }
 
     function test_Cap_Is21M() public view {
@@ -33,20 +34,22 @@ contract CacaoTokenTest is Test {
         token.mint(user, 1e18);
         assertEq(token.balanceOf(user), 1e18);
 
+        bytes32 minterRole = token.MINTER_ROLE();
         vm.prank(admin);
         vm.expectRevert(
             abi.encodeWithSelector(
                 IAccessControl.AccessControlUnauthorizedAccount.selector,
                 admin,
-                token.MINTER_ROLE()
+                minterRole
             )
         );
         token.mint(user, 1e18);
     }
 
     function test_Mint_RevertsAtCap() public {
+        uint256 cap = token.CAP();
         vm.prank(redeemer);
-        token.mint(user, token.CAP());
+        token.mint(user, cap);
 
         vm.prank(redeemer);
         vm.expectRevert(); // CapExceeded from ERC20Capped
@@ -54,10 +57,11 @@ contract CacaoTokenTest is Test {
     }
 
     function testFuzz_Mint_StaysWithinCap(uint128 amount) public {
-        vm.assume(amount > 0);
+        uint256 cap = token.CAP();
+        vm.assume(amount > 0 && uint256(amount) <= cap);
         vm.prank(redeemer);
         token.mint(user, amount);
-        assertLe(token.totalSupply(), token.CAP());
+        assertLe(token.totalSupply(), cap);
     }
 
     function test_Pause_BlocksMint() public {

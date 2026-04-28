@@ -19,7 +19,6 @@
 
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
-import { JWT } from 'https://deno.land/x/jose@v5.4.1/mod.ts'
 import {
   createWalletClient,
   createPublicClient,
@@ -34,7 +33,6 @@ import { privateKeyToAccount } from 'https://esm.sh/viem@2.21.0/accounts'
 
 const supabaseUrl        = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-const jwtSecret          = Deno.env.get('JWT_SECRET')!
 const relayerKey         = (Deno.env.get('RELAYER_PRIVATE_KEY') ?? '') as Hex
 const contractAddress    = (Deno.env.get('CACAO_TREE_NFT_ADDRESS') ?? '').toLowerCase() as Hex
 const chainIdEnv         = Number(Deno.env.get('WEB3_CHAIN_ID') ?? '8453')
@@ -67,10 +65,9 @@ const PRIVACY_SALT = Deno.env.get('PRIVACY_SALT') ?? 'caua_default_salt_change_m
 async function verifyAuth(authHeader: string): Promise<string> {
   if (!authHeader.startsWith('Bearer ')) throw new Error('missing_bearer')
   const token = authHeader.substring(7)
-  const secret = new TextEncoder().encode(jwtSecret)
-  await JWT.verify(token, secret)
-  const payload = JWT.decode(token)
-  return payload.payload.sub as string
+  const { data: { user }, error } = await supabase.auth.getUser(token)
+  if (error || !user) throw new Error('invalid_jwt')
+  return user.id
 }
 
 function uuidToBytes32(uuid: string): Hex {
