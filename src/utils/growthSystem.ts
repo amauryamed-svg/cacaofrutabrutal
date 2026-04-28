@@ -184,3 +184,68 @@ export function getCycleProgress(adoptedAt: Date | string): number {
 export function isHarvestReady(adoptedAt: Date | string): boolean {
   return hoursSinceAdoption(adoptedAt) >= HARVEST_HOURS_THRESHOLD
 }
+
+// ─── ERC-721 metadata helpers ───────────────────────────────────────────
+// Used by the tree-metadata Edge Function to compose the dynamic tokenURI.
+// Mirror in supabase/functions/tree-metadata/index.ts — keep both in sync.
+
+export interface TreeForMetadata {
+  guardian_id: number
+  region: string
+  variety: string
+  health: number | null
+  moisture: number | null
+  sunlight: number | null
+  co2_kg: number | null
+  adopted_at: string | Date
+}
+
+export interface MetadataAttribute {
+  trait_type: string
+  value: string | number
+  max_value?: number
+}
+
+const GUARDIAN_NAMES = [
+  'Lucho · Huila',
+  'Marta · Arauca',
+  'Rafael · Cundinamarca',
+  'Fernando · Meta',
+  'Ricardo · Santander',
+] as const
+
+/**
+ * Compute a rarity score from current vitals + stage progression.
+ * Higher health + further-along stage = rarer = more valuable on secondary market.
+ * The exact formula is part of the gameplay reward loop and may be tuned in Phase 4.
+ */
+export function getRarityScore(tree: TreeForMetadata): number {
+  const stage = getStageByHours(hoursSinceAdoption(tree.adopted_at))
+  return Math.round(
+    (tree.health ?? 80) * 2
+    + (tree.moisture ?? 70)
+    + (tree.sunlight ?? 60)
+    + stage.id * 50
+  )
+}
+
+/**
+ * Build the OpenSea-compatible attributes[] array for an ERC-721 tokenURI.
+ * Stable shape across the game loop — every care action regenerates this and
+ * emits ERC-4906 MetadataUpdate so marketplaces refresh.
+ */
+export function getMetadataAttributes(tree: TreeForMetadata): MetadataAttribute[] {
+  const stage = getStageByHours(hoursSinceAdoption(tree.adopted_at))
+  const guardian = GUARDIAN_NAMES[tree.guardian_id] ?? `Guardian ${tree.guardian_id}`
+  return [
+    { trait_type: 'Stage',                value: stage.name },
+    { trait_type: 'Variety',              value: tree.variety },
+    { trait_type: 'Guardian',             value: guardian },
+    { trait_type: 'Region',               value: tree.region },
+    { trait_type: 'Health',               value: tree.health ?? 0,   max_value: 100 },
+    { trait_type: 'Moisture',             value: tree.moisture ?? 0, max_value: 100 },
+    { trait_type: 'Sunlight',             value: tree.sunlight ?? 0, max_value: 100 },
+    { trait_type: 'CO₂ sequestered (kg)', value: Number(tree.co2_kg ?? 0) },
+    { trait_type: 'Rarity score',         value: getRarityScore(tree) },
+  ]
+}
