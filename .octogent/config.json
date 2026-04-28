@@ -11,7 +11,8 @@
     "supabase-backend",
     "ml-pipeline",
     "design-system",
-    "infra-devops"
+    "infra-devops",
+    "web3"
   ],
   "global_constraints": {
     "backgrounds": "hex-only — never CSS custom properties for color",
@@ -19,7 +20,13 @@
     "storage": "supabase-or-react-context — never localStorage",
     "stripe_key": "edge-functions-only — never in src/",
     "service_role_key": "edge-functions-and-python-ml-only — never in src/",
-    "python_fn_max_lines": 20
+    "python_fn_max_lines": 20,
+    "web3_private_keys": "edge-functions-env-only — never in src/, contracts/, or commits",
+    "web3_signing_standard": "EIP-712 typed-data — never eth_sign or raw signatures",
+    "web3_kyc_gate": "required for mint/redeem/adopt-with-crypto — see docs/KYC.md",
+    "web3_screening": "Chainalysis + OFAC pre-write on every wallet_address mutation",
+    "web3_token_distribution": "100% earned via gameplay — no presale, no ICO, no insider allocation (Charter I.3)",
+    "web3_chain": "Base (chain ID 8453) — multi-chain requires Charter amendment"
   },
   "skill_routing": {
     "architecture_api_design": "plan-eng-review",
@@ -33,7 +40,8 @@
     "supabase_schema_migrations": "supabase",
     "weekly_quality": "health",
     "retrospective": "retro",
-    "checkpoint_before_refactor": "checkpoint"
+    "checkpoint_before_refactor": "checkpoint",
+    "web3_contracts_kyc_nft": "tentacle:web3 + skill:cso review"
   },
   "stack": {
     "frontend": "React 19 + Vite 8 + TypeScript 6 + React Router DOM v7",
@@ -43,7 +51,19 @@
     "ml": "Python (FastAPI + scikit-learn) in api/ — Vercel serverless",
     "payments": "Stripe (USD/EUR) + MercadoPago (COP) + Coinbase Commerce (USDC)",
     "crm": "HubSpot",
-    "deploy": "Vercel (primary) + Netlify (secondary)"
+    "deploy": "Vercel (primary) + Netlify (secondary)",
+    "web3": {
+      "chain": "Base mainnet (8453) + Sepolia testnet",
+      "framework": "Foundry + OpenZeppelin v5",
+      "wallet": "Coinbase Smart Wallet (passkey) + RainbowKit (Rabby/MetaMask)",
+      "client_libs": "wagmi v2 + viem",
+      "kyc": "Persona (hosted)",
+      "aml": "Chainalysis Address Screening + OFAC SDN cron",
+      "metadata": "Pinata IPFS (immutable birth-cert) + Supabase Storage (dynamic game state)",
+      "indexer": "Alchemy Custom Webhook → Edge Function",
+      "iot_attestation": "ESP32 + Ed25519 → weekly Merkle root on Base",
+      "fiat_onramp": "Coinbase Onramp + Coinbase Commerce"
+    }
   },
   "brand_palette": {
     "heirloom": "#F7F1EE",
