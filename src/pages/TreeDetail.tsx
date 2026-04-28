@@ -4,31 +4,30 @@ import { useAuth } from '../context/AuthContext'
 import { useCocoaTrees, type CareAction } from '../hooks/useCocoaTrees'
 import { supabase } from '../lib/supabase'
 import { BRAND, FONTS, GUARDIANS, TOKEN_RATES } from '../utils/constants'
-import CauaButton from '../components/ui/CauaButton'
 import CauaGotchi from '../components/dashboard/CauaGotchi'
 import MintTreeButton from '../components/dashboard/MintTreeButton'
 import type { CacaoTree } from '../lib/database.types'
 import {
-  GROWTH_STAGES, PLANT_PROBLEMS, SPECIAL_ITEMS,
-  getStageByHours, getHealthStatus, getNextCareTime, formatTimeUntil,
+  PLANT_PROBLEMS, SPECIAL_ITEMS,
+  getStageByHours, getNextCareTime, formatTimeUntil,
   hoursSinceAdoption, getCycleProgress, isHarvestReady,
   ADOPTION_HOURS, CARE_INTERVAL_MIN,
 } from '../utils/growthSystem'
-
-interface CareLogEntry {
-  id: number
-  time: Date
-  emoji: string
-  action: string
-  message: string
-  color: string
-}
 
 interface Inventory {
   nutrients: number
   pruning: number
   molasses: number
 }
+
+// ── Retro game state ────────────────────────────────────────────────────
+interface FloatNum { id: number; value: string; color: string; x: number }
+interface Achievement { id: number; title: string; subtitle: string; icon: string }
+
+// 8-bit-style palette mapped to brand. CRIT chance = 12%; combo timeout = 1500ms.
+const CRIT_CHANCE = 0.12
+const COMBO_TIMEOUT_MS = 1500
+const PRESS_START_FONT = "'Press Start 2P', monospace"
 
 export default function TreeDetail() {
   const { id } = useParams<{ id: string }>()
@@ -43,7 +42,6 @@ export default function TreeDetail() {
   const [moisture, setMoisture] = useState(70)
   const [sunlight, setSunlight] = useState(60)
   const [currentProblem, setCurrentProblem] = useState<string | null>(null)
-  const [careLog, setCareLog] = useState<CareLogEntry[]>([])
   const [inventory, setInventory] = useState<Inventory>({ nutrients: 1, pruning: 1, molasses: 0 })
   const [lastCareTime, setLastCareTime] = useState<Date | null>(null)
   const [activeEffect, setActiveEffect] = useState<string | null>(null)
@@ -56,7 +54,51 @@ export default function TreeDetail() {
   const [harvesting, setHarvesting] = useState(false)
   const [cycleTick, setCycleTick] = useState(0)  // forces re-render every second for live countdown
 
+  // Retro game layer — floating damage/heal numbers, combo counter, achievement toasts
+  const [floats, setFloats] = useState<FloatNum[]>([])
+  const [combo, setCombo] = useState(0)
+  const [comboFlash, setComboFlash] = useState(false)
+  const [achievement, setAchievement] = useState<Achievement | null>(null)
+  const lastComboAt = useRef<number>(0)
+  const comboResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const initializedTree = useRef<string | null>(null)
+
+  // Inject Press Start 2P (retro pixel font) once on mount
+  useEffect(() => {
+    const id = 'press-start-2p-font'
+    if (document.getElementById(id)) return
+    const link = document.createElement('link')
+    link.id = id
+    link.rel = 'stylesheet'
+    link.href = 'https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap'
+    document.head.appendChild(link)
+  }, [])
+
+  // Combo decay — clear after timeout if no new action
+  const bumpCombo = useCallback(() => {
+    const now = Date.now()
+    const within = now - lastComboAt.current < COMBO_TIMEOUT_MS
+    const next = within ? combo + 1 : 1
+    setCombo(next)
+    setComboFlash(true)
+    setTimeout(() => setComboFlash(false), 350)
+    lastComboAt.current = now
+    if (comboResetTimer.current) clearTimeout(comboResetTimer.current)
+    comboResetTimer.current = setTimeout(() => setCombo(0), COMBO_TIMEOUT_MS + 100)
+    return next
+  }, [combo])
+
+  const emitFloat = useCallback((value: string, color: string) => {
+    const id = Date.now() + Math.random()
+    setFloats(f => [...f, { id, value, color, x: 30 + Math.random() * 40 }])
+    setTimeout(() => setFloats(f => f.filter(x => x.id !== id)), 1200)
+  }, [])
+
+  const showAchievement = useCallback((a: Omit<Achievement, 'id'>) => {
+    setAchievement({ ...a, id: Date.now() })
+    setTimeout(() => setAchievement(null), 2800)
+  }, [])
 
   useEffect(() => {
     if (!id || !user) return
@@ -115,15 +157,10 @@ export default function TreeDetail() {
         setCurrentProblem(prob)
         const p = PLANT_PROBLEMS[prob]
         setHealth(h => Math.max(5, h - p.healthDamage))
-        addLog(`${p.emoji}⚠️`, p.name, p.description, '#e74c3c')
       }
     }, 20000)
     return () => clearInterval(check)
   }, [lastCareTime, currentProblem])
-
-  const addLog = useCallback((emoji: string, action: string, message: string, color: string) => {
-    setCareLog(prev => [{ id: Date.now(), time: new Date(), emoji, action, message, color }, ...prev.slice(0, 9)])
-  }, [])
 
   const triggerEffect = (name: string) => {
     setActiveEffect(name)
@@ -145,7 +182,17 @@ export default function TreeDetail() {
     if (action === 'pruning'   && inventory.pruning   <= 0) return
     if (action === 'molasses'  && inventory.molasses  <= 0) return
 
-    const d = CARE_DELTAS[action]
+    // ── Retro game variable reward: 12% crit chance doubles HP gain
+    const isCrit = Math.random() < CRIT_CHANCE
+
+    const baseDelta = CARE_DELTAS[action]
+    const critMultiplier = isCrit ? 2 : 1
+    const d = {
+      health: baseDelta.health * critMultiplier,
+      moisture: baseDelta.moisture,
+      sunlight: baseDelta.sunlight,
+    }
+
     const clamp = (v: number) => Math.max(0, Math.min(100, v))
     const newHealth   = clamp(health   + d.health)
     const newMoisture = clamp(moisture + d.moisture)
@@ -153,6 +200,18 @@ export default function TreeDetail() {
 
     triggerEffect(action)
     if (isBasic) { setLastCareTime(new Date()); setCanCare(false) }
+
+    // Combo + floating numbers
+    const nextCombo = bumpCombo()
+    if (d.health > 0) emitFloat(`+${d.health} HP${isCrit ? ' CRIT!' : ''}`, isCrit ? '#F1A91E' : '#91A63B')
+    if (d.moisture > 0) emitFloat(`+${d.moisture} 💧`, '#3498db')
+    if (d.sunlight > 0) emitFloat(`+${d.sunlight} ☀`, '#f1c40f')
+
+    // Achievement triggers (variable rewards — Hunt + Self mastery)
+    if (nextCombo === 3) showAchievement({ title: '3X COMBO', subtitle: 'Care chain unlocked', icon: '🔥' })
+    if (nextCombo === 5) showAchievement({ title: 'PERFECT FLOW', subtitle: '+50% growth bonus', icon: '⚡' })
+    if (newHealth === 100 && health < 100) showAchievement({ title: 'FULL HEAL', subtitle: 'Tree at peak vitality', icon: '💚' })
+    if (isCrit) showAchievement({ title: 'CRITICAL HIT', subtitle: 'x2 healing burst', icon: '✨' })
 
     setHealth(newHealth)
     setMoisture(newMoisture)
@@ -162,28 +221,14 @@ export default function TreeDetail() {
     if (action === 'pruning')   setInventory(inv => ({ ...inv, pruning:   inv.pruning   - 1 }))
     if (action === 'molasses')  setInventory(inv => ({ ...inv, molasses:  inv.molasses  - 1 }))
 
-    if (action === 'water') {
-      if (currentProblem === 'plague' || currentProblem === 'drought') {
-        const prob = PLANT_PROBLEMS[currentProblem]
-        setCurrentProblem(null)
-        addLog('💧✅', 'Riego curativo', `¡${prob.name} curado con riego! Tu árbol respira. 😊`, '#3498db')
-      } else {
-        addLog('💧', 'Riego', 'Agua fresca del bosque absorbida. Tu árbol te lo agradece. 🌿', '#3498db')
-      }
-    } else if (action === 'sunlight') {
-      addLog('☀️', 'Exposición solar', 'Fotosíntesis activa — energía del trópico convertida en vida. ✨', '#f1c40f')
-    } else if (action === 'nutrients') {
-      addLog('🌿', 'Nutrientes aplicados', 'Microorganismos amazónicos activados. Crecimiento acelerado. 🚀', '#91A63B')
-    } else if (action === 'pruning') {
-      addLog('✂️', 'Poda científica', 'Corte estratégico para maximizar floración. Árbol más fuerte. 🌸', '#8D2679')
-    } else if (action === 'molasses') {
-      if (currentProblem === 'fungus' || currentProblem === 'plague') {
-        const prob = PLANT_PROBLEMS[currentProblem]
-        setCurrentProblem(null)
-        addLog('🍯✅', 'Melaza curativa', `SECRETO ANCESTRAL activado — ¡${prob.name} eliminado! 🎉`, '#F1A91E')
-      } else {
-        addLog('🍯', 'Melaza anti-hongo', 'Defensa ancestral fermentada aplicada. Árbol blindado. 🛡️', '#F1A91E')
-      }
+    // Curative side-effects: water clears plague/drought, molasses clears fungus/plague.
+    // Notifications are surfaced via floating numbers + achievement toasts (no log card).
+    if (action === 'water' && (currentProblem === 'plague' || currentProblem === 'drought')) {
+      setCurrentProblem(null)
+      showAchievement({ title: 'CURED', subtitle: `${PLANT_PROBLEMS[currentProblem].name} cleared`, icon: '💧' })
+    } else if (action === 'molasses' && (currentProblem === 'fungus' || currentProblem === 'plague')) {
+      setCurrentProblem(null)
+      showAchievement({ title: 'ANCIENT SECRET', subtitle: `${PLANT_PROBLEMS[currentProblem].name} eliminated`, icon: '🍯' })
     }
 
     // Persist to DB (fire-and-forget)
@@ -213,7 +258,11 @@ export default function TreeDetail() {
       }
       setHarvested(true)
       const reward = TOKEN_RATES.tree_harvest_share
-      addLog('🍫✨', '¡COSECHA!', `+${reward.beans} granos · +${reward.mazorcas} mazorcas — canjeables por chocolate.`, BRAND.mazorca)
+      showAchievement({
+        title: 'HARVEST CLAIMED',
+        subtitle: `+${reward.beans} granos · +${reward.mazorcas} mazorcas`,
+        icon: '🍫',
+      })
     } catch {
       // best-effort; user can retry
     } finally {
@@ -258,8 +307,6 @@ export default function TreeDetail() {
   const guardian = GUARDIANS[tree.guardian_id]
   const hoursSince = hoursSinceAdoption(tree.adopted_at)
   const stage = getStageByHours(hoursSince)
-  const healthStatus = getHealthStatus(health)
-  const stageProgressPct = ((stage.id + 1) / GROWTH_STAGES.length) * 100
   const cyclePct = getCycleProgress(tree.adopted_at) * 100
   const cycleRemaining = formatTimeUntil(new Date(new Date(tree.adopted_at).getTime() + ADOPTION_HOURS * 3600000))
   const harvestReady = isHarvestReady(tree.adopted_at)
@@ -268,272 +315,135 @@ export default function TreeDetail() {
   void cycleTick
 
   return (
-    <div style={{ background: BRAND.bgDeep, minHeight: '100vh', paddingBottom: '5rem' }}>
+    <div style={{ background: BRAND.bgDeep, minHeight: '100vh', paddingBottom: '5rem', position: 'relative', overflow: 'hidden' }}>
 
-      {/* Header */}
-      <div style={{
-        padding: '1rem 1.25rem 0.75rem',
-        borderBottom: `1px solid ${BRAND.bgCard}`,
-        background: BRAND.bgDeep,
-      }}>
-        <button onClick={() => navigate('/adoptar')} style={{
-          background: 'transparent', border: 'none', color: BRAND.pod,
-          cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600, marginBottom: 6,
-        }}>
-          ← Volver
-        </button>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h1 style={{
-              fontSize: 'clamp(1.1rem,4vw,1.5rem)', fontWeight: 900,
-              fontFamily: FONTS.display, color: BRAND.heirloom,
-              margin: 0, textTransform: 'uppercase',
-            }}>
-              {guardian.name} · <span style={{ color: BRAND.pod }}>{stage.name}</span>
-            </h1>
-            <div style={{ fontSize: '0.75rem', color: '#888', marginTop: 2 }}>
-              {Math.round(hoursSince * 10) / 10}h / {ADOPTION_HOURS}h · {stage.emoji} · {cycleRemaining === '¡Ahora!' ? 'cosecha lista' : cycleRemaining + ' restantes'}
-            </div>
-          </div>
-          <div style={{
-            background: BRAND.bgCard, border: `1px solid ${BRAND.amazon}66`,
-            borderRadius: 8, padding: '4px 10px', textAlign: 'center',
+      {/* CRT scanline overlay — fixed, low-opacity, decorative */}
+      <div aria-hidden="true" style={crtScanlineStyle} />
+
+      {/* Floating damage / heal numbers — emit on doCare, fade up */}
+      <div aria-hidden="true" style={floatLayerStyle}>
+        {floats.map(f => (
+          <div key={f.id} style={{
+            position: 'absolute', left: `${f.x}%`, bottom: 0,
+            color: f.color, fontFamily: PRESS_START_FONT, fontSize: 11,
+            textShadow: `2px 2px 0 #000, 0 0 12px ${f.color}88`,
+            animation: 'caua-float-up 1.2s cubic-bezier(.16,1,.3,1) forwards',
+            pointerEvents: 'none', whiteSpace: 'nowrap',
           }}>
-            <div style={{ fontSize: 10, color: '#888', textTransform: 'uppercase' }}>Salud</div>
-            <div style={{ fontSize: 18, fontWeight: 900, color: healthStatus.color }}>
-              {healthStatus.emoji} {health}%
-            </div>
+            {f.value}
           </div>
-        </div>
+        ))}
       </div>
 
-      <div style={{ maxWidth: 560, margin: '0 auto', padding: '1rem 1rem 0' }}>
-
-        {/* Problem Alert */}
-        {prob && (
-          <div style={{
-            background: '#2a0808', border: '2px solid #e74c3c',
-            borderRadius: 12, padding: '0.75rem 1rem', marginBottom: '1rem',
-            display: 'flex', alignItems: 'center', gap: 10,
-          }}>
-            <div style={{ fontSize: 28 }}>{prob.emoji}</div>
-            <div>
-              <div style={{ color: '#ff6b6b', fontWeight: 700, fontSize: '0.875rem' }}>{prob.name}</div>
-              <div style={{ color: '#ccc', fontSize: '0.75rem', marginTop: 2 }}>{prob.description}</div>
+      {/* Achievement toast — Variable reward (Self mastery) */}
+      {achievement && (
+        <div style={achievementToastStyle} role="status" aria-live="polite">
+          <div style={{ fontSize: 22 }}>{achievement.icon}</div>
+          <div>
+            <div style={{ fontFamily: PRESS_START_FONT, fontSize: 9, color: BRAND.mazorca, letterSpacing: '0.06em' }}>
+              ACHIEVEMENT
+            </div>
+            <div style={{ fontFamily: PRESS_START_FONT, fontSize: 11, color: BRAND.heirloom, marginTop: 2 }}>
+              {achievement.title}
+            </div>
+            <div style={{ fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}99`, marginTop: 2 }}>
+              {achievement.subtitle}
             </div>
           </div>
-        )}
-
-        {/* Secret found flash */}
-        {secretFound && (
-          <div style={{
-            background: 'linear-gradient(135deg, #583915, #F1A91E33)',
-            border: '2px solid #F1A91E', borderRadius: 12,
-            padding: '0.75rem 1rem', marginBottom: '1rem', textAlign: 'center',
-          }}>
-            <div style={{ fontSize: 24 }}>🍯✨</div>
-            <div style={{ color: '#F1A91E', fontWeight: 700 }}>¡SECRETO DESCUBIERTO!</div>
-            <div style={{ color: '#ccc', fontSize: '0.75rem' }}>Melaza Orgánica Anti-Hongo añadida al inventario</div>
-          </div>
-        )}
-
-        {/* HARVEST hero — only when stage 7 (Maduración) and not yet harvested */}
-        {harvestReady && !harvested && (
-          <div style={{
-            background: `linear-gradient(135deg, ${BRAND.mazorca}33, ${BRAND.brown}55)`,
-            border: `2px solid ${BRAND.mazorca}`,
-            borderRadius: 16, padding: '1rem 1.25rem', marginBottom: '1rem',
-            display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
-          }}>
-            <div style={{ fontSize: 44, animation: 'bounce 1.4s ease-in-out infinite' }}>🍫</div>
-            <div style={{ flex: 1, minWidth: 160 }}>
-              <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 16, color: BRAND.mazorca, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                ¡Cosecha lista!
-              </div>
-              <div style={{ fontFamily: FONTS.body, fontSize: 12, color: `${BRAND.heirloom}cc`, marginTop: 4, lineHeight: 1.5 }}>
-                Recolecta {TOKEN_RATES.tree_harvest_share.beans} granos + {TOKEN_RATES.tree_harvest_share.mazorcas} mazorcas — canjeables por chocolate real.
-              </div>
-            </div>
-            <button onClick={doHarvest} disabled={harvesting} style={{
-              padding: '14px 22px', borderRadius: 999,
-              background: `linear-gradient(135deg, ${BRAND.mazorca}, ${BRAND.brown})`,
-              color: BRAND.bgDeep, border: 'none', cursor: harvesting ? 'wait' : 'pointer',
-              fontFamily: FONTS.display, fontWeight: 900, fontSize: 12,
-              letterSpacing: '0.12em', textTransform: 'uppercase',
-              opacity: harvesting ? 0.6 : 1,
-            }}>
-              {harvesting ? 'Cosechando…' : '🍫 RECOLECTAR'}
-            </button>
-          </div>
-        )}
-
-        {/* HARVEST done celebration */}
-        {harvested && (
-          <div style={{
-            background: `linear-gradient(135deg, ${BRAND.mazorca}22, ${BRAND.amazon}88)`,
-            border: `1px solid ${BRAND.mazorca}88`,
-            borderRadius: 12, padding: '0.875rem 1rem', marginBottom: '1rem',
-            display: 'flex', alignItems: 'center', gap: 12,
-          }}>
-            <div style={{ fontSize: 28 }}>🍫✨</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 13, color: BRAND.mazorca, letterSpacing: '0.06em' }}>
-                COSECHA RECIBIDA
-              </div>
-              <div style={{ fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}aa`, marginTop: 2 }}>
-                Ve a tu Dashboard para canjear tus mazorcas por chocolate.
-              </div>
-            </div>
-            <button onClick={() => navigate('/dashboard')} style={{
-              padding: '8px 14px', borderRadius: 999,
-              background: `${BRAND.mazorca}33`, color: BRAND.mazorca,
-              border: `1px solid ${BRAND.mazorca}88`, cursor: 'pointer',
-              fontFamily: FONTS.display, fontWeight: 700, fontSize: 10, letterSpacing: '0.12em',
-            }}>
-              Canjear →
-            </button>
-          </div>
-        )}
-
-        {/* CauaGotchi */}
-        <CauaGotchi
-          health={health} moisture={moisture} sunlight={sunlight}
-          stageText={stage.name} treeName={guardian.name}
-          stageEmoji={stage.emoji} stageId={stage.id}
-          problem={currentProblem}
-        />
-
-        {/* Stage Info */}
-        <div style={{
-          background: BRAND.bgCard, border: `1px solid ${BRAND.amazon}55`,
-          borderRadius: 12, padding: '0.875rem 1rem', marginBottom: '1rem',
-        }}>
-          <div style={{ fontSize: '0.7rem', color: BRAND.pod, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
-            Etapa {stage.id + 1}/8 — {stage.name}
-          </div>
-          <p style={{ color: '#ddd', fontSize: '0.8rem', lineHeight: 1.5, margin: '0 0 6px' }}>{stage.description}</p>
-          <div style={{ color: BRAND.mazorca, fontSize: '0.75rem' }}>💡 {stage.careTip}</div>
         </div>
+      )}
 
-        {/* Web3 NFT mint — gated by KYC + linked wallet (handled inside the component) */}
-        <div style={{ marginBottom: '1rem' }}>
-          <MintTreeButton
-            treeId={tree.id}
-            alreadyMintedTokenId={tree.nft_token_id}
-            alreadyMintedContract={tree.nft_contract}
-          />
-        </div>
+      {/* ─── CAUA-GOTCHI HANDHELD DEVICE ─────────────────────────────────
+        Plastic shell, brand strap, LED, embedded screen, hardware keypad.
+        The whole care loop happens here — touch = press a button. */}
+      <div style={deviceOuterStyle}>
+        <div style={deviceShellStyle}>
 
-        {/* Cycle progress + next-care countdown — UNIFIED CONTROL CARD */}
-        <div style={{
-          background: BRAND.bgCard, border: `1px solid ${BRAND.amazon}66`,
-          borderRadius: 12, padding: '0.875rem 1rem', marginBottom: '1rem',
-        }}>
-          {/* Top row: counters */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 10, gap: 12, flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, minWidth: 140 }}>
-              <div style={{ fontSize: '0.65rem', color: '#888', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
-                ⏳ Ciclo {ADOPTION_HOURS}h
-              </div>
-              <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: '1.5rem', color: BRAND.heirloom, lineHeight: 1.1 }}>
-                {cycleRemaining === '¡Ahora!' ? '¡Listo!' : cycleRemaining}
-              </div>
-              <div style={{ fontSize: '0.7rem', color: '#666' }}>
-                {Math.round(cyclePct)}% del ciclo · cosecha al final
-              </div>
+          {/* Top strap: back · brand · LED status */}
+          <div style={deviceStrapStyle}>
+            <button onClick={() => navigate('/adoptar')} style={strapBackBtnStyle} aria-label="Exit to adoption list">
+              ◀
+            </button>
+            <div style={brandPlateStyle}>
+              <div style={brandPlateInnerStyle}>CAUA‑GOTCHI</div>
+              <div style={brandPlateModelStyle}>MODEL: CACAO V.1</div>
             </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '0.65rem', color: '#888', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                {canCare ? '⚡ Cuidado' : '⏱ Próximo cuidado'}
-              </div>
-              <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: '1.15rem', color: canCare ? BRAND.pod : '#aaa', lineHeight: 1.1 }}>
-                {canCare ? '¡Ya!' : (nextCareIn || `${CARE_INTERVAL_MIN}m`)}
-              </div>
-              <div style={{ fontSize: '0.65rem', color: '#666' }}>
-                cada {CARE_INTERVAL_MIN} min
-              </div>
+            <div style={ledStackStyle}>
+              <div style={ledStyle(canCare ? '#2ecc71' : `${BRAND.heirloom}22`, canCare)} title={canCare ? 'Ready' : 'Cooldown'} />
+              <div style={ledStyle(prob ? '#e74c3c' : `${BRAND.heirloom}22`, !!prob)} title={prob ? 'Alert' : 'OK'} />
+              <div style={ledStyle(harvestReady ? BRAND.mazorca : `${BRAND.heirloom}22`, harvestReady)} title={harvestReady ? 'Harvest ready' : 'Growing'} />
             </div>
           </div>
-          {/* Cycle progress bar — long, prominent */}
-          <div style={{ background: `${BRAND.amazon}55`, height: 8, borderRadius: 4, overflow: 'hidden', position: 'relative' }}>
-            <div style={{
-              width: `${cyclePct}%`, height: '100%',
-              background: `linear-gradient(90deg, ${BRAND.pod}, ${BRAND.mazorca})`,
-              transition: 'width 1s ease-out',
-            }} />
-            {/* Stage marks on the bar */}
-            {GROWTH_STAGES.map(s => (
-              <div key={s.id} style={{
-                position: 'absolute',
-                left: `${(s.hoursThreshold / ADOPTION_HOURS) * 100}%`,
-                top: -2, bottom: -2, width: 1,
-                background: s.id <= stage.id ? BRAND.heirloom : `${BRAND.heirloom}33`,
-              }} />
+
+          {/* Speaker grille — purely decorative plastic detail */}
+          <div style={speakerGrilleStyle} aria-hidden="true">
+            {Array.from({ length: 24 }).map((_, i) => (
+              <div key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: '#0a0a0a' }} />
             ))}
           </div>
-        </div>
 
-        {/* Tree Tap Zone */}
-        <div
-          onClick={handleTreeTap}
-          style={{
-            textAlign: 'center', cursor: 'pointer', marginBottom: '1rem',
-            padding: '0.75rem',
-            background: `${BRAND.amazon}22`,
-            borderRadius: 12, border: `1px dashed ${BRAND.amazon}`,
-            transition: 'transform 0.1s',
-            userSelect: 'none',
-          }}
-        >
-          <div style={{
-            fontSize: activeEffect ? '4.5rem' : '4rem',
-            transition: 'font-size 0.15s',
-            filter: activeEffect ? `drop-shadow(0 0 16px ${BRAND.pod})` : 'none',
-          }}>
-            {stage.emoji}
-          </div>
-          <div style={{ fontSize: '0.65rem', color: '#555', marginTop: 4 }}>
-            👆 toca 3 veces rápido para descubrir algo
-          </div>
-
-          {/* Active care visual particles */}
-          {activeEffect === 'water' && (
-            <div style={{ position: 'absolute', pointerEvents: 'none' }}>
-              {'💧💧💧'.split('').map((e, i) => (
-                <span key={i} style={{ fontSize: 20, animation: `fall 1s ease-in ${i * 0.1}s forwards`, position: 'relative', display: 'inline-block' }}>{e}</span>
-              ))}
+          {/* Mini status row — quest + combo as tiny on-device readout */}
+          <div style={deviceStatusRowStyle}>
+            <div style={{ fontFamily: PRESS_START_FONT, fontSize: 7, color: BRAND.mazorca, letterSpacing: '0.1em' }}>
+              ⚔ {harvestReady ? 'HARVEST READY!' : `${cycleRemaining} LEFT`}
             </div>
-          )}
-        </div>
-
-        {/* Basic Care Buttons */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: '0.75rem' }}>
-          <CauaButton
-            variant={activeEffect === 'water' ? 'primary' : 'secondary'}
-            size="lg"
-            onClick={() => doCare('water')}
-            disabled={!canCare || activeEffect !== null}
-            style={{ width: '100%' }}
-          >
-            {activeEffect === 'water' ? '💧 Regando...' : `💧 Regar${!canCare ? ' (' + (nextCareIn || `${CARE_INTERVAL_MIN}m`) + ')' : ''}`}
-          </CauaButton>
-          <CauaButton
-            variant={activeEffect === 'sunlight' ? 'primary' : 'secondary'}
-            size="lg"
-            onClick={() => doCare('sunlight')}
-            disabled={!canCare || activeEffect !== null}
-            style={{ width: '100%' }}
-          >
-            {activeEffect === 'sunlight' ? '☀️ Soleando...' : '☀️ Sol'}
-          </CauaButton>
-        </div>
-
-        {/* Special Items */}
-        <div style={{ marginBottom: '1rem' }}>
-          <div style={{ fontSize: '0.7rem', color: '#666', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
-            Items especiales
+            <div style={{
+              fontFamily: PRESS_START_FONT, fontSize: 9,
+              color: combo > 0 ? BRAND.mazorca : `${BRAND.heirloom}33`,
+              textShadow: combo >= 3 ? `0 0 10px ${BRAND.mazorca}aa` : 'none',
+              transform: comboFlash ? 'scale(1.25)' : 'scale(1)',
+              transition: 'transform 0.18s cubic-bezier(.16,1,.3,1)',
+            }}>
+              COMBO x{combo}
+            </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+
+          {/* Embedded screen — the existing CauaGotchi component, styled as the device's CRT */}
+          <div style={deviceScreenMountStyle}>
+            <CauaGotchi
+              health={health} moisture={moisture} sunlight={sunlight}
+              stageText={stage.name} treeName={guardian.name}
+              stageEmoji={stage.emoji} stageId={stage.id}
+              problem={currentProblem}
+            />
+          </div>
+
+          {/* Hardware keypad — A (WATER) · B (SUN) · MENU (handleTreeTap easter egg) */}
+          <div style={keypadStyle}>
+            <DeviceButton
+              label="WATER"
+              hotkey="A"
+              icon="💧"
+              color="#3498db"
+              disabled={!canCare || activeEffect !== null}
+              active={activeEffect === 'water'}
+              onClick={() => doCare('water')}
+              cooldown={!canCare ? (nextCareIn || `${CARE_INTERVAL_MIN}M`) : null}
+            />
+            <DeviceButton
+              label="SUN"
+              hotkey="B"
+              icon="☀️"
+              color="#f1c40f"
+              disabled={!canCare || activeEffect !== null}
+              active={activeEffect === 'sunlight'}
+              onClick={() => doCare('sunlight')}
+              cooldown={!canCare ? (nextCareIn || `${CARE_INTERVAL_MIN}M`) : null}
+            />
+            <DeviceButton
+              label="MENU"
+              hotkey="✺"
+              icon="🍯"
+              color={BRAND.mazorca}
+              disabled={false}
+              active={false}
+              onClick={handleTreeTap}
+              cooldown={null}
+            />
+          </div>
+
+          {/* Special items inventory — compact slot row */}
+          <div style={itemsRowStyle}>
             {(Object.entries(SPECIAL_ITEMS) as [keyof Inventory, typeof SPECIAL_ITEMS[string]][]).map(([key, item]) => {
               const count = inventory[key as keyof Inventory]
               const isEmpty = count === 0
@@ -542,111 +452,101 @@ export default function TreeDetail() {
                   key={key}
                   onClick={() => doCare(key as 'nutrients' | 'pruning' | 'molasses')}
                   disabled={isEmpty || activeEffect !== null}
-                  style={{
-                    background: isEmpty ? `${BRAND.bgCard}88` : item.rarity === 'secret' ? `${BRAND.mazorca}22` : `${BRAND.pod}22`,
-                    border: `1px solid ${isEmpty ? BRAND.amazon + '33' : item.rarity === 'secret' ? BRAND.mazorca + '88' : BRAND.pod + '66'}`,
-                    borderRadius: 10, padding: '10px 8px',
-                    cursor: isEmpty ? 'not-allowed' : 'pointer',
-                    color: BRAND.heirloom, textAlign: 'center',
-                    opacity: isEmpty ? 0.4 : 1,
-                    transition: 'opacity 0.3s, transform 0.1s',
-                  }}
+                  style={itemSlotStyle(isEmpty, item.rarity === 'secret')}
+                  title={`${item.name} ×${count}`}
                 >
-                  <div style={{ fontSize: 22, marginBottom: 4 }}>{item.emoji}</div>
-                  <div style={{ fontSize: 9, fontWeight: 700, lineHeight: 1.2, marginBottom: 3, color: item.rarity === 'secret' ? BRAND.mazorca : BRAND.pod }}>
-                    {item.name.toUpperCase()}
-                  </div>
-                  <div style={{ fontSize: 11, color: count > 0 ? BRAND.pod : '#555', fontWeight: 700 }}>
+                  <div style={{ fontSize: 18 }}>{item.emoji}</div>
+                  <div style={{
+                    fontFamily: PRESS_START_FONT, fontSize: 7,
+                    color: count > 0 ? (item.rarity === 'secret' ? BRAND.mazorca : BRAND.pod) : `${BRAND.heirloom}33`,
+                    marginTop: 2,
+                  }}>
                     ×{count}
                   </div>
-                  {item.rarity === 'secret' && count === 0 && (
-                    <div style={{ fontSize: 8, color: '#555', marginTop: 2 }}>secreto</div>
-                  )}
                 </button>
               )
             })}
           </div>
-        </div>
 
-        {/* Growth Timeline */}
-        <div style={{
-          background: BRAND.bgCard, border: `1px solid ${BRAND.amazon}55`,
-          borderRadius: 12, padding: '1rem', marginBottom: '1rem',
-        }}>
-          <div style={{ fontSize: '0.7rem', color: BRAND.pod, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>
-            Ciclo de vida — {stage.id + 1}/8 etapas
+          {/* Stage info ticker — brief care tip rotating into view */}
+          <div style={stageTickerStyle}>
+            <span style={stageTickerLabelStyle}>STAGE {stage.id + 1}/8 · {stage.name.toUpperCase()}</span>
+            <span style={stageTickerTipStyle}>💡 {stage.careTip}</span>
           </div>
 
-          {/* Progress bar */}
-          <div style={{ background: `${BRAND.amazon}44`, height: 6, borderRadius: 3, overflow: 'hidden', marginBottom: 12 }}>
-            <div style={{
-              background: `linear-gradient(90deg, ${BRAND.pod}, ${BRAND.mazorca})`,
-              height: '100%', width: `${stageProgressPct}%`,
-              transition: 'width 1s ease-out',
-            }} />
-          </div>
-
-          {/* Stage dots */}
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            {GROWTH_STAGES.map(s => (
-              <div key={s.id} style={{ textAlign: 'center', flex: 1 }}>
-                <div style={{
-                  fontSize: s.id <= stage.id ? 16 : 12,
-                  opacity: s.id <= stage.id ? 1 : 0.3,
-                  transition: 'font-size 0.3s, opacity 0.3s',
-                  filter: s.id === stage.id ? `drop-shadow(0 0 6px ${BRAND.pod})` : 'none',
-                }}>
-                  {s.emoji}
+          {/* Conditional state strips inside the device — alerts override below the keypad */}
+          {prob && (
+            <div style={alertStripStyle}>
+              <span style={{ fontSize: 16 }}>{prob.emoji}</span>
+              <div>
+                <div style={{ fontFamily: PRESS_START_FONT, fontSize: 8, color: '#ff6b6b', letterSpacing: '0.08em' }}>
+                  ⚠ {prob.name.toUpperCase()}
                 </div>
-                {s.id === stage.id && (
-                  <div style={{ width: 4, height: 4, background: BRAND.pod, borderRadius: '50%', margin: '3px auto 0' }} />
-                )}
+                <div style={{ fontFamily: FONTS.body, fontSize: 11, color: '#ccc', marginTop: 2 }}>
+                  {prob.description}
+                </div>
               </div>
-            ))}
+            </div>
+          )}
+          {secretFound && (
+            <div style={{ ...alertStripStyle, borderColor: BRAND.mazorca, background: `${BRAND.mazorca}15` }}>
+              <span style={{ fontSize: 16 }}>🍯✨</span>
+              <div>
+                <div style={{ fontFamily: PRESS_START_FONT, fontSize: 8, color: BRAND.mazorca, letterSpacing: '0.08em' }}>
+                  SECRET UNLOCKED
+                </div>
+                <div style={{ fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}cc`, marginTop: 2 }}>
+                  Melaza Orgánica added · use it via 🍯 button
+                </div>
+              </div>
+            </div>
+          )}
+          {harvestReady && !harvested && (
+            <button onClick={doHarvest} disabled={harvesting} style={harvestStripStyle}>
+              <span style={{ fontSize: 22 }}>🍫</span>
+              <span style={{ flex: 1, textAlign: 'left' }}>
+                <div style={{ fontFamily: PRESS_START_FONT, fontSize: 9, color: BRAND.bgDeep, letterSpacing: '0.08em' }}>
+                  {harvesting ? 'HARVESTING…' : 'CLAIM HARVEST'}
+                </div>
+                <div style={{ fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.bgDeep}cc`, marginTop: 2 }}>
+                  +{TOKEN_RATES.tree_harvest_share.beans} granos · +{TOKEN_RATES.tree_harvest_share.mazorcas} mazorcas
+                </div>
+              </span>
+              <span style={{ fontFamily: PRESS_START_FONT, fontSize: 10, color: BRAND.bgDeep }}>▶</span>
+            </button>
+          )}
+          {harvested && (
+            <button onClick={() => navigate('/dashboard')} style={postHarvestStripStyle}>
+              <span style={{ fontSize: 16 }}>🍫✨</span>
+              <span style={{ flex: 1, textAlign: 'left' }}>
+                <div style={{ fontFamily: PRESS_START_FONT, fontSize: 8, color: BRAND.mazorca, letterSpacing: '0.08em' }}>
+                  HARVESTED · CLAIM CHOCOLATE
+                </div>
+              </span>
+              <span style={{ fontFamily: PRESS_START_FONT, fontSize: 9, color: BRAND.mazorca }}>▶</span>
+            </button>
+          )}
+
+          {/* NFT mint mini-row — only shown if KYC + wallet linked OR already minted */}
+          <div style={nftMiniRowStyle}>
+            <MintTreeButton
+              treeId={tree.id}
+              alreadyMintedTokenId={tree.nft_token_id}
+              alreadyMintedContract={tree.nft_contract}
+            />
+          </div>
+
+          {/* Bottom plate — brand mark + cycle progress as a tiny battery-style indicator */}
+          <div style={deviceBottomPlateStyle}>
+            <div style={brandSubMarkStyle}>CACAO FRUTA BRUTAL</div>
+            <div style={batteryWrapStyle} title={`${Math.round(cyclePct)}% growth cycle`}>
+              <div style={batteryFillStyle(cyclePct)} />
+              <div style={batteryNubStyle} />
+            </div>
           </div>
         </div>
-
-        {/* Care Log */}
-        {careLog.length > 0 && (
-          <div style={{
-            background: BRAND.bgCard, border: `1px solid ${BRAND.amazon}55`,
-            borderRadius: 12, padding: '1rem',
-          }}>
-            <div style={{ fontSize: '0.7rem', color: '#666', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>
-              Registro de cuidados
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {careLog.map(entry => (
-                <div key={entry.id} style={{
-                  display: 'flex', gap: 10, alignItems: 'flex-start',
-                  paddingBottom: 8, borderBottom: `1px solid ${BRAND.amazon}33`,
-                }}>
-                  <div style={{ fontSize: 18, flexShrink: 0 }}>{entry.emoji}</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: entry.color }}>{entry.action}</div>
-                    <div style={{ fontSize: '0.7rem', color: '#aaa', lineHeight: 1.4 }}>{entry.message}</div>
-                  </div>
-                  <div style={{ fontSize: '0.65rem', color: '#555', flexShrink: 0 }}>
-                    {entry.time.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {careLog.length === 0 && (
-          <div style={{
-            textAlign: 'center', padding: '2rem 1rem',
-            color: '#555', fontSize: '0.8rem',
-          }}>
-            <div style={{ fontSize: 32, marginBottom: 8 }}>📋</div>
-            <div>Aún no has cuidado tu árbol.</div>
-            <div style={{ color: BRAND.pod, marginTop: 4 }}>¡Empieza ahora — riégalo!</div>
-          </div>
-        )}
-
       </div>
+
 
       <style>{`
         @keyframes fall {
@@ -658,7 +558,322 @@ export default function TreeDetail() {
           0%, 100% { transform: translateY(0); }
           50%      { transform: translateY(-8px); }
         }
+        @keyframes caua-float-up {
+          0%   { transform: translateY(0)    scale(0.8); opacity: 0; }
+          15%  { transform: translateY(-12px) scale(1.1); opacity: 1; }
+          100% { transform: translateY(-90px) scale(1);   opacity: 0; }
+        }
+        @keyframes caua-toast-in {
+          0%   { transform: translateX(120%); opacity: 0; }
+          15%  { transform: translateX(-6%);  opacity: 1; }
+          25%  { transform: translateX(0);    opacity: 1; }
+          85%  { transform: translateX(0);    opacity: 1; }
+          100% { transform: translateX(120%); opacity: 0; }
+        }
+        @keyframes caua-scanline {
+          0%   { background-position: 0 0; }
+          100% { background-position: 0 4px; }
+        }
+        @keyframes caua-crit-pulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(241,169,30,0); }
+          50%      { box-shadow: 0 0 28px 4px rgba(241,169,30,.6); }
+        }
       `}</style>
     </div>
   )
+}
+
+
+// ── CAUA-GOTCHI handheld device ──────────────────────────────────────
+
+function DeviceButton({ label, hotkey, icon, color, disabled, active, onClick, cooldown }: {
+  label: string; hotkey: string; icon: string; color: string;
+  disabled: boolean; active: boolean; onClick: () => void; cooldown: string | null
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        position: 'relative',
+        background: active ? color : disabled ? '#1a1a1a' : '#2a2a2a',
+        border: `2px solid ${disabled ? '#444' : color}`,
+        borderRadius: 16,
+        padding: '14px 10px',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.55 : 1,
+        textAlign: 'center',
+        boxShadow: active
+          ? `0 0 18px ${color}aa, inset 0 -3px 0 ${BRAND.bgDeep}, inset 0 1px 0 #ffffff22`
+          : `inset 0 -3px 0 #000000cc, inset 0 1px 0 #ffffff15`,
+        transition: 'transform 0.08s, background 0.2s, box-shadow 0.2s',
+      }}
+      onMouseDown={(e) => { if (!disabled) {
+        e.currentTarget.style.transform = 'translateY(2px)'
+      } }}
+      onMouseUp={(e) => { e.currentTarget.style.transform = 'none' }}
+      onMouseLeave={(e) => { e.currentTarget.style.transform = 'none' }}
+    >
+      <div style={{
+        position: 'absolute', top: 4, right: 6,
+        fontFamily: PRESS_START_FONT, fontSize: 8,
+        color: disabled ? '#555' : color,
+        border: `1px solid ${disabled ? '#444' : color}`,
+        padding: '1px 4px',
+        borderRadius: 3,
+      }}>
+        {hotkey}
+      </div>
+      <div style={{ fontSize: 22, marginBottom: 4 }}>{icon}</div>
+      <div style={{
+        fontFamily: PRESS_START_FONT, fontSize: 9,
+        color: active ? BRAND.bgDeep : BRAND.heirloom,
+        letterSpacing: '0.06em',
+      }}>
+        {label}
+      </div>
+      {cooldown && (
+        <div style={{
+          fontFamily: PRESS_START_FONT, fontSize: 6,
+          color: `${BRAND.heirloom}77`, marginTop: 3,
+          letterSpacing: '0.04em',
+        }}>
+          CD {cooldown}
+        </div>
+      )}
+    </button>
+  )
+}
+
+const deviceOuterStyle: React.CSSProperties = {
+  position: 'relative',
+  zIndex: 2,
+  padding: 'clamp(20px, 4vw, 32px) clamp(12px, 3vw, 24px) 80px',
+  display: 'flex', justifyContent: 'center',
+}
+const deviceShellStyle: React.CSSProperties = {
+  width: '100%',
+  maxWidth: 440,
+  background: 'linear-gradient(160deg, #1a2a1f 0%, #0d1a12 50%, #1a2a1f 100%)',
+  border: `2px solid ${BRAND.amazon}`,
+  borderRadius: 36,
+  padding: 14,
+  boxShadow: [
+    'inset 0 2px 0 #ffffff18',
+    'inset 0 -3px 0 #00000099',
+    '0 24px 60px #000000bb',
+    `0 0 0 1px ${BRAND.amazon}`,
+  ].join(', '),
+  position: 'relative',
+}
+const deviceStrapStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'auto 1fr auto',
+  alignItems: 'center',
+  gap: 10,
+  padding: '8px 12px',
+  background: '#0a0f0c',
+  border: `1px solid ${BRAND.amazon}`,
+  borderRadius: 22,
+  marginBottom: 10,
+  boxShadow: 'inset 0 1px 0 #ffffff10, inset 0 -2px 0 #00000088',
+}
+const strapBackBtnStyle: React.CSSProperties = {
+  background: '#1f2a23',
+  border: `1px solid ${BRAND.amazon}`,
+  color: BRAND.heirloom,
+  width: 32, height: 32,
+  borderRadius: 8,
+  fontFamily: PRESS_START_FONT, fontSize: 10,
+  cursor: 'pointer',
+  boxShadow: 'inset 0 1px 0 #ffffff15, inset 0 -2px 0 #000000aa',
+}
+const brandPlateStyle: React.CSSProperties = {
+  textAlign: 'center',
+  background: '#000',
+  border: `1px solid ${BRAND.amazon}`,
+  borderRadius: 6,
+  padding: '5px 8px',
+}
+const brandPlateInnerStyle: React.CSSProperties = {
+  fontFamily: PRESS_START_FONT, fontSize: 11,
+  color: BRAND.mazorca,
+  letterSpacing: '0.08em',
+  textShadow: `0 0 8px ${BRAND.mazorca}66`,
+}
+const brandPlateModelStyle: React.CSSProperties = {
+  fontFamily: PRESS_START_FONT, fontSize: 6,
+  color: `${BRAND.heirloom}55`,
+  marginTop: 3,
+  letterSpacing: '0.1em',
+}
+const ledStackStyle: React.CSSProperties = {
+  display: 'flex', gap: 5,
+}
+function ledStyle(color: string, lit: boolean): React.CSSProperties {
+  return {
+    width: 8, height: 8, borderRadius: '50%',
+    background: color,
+    border: `1px solid ${BRAND.bgDeep}`,
+    boxShadow: lit ? `0 0 8px ${color}, 0 0 2px #ffffff66 inset` : 'inset 0 -1px 0 #00000088',
+  }
+}
+const speakerGrilleStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(12, 1fr)',
+  gap: 4,
+  padding: '6px 14px',
+  background: '#050805',
+  borderTop: `1px solid ${BRAND.amazon}`,
+  borderBottom: `1px solid ${BRAND.amazon}`,
+  marginBottom: 8,
+}
+const deviceStatusRowStyle: React.CSSProperties = {
+  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+  padding: '6px 12px',
+  background: '#000',
+  border: `1px solid ${BRAND.amazon}`,
+  borderRadius: 6,
+  marginBottom: 8,
+}
+const deviceScreenMountStyle: React.CSSProperties = {
+  background: '#000',
+  border: `1px solid ${BRAND.amazon}`,
+  padding: 6,
+  borderRadius: 8,
+  marginBottom: 12,
+  boxShadow: 'inset 0 0 22px #000, inset 0 1px 0 #ffffff10',
+}
+const keypadStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr 1fr',
+  gap: 8,
+  padding: '10px 4px',
+  marginBottom: 8,
+}
+const itemsRowStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr 1fr',
+  gap: 6,
+  padding: '6px 4px',
+  marginBottom: 8,
+}
+function itemSlotStyle(empty: boolean, secret: boolean): React.CSSProperties {
+  const accent = secret ? BRAND.mazorca : BRAND.pod
+  return {
+    background: empty ? '#0a0a0a' : `${accent}11`,
+    border: `1px solid ${empty ? '#333' : `${accent}66`}`,
+    borderRadius: 8,
+    padding: '6px 4px',
+    cursor: empty ? 'not-allowed' : 'pointer',
+    opacity: empty ? 0.4 : 1,
+    boxShadow: 'inset 0 1px 0 #ffffff10, inset 0 -2px 0 #00000088',
+  }
+}
+const stageTickerStyle: React.CSSProperties = {
+  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+  gap: 8, flexWrap: 'wrap',
+  padding: '6px 12px',
+  background: '#0a1410',
+  border: `1px solid ${BRAND.amazon}55`,
+  borderRadius: 6,
+  marginBottom: 8,
+}
+const stageTickerLabelStyle: React.CSSProperties = {
+  fontFamily: PRESS_START_FONT, fontSize: 7,
+  color: BRAND.pod, letterSpacing: '0.1em',
+}
+const stageTickerTipStyle: React.CSSProperties = {
+  fontFamily: FONTS.body, fontSize: 11,
+  color: `${BRAND.heirloom}99`,
+}
+const alertStripStyle: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: 10,
+  padding: '8px 12px',
+  background: '#2a0808',
+  border: '1px solid #e74c3c66',
+  borderRadius: 6,
+  marginBottom: 8,
+}
+const harvestStripStyle: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: 10,
+  width: '100%',
+  padding: '10px 14px',
+  background: `linear-gradient(135deg, ${BRAND.mazorca}, #d49018)`,
+  border: 'none',
+  borderRadius: 8,
+  cursor: 'pointer',
+  marginBottom: 8,
+  boxShadow: `0 0 20px ${BRAND.mazorca}66, inset 0 1px 0 #ffffff44, inset 0 -3px 0 #00000044`,
+}
+const postHarvestStripStyle: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: 10,
+  width: '100%',
+  padding: '8px 12px',
+  background: `${BRAND.mazorca}22`,
+  border: `1px solid ${BRAND.mazorca}66`,
+  borderRadius: 6,
+  cursor: 'pointer',
+  marginBottom: 8,
+}
+const nftMiniRowStyle: React.CSSProperties = {
+  marginBottom: 8,
+}
+const deviceBottomPlateStyle: React.CSSProperties = {
+  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+  padding: '8px 14px',
+  background: '#0a0f0c',
+  border: `1px solid ${BRAND.amazon}`,
+  borderRadius: 22,
+  boxShadow: 'inset 0 1px 0 #ffffff10, inset 0 -2px 0 #00000088',
+  marginTop: 4,
+}
+const brandSubMarkStyle: React.CSSProperties = {
+  fontFamily: PRESS_START_FONT, fontSize: 6,
+  color: `${BRAND.heirloom}44`,
+  letterSpacing: '0.16em',
+}
+const batteryWrapStyle: React.CSSProperties = {
+  position: 'relative',
+  width: 36, height: 14,
+  border: `1px solid ${BRAND.heirloom}55`,
+  borderRadius: 2,
+  padding: 1,
+}
+function batteryFillStyle(pct: number): React.CSSProperties {
+  return {
+    width: `${pct}%`, height: '100%',
+    background: pct > 60 ? BRAND.pod : pct > 25 ? BRAND.mazorca : '#e74c3c',
+    transition: 'width 1s',
+  }
+}
+const batteryNubStyle: React.CSSProperties = {
+  position: 'absolute',
+  right: -4, top: 3,
+  width: 3, height: 6,
+  background: `${BRAND.heirloom}55`,
+  borderRadius: '0 1px 1px 0',
+}
+
+// ── Page-level overlays (CRT scanlines, floating damage/heal numbers, achievement toast) ──
+
+const crtScanlineStyle: React.CSSProperties = {
+  position: 'fixed', inset: 0, zIndex: 1, pointerEvents: 'none',
+  backgroundImage: `repeating-linear-gradient(0deg, rgba(0,0,0,0.18) 0px, rgba(0,0,0,0.18) 1px, transparent 1px, transparent 4px)`,
+  mixBlendMode: 'multiply',
+  opacity: 0.55,
+}
+const floatLayerStyle: React.CSSProperties = {
+  position: 'fixed', left: 0, right: 0, bottom: '40%',
+  height: 0, zIndex: 50, pointerEvents: 'none',
+}
+const achievementToastStyle: React.CSSProperties = {
+  position: 'fixed', top: 86, right: 16, zIndex: 60,
+  background: BRAND.bgDark,
+  border: `2px solid ${BRAND.mazorca}`,
+  padding: '12px 16px',
+  display: 'flex', alignItems: 'center', gap: 12,
+  boxShadow: `0 0 28px ${BRAND.mazorca}44, inset 0 0 0 2px ${BRAND.bgDeep}`,
+  animation: 'caua-toast-in 2.8s cubic-bezier(.16,1,.3,1) forwards',
+  maxWidth: 280,
 }

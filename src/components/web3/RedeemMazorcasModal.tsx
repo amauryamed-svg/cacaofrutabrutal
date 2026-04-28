@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import Web3Provider from './Web3Provider'
 import { useKYCStatus } from '../../hooks/useKYCStatus'
 import {
   BRAND,
@@ -24,7 +25,19 @@ interface Props {
 
 type Phase = 'pick' | 'signing' | 'ready' | 'claiming' | 'mining' | 'done' | 'error'
 
-export default function RedeemMazorcasModal({ open, onClose, mazorcasBalance, onClaimed }: Props) {
+// Public export wraps Inner in Web3Provider so the modal works on routes that
+// don't wrap their tree in WagmiProvider (e.g. Dashboard). Provider only mounts
+// while the modal is open — wallet code stays cold otherwise.
+export default function RedeemMazorcasModal(props: Props) {
+  if (!props.open) return null
+  return (
+    <Web3Provider>
+      <RedeemInner {...props} />
+    </Web3Provider>
+  )
+}
+
+function RedeemInner({ open, onClose, mazorcasBalance, onClaimed }: Props) {
   const kyc = useKYCStatus()
   const { address } = useAccount()
   const { writeContractAsync } = useWriteContract()

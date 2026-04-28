@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { BRAND, FONTS } from '../../utils/constants'
 import CauaLogo from '../ui/CauaLogo'
@@ -50,108 +50,6 @@ function HamburgerIcon({ open }: { open: boolean }) {
         transform: open ? 'translateY(-6.5px) rotate(-45deg)' : 'none',
       }} />
     </button>
-  )
-}
-
-// ── Desktop dropdown for grouped tabs ───────────────────────────────────────
-function DesktopGroupTab({
-  group, activePath,
-}: { group: NavGroup; activePath: string }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-  const childActive = group.children.some(c => c.path === activePath)
-
-  // Close on click-outside
-  useEffect(() => {
-    if (!open) return
-    function onDoc(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', onDoc)
-    return () => document.removeEventListener('mousedown', onDoc)
-  }, [open])
-
-  return (
-    <div
-      ref={ref}
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
-      style={{ position: 'relative' }}
-    >
-      <button
-        onClick={() => setOpen(o => !o)}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        style={{
-          background: childActive ? `${BRAND.pod}22` : 'transparent',
-          border: childActive ? `1px solid ${BRAND.pod}44` : '1px solid transparent',
-          color: childActive ? BRAND.pod : `${BRAND.heirloom}88`,
-          padding: '6px 14px', borderRadius: 999, cursor: 'pointer',
-          fontFamily: FONTS.display, fontWeight: 700,
-          fontSize: 11, letterSpacing: '0.12em', transition: 'all 0.3s',
-          display: 'inline-flex', alignItems: 'center', gap: 6,
-        }}
-      >
-        {group.label}
-        <span aria-hidden style={{
-          display: 'inline-block',
-          transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
-          transition: 'transform 0.2s',
-          fontSize: 9, opacity: 0.7,
-        }}>▾</span>
-      </button>
-
-      {open && (
-        <div
-          role="menu"
-          style={{
-            position: 'absolute', top: 'calc(100% + 6px)', left: 0,
-            minWidth: 220,
-            background: BRAND.bgCard,
-            border: `1px solid ${BRAND.amazon}77`,
-            borderRadius: 12,
-            padding: 6,
-            boxShadow: `0 18px 40px rgba(0,0,0,0.45)`,
-            display: 'flex', flexDirection: 'column', gap: 2,
-            zIndex: 110,
-          }}
-        >
-          {group.children.map(c => {
-            const active = activePath === c.path
-            return (
-              <Link
-                key={c.path}
-                to={c.path}
-                role="menuitem"
-                onClick={() => setOpen(false)}
-                style={{ textDecoration: 'none' }}
-              >
-                <div style={{
-                  padding: '10px 12px', borderRadius: 8,
-                  background: active ? `${BRAND.pod}1f` : 'transparent',
-                  border: `1px solid ${active ? BRAND.pod + '44' : 'transparent'}`,
-                  fontFamily: FONTS.display, fontWeight: 700,
-                  fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase',
-                  color: active ? BRAND.pod : BRAND.heirloom,
-                  transition: 'background 0.2s',
-                }}>
-                  {c.label}
-                  {c.hint && (
-                    <div style={{
-                      fontFamily: FONTS.body, fontWeight: 400,
-                      fontSize: 10, letterSpacing: 'normal', textTransform: 'none',
-                      color: `${BRAND.heirloom}66`, marginTop: 2,
-                    }}>
-                      {c.hint}
-                    </div>
-                  )}
-                </div>
-              </Link>
-            )
-          })}
-        </div>
-      )}
-    </div>
   )
 }
 
@@ -349,7 +247,6 @@ function MobileDrawerGroup({
 // ── Main NavBar ─────────────────────────────────────────────────────────────
 export default function NavBar() {
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const location  = useLocation()
   const navigate  = useNavigate()
   const { user, isAdmin, setUser } = useAuth()
   const { lang }  = useLang()
@@ -397,8 +294,6 @@ export default function NavBar() {
     { href: '/siembra.html',      label: 'SIEMBRA', color: BRAND.pod     },
   ]
 
-  const activePath = location.pathname
-
   return (
     <>
       <nav style={{
@@ -429,102 +324,74 @@ export default function NavBar() {
           </a>
         </div>
 
-        {/* Desktop / Tablet — inline nav with hover dropdowns */}
-        {!isMobile && (
-          <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-            {TABS.map((t, i) => {
-              if (!isGroup(t)) {
-                const active = activePath === t.path
-                return (
-                  <Link key={t.path} to={t.path} style={{ textDecoration: 'none' }}>
-                    <button style={{
-                      background: active ? `${BRAND.pod}22` : 'transparent',
-                      border: active ? `1px solid ${BRAND.pod}44` : '1px solid transparent',
-                      color: active ? BRAND.pod : `${BRAND.heirloom}88`,
-                      padding: '6px 14px', borderRadius: 999, cursor: 'pointer',
-                      fontFamily: FONTS.display, fontWeight: 700,
-                      fontSize: 11, letterSpacing: '0.12em', transition: 'all 0.3s',
-                    }}>{t.label}</button>
-                  </Link>
-                )
-              }
-              return <DesktopGroupTab key={i} group={t} activePath={activePath} />
-            })}
-          </div>
-        )}
+        {/* Right cluster — desktop utilities + burger (universal). Tabs all live in the drawer. */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 0 : 10 }}>
+          {/* Desktop utilities: lang toggle + token balance + avatar — sit beside the burger */}
+          {!isMobile && (
+            <>
+              {!isTablet && EXTERNAL.map(({ href, label, color }) => (
+                <a key={href} href={href} target="_blank" rel="noopener noreferrer"
+                  style={{
+                    padding: '4px 10px', borderRadius: 999,
+                    fontFamily: FONTS.display, fontWeight: 700,
+                    fontSize: 10, letterSpacing: '0.1em', textDecoration: 'none',
+                    color: `${color}88`, border: `1px solid ${color}22`,
+                    transition: 'all 0.3s',
+                  }}>
+                  {label}
+                </a>
+              ))}
 
-        {/* Desktop right side — external links + auth */}
-        {!isMobile && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {/* External links — hidden on tablet */}
-            {!isTablet && EXTERNAL.map(({ href, label, color }) => (
-              <a key={href} href={href} target="_blank" rel="noopener noreferrer"
-                style={{
-                  padding: '4px 10px', borderRadius: 999,
-                  fontFamily: FONTS.display, fontWeight: 700,
-                  fontSize: 10, letterSpacing: '0.1em', textDecoration: 'none',
-                  color: `${color}88`, border: `1px solid ${color}22`,
-                  transition: 'all 0.3s',
-                }}>
-                {label}
-              </a>
-            ))}
+              <LanguageToggle />
 
-            <div style={{ width: 1, height: 16, background: `${BRAND.amazon}55` }} />
+              {user ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <TokenBalance />
+                  {isAdmin && (
+                    <Link to="/admin/crm" style={{ textDecoration: 'none' }}>
+                      <button style={{
+                        background: `${BRAND.mazorca}22`, border: `1px solid ${BRAND.mazorca}44`,
+                        color: BRAND.mazorca, padding: '4px 10px', borderRadius: 999,
+                        cursor: 'pointer', fontFamily: FONTS.display, fontWeight: 700,
+                        fontSize: 10, letterSpacing: '0.1em',
+                      }}>CRM</button>
+                    </Link>
+                  )}
+                  <div style={{
+                    width: 28, height: 28, borderRadius: '50%',
+                    background: `linear-gradient(135deg, ${BRAND.criollo}, ${BRAND.theobroma})`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 12, fontWeight: 700, color: BRAND.heirloom,
+                  }}>{(user && user.length > 0) ? user[0].toUpperCase() : 'U'}</div>
+                </div>
+              ) : (
+                <CauaButton size="sm" onClick={() => navigate('/auth')}>{T('nav_enter')}</CauaButton>
+              )}
 
-            <LanguageToggle />
+              <div style={{ width: 1, height: 22, background: `${BRAND.amazon}55`, margin: '0 4px' }} />
+            </>
+          )}
 
-            {user ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <TokenBalance />
-                {isAdmin && (
-                  <Link to="/admin/crm" style={{ textDecoration: 'none' }}>
-                    <button style={{
-                      background: `${BRAND.mazorca}22`, border: `1px solid ${BRAND.mazorca}44`,
-                      color: BRAND.mazorca, padding: '4px 10px', borderRadius: 999,
-                      cursor: 'pointer', fontFamily: FONTS.display, fontWeight: 700,
-                      fontSize: 10, letterSpacing: '0.1em',
-                    }}>CRM</button>
-                  </Link>
-                )}
-                <div style={{
-                  width: 28, height: 28, borderRadius: '50%',
-                  background: `linear-gradient(135deg, ${BRAND.criollo}, ${BRAND.theobroma})`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 12, fontWeight: 700, color: BRAND.heirloom,
-                }}>{(user && user.length > 0) ? user[0].toUpperCase() : 'U'}</div>
-                <button onClick={() => setUser(null)} style={{
-                  background: 'none', border: 'none', color: `${BRAND.heirloom}66`,
-                  fontSize: 10, cursor: 'pointer',
-                }}>{T('nav_exit')}</button>
-              </div>
-            ) : (
-              <CauaButton size="sm" onClick={() => navigate('/auth')}>{T('nav_enter')}</CauaButton>
-            )}
-          </div>
-        )}
-
-        {/* Mobile — hamburger only */}
-        {isMobile && (
-          <div onClick={() => setDrawerOpen(o => !o)}>
+          {/* Burger — always visible. Opens the drawer with all grouped nav tabs. */}
+          <div onClick={() => setDrawerOpen(o => !o)} role="button" tabIndex={0}
+               aria-label={drawerOpen ? 'Close menu' : 'Open menu'}
+               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setDrawerOpen(o => !o) }}>
             <HamburgerIcon open={drawerOpen} />
           </div>
-        )}
+        </div>
       </nav>
 
-      {/* Mobile drawer */}
-      {isMobile && (
-        <MobileDrawer
-          open={drawerOpen}
-          onClose={() => setDrawerOpen(false)}
-          tabs={TABS}
-          externalLinks={EXTERNAL}
-          user={user}
-          onLogout={() => setUser(null)}
-          onLogin={() => navigate('/auth')}
-          T={T as (key: string) => string}
-        />
-      )}
+      {/* Drawer — universal (mobile + desktop). Carries all grouped tabs. */}
+      <MobileDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        tabs={TABS}
+        externalLinks={EXTERNAL}
+        user={user}
+        onLogout={() => setUser(null)}
+        onLogin={() => navigate('/auth')}
+        T={T as (key: string) => string}
+      />
     </>
   )
 }
