@@ -458,6 +458,81 @@ footer a:hover{color:var(--ink2);}
     opacity: 1 !important;
   }
 }
+
+/* ── Origin / Transmutation section — hyperrealistic vector tree + cacao→heart morph ── */
+#origin {
+  position: relative;
+  min-height: 100vh;
+  padding: 96px 32px 120px;
+  overflow: hidden;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+#origin .origin-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.45;
+}
+#origin .origin-bg img {
+  height: 110%;
+  width: auto;
+  max-width: none;
+  filter: blur(1px) saturate(1.05);
+}
+#origin .origin-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    radial-gradient(ellipse at 50% 60%, rgba(4,12,6,0.0) 0%, rgba(4,12,6,0.55) 55%, rgba(4,12,6,0.92) 100%);
+  pointer-events: none;
+}
+#origin .origin-content {
+  position: relative;
+  z-index: 2;
+  max-width: 1180px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 56px;
+  align-items: center;
+}
+#origin .origin-morph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#origin .origin-morph img {
+  width: clamp(260px, 38vw, 480px);
+  height: auto;
+  filter: drop-shadow(0 24px 40px rgba(0,0,0,0.55))
+          drop-shadow(0 0 28px rgba(241,169,30,0.18));
+}
+#origin .origin-narrative {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+#origin .origin-narrative .ac { color: var(--gold); }
+#origin .origin-narrative blockquote {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  border-left: 2px solid var(--gold);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ink2);
+}
+@media (max-width: 880px) {
+  #origin .origin-content { grid-template-columns: 1fr; gap: 36px; }
+  #origin .origin-morph img { width: clamp(220px, 70vw, 380px); }
+}
 </style>
 </head>
 <body>
@@ -504,6 +579,35 @@ footer a:hover{color:var(--ink2);}
     <div style="display:flex;flex-direction:column;align-items:flex-start;">
       <div class="scroll-line"></div>
       <div class="scroll-lbl">Scroll</div>
+    </div>
+  </div>
+</section>
+
+<!-- 1.5 ORIGEN — hyperrealistic vector tree + cacao→heart transmutation -->
+<section id="origin">
+  <!-- Hyperrealistic vector tree as ambient backdrop -->
+  <div class="origin-bg">
+    <img src="/cacao-tree-illustration.svg" alt="Árbol de cacao en una finca de Hobo, Huila — tronco mossy con mazorcas cauliflory" loading="lazy"/>
+  </div>
+  <div class="origin-vignette"></div>
+
+  <div class="origin-content reveal">
+    <!-- The morph: cacao pod → organic heart, looping -->
+    <div class="origin-morph">
+      <img src="/cacao-heart-morph.svg" alt="La mazorca de cacao se transmuta en un corazón" loading="lazy"/>
+    </div>
+    <!-- Narrative -->
+    <div class="origin-narrative">
+      <div class="sec-idx" data-i18n="s015_idx">01.5 — Origen</div>
+      <h2 class="big-h" data-i18n="s015_h">Donde el<br>fruto<br>se transmuta<br>en <span class="ac">corazón</span>.</h2>
+      <p class="body-text" data-i18n="s015_body">
+        Cada mazorca madura es un acto de cuidado convertido en nutrición. El árbol entrega su fruto;
+        el fruto se vuelve el corazón del sistema. De la corteza mossy a la pulpa, del bosque al cuerpo —
+        un ciclo continuo de transformación.
+      </p>
+      <blockquote data-i18n="s015_quote">
+        Theobroma · 'alimento de los dioses' · Hobo, Huila · 2°31′N
+      </blockquote>
     </div>
   </div>
 </section>
@@ -1230,6 +1334,10 @@ const T = {
     hero_tag:'Caúa · Brief para Inversores · Series Angel · 2026',
     hero_h1:'El<br>problema<br>no es el<br><span class="ac">cacao.</span>',
     hero_body:'Es todo lo que hicimos con él.<br><br>Un ecosistema de biotecnología que reconstruye la relación entre la biología humana y el sistema funcional vivo más complejo de la tierra.',
+    s015_idx:'01.5 — Origen',
+    s015_h:'Donde el<br>fruto<br>se transmuta<br>en <span class="ac">corazón</span>.',
+    s015_body:'Cada mazorca madura es un acto de cuidado convertido en nutrición. El árbol entrega su fruto; el fruto se vuelve el corazón del sistema. De la corteza mossy a la pulpa, del bosque al cuerpo — un ciclo continuo de transformación.',
+    s015_quote:'Theobroma · "alimento de los dioses" · Hobo, Huila · 2°31′N',
     sp_idx:'08.6 — Elige tu nivel',
     sp_h:'Aliméntate con el<br><span style="color:var(--gold)">propósito de Caúa.</span>',
     sp_sub:'El cacao acaba<br>de abrirse.<br>Elige tu rol.',
@@ -1377,6 +1485,10 @@ const T = {
     hero_tag:'Caúa · Investor Brief · Series Angel · 2026',
     hero_h1:'The<br>problem<br>is not<br><span class="ac">cacao.</span>',
     hero_body:"It's what we turned it into.<br><br>A biotech ecosystem rebuilding the relationship between human biology and the most complex functional living system on earth.",
+    s015_idx:'01.5 — Origin',
+    s015_h:'Where the<br>fruit<br>transmutes<br>into a <span class="ac">heart</span>.',
+    s015_body:"Every ripe pod is care turned into nutrition. The tree gives its fruit; the fruit becomes the heart of the system. From mossy bark to pulp, from forest to body — a continuous cycle of transformation.",
+    s015_quote:'Theobroma · "food of the gods" · Hobo, Huila · 2°31′N',
     sp_idx:'08.6 — Choose your tier',
     sp_h:"Eat with<br><span style=\"color:var(--gold)\">Caúa's purpose.</span>",
     sp_sub:'The pod just<br>opened.<br>Choose your role.',

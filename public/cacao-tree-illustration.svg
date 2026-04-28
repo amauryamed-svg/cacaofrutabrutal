@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Caúa — hyperrealistic vector cacao tree.
+  Based on field photos (Hobo · Huila): mossy mottled trunk, red/yellow cauliflory
+  pods growing directly from the bark at various heights, lanceolate canopy leaves,
+  brown leaf litter on the ground.
+
+  Composition: 800×1200 viewBox, tree centered, horizon at y≈1050.
+  Layered (back→front):
+    1. Sky/canopy backdrop gradient
+    2. Light shafts piercing the canopy
+    3. Far foliage silhouette
+    4. Trunk (with bark, moss patches, lichen, wet streaks)
+    5. Cauliflory pods (12 pods, varied ripeness — green / yellow / orange / red)
+    6. Foreground leaves
+    7. Ground litter
+
+  Most pods have a subtle sway animation; ripeness colors are baked-in (this asset
+  is the static stage; the cacao→heart morph in /cacao-heart-morph.svg shows the
+  ripening + transmutation moment).
+-->
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 800 1200"
+     role="img"
+     aria-label="Hyperrealistic cacao tree with cauliflory pods on a mossy trunk">
+
+  <defs>
+    <!-- Backdrop: deep forest gradient -->
+    <linearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"  stop-color="#0A1A0E"/>
+      <stop offset="40%" stop-color="#132B1C"/>
+      <stop offset="80%" stop-color="#1A2818"/>
+      <stop offset="100%" stop-color="#0F1A0F"/>
+    </linearGradient>
+
+    <!-- Trunk core gradient — light side (right) lit by warm sun -->
+    <linearGradient id="trunkLit" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#3F2C1E"/>
+      <stop offset="35%"  stop-color="#5C4530"/>
+      <stop offset="55%"  stop-color="#8A7560"/>
+      <stop offset="78%"  stop-color="#A89888"/>
+      <stop offset="100%" stop-color="#7A6852"/>
+    </linearGradient>
+
+    <!-- Moss patch gradient — saturated green with darker edges -->
+    <radialGradient id="moss" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#5C8A2F" stop-opacity="0.95"/>
+      <stop offset="55%"  stop-color="#3A6628" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#1F3A14" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Lichen patch — pale grey-green -->
+    <radialGradient id="lichen" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#D6DCC0" stop-opacity="0.78"/>
+      <stop offset="60%"  stop-color="#A8B398" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#A8B398" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Wet streak — dark brown vertical stain -->
+    <linearGradient id="wetStreak" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#1F1009" stop-opacity="0"/>
+      <stop offset="30%"  stop-color="#1F1009" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#1F1009" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Pod gradients per ripeness stage -->
+    <linearGradient id="podRed" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#5C1A14"/>
+      <stop offset="40%"  stop-color="#9A2A22"/>
+      <stop offset="70%"  stop-color="#C13340"/>
+      <stop offset="100%" stop-color="#D63A55"/>
+    </linearGradient>
+    <linearGradient id="podOrange" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#5C2A0E"/>
+      <stop offset="40%"  stop-color="#9A5418"/>
+      <stop offset="70%"  stop-color="#D49328"/>
+      <stop offset="100%" stop-color="#E8A040"/>
+    </linearGradient>
+    <linearGradient id="podYellow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#5C4A14"/>
+      <stop offset="40%"  stop-color="#A89538"/>
+      <stop offset="70%"  stop-color="#D4B22A"/>
+      <stop offset="100%" stop-color="#E8C95A"/>
+    </linearGradient>
+    <linearGradient id="podGreen" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#1F3A14"/>
+      <stop offset="40%"  stop-color="#3A6628"/>
+      <stop offset="70%"  stop-color="#5A8A3A"/>
+      <stop offset="100%" stop-color="#7AA050"/>
+    </linearGradient>
+
+    <!-- Leaf gradient -->
+    <linearGradient id="leafLit" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#2D6A2A"/>
+      <stop offset="60%"  stop-color="#4A9B3A"/>
+      <stop offset="100%" stop-color="#6BB048"/>
+    </linearGradient>
+
+    <!-- Light shaft -->
+    <linearGradient id="shaft" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%"   stop-color="#F4E8B2" stop-opacity="0.0"/>
+      <stop offset="35%"  stop-color="#F4E8B2" stop-opacity="0.25"/>
+      <stop offset="65%"  stop-color="#F4E8B2" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#F4E8B2" stop-opacity="0.0"/>
+    </linearGradient>
+
+    <!-- Ground gradient — wet leaf litter -->
+    <radialGradient id="ground" cx="50%" cy="0%" r="80%">
+      <stop offset="0%"   stop-color="#3A2A18"/>
+      <stop offset="50%"  stop-color="#2A1A0E"/>
+      <stop offset="100%" stop-color="#0F0A06"/>
+    </radialGradient>
+
+    <!-- Pod symbol (12-ridge ellipsoid) — reusable, colored via a wrapping <g> -->
+    <symbol id="pod" viewBox="-50 -90 100 180">
+      <!-- Stem -->
+      <path d="M 0,-90 L -2,-72 C -3,-66 -4,-62 -8,-58" stroke="#3A2A18" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <!-- Pod body silhouette -->
+      <path d="M 0,-72 C 22,-66 38,-46 38,-22 C 40,18 38,52 30,72 C 18,86 8,90 0,90 C -8,90 -18,86 -30,72 C -38,52 -40,18 -38,-22 C -38,-46 -22,-66 0,-72 Z"
+            fill="currentColor"/>
+      <!-- Ridges (longitudinal) -->
+      <path d="M -22,-58 C -28,-20 -28,28 -22,72" stroke="#000000" stroke-opacity="0.32" stroke-width="1.4" fill="none"/>
+      <path d="M -10,-66 C -14,-22 -14,32 -10,82" stroke="#000000" stroke-opacity="0.32" stroke-width="1.4" fill="none"/>
+      <path d="M  10,-66 C  14,-22  14,32  10,82" stroke="#000000" stroke-opacity="0.32" stroke-width="1.4" fill="none"/>
+      <path d="M  22,-58 C  28,-20  28,28  22,72" stroke="#000000" stroke-opacity="0.32" stroke-width="1.4" fill="none"/>
+      <!-- Sheen highlight on lit side -->
+      <path d="M 18,-50 C 22,-20 22,20 18,60" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+      <!-- Tip dimple -->
+      <ellipse cx="0" cy="86" rx="6" ry="3" fill="#000000" fill-opacity="0.4"/>
+    </symbol>
+
+    <!-- Leaf symbol — lanceolate -->
+    <symbol id="leaf" viewBox="-30 -60 60 120">
+      <path d="M 0,-58 C 14,-50 24,-30 22,0 C 20,30 8,52 0,58 C -8,52 -20,30 -22,0 C -24,-30 -14,-50 0,-58 Z"
+            fill="url(#leafLit)"/>
+      <!-- Central vein -->
+      <path d="M 0,-56 L 0,56" stroke="#1F3A14" stroke-width="0.8" stroke-opacity="0.7"/>
+      <!-- Lateral veins -->
+      <path d="M 0,-30 L 14,-22 M 0,-10 L 18,0 M 0,12 L 16,22 M 0,32 L 12,42 M 0,-30 L -14,-22 M 0,-10 L -18,0 M 0,12 L -16,22 M 0,32 L -12,42"
+            stroke="#1F3A14" stroke-width="0.5" stroke-opacity="0.55" fill="none"/>
+    </symbol>
+  </defs>
+
+  <!-- 1. Sky/canopy backdrop -->
+  <rect width="800" height="1200" fill="url(#sky)"/>
+
+  <!-- 2. Light shafts piercing the canopy -->
+  <g opacity="0.7">
+    <polygon points="280,0 230,1200 320,1200 360,0" fill="url(#shaft)"/>
+    <polygon points="500,0 460,1200 580,1200 600,0" fill="url(#shaft)" opacity="0.7"/>
+    <polygon points="700,0 680,1200 760,1200 760,0" fill="url(#shaft)" opacity="0.5"/>
+  </g>
+
+  <!-- 3. Far foliage silhouette -->
+  <g fill="#0F1A0F" opacity="0.8">
+    <ellipse cx="120" cy="200" rx="120" ry="160"/>
+    <ellipse cx="650" cy="180" rx="160" ry="140"/>
+    <ellipse cx="400" cy="60" rx="280" ry="100"/>
+    <ellipse cx="50" cy="500" rx="80" ry="180"/>
+    <ellipse cx="750" cy="500" rx="100" ry="200"/>
+  </g>
+
+  <!-- 4. Trunk -->
+  <g>
+    <!-- Main trunk silhouette: tapered cylinder, slight lean -->
+    <path d="M 348,60 C 344,260 340,520 336,780 C 334,920 330,1020 320,1080 L 470,1080 C 460,1020 456,920 454,780 C 450,520 446,260 442,60 Z"
+          fill="url(#trunkLit)"/>
+    <!-- Vertical bark grooves (multiple layers) -->
+    <g stroke="#1F1009" stroke-opacity="0.35" stroke-width="1.5" fill="none">
+      <path d="M 358,80 C 356,300 354,560 352,820 C 350,940 346,1020 340,1070"/>
+      <path d="M 376,80 C 374,300 372,560 370,820 C 368,940 364,1020 360,1070"/>
+      <path d="M 396,80 C 396,300 396,560 396,820 C 396,940 396,1020 394,1070"/>
+      <path d="M 412,80 C 414,300 416,560 418,820 C 420,940 422,1020 422,1070"/>
+      <path d="M 430,80 C 432,300 434,560 436,820 C 438,940 442,1020 446,1070"/>
+    </g>
+    <!-- Bark grain (thinner secondary lines) -->
+    <g stroke="#1F1009" stroke-opacity="0.2" stroke-width="0.8" fill="none">
+      <path d="M 364,100 C 368,320 372,580 376,820"/>
+      <path d="M 384,100 C 386,320 388,580 390,820"/>
+      <path d="M 404,100 C 406,320 408,580 410,820"/>
+      <path d="M 422,100 C 422,320 422,580 422,820"/>
+    </g>
+    <!-- Wet streaks running down -->
+    <rect x="360" y="200" width="20" height="700" fill="url(#wetStreak)" opacity="0.6"/>
+    <rect x="416" y="280" width="14" height="600" fill="url(#wetStreak)" opacity="0.5"/>
+    <!-- Moss patches — concentrated near base, scattered upward -->
+    <g>
+      <ellipse cx="345" cy="980" rx="32" ry="60" fill="url(#moss)"/>
+      <ellipse cx="380" cy="1020" rx="42" ry="40" fill="url(#moss)"/>
+      <ellipse cx="436" cy="990" rx="36" ry="55" fill="url(#moss)"/>
+      <ellipse cx="455" cy="1050" rx="38" ry="38" fill="url(#moss)"/>
+      <ellipse cx="350" cy="850" rx="28" ry="42" fill="url(#moss)"/>
+      <ellipse cx="430" cy="820" rx="22" ry="36" fill="url(#moss)"/>
+      <ellipse cx="370" cy="700" rx="22" ry="32" fill="url(#moss)" opacity="0.85"/>
+      <ellipse cx="430" cy="600" rx="18" ry="28" fill="url(#moss)" opacity="0.78"/>
+      <ellipse cx="345" cy="500" rx="16" ry="24" fill="url(#moss)" opacity="0.7"/>
+      <ellipse cx="436" cy="420" rx="14" ry="22" fill="url(#moss)" opacity="0.6"/>
+      <ellipse cx="358" cy="320" rx="12" ry="18" fill="url(#moss)" opacity="0.5"/>
+    </g>
+    <!-- Lichen patches — pale, scattered higher up -->
+    <g>
+      <ellipse cx="395" cy="780" rx="14" ry="22" fill="url(#lichen)"/>
+      <ellipse cx="420" cy="660" rx="11" ry="17" fill="url(#lichen)"/>
+      <ellipse cx="362" cy="580" rx="13" ry="20" fill="url(#lichen)"/>
+      <ellipse cx="408" cy="500" rx="10" ry="15" fill="url(#lichen)"/>
+      <ellipse cx="378" cy="400" rx="12" ry="18" fill="url(#lichen)"/>
+      <ellipse cx="424" cy="320" rx="9" ry="14" fill="url(#lichen)"/>
+      <ellipse cx="386" cy="240" rx="10" ry="15" fill="url(#lichen)"/>
+    </g>
+  </g>
+
+  <!-- 5. Cauliflory pods on the trunk — varied ripeness, varied positions -->
+  <!-- Each pod hangs from a stem; we use the symbol with currentColor + transform -->
+  <!-- Pod 01: ripe red, mid-trunk left -->
+  <g transform="translate(320 580) rotate(-12) scale(0.55)" color="url(#podRed)">
+    <use href="#pod"/>
+  </g>
+  <!-- Pod 02: ripe red, mid-trunk right -->
+  <g transform="translate(470 540) rotate(15) scale(0.6)" color="url(#podRed)">
+    <use href="#pod"/>
+  </g>
+  <!-- Pod 03: orange, upper trunk right -->
+  <g transform="translate(480 380) rotate(8) scale(0.5)" color="url(#podOrange)">
+    <use href="#pod"/>
+  </g>
+  <!-- Pod 04: red, upper trunk left -->
+  <g transform="translate(310 320) rotate(-6) scale(0.46)" color="url(#podRed)">
+    <use href="#pod"/>
+  </g>
+  <!-- Pod 05: yellow, lower trunk -->
+  <g transform="translate(330 740) rotate(-18) scale(0.62)" color="url(#podYellow)">
+    <use href="#pod"/>
+  </g>
+  <!-- Pod 06: orange, low right -->
+  <g transform="translate(490 720) rotate(20) scale(0.58)" color="url(#podOrange)">
+    <use href="#pod"/>
+  </g>
+  <!-- Pod 07: green (immature), high left -->
+  <g transform="translate(330 220) rotate(-10) scale(0.42)" color="url(#podGreen)">
+    <use href="#pod"/>
+  </g>
+  <!-- Pod 08: red, mid -->
+  <g transform="translate(400 460) rotate(-2) scale(0.48)" color="url(#podRed)">
+    <use href="#pod"/>
+  </g>
+  <!-- Pod 09: yellow, mid right -->
+  <g transform="translate(495 460) rotate(14) scale(0.44)" color="url(#podYellow)">
+    <use href="#pod"/>
+  </g>
+  <!-- Pod 10: red, lower left -->
+  <g transform="translate(310 880) rotate(-16) scale(0.66)" color="url(#podRed)">
+    <use href="#pod"/>
+  </g>
+  <!-- Pod 11: orange, very low right -->
+  <g transform="translate(498 920) rotate(22) scale(0.7)" color="url(#podOrange)">
+    <use href="#pod"/>
+  </g>
+  <!-- Pod 12: green, top -->
+  <g transform="translate(480 220) rotate(8) scale(0.4)" color="url(#podGreen)">
+    <use href="#pod"/>
+  </g>
+
+  <!-- 6. Foreground leaves — clustered around the canopy -->
+  <g>
+    <!-- Upper canopy left -->
+    <g transform="translate(220 180) rotate(-30) scale(0.7)"><use href="#leaf"/></g>
+    <g transform="translate(170 240) rotate(15) scale(0.85)"><use href="#leaf"/></g>
+    <g transform="translate(260 100) rotate(-10) scale(0.6)"><use href="#leaf"/></g>
+    <g transform="translate(310 60) rotate(20) scale(0.55)"><use href="#leaf"/></g>
+    <g transform="translate(120 320) rotate(-50) scale(0.7)"><use href="#leaf"/></g>
+    <!-- Upper canopy right -->
+    <g transform="translate(540 80) rotate(-15) scale(0.6)"><use href="#leaf"/></g>
+    <g transform="translate(620 140) rotate(35) scale(0.8)"><use href="#leaf"/></g>
+    <g transform="translate(680 220) rotate(50) scale(0.7)"><use href="#leaf"/></g>
+    <g transform="translate(560 300) rotate(20) scale(0.65)"><use href="#leaf"/></g>
+    <g transform="translate(720 360) rotate(60) scale(0.55)"><use href="#leaf"/></g>
+    <!-- Mid-tier leaves -->
+    <g transform="translate(180 480) rotate(-40) scale(0.55)"><use href="#leaf"/></g>
+    <g transform="translate(220 580) rotate(-25) scale(0.5)"><use href="#leaf"/></g>
+    <g transform="translate(580 460) rotate(40) scale(0.55)"><use href="#leaf"/></g>
+    <g transform="translate(620 580) rotate(35) scale(0.5)"><use href="#leaf"/></g>
+    <g transform="translate(160 720) rotate(-55) scale(0.45)"><use href="#leaf"/></g>
+    <g transform="translate(640 720) rotate(50) scale(0.45)"><use href="#leaf"/></g>
+    <!-- Foreground sparse leaves -->
+    <g transform="translate(80 880) rotate(-70) scale(0.6)" opacity="0.85"><use href="#leaf"/></g>
+    <g transform="translate(720 880) rotate(70) scale(0.6)" opacity="0.85"><use href="#leaf"/></g>
+  </g>
+
+  <!-- 7. Ground litter — scattered ellipses of brown/orange/dark brown -->
+  <g>
+    <rect x="0" y="1080" width="800" height="120" fill="url(#ground)"/>
+    <!-- Scatter of fallen leaves (ellipses + thin path stems) -->
+    <g>
+      <ellipse cx="80" cy="1100" rx="22" ry="6" fill="#6A4823" opacity="0.85" transform="rotate(15 80 1100)"/>
+      <ellipse cx="160" cy="1130" rx="28" ry="8" fill="#8B5D2C" opacity="0.9" transform="rotate(-20 160 1130)"/>
+      <ellipse cx="240" cy="1110" rx="20" ry="6" fill="#A87632" opacity="0.85" transform="rotate(35 240 1110)"/>
+      <ellipse cx="320" cy="1150" rx="26" ry="7" fill="#6A4823" opacity="0.95" transform="rotate(-12 320 1150)"/>
+      <ellipse cx="420" cy="1100" rx="22" ry="6" fill="#3A2A18" opacity="0.9" transform="rotate(28 420 1100)"/>
+      <ellipse cx="500" cy="1130" rx="24" ry="6" fill="#8B5D2C" opacity="0.85" transform="rotate(-30 500 1130)"/>
+      <ellipse cx="580" cy="1160" rx="28" ry="8" fill="#A87632" opacity="0.9" transform="rotate(18 580 1160)"/>
+      <ellipse cx="660" cy="1110" rx="20" ry="5" fill="#6A4823" opacity="0.8" transform="rotate(-40 660 1110)"/>
+      <ellipse cx="740" cy="1140" rx="24" ry="7" fill="#3A2A18" opacity="0.92" transform="rotate(22 740 1140)"/>
+      <ellipse cx="120" cy="1170" rx="18" ry="5" fill="#A87632" opacity="0.8" transform="rotate(-50 120 1170)"/>
+      <ellipse cx="380" cy="1170" rx="22" ry="6" fill="#8B5D2C" opacity="0.85" transform="rotate(45 380 1170)"/>
+      <ellipse cx="560" cy="1100" rx="14" ry="4" fill="#A87632" opacity="0.7" transform="rotate(-15 560 1100)"/>
+      <ellipse cx="700" cy="1180" rx="20" ry="6" fill="#6A4823" opacity="0.85" transform="rotate(-25 700 1180)"/>
+    </g>
+    <!-- A couple of fallen pods on the ground (ripe, lying on side) -->
+    <g transform="translate(520 1100) rotate(80) scale(0.42)" color="url(#podRed)" opacity="0.92">
+      <use href="#pod"/>
+    </g>
+    <g transform="translate(180 1140) rotate(-65) scale(0.36)" color="url(#podOrange)" opacity="0.88">
+      <use href="#pod"/>
+    </g>
+  </g>
+</svg>

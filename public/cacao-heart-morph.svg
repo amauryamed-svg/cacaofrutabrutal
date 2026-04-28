@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Caúa — cacao-to-heart transmutation.
+  An 8s loop where a ripe cacao pod morphs into an organic heart (emoji ❤️ topology)
+  via SMIL <animate>. Both paths share an 8-cubic-bezier topology so the morph is clean.
+
+  Phases:
+    0%–15%  pod hangs static with a gentle sway
+    15%–35% pod falls (translate + spin) and starts color shift
+    35%–50% pod silhouette morphs into the heart shape; gold halo flashes
+    50%–95% heart pulses (3–4 beats) — the cacao becomes the heart of the system
+    95%–100% morphs back to the pod silhouette; loop
+
+  Self-contained: drop into an <img> or inline. Loops forever. Honors
+  prefers-reduced-motion via CSS @media (set on the wrapping element if needed).
+-->
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 240 320"
+     role="img"
+     aria-label="Cacao pod transmuting into a heart">
+
+  <defs>
+    <!-- Soft gold halo that flashes during the transmutation moment -->
+    <radialGradient id="haloGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#F1A91E" stop-opacity="0.55"/>
+      <stop offset="60%"  stop-color="#D03050" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#040C06" stop-opacity="0.0"/>
+    </radialGradient>
+    <!-- Pod ridge highlight gradient -->
+    <linearGradient id="podSheen" x1="35%" y1="0%" x2="65%" y2="100%">
+      <stop offset="0%"  stop-color="#FFFFFF" stop-opacity="0.0"/>
+      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.0"/>
+    </linearGradient>
+    <!-- Heart specular highlight -->
+    <radialGradient id="heartSpec" cx="35%" cy="32%" r="22%">
+      <stop offset="0%"  stop-color="#FFFFFF" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Halo: scales + flashes during morph window -->
+  <g>
+    <ellipse cx="120" cy="160" rx="140" ry="140" fill="url(#haloGrad)" opacity="0">
+      <animate attributeName="opacity"
+               dur="8s" repeatCount="indefinite"
+               values="0;0;0.85;1;0.6;0.4;0.6;0.4;0.6;0.4;0;0"
+               keyTimes="0;0.3;0.42;0.5;0.55;0.62;0.68;0.74;0.80;0.88;0.95;1"/>
+      <animateTransform attributeName="transform" type="scale"
+               additive="sum"
+               dur="8s" repeatCount="indefinite"
+               values="0.6;0.6;1.0;1.15;1.0;0.92;1.05;0.95;1.05;0.9;0.6;0.6"
+               keyTimes="0;0.3;0.42;0.5;0.55;0.62;0.68;0.74;0.80;0.88;0.95;1"/>
+    </ellipse>
+  </g>
+
+  <!-- Pod/Heart morphing silhouette + transform group (translate + scale + rotate) -->
+  <g transform-origin="120 160">
+    <!-- Translate: pod hangs above (centered around y=120 on the canvas), then "falls" toward y=160 -->
+    <animateTransform attributeName="transform" type="translate"
+             additive="sum"
+             dur="8s" repeatCount="indefinite"
+             values="0 -40; 0 -38; 0 -10; 0 0; 0 0; 0 -2; 0 0; 0 -2; 0 0; 0 -2; 0 -40; 0 -40"
+             keyTimes="0;0.15;0.3;0.42;0.5;0.62;0.7;0.78;0.85;0.92;0.97;1"
+             calcMode="spline"
+             keySplines="0.4 0 0.6 1; 0.16 1 0.3 1; 0.55 0 0.45 1; 0.16 1 0.3 1; 0.16 1 0.3 1; 0.16 1 0.3 1; 0.16 1 0.3 1; 0.16 1 0.3 1; 0.16 1 0.3 1; 0.55 0 0.45 1; 0.16 1 0.3 1"/>
+    <!-- Subtle sway as a pod, then a tumbling spin during fall -->
+    <animateTransform attributeName="transform" type="rotate"
+             additive="sum"
+             dur="8s" repeatCount="indefinite"
+             values="-6 120 160; 6 120 160; -120 120 160; -180 120 160; 0 120 160; 0 120 160; 0 120 160; 0 120 160; 0 120 160; 0 120 160; -360 120 160; -6 120 160"
+             keyTimes="0;0.15;0.25;0.35;0.42;0.5;0.6;0.7;0.8;0.92;0.97;1"
+             calcMode="spline"
+             keySplines="0.45 0 0.55 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.16 1 0.3 1; 0.16 1 0.3 1; 0.16 1 0.3 1; 0.16 1 0.3 1; 0.16 1 0.3 1; 0.16 1 0.3 1; 0.55 0 0.45 1; 0.16 1 0.3 1"/>
+    <!-- Heart pulse — 4 beats during the heart phase, neutral at all other phases -->
+    <animateTransform attributeName="transform" type="scale"
+             additive="sum"
+             dur="8s" repeatCount="indefinite"
+             values="1; 1; 1; 1; 1.06; 0.97; 1.08; 0.96; 1.04; 0.99; 1; 1"
+             keyTimes="0;0.3;0.42;0.5;0.55;0.62;0.7;0.78;0.86;0.92;0.97;1"
+             calcMode="spline"
+             keySplines="0.16 1 0.3 1; 0.16 1 0.3 1; 0.16 1 0.3 1; 0.16 1 0.3 1; 0.16 1 0.3 1; 0.16 1 0.3 1; 0.16 1 0.3 1; 0.16 1 0.3 1; 0.16 1 0.3 1; 0.16 1 0.3 1; 0.16 1 0.3 1"/>
+
+    <!-- The morphing silhouette (filled). Both d-strings share 8 cubic segments. -->
+    <path id="silhouette"
+          d="M 120,80 C 140,85 150,100 150,110 C 160,130 160,150 160,180 C 160,220 155,245 150,250 C 140,270 130,280 120,280 C 110,280 100,270 90,250 C 85,245 80,220 80,180 C 80,150 80,130 90,110 C 90,100 100,85 120,80 Z">
+      <!-- Color cycle: ripe-red → magenta → heart-red → magenta → ripe-red -->
+      <animate attributeName="fill"
+               dur="8s" repeatCount="indefinite"
+               values="#B3372E;#B3372E;#C13340;#D03050;#D63A55;#D03050;#D63A55;#D03050;#D63A55;#C13340;#B3372E;#B3372E"
+               keyTimes="0;0.3;0.42;0.5;0.55;0.62;0.7;0.78;0.86;0.92;0.97;1"/>
+      <!-- Path morph: pod silhouette → heart silhouette → pod -->
+      <animate attributeName="d"
+               dur="8s" repeatCount="indefinite"
+               keyTimes="0;0.3;0.42;0.5;0.92;0.97;1"
+               calcMode="spline"
+               keySplines="0.5 0 0.5 1; 0.16 1 0.3 1; 0.16 1 0.3 1; 0.5 0 0.5 1; 0.5 0 0.5 1; 0.5 0 0.5 1"
+               values="
+M 120,80 C 140,85 150,100 150,110 C 160,130 160,150 160,180 C 160,220 155,245 150,250 C 140,270 130,280 120,280 C 110,280 100,270 90,250 C 85,245 80,220 80,180 C 80,150 80,130 90,110 C 90,100 100,85 120,80 Z;
+M 120,80 C 140,85 150,100 150,110 C 160,130 160,150 160,180 C 160,220 155,245 150,250 C 140,270 130,280 120,280 C 110,280 100,270 90,250 C 85,245 80,220 80,180 C 80,150 80,130 90,110 C 90,100 100,85 120,80 Z;
+M 120,140 C 145,90 195,90 200,130 C 215,160 200,210 175,235 C 155,255 130,275 120,280 C 110,275 85,255 65,235 C 40,210 25,160 40,130 C 45,90 95,90 120,140 Z;
+M 120,150 C 150,80 210,80 215,135 C 230,170 210,225 175,245 C 155,265 130,285 120,290 C 110,285 85,265 65,245 C 30,225 10,170 25,135 C 30,80 90,80 120,150 Z;
+M 120,150 C 150,80 210,80 215,135 C 230,170 210,225 175,245 C 155,265 130,285 120,290 C 110,285 85,265 65,245 C 30,225 10,170 25,135 C 30,80 90,80 120,150 Z;
+M 120,80 C 140,85 150,100 150,110 C 160,130 160,150 160,180 C 160,220 155,245 150,250 C 140,270 130,280 120,280 C 110,280 100,270 90,250 C 85,245 80,220 80,180 C 80,150 80,130 90,110 C 90,100 100,85 120,80 Z;
+M 120,80 C 140,85 150,100 150,110 C 160,130 160,150 160,180 C 160,220 155,245 150,250 C 140,270 130,280 120,280 C 110,280 100,270 90,250 C 85,245 80,220 80,180 C 80,150 80,130 90,110 C 90,100 100,85 120,80 Z"/>
+    </path>
+
+    <!-- Pod ridge highlight — visible only during pod phase -->
+    <path d="M 120,90 C 122,140 122,200 120,275 M 100,100 C 95,140 95,210 100,260 M 140,100 C 145,140 145,210 140,260"
+          stroke="url(#podSheen)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0">
+      <animate attributeName="opacity"
+               dur="8s" repeatCount="indefinite"
+               values="0.55;0.55;0.3;0;0;0;0;0;0;0;0.55;0.55"
+               keyTimes="0;0.3;0.36;0.42;0.5;0.6;0.7;0.8;0.9;0.95;0.97;1"/>
+    </path>
+
+    <!-- Heart specular highlight — visible only during heart phase -->
+    <ellipse cx="80" cy="120" rx="32" ry="22" fill="url(#heartSpec)" opacity="0">
+      <animate attributeName="opacity"
+               dur="8s" repeatCount="indefinite"
+               values="0;0;0;0.6;0.85;0.7;0.85;0.7;0.85;0.4;0;0"
+               keyTimes="0;0.3;0.42;0.5;0.55;0.62;0.7;0.78;0.86;0.92;0.97;1"/>
+    </ellipse>
+
+    <!-- Pod stem — only during pod phase -->
+    <path d="M 120,80 L 118,55 C 117,48 115,45 110,42"
+          stroke="#3A2A18" stroke-width="4" fill="none" stroke-linecap="round" opacity="0">
+      <animate attributeName="opacity"
+               dur="8s" repeatCount="indefinite"
+               values="1;1;0.8;0;0;0;0;0;0;0;1;1"
+               keyTimes="0;0.3;0.36;0.42;0.5;0.6;0.7;0.8;0.9;0.95;0.97;1"/>
+    </path>
+  </g>
+
+  <!-- Sparkle motes that radiate out from the heart on each beat -->
+  <g>
+    <circle cx="120" cy="160" r="2.5" fill="#F1A91E" opacity="0">
+      <animate attributeName="cx" dur="8s" repeatCount="indefinite"
+               values="120;120;120;120;200;200;215;215;220;220;120;120"
+               keyTimes="0;0.3;0.42;0.5;0.55;0.62;0.7;0.78;0.86;0.92;0.97;1"/>
+      <animate attributeName="cy" dur="8s" repeatCount="indefinite"
+               values="160;160;160;160;100;160;120;90;80;60;160;160"
+               keyTimes="0;0.3;0.42;0.5;0.55;0.62;0.7;0.78;0.86;0.92;0.97;1"/>
+      <animate attributeName="opacity" dur="8s" repeatCount="indefinite"
+               values="0;0;0;0;1;0.6;1;0.6;1;0;0;0"
+               keyTimes="0;0.3;0.42;0.5;0.55;0.62;0.7;0.78;0.86;0.92;0.97;1"/>
+    </circle>
+    <circle cx="120" cy="160" r="2" fill="#F1A91E" opacity="0">
+      <animate attributeName="cx" dur="8s" repeatCount="indefinite"
+               values="120;120;120;120;40;40;25;25;20;20;120;120"
+               keyTimes="0;0.3;0.42;0.5;0.55;0.62;0.7;0.78;0.86;0.92;0.97;1"/>
+      <animate attributeName="cy" dur="8s" repeatCount="indefinite"
+               values="160;160;160;160;100;160;120;90;80;60;160;160"
+               keyTimes="0;0.3;0.42;0.5;0.55;0.62;0.7;0.78;0.86;0.92;0.97;1"/>
+      <animate attributeName="opacity" dur="8s" repeatCount="indefinite"
+               values="0;0;0;0;1;0.6;1;0.6;1;0;0;0"
+               keyTimes="0;0.3;0.42;0.5;0.55;0.62;0.7;0.78;0.86;0.92;0.97;1"/>
+    </circle>
+    <circle cx="120" cy="160" r="2.5" fill="#F1A91E" opacity="0">
+      <animate attributeName="cy" dur="8s" repeatCount="indefinite"
+               values="160;160;160;160;240;240;260;260;280;280;160;160"
+               keyTimes="0;0.3;0.42;0.5;0.55;0.62;0.7;0.78;0.86;0.92;0.97;1"/>
+      <animate attributeName="opacity" dur="8s" repeatCount="indefinite"
+               values="0;0;0;0;1;0.6;1;0.6;1;0;0;0"
+               keyTimes="0;0.3;0.42;0.5;0.55;0.62;0.7;0.78;0.86;0.92;0.97;1"/>
+    </circle>
+  </g>
+</svg>
