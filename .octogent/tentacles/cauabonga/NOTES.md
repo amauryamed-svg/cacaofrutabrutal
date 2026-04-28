@@ -7,6 +7,7 @@
 - **Educational core: regenerative vs traditional.** Two play modes per plot. Regen wins long-term economically; traditional degrades soil. Mechanics teach the lesson.
 - **5 guardianes = 5 hub worlds.** Existing `GUARDIANS` constant is canonical. Plots live within a guardian's finca. Map of Colombia (`ColombiaMap.tsx` + `REGION_BIOME`) becomes the world hub.
 - **Game Studios studio framework adopted.** Curated 12 agents (game-designer, economy-designer, systems-designer, level-designer, world-builder, narrative-director, gameplay-programmer, technical-director, ux-designer, ui-programmer, art-director, writer) + 10 skills (brainstorm, create-architecture, create-epics, create-stories, art-bible, asset-spec, map-systems, balance-check, prototype, quick-design) installed in `.claude/`. Engine-specific agents (Godot/Unity/Unreal) skipped — we're React+Vite.
+- **Guardian roster reconciled with code.** Original GDD draft proposed a fictional "Maicol / Sumapaz" 5th guardian. `src/utils/constants.ts:99` already had 5 real guardianes — the 5th is **Ricardo (Santander/Landázuri/Trinitario)**. The Sumapaz/altitude territory is already represented by **Rafael (Arbeláez/Cundinamarca)**. GDD §5, GDD §18, CONTEXT.md, and todo.md all updated to the canonical roster. **Rule going forward: GDD content must be reconciled against the codebase before authoritative docs are produced.**
 
 ## Cross-tentacle dependencies
 

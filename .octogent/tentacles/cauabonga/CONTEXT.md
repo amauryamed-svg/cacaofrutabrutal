@@ -23,17 +23,19 @@ Per Charter §10 + earn-only: **no new fungible token**. CauaBonga taps the exis
 
 KYC + OFAC + geo-block continue to gate any on-chain write per [`docs/COMPLIANCE.md`](docs/COMPLIANCE.md).
 
-## 5 guardianes (existing roster)
+## 5 guardianes (canonical roster)
 
-| ID | Name      | Region   | Bioma             | Variety           |
-|----|-----------|----------|-------------------|-------------------|
-| 0  | Lucho     | Huila    | Andean valley     | Híbrido Acriollado |
-| 1  | Marta     | Arauca   | Llanos savanna    | Criollo Élite     |
-| 2  | Rafael    | Tolima   | Andean foothills  | Trinitario        |
-| 3  | Fernando  | Cauca    | Pacific cordillera| Nacional          |
-| 4  | (5th)     | (TBD)    | (TBD)             | (TBD)             |
+Source-of-truth: [`src/utils/constants.ts:99`](../../../src/utils/constants.ts#L99) (`GUARDIANS`).
 
-Each guardian's finca becomes a hub world. Plots within belong to players via PlotNFT.
+| ID | Name      | Region / Town          | Bioma                     | Variety                                |
+|----|-----------|------------------------|---------------------------|----------------------------------------|
+| 0  | Lucho     | Huila / Hobo           | Andean valley · cedar shade | Híbrido Acriollado                    |
+| 1  | Marta     | Arauca / Saravena      | Llanos savanna inundable  | Criollo Élite (FEAR5/Saravena 12/Tame 2) |
+| 2  | Rafael    | Cundinamarca / Arbeláez | Páramo edge · Sumapaz wind | Criollo Élite altitudinal · polifenoles diméricos |
+| 3  | Fernando  | Meta / Guamal          | Piedemonte llanero        | Criollo Élite premiado · Medalla de Oro 2024 |
+| 4  | Ricardo   | Santander / Landázuri  | Montaña santandereana     | Trinitario robusto · trazabilidad lote-a-lote |
+
+Each guardian's finca becomes a hub world. Plots within belong to players via PlotNFT. See [GDD §5](./GDD.md#5-the-five-guardianes--five-hub-worlds) for per-guardian mechanical modifiers.
 
 ## Educational core (the hook)
 

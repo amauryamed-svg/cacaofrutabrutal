@@ -104,17 +104,19 @@ The meta loop creates **investment** (Hook stage 4): the longer you play, the mo
 
 ## 5. The five Guardianes — five hub worlds
 
-Each finca is mechanically distinct via one **regional modifier** that nudges the player toward the bioma's real-world strength.
+Roster is canonical in [src/utils/constants.ts:99](../../../src/utils/constants.ts#L99) (`GUARDIANS`). Each finca is mechanically distinct via one **regional modifier** anchored to that guardian's real-world cacao power.
 
-| # | Guardian   | Region       | Bioma                | Variety hook            | Mechanical modifier                                                                                          |
-|---|------------|--------------|----------------------|-------------------------|-------------------------------------------------------------------------------------------------------------|
-| 0 | **Lucho**  | Huila / Hobo | Andean valley        | Híbrido Acriollado      | **Cedar shade canopy**: any plot in regen mode with ≥1 forestal tile gets +20% yield on cacao tiles.        |
-| 1 | **Marta**  | Arauca / Saravena | Llanos savanna  | Criollo Élite           | **Floral profile**: 1% chance per harvest of a "Saravena 12" rare-drop seed (worth 5× yield).                |
-| 2 | **Rafael** | Tolima       | Andean foothills     | Trinitario              | **Foothill resilience**: pest events do half damage; mid-tier yield, low variance — the safe portfolio.     |
-| 3 | **Fernando** | Cauca / Pacific | Pacific cordillera | Nacional               | **Biodiversity bonus**: each unique companion crop in a 3-tile radius adds +3% yield, stacking up to +18%.   |
-| 4 | **Maicol** *(open question — see §18)* | Cundinamarca / Sumapaz | Páramo edge | Forastero | **Long-cycle premium**: cacao takes 30% longer to mature but yields +50%; rewards patient players.        |
+| # | Guardian   | Region / Town          | Bioma                      | Variety hook                                  | Mechanical modifier                                                                                                                         |
+|---|------------|------------------------|----------------------------|-----------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| 0 | **Lucho**     | Huila / Hobo           | Andean valley · cedar shade | Híbrido Acriollado · mucílago cítrico         | **Shade canopy mastery**: any plot in regen mode with ≥1 forestal tile (Cedro Rosado, Guanábana) gets +20% yield on cacao tiles.            |
+| 1 | **Marta**     | Arauca / Saravena      | Llanos savanna inundable   | Criollo Élite · FEAR5 · Saravena 12 · Tame 2   | **Floral rare-drop**: 1% chance per regen harvest of dropping a "Saravena 12" rare seed (yields 5× when planted, traditional ineligible).    |
+| 2 | **Rafael**    | Cundinamarca / Arbeláez | Páramo edge · Sumapaz wind | Criollo Élite altitudinal · polifenoles diméricos · San Vicente 41 | **Altitude premium**: cacao takes +30% longer to mature but yields +50%; pest events do half damage. Rewards patient, regen-committed players. |
+| 3 | **Fernando**  | Meta / Guamal          | Piedemonte llanero         | Criollo Élite premiado · FEAR5 · Medalla de Oro 2024 | **Award-winning biodiversity**: each unique companion crop in 3-tile radius adds +4% yield (stacks to +24%); rare San Vicente 41 morado drops at level 15+. |
+| 4 | **Ricardo**   | Santander / Landázuri  | Montaña santandereana      | Trinitario robusto · trazabilidad lote-a-lote  | **Trazabilidad bonus**: completing all 4 regen care actions on schedule (no missed cooldowns) flags the harvest as "verified batch" → +25% yield + cosmetic gold tag (NFT metadata). |
 
-Each finca renders the same 5×5 plot grid, but visually carries the biome's atmosphere — Llanos is open savanna with sparse trees, Pacific is dense canopy, páramo is austere fog. This is a brand alignment: the 5 guardianes are real cultivators, the player visits their world, the 60/30/10 adoption split (already on-chain in `TreeAdoption.sol`) means real money flows back. The game is a viewing window into the real economy.
+Each finca renders the same 5×5 plot grid, but visually carries the biome's atmosphere — Llanos is open savanna with sparse trees, Sumapaz/Cundinamarca is fog and altitude, Santandereana is steep montane terraces. This is a brand alignment: the 5 guardianes are real cultivators, the player visits their world, the 60/30/10 adoption split (already on-chain in `TreeAdoption.sol`) means real money flows back. The game is a viewing window into the real economy.
+
+> Note: an earlier GDD draft proposed a fictional "Maicol / Sumapaz" 5th guardian. The Sumapaz/altitude territory is already represented by **Rafael** (real cacaocultor, Arbeláez/Cundinamarca, polifenoles diméricos premium); the 5th seat goes to **Ricardo** in Santander/Landázuri, the Trinitario master whose trazabilidad lote-a-lote anchors the trust mechanic. No fictional guardianes — every modifier maps to a living person.
 
 **NPC dialogue**: each guardian has 30+ dialogue snippets, written by the `writer` agent in P3 (after MVP). Dialogue surfaces on plot entry, harvest, and major milestones — see `CauaBonga.tsx:97` for the existing `npc_dialogue` field that we'll expand.
 
@@ -508,7 +510,7 @@ The grid scales down to 4×4 visible with horizontal swipe to reveal full 5×5. 
 
 | # | Question                                              | Owner          | Blocks                  |
 |---|-------------------------------------------------------|----------------|-------------------------|
-| 1 | 5th guardian identity — propose **Maicol** from Sumapaz / Cundinamarca. Need real-person commitment or fictionalize? | CEO/CTO       | Map UI, NPC dialogue   |
+| ~~1~~ | ~~5th guardian identity~~ — **RESOLVED 2026-04-28**: roster reconciled with `src/utils/constants.ts:99`. The 5 are Lucho/Marta/Rafael/Fernando/Ricardo (Santander/Landázuri/Trinitario). No fictional guardianes. | — | — |
 | 2 | Plot-mint cost: 500 mz vs 1000 mz vs USDC alternative? | economy-designer | Sink/faucet balance |
 | 3 | Soulbound v1: confirm? affects UX copy + market plan | Charter signers | NFT contract spec      |
 | 4 | Regen yield bonus — locked at +30% per Charter? balance-check may need ±5% | economy-designer + balance-check skill | Yield curves |

@@ -587,6 +587,32 @@
   });
   scene.add(heroPod);
 
+  // ── Logo bean — the magenta tilde from the Caúa logo, born into 3D.
+  //    0.00-0.04 lives camera-anchored at the top-left of the viewport (mirrors the SVG bean),
+  //    0.04-0.12 detaches and dives in a parabolic arc toward the hero pod,
+  //    0.12-0.15 merges into the pod and fades out — "the logo seed becomes the cacao seed". ──
+  const logoBeanCurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-0.18,  0.04, 0),
+    new THREE.Vector3(-0.05,  0.16, 0),
+    new THREE.Vector3( 0.12,  0.10, 0),
+    new THREE.Vector3( 0.18, -0.06, 0),
+  ]);
+  const logoBeanGeo = new THREE.TubeGeometry(logoBeanCurve, 36, 0.07, 16, false);
+  const logoBeanMat = new THREE.MeshStandardMaterial({
+    color: 0x911F70,            // matches .caua-bean SVG fill
+    emissive: 0x911F70,
+    emissiveIntensity: 0.55,
+    roughness: 0.32,
+    metalness: 0.08,
+    transparent: true,
+    opacity: 0,
+  });
+  const logoBean = new THREE.Mesh(logoBeanGeo, logoBeanMat);
+  logoBean.userData.mat = logoBeanMat;
+  scene.add(logoBean);
+  // Reusable scratch vector to avoid per-frame GC
+  const _logoBeanV = new THREE.Vector3();
+
   // ── Impact particles (when heroPod lands) ──
   const IMPACT_COUNT = 80;
   const impactGeo = new THREE.BufferGeometry();
@@ -875,6 +901,66 @@
     camera.position.set(camX, camY, camZ + Math.sin(t * 0.12) * 0.25);
     const la = lookAtTarget(p);
     camera.lookAt(la.x, la.y, la.z);
+    // Force matrix flush — logoBean depends on camera.matrixWorld this frame
+    camera.updateMatrixWorld(true);
+
+    // ── Logo bean — the magenta tilde from the Caúa logo, born into 3D ──
+    //    Phase 1 (p<0.04): camera-anchored at top-left of viewport, breathing pulse.
+    //    Phase 2 (0.04<p<0.12): detaches, parabolic arc toward the hero pod, spinning.
+    //    Phase 3 (0.12<p<0.15): merges into the pod and fades out. Hidden afterward.
+    if (p < 0.15) {
+      logoBean.visible = true;
+      // Top-left camera-anchored position (computed each frame so it tracks camera sway)
+      const aspect = window.innerWidth / window.innerHeight;
+      const fov = camera.fov * Math.PI / 180;
+      const dist = 4.5;
+      const halfH = Math.tan(fov / 2) * dist;
+      const halfW = halfH * aspect;
+      _logoBeanV.set(-halfW * 0.78, halfH * 0.84, -dist);
+      _logoBeanV.applyMatrix4(camera.matrixWorld);
+
+      if (p < 0.04) {
+        // Phase 1 — anchored at the logo screen position
+        logoBean.position.copy(_logoBeanV);
+        logoBean.quaternion.copy(camera.quaternion);
+        // Tilt the bean a touch so it reads as the SVG comma when face-on
+        logoBean.rotateZ(0.55 + Math.sin(t * 0.8) * 0.18);
+        logoBean.rotateY(0.25 + Math.sin(t * 0.6) * 0.10);
+        const fadeIn = smoothstep(0, 0.02, p);
+        const breath = 1 + 0.08 * Math.sin(t * 4.5);
+        logoBean.scale.setScalar(0.85 * (0.6 + fadeIn * 0.4) * breath);
+        logoBeanMat.opacity = fadeIn * 0.95;
+        logoBeanMat.emissiveIntensity = 0.45 + 0.45 * (0.5 + 0.5 * Math.sin(t * 3.2));
+      } else if (p < 0.12) {
+        // Phase 2 — detach + parabolic dive toward the hero pod
+        const seg = smoothstep(0.04, 0.12, p);
+        const arc = Math.sin(seg * Math.PI) * 1.4;  // peak of arc mid-flight
+        logoBean.position.set(
+          lerp(_logoBeanV.x, HERO_BRANCH_POS.x, seg),
+          lerp(_logoBeanV.y, HERO_BRANCH_POS.y, seg) + arc,
+          lerp(_logoBeanV.z, HERO_BRANCH_POS.z, seg)
+        );
+        // Tumble during flight (independent of camera quaternion now)
+        logoBean.rotation.x = t * 1.6;
+        logoBean.rotation.y = t * 2.1;
+        logoBean.rotation.z = 0.55 + t * 1.2;
+        const swell = 1 + seg * 1.4;
+        logoBean.scale.setScalar(0.85 * swell);
+        logoBeanMat.opacity = 0.95;
+        logoBeanMat.emissiveIntensity = 0.6 + seg * 0.6;
+      } else {
+        // Phase 3 — merge into the pod
+        const merge = smoothstep(0.12, 0.15, p);
+        logoBean.position.set(HERO_BRANCH_POS.x, HERO_BRANCH_POS.y, HERO_BRANCH_POS.z);
+        logoBean.rotation.x = t * 2.4;
+        logoBean.rotation.y = t * 3.1;
+        logoBean.scale.setScalar(0.85 * (2.4 - merge * 2.2));
+        logoBeanMat.opacity = 0.95 * (1 - merge);
+        logoBeanMat.emissiveIntensity = 1.2 * (1 - merge);
+      }
+    } else if (logoBean.visible) {
+      logoBean.visible = false;
+    }
 
     // ── Mature tree visibility — present 0.00-0.50, fades during reverse growth 0.50-0.65 ──
     const matureAlpha = 1 - smoothstep(0.48, 0.62, p);

@@ -156,14 +156,25 @@ export default function CauaBongaFinca() {
         )}
       </div>
 
-      {/* Future-features footer */}
+      {/* CauaBonga plot CTA — entry to the P2E farming layer */}
       <div style={{ maxWidth: 560, margin: '32px auto 0', padding: '0 20px', textAlign: 'center' }}>
+        <button
+          onClick={() => navigate(`/caua-bonga/finca/${guardianId}/plot`)}
+          style={{
+            display: 'inline-block', padding: '14px 28px', borderRadius: 999,
+            background: `linear-gradient(135deg, ${bio.accent}, ${bio.accent}cc)`,
+            color: BRAND.bgDeep, border: 'none', cursor: 'pointer',
+            fontFamily: FONTS.display, fontWeight: 800, fontSize: 12, letterSpacing: '0.14em',
+            textTransform: 'uppercase', boxShadow: `0 8px 24px ${bio.accent}33`,
+          }}
+        >
+          🌱 Entrar a mi parcela
+        </button>
         <div style={{
-          background: `${BRAND.bgDark}99`, border: `1px dashed ${BRAND.amazon}88`,
-          borderRadius: 14, padding: '14px 18px',
-          fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}55`, lineHeight: 1.6,
+          marginTop: 14, fontFamily: FONTS.body, fontSize: 11,
+          color: `${BRAND.heirloom}55`, lineHeight: 1.6,
         }}>
-          Próximamente desde esta finca: minijuego machete · cosecha baba · lecciones edutainment
+          Próximamente: minijuego machete · cosecha baba · lecciones edutainment
         </div>
       </div>
     </div>
