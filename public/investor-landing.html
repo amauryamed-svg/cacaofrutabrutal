@@ -102,10 +102,10 @@ section::before{content:'';position:absolute;inset:0;background:radial-gradient(
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:0;}
 
 .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;}
-.stat-box{padding:36px 32px;border:1px solid var(--line);position:relative;overflow:hidden;}
-.stat-ghost{font-family:'Barlow Condensed',sans-serif;font-size:clamp(80px,12vw,160px);font-weight:900;line-height:.85;letter-spacing:-4px;opacity:.1;position:absolute;top:12px;right:12px;pointer-events:none;user-select:none;}
-.stat-label{font-family:'Barlow Condensed',sans-serif;font-size:clamp(18px,2vw,28px);font-weight:700;text-transform:uppercase;line-height:1.1;color:var(--ink);position:relative;z-index:1;max-width:260px;}
-.stat-sub{margin-top:10px;font-family:'DM Mono',monospace;font-size:12px;color:var(--ink3);letter-spacing:1px;position:relative;z-index:1;}
+.stat-box{padding:36px 32px;border:1px solid var(--line);position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:flex-start;gap:14px;}
+.stat-ghost{font-family:'Barlow Condensed',sans-serif;font-size:clamp(64px,10vw,128px);font-weight:900;line-height:.85;letter-spacing:-3px;color:var(--gold);text-shadow:0 0 22px rgba(241,169,30,.18);position:relative;z-index:2;}
+.stat-label{font-family:'Barlow Condensed',sans-serif;font-size:clamp(16px,1.7vw,22px);font-weight:700;text-transform:uppercase;line-height:1.15;color:var(--ink);position:relative;z-index:1;max-width:280px;}
+.stat-sub{margin-top:0;font-family:'DM Mono',monospace;font-size:11px;color:var(--ink2);letter-spacing:1.4px;position:relative;z-index:1;text-transform:uppercase;}
 
 .big-h{font-family:'Barlow Condensed',sans-serif;font-size:clamp(40px,5.5vw,80px);font-weight:900;text-transform:uppercase;line-height:.92;letter-spacing:-1px;}
 .body-text{font-size:17px;line-height:1.75;color:var(--ink2);}
@@ -434,7 +434,7 @@ footer a:hover{color:var(--ink2);}
       <path fill="#F7F1EE" d="M231.11,18.71h-8.43s-.03.02-.05.02c-2.38,0-2.47,2.47-2.47,2.47v3.89c-2.58-2.62-5.4-4.59-8.44-5.9-3.05-1.31-6.3-1.97-9.77-1.97-7.54,0-13.94,2.85-19.21,8.56-5.27,5.7-7.91,13.02-7.91,21.95s2.73,15.81,8.18,21.6c5.44,5.79,11.9,8.68,19.37,8.68,3.32,0,6.41-.59,9.26-1.78s5.69-3.13,8.52-5.82v2.91s-.16,3.14,3.14,3.14c.14,0,.16.05.27.06h7.55c1.96,0,3.55-1.59,3.55-3.55V22.26c0-1.96-1.59-3.55-3.55-3.55h-.01ZM216.29,59.97c-3,3.17-6.78,4.75-11.34,4.75s-8.13-1.61-11.15-4.84c-3.02-3.22-4.53-7.33-4.53-12.33s1.48-9.02,4.45-12.19c2.96-3.17,6.69-4.76,11.17-4.76s8.39,1.56,11.39,4.68c3,3.12,4.5,7.19,4.5,12.22s-1.5,9.29-4.5,12.46h0Z"/>
     </svg>
   </a>
-  <div class="nav-mono">Functional Cacao Platform · 2025</div>
+  <div class="nav-mono">Functional Cacao Ecosystem · 2026</div>
   <div style="display:flex;align-items:center;gap:10px;">
     <button id="sound-toggle" onclick="toggleSound()" title="Arcade chiptune" style="background:none;border:1px solid var(--line-b);color:var(--ink2);padding:7px 11px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;transition:border-color .2s,color .2s;display:flex;align-items:center;gap:6px;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="if(!window.__soundOn){this.style.borderColor='var(--line-b)';this.style.color='var(--ink2)'}">
       <svg id="snd-icon" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 6 L2 10 L5 10 L9 13 L9 3 L5 6 Z" fill="currentColor"/><line x1="12" y1="5" x2="15" y2="11"/><line x1="15" y1="5" x2="12" y2="11"/></svg>
@@ -455,7 +455,7 @@ footer a:hover{color:var(--ink2);}
     <h1 class="hero-h1 reveal d1" data-i18n="hero_h1">El<br>problema<br>no es el<br><span class="ac">cacao.</span></h1>
   </div>
   <div class="hero-right reveal d2">
-    <p class="hero-body" data-i18n="hero_body">Es todo lo que hicimos con él.<br><br>Una plataforma de biotecnología que reconstruye la relación entre la biología humana y el sistema funcional vivo más complejo de la tierra.</p>
+    <p class="hero-body" data-i18n="hero_body">Es todo lo que hicimos con él.<br><br>Un ecosistema de biotecnología que reconstruye la relación entre la biología humana y el sistema funcional vivo más complejo de la tierra.</p>
     <div style="display:flex;flex-direction:column;align-items:flex-start;">
       <div class="scroll-line"></div>
       <div class="scroll-lbl">Scroll</div>
@@ -1184,7 +1184,7 @@ const T = {
     nav_cta:'Invertir Ahora',
     hero_tag:'Caúa · Brief para Inversores · Series Angel · 2026',
     hero_h1:'El<br>problema<br>no es el<br><span class="ac">cacao.</span>',
-    hero_body:'Es todo lo que hicimos con él.<br><br>Una plataforma de biotecnología que reconstruye la relación entre la biología humana y el sistema funcional vivo más complejo de la tierra.',
+    hero_body:'Es todo lo que hicimos con él.<br><br>Un ecosistema de biotecnología que reconstruye la relación entre la biología humana y el sistema funcional vivo más complejo de la tierra.',
     sp_idx:'08.6 — Elige tu nivel',
     sp_h:'Aliméntate con el<br><span style="color:var(--gold)">propósito de Caúa.</span>',
     sp_sub:'El cacao acaba<br>de abrirse.<br>Elige tu rol.',
@@ -1331,7 +1331,7 @@ const T = {
     nav_cta:'Invest Now',
     hero_tag:'Caúa · Investor Brief · Series Angel · 2026',
     hero_h1:'The<br>problem<br>is not<br><span class="ac">cacao.</span>',
-    hero_body:"It's what we turned it into.<br><br>A biotech platform rebuilding the relationship between human biology and the most complex functional living system on earth.",
+    hero_body:"It's what we turned it into.<br><br>A biotech ecosystem rebuilding the relationship between human biology and the most complex functional living system on earth.",
     sp_idx:'08.6 — Choose your tier',
     sp_h:"Eat with<br><span style=\"color:var(--gold)\">Caúa's purpose.</span>",
     sp_sub:'The pod just<br>opened.<br>Choose your role.',
