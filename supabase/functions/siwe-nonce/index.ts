@@ -25,30 +25,37 @@ function randomNonce(): string {
   return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+function jsonResponse(payload: unknown, status = 200): Response {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+  })
+}
+
 serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: CORS_HEADERS })
+  }
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'method_not_allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    return jsonResponse({ error: 'method_not_allowed' }, 405)
   }
 
   const authHeader = req.headers.get('authorization')
   if (!authHeader) {
-    return new Response(JSON.stringify({ error: 'unauthorized' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    return jsonResponse({ error: 'unauthorized' }, 401)
   }
 
   let userId: string
   try {
     userId = await verifyAuth(authHeader)
   } catch {
-    return new Response(JSON.stringify({ error: 'invalid_jwt' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    return jsonResponse({ error: 'invalid_jwt' }, 401)
   }
 
   const nonce = randomNonce()
@@ -58,14 +65,8 @@ serve(async (req) => {
   })
 
   if (error) {
-    return new Response(JSON.stringify({ error: 'insert_failed', detail: error.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    return jsonResponse({ error: 'insert_failed', detail: error.message }, 500)
   }
 
-  return new Response(JSON.stringify({ nonce, ttl_seconds: 300 }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' },
-  })
+  return jsonResponse({ nonce, ttl_seconds: 300 })
 })

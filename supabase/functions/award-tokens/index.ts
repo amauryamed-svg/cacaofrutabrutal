@@ -6,6 +6,19 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+  })
+}
+
 // Token earning rates
 const TOKEN_RATES: Record<string, { beans: number; mazorcas: number }> = {
   ritual_draw: { beans: 0.5, mazorcas: 0 },
@@ -33,30 +46,26 @@ async function verifyAuth(authHeader: string) {
 }
 
 serve(async (req) => {
+  // CORS preflight — the browser sends OPTIONS before any cross-origin POST.
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: CORS_HEADERS })
+  }
+
   try {
     if (req.method !== 'POST') {
-      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-        status: 405,
-        headers: { 'Content-Type': 'application/json' },
-      })
+      return jsonResponse({ error: 'Method not allowed' }, 405)
     }
 
     const authHeader = req.headers.get('authorization')
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      })
+      return jsonResponse({ error: 'Unauthorized' }, 401)
     }
 
     const userId = await verifyAuth(authHeader)
     const { event_type, ref_id, amount } = await req.json()
 
     if (!event_type || !TOKEN_RATES[event_type]) {
-      return new Response(JSON.stringify({ error: 'Invalid event type' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      })
+      return jsonResponse({ error: 'Invalid event type' }, 400)
     }
 
     let { beans, mazorcas } = TOKEN_RATES[event_type]
@@ -99,22 +108,16 @@ serve(async (req) => {
 
     if (updateError) throw updateError
 
-    return new Response(JSON.stringify({
+    return jsonResponse({
       beans_awarded: beans,
       mazorcas_awarded: mazorcas,
       new_balance: {
         beans: (profile?.beans_balance || 0) + beans,
         mazorcas: (profile?.mazorcas_balance || 0) + mazorcas,
       },
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    return new Response(JSON.stringify({ error: message }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    return jsonResponse({ error: message }, 400)
   }
 })
