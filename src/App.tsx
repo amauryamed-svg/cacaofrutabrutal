@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useEffect, lazy, Suspense } from 'react'
 import { AuthProvider }  from './context/AuthContext'
 import { LangProvider }  from './context/LangContext'
 import NavBar            from './components/layout/NavBar'
@@ -26,6 +26,11 @@ import CincoTiemposProposal from './pages/CincoTiemposProposal'
 import ProposalAndreaRojas from './pages/ProposalAndreaRojas'
 import CauaCoti           from './pages/CauaCoti'
 import { hsTrackPage }   from './lib/hubspot'
+
+// Web3 routes are lazy-loaded — wagmi/viem/RainbowKit (~80kb gz) only ship
+// when a user navigates to /app/web3/*. See docs/WEB3.md and CLAUDE.md §10.
+const Web3Onboarding = lazy(() => import('./pages/Web3Onboarding'))
+const Web3Landing    = lazy(() => import('./pages/Web3Landing'))
 
 function AppShell() {
   const { pathname } = useLocation()
@@ -64,6 +69,28 @@ function AppShell() {
         <Route path="/dashboard"             element={<AuthGate><Dashboard /></AuthGate>} />
         <Route path="/fund"                  element={<AuthGate><Fund /></AuthGate>} />
         <Route path="/impacto"               element={<AuthGate><Impacto /></AuthGate>} />
+
+        {/* Web3 onboarding — KYC + SIWE wallet linking. AuthGate required, KYC happens inside. */}
+        <Route
+          path="/web3/onboarding"
+          element={
+            <AuthGate>
+              <Suspense fallback={<div style={{ padding: 64, color: '#F7F1EE', background: '#040C06', minHeight: '100vh' }}>Loading Web3…</div>}>
+                <Web3Onboarding />
+              </Suspense>
+            </AuthGate>
+          }
+        />
+
+        {/* Web3 marketing landing — English, public-facing. No AuthGate. */}
+        <Route
+          path="/web3"
+          element={
+            <Suspense fallback={<div style={{ padding: 64, color: '#F7F1EE', background: '#040C06', minHeight: '100vh' }}>Loading Web3…</div>}>
+              <Web3Landing />
+            </Suspense>
+          }
+        />
 
         {/* Super admin only — guarded inside AdminCRM */}
         <Route path="/admin/crm"   element={<AdminCRM />} />
