@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Caúa — Divine Heart with Human Form.
+  The divine heart of the earth in human shape: a stylized human silhouette
+  stands at the center of an organic heart, arms open in offering. The heart
+  IS the body: head, torso, open arms, legs converging to the heart's bottom point.
+
+  Used as the final morph state of /cacao-heart-morph.svg — after the cacao pod
+  morphs into the heart, the human silhouette fades in and pulses with it,
+  symbolizing humans as the heart of the earth's regenerative system.
+
+  Standalone, self-contained. Loops the heartbeat forever.
+-->
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 240 320"
+     role="img"
+     aria-label="Divine heart of the earth in human form">
+
+  <defs>
+    <!-- Heart body gradient — deep red/magenta with subtle glow -->
+    <radialGradient id="heartFlesh" cx="40%" cy="35%" r="65%">
+      <stop offset="0%"   stop-color="#E8506A"/>
+      <stop offset="40%"  stop-color="#D03050"/>
+      <stop offset="80%"  stop-color="#9A2238"/>
+      <stop offset="100%" stop-color="#5C0F1C"/>
+    </radialGradient>
+
+    <!-- Specular highlight on heart top-left -->
+    <radialGradient id="heartHighlight" cx="32%" cy="28%" r="20%">
+      <stop offset="0%"   stop-color="#FFFFFF" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.0"/>
+    </radialGradient>
+
+    <!-- Aura halo — gold + magenta divine glow -->
+    <radialGradient id="divineHalo" cx="50%" cy="50%" r="55%">
+      <stop offset="0%"   stop-color="#F1A91E" stop-opacity="0.45"/>
+      <stop offset="50%"  stop-color="#D03050" stop-opacity="0.20"/>
+      <stop offset="100%" stop-color="#040C06" stop-opacity="0.0"/>
+    </radialGradient>
+
+    <!-- Human silhouette — bg-deep against the red heart for max contrast -->
+    <linearGradient id="humanForm" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#1A2818"/>
+      <stop offset="100%" stop-color="#040C06"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Divine halo behind everything, pulsing softly -->
+  <ellipse cx="120" cy="170" rx="135" ry="135" fill="url(#divineHalo)">
+    <animate attributeName="rx" dur="2.4s" repeatCount="indefinite"
+             values="125;140;128;142;125" keyTimes="0;0.25;0.5;0.75;1"
+             calcMode="spline" keySplines="0.16 1 0.3 1; 0.16 1 0.3 1; 0.16 1 0.3 1; 0.16 1 0.3 1"/>
+    <animate attributeName="ry" dur="2.4s" repeatCount="indefinite"
+             values="125;140;128;142;125" keyTimes="0;0.25;0.5;0.75;1"
+             calcMode="spline" keySplines="0.16 1 0.3 1; 0.16 1 0.3 1; 0.16 1 0.3 1; 0.16 1 0.3 1"/>
+    <animate attributeName="opacity" dur="2.4s" repeatCount="indefinite"
+             values="0.55;0.85;0.6;0.9;0.55" keyTimes="0;0.25;0.5;0.75;1"/>
+  </ellipse>
+
+  <!-- The heart, breathing with the heartbeat -->
+  <g transform-origin="120 170">
+    <animateTransform attributeName="transform" type="scale"
+             dur="2.4s" repeatCount="indefinite"
+             values="1; 1.06; 0.98; 1.08; 1" keyTimes="0;0.25;0.5;0.75;1"
+             calcMode="spline" keySplines="0.16 1 0.3 1; 0.16 1 0.3 1; 0.16 1 0.3 1; 0.16 1 0.3 1"/>
+    <!-- Heart silhouette — organic, emoji-style topology -->
+    <path d="M 120,150 C 150,80 210,80 215,135 C 230,170 210,225 175,245 C 155,265 130,285 120,290 C 110,285 85,265 65,245 C 30,225 10,170 25,135 C 30,80 90,80 120,150 Z"
+          fill="url(#heartFlesh)"/>
+    <!-- Specular highlight on top-left lobe -->
+    <ellipse cx="78" cy="120" rx="32" ry="22" fill="url(#heartHighlight)"/>
+  </g>
+
+  <!-- The Human Form — divine silhouette inside the heart, also breathing in sync -->
+  <g transform-origin="120 200" opacity="0.92">
+    <animateTransform attributeName="transform" type="scale"
+             dur="2.4s" repeatCount="indefinite"
+             values="1; 1.04; 0.99; 1.05; 1" keyTimes="0;0.25;0.5;0.75;1"
+             calcMode="spline" keySplines="0.16 1 0.3 1; 0.16 1 0.3 1; 0.16 1 0.3 1; 0.16 1 0.3 1"/>
+
+    <!-- Head — round, slightly down-tilted -->
+    <circle cx="120" cy="142" r="14" fill="url(#humanForm)"/>
+    <!-- Subtle face shadow on chin to suggest down-tilt -->
+    <ellipse cx="120" cy="150" rx="9" ry="3" fill="#000000" fill-opacity="0.4"/>
+
+    <!-- Neck -->
+    <path d="M 113,154 L 113,162 C 113,165 116,167 120,167 C 124,167 127,165 127,162 L 127,154 Z"
+          fill="url(#humanForm)"/>
+
+    <!-- Torso + open arms in offering posture
+         The arms extend outward and slightly down — receptive, the divine offering shape.
+         Body silhouette flows from shoulders to hips. -->
+    <path d="
+            M 105,167
+            C 100,168  98,170  98,174
+            L 98,182
+            C 80,190  60,205  46,224
+            C 40,232  44,238  52,236
+            C 70,228  86,218  100,210
+            C 99,222  98,236  100,250
+            L 100,254
+            L 110,256
+            L 116,228
+            L 124,228
+            L 130,256
+            L 140,254
+            L 140,250
+            C 142,236  141,222  140,210
+            C 154,218  170,228  188,236
+            C 196,238  200,232  194,224
+            C 180,205  160,190  142,182
+            L 142,174
+            C 142,170  140,168  135,167
+            C 130,166  127,166  120,166
+            C 113,166  110,166  105,167
+            Z"
+          fill="url(#humanForm)"/>
+
+    <!-- Legs — converge toward the heart's bottom point -->
+    <path d="
+            M 110,254
+            C 109,266  110,278  113,288
+            L 117,288
+            C 119,278  119,266  120,254
+            L 120,254
+            C 121,266  121,278  123,288
+            L 127,288
+            C 130,278  131,266  130,254
+            L 130,254
+            Z"
+          fill="url(#humanForm)"/>
+
+    <!-- Open palms — small marks at end of arms, suggesting offering gesture -->
+    <circle cx="49" cy="231" r="3" fill="url(#humanForm)"/>
+    <circle cx="191" cy="231" r="3" fill="url(#humanForm)"/>
+  </g>
+
+  <!-- Sparkle motes radiating from the human's heart center on each beat -->
+  <g>
+    <circle cx="120" cy="190" r="2" fill="#F1A91E">
+      <animate attributeName="cy" dur="2.4s" repeatCount="indefinite"
+               values="190;190;165;190;190" keyTimes="0;0.2;0.35;0.5;1"/>
+      <animate attributeName="opacity" dur="2.4s" repeatCount="indefinite"
+               values="0;0;1;0.5;0" keyTimes="0;0.2;0.3;0.45;0.6"/>
+    </circle>
+    <circle cx="120" cy="190" r="1.6" fill="#F1A91E">
+      <animate attributeName="cx" dur="2.4s" repeatCount="indefinite"
+               values="120;120;90;120;120" keyTimes="0;0.7;0.82;0.95;1"/>
+      <animate attributeName="cy" dur="2.4s" repeatCount="indefinite"
+               values="190;190;170;190;190" keyTimes="0;0.7;0.82;0.95;1"/>
+      <animate attributeName="opacity" dur="2.4s" repeatCount="indefinite"
+               values="0;0;1;0;0" keyTimes="0;0.7;0.82;0.95;1"/>
+    </circle>
+    <circle cx="120" cy="190" r="1.6" fill="#F1A91E">
+      <animate attributeName="cx" dur="2.4s" repeatCount="indefinite"
+               values="120;120;150;120;120" keyTimes="0;0.7;0.82;0.95;1"/>
+      <animate attributeName="cy" dur="2.4s" repeatCount="indefinite"
+               values="190;190;170;190;190" keyTimes="0;0.7;0.82;0.95;1"/>
+      <animate attributeName="opacity" dur="2.4s" repeatCount="indefinite"
+               values="0;0;1;0;0" keyTimes="0;0.7;0.82;0.95;1"/>
+    </circle>
+  </g>
+</svg>
