@@ -1,0 +1,244 @@
+{
+  "$schema": "https://cacaofrutabrutal.com/schemas/cacao-tree-spec.v1.json",
+  "name": "Theobroma cacao — Caúa procedural spec",
+  "version": "1.0.0",
+  "source": [
+    "Field photos: Hobo (Huila) + Saravena (Arauca) + Tame",
+    "Reference imagery on the moss-covered trunk + cauliflory red pods,",
+    "the corridor row of medium trees, and the close-up hands cutting yellow ripe pods"
+  ],
+
+  "trunk": {
+    "height_m": 4.2,
+    "base_radius_m": 0.30,
+    "tip_radius_m": 0.18,
+    "segments": { "radial": 16, "vertical": 32 },
+    "bark": {
+      "base_color":           "#9A8878",
+      "lichen_patch_color":   "#D6DCC0",
+      "moss_overlay_color":   "#3A6628",
+      "wet_streak_color":     "#3A2818",
+      "moss_coverage":        0.85,
+      "lichen_patches":       12,
+      "wet_streaks":          5,
+      "roughness":            0.93,
+      "scale_x":              0.22,
+      "scale_y":              0.06,
+      "noise_scale":          1.45,
+      "scar_count":           6,
+      "vertical_grooves":     true
+    },
+    "lean":         { "x": 0.04, "z": 0.02 },
+    "taper_curve":  [0.0, 1.0, 0.40, 0.85, 0.75, 0.55, 1.0, 0.32]
+  },
+
+  "branches": {
+    "primary": {
+      "count_range":           [3, 5],
+      "split_height_range_m":  [1.6, 2.8],
+      "length_range_m":        [1.0, 1.6],
+      "azimuth_jitter":        0.35,
+      "elevation_range":       [0.25, 0.55],
+      "taper":                 0.45
+    },
+    "secondary": {
+      "count_per_primary":     [3, 6],
+      "length_range_m":        [0.35, 0.75],
+      "elevation_range":       [-0.10, 0.30],
+      "split_t_range":         [0.35, 0.85]
+    },
+    "twigs": {
+      "count_per_secondary":   [4, 8],
+      "length_range_m":        [0.08, 0.22],
+      "split_t_range":         [0.5, 0.95]
+    },
+    "trunk_pods_origin": {
+      "enabled":               true,
+      "comment":               "Cauliflory — pods grow directly from the trunk and primary branch unions",
+      "count_range":           [10, 16],
+      "height_range_m":        [0.5, 3.4]
+    }
+  },
+
+  "pods": {
+    "shape": {
+      "length_m":      0.18,
+      "width_m":       0.085,
+      "ridges":        10,
+      "ridge_depth":   0.014,
+      "tip_taper":     0.42,
+      "stem_length_m": 0.04
+    },
+    "density_per_branch_kind": {
+      "trunk":              1.0,
+      "primary_branches":   0.45,
+      "secondary_branches": 0.78,
+      "twigs":              0.15
+    },
+    "ripening_cycle": {
+      "duration_seconds": 18,
+      "comment": "Each pod is offset by a random phase so the canopy ripens out-of-sync",
+      "phase_offset_jitter": 0.65,
+      "keyframes": [
+        { "t": 0.00, "name": "young_green",   "color": "#5A8A3A", "emissive": 0.00, "gloss": 0.42 },
+        { "t": 0.20, "name": "deep_green",    "color": "#4F8230", "emissive": 0.02, "gloss": 0.48 },
+        { "t": 0.42, "name": "lime_yellow",   "color": "#A8A73A", "emissive": 0.06, "gloss": 0.55 },
+        { "t": 0.58, "name": "amber_orange",  "color": "#D49328", "emissive": 0.12, "gloss": 0.70 },
+        { "t": 0.78, "name": "ripe_red",      "color": "#B3372E", "emissive": 0.22, "gloss": 0.86 },
+        { "t": 0.92, "name": "over_ripe",     "color": "#7C2A20", "emissive": 0.10, "gloss": 0.55 },
+        { "t": 1.00, "name": "fallen",        "color": "#4A1E16", "emissive": 0.02, "gloss": 0.28 }
+      ]
+    },
+    "variants": [
+      { "name": "criollo_red",        "weight": 0.40, "base_hue_shift":  0.00, "ridge_depth_mul": 1.10 },
+      { "name": "trinitario_orange",  "weight": 0.35, "base_hue_shift":  0.04, "ridge_depth_mul": 1.00 },
+      { "name": "forastero_yellow",   "weight": 0.25, "base_hue_shift":  0.10, "ridge_depth_mul": 0.92 }
+    ],
+    "drop_threshold_t": 0.92,
+    "drop_motion": {
+      "parabola_height_m": 0.6,
+      "fall_duration_s":   0.85,
+      "bounce_count":      1,
+      "bounce_damping":    0.32,
+      "spin_rad_per_s":    [3.5, 6.0]
+    }
+  },
+
+  "leaves": {
+    "shape":            "lanceolate",
+    "size_range_m":     [0.16, 0.28],
+    "aspect_ratio":     0.34,
+    "veins_visible":    true,
+    "translucency":     0.46,
+    "two_sided":        true,
+    "back_color_bias":  0.78,
+    "cluster_count_per_secondary": [4, 9],
+    "leaves_per_cluster":          [3, 7],
+    "color_palette": [
+      { "name": "mature_green",  "color": "#2D6A2A", "weight": 0.55 },
+      { "name": "fresh_green",   "color": "#4A9B3A", "weight": 0.22 },
+      { "name": "amber_old",     "color": "#C4632A", "weight": 0.13 },
+      { "name": "yellow_old",    "color": "#D4B22A", "weight": 0.10 }
+    ],
+    "wind": { "amplitude": 0.07, "frequency_hz": 1.25, "twist_amplitude": 0.04 }
+  },
+
+  "rows": {
+    "comment":               "Plantation corridor — ref: Saravena perspective row photo",
+    "tree_spacing_m":        2.8,
+    "row_spacing_m":         3.2,
+    "rows_visible":          5,
+    "trees_per_row":         9,
+    "tree_archetypes":       ["young", "medium", "mature", "old"],
+    "archetype_weights":     [0.18, 0.34, 0.34, 0.14],
+    "perspective_focal_point_m": [0, 1.2, -14]
+  },
+
+  "ground": {
+    "litter_density_per_m2":  220,
+    "litter_color_palette":   ["#6A4823", "#8B5D2C", "#3A2A18", "#A87632", "#4A3018", "#2A1A0E"],
+    "moss_patch_color":       "#3A4A26",
+    "moss_patch_count":       9,
+    "wet_soil_tint":          "#1F1009",
+    "fallen_pods_per_tree":   [0, 2],
+    "fallen_pod_color_bias":  "#4A1E16"
+  },
+
+  "lighting": {
+    "ambient":              { "color": "#6A8A4A", "intensity": 0.30 },
+    "key_sun":              { "color": "#FFF4D8", "intensity": 1.10, "azimuth": 0.60, "elevation": 0.50 },
+    "fill_canopy_filtered": { "color": "#A8C47A", "intensity": 0.55 },
+    "fog":                  { "color": "#1A2818", "near_m": 8, "far_m": 22, "exponent": 1.6 }
+  },
+
+  "atmosphere": {
+    "light_shafts": { "count": 3, "color": "#F4E8B2", "opacity": 0.18, "drift_speed": 0.025 },
+    "particles": {
+      "butterflies":  { "count": 5, "speed_range": [0.42, 0.86], "wing_color": "#F1A91E", "body_color": "#3A2A18" },
+      "leaf_drift":   { "count": 14, "fall_speed_range": [0.05, 0.13], "twist_rate": 1.2 },
+      "pollen":       { "count": 70, "color": "#F4E8B2", "size_range": [0.6, 1.4] },
+      "midges":       { "count": 12, "swarm_radius_m": 0.6 }
+    }
+  },
+
+  "animation_loop": {
+    "comment":          "24s loop. Replaces the prior tree → ripen → fall → implosion arc.",
+    "duration_seconds": 24,
+    "easing":           "cubic-bezier(0.16, 1, 0.3, 1)",
+    "phases": [
+      {
+        "id":      "approach",
+        "t_range": [0.00, 0.30],
+        "purpose": "Camera + peasant silhouette walk down the row corridor",
+        "ref":     "Saravena corridor photo",
+        "camera":  {
+          "from": { "pos_m": [0,  1.60,  8.0], "look_m": [0, 1.4, 0] },
+          "to":   { "pos_m": [0.10, 1.55, 1.4], "look_m": [0.40, 1.6, 0] }
+        },
+        "peasant_state": "walking_cycle"
+      },
+      {
+        "id":      "halt",
+        "t_range": [0.30, 0.38],
+        "purpose": "Peasant stops in front of the chosen tree, camera tilts up to ripest pod",
+        "camera":  {
+          "to": { "pos_m": [0.18, 1.55, 0.7], "look_m": [0.50, 2.10, 0] }
+        },
+        "peasant_state": "idle_breath"
+      },
+      {
+        "id":      "raise_shears",
+        "t_range": [0.38, 0.52],
+        "purpose": "Hands rise into frame holding pruning shears",
+        "ref":     "close-up hands cutting yellow pod",
+        "peasant_state":  "raise_shears",
+        "shears_state":   "open"
+      },
+      {
+        "id":      "cut",
+        "t_range": [0.52, 0.60],
+        "purpose": "Shears close, pod stem severs",
+        "peasant_state":  "cut",
+        "shears_state":   "close",
+        "target_pod":     "selected_ripe_pod",
+        "audio_cue":      "snip"
+      },
+      {
+        "id":      "fall",
+        "t_range": [0.60, 0.74],
+        "purpose": "Pod falls in parabola, lands on litter, slight bounce",
+        "peasant_state":  "lower_arm",
+        "pod_motion":     "parabolic_drop_with_bounce"
+      },
+      {
+        "id":      "linger",
+        "t_range": [0.74, 0.88],
+        "purpose": "Camera lingers on fallen pod ripening to deep red on the leaf litter",
+        "pod_color_target": "#4A1E16"
+      },
+      {
+        "id":      "loop_return",
+        "t_range": [0.88, 1.00],
+        "purpose": "Camera pulls back to corridor, peasant resumes walking",
+        "camera":  { "to": { "pos_m": [0, 1.60, 8.0], "look_m": [0, 1.4, 0] } },
+        "peasant_state": "walking_cycle"
+      }
+    ]
+  },
+
+  "peasant_silhouette": {
+    "comment":           "Rendered as 2D SVG overlay above the WebGL canvas — see /peasant-silhouette.svg + components/PeasantSilhouette.tsx",
+    "asset_path":        "/peasant-silhouette.svg",
+    "anchor_screen_pos": { "x_pct": 42, "y_pct": 62 },
+    "scale":             0.85,
+    "blend":             "screen",
+    "color":             "#1A2818",
+    "frames_per_state": {
+      "walking_cycle":  24,
+      "idle_breath":    16,
+      "raise_shears":   12,
+      "cut":            6,
+      "lower_arm":      10
+    }
+  }
+}

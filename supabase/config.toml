@@ -1,10 +1,35 @@
 # Supabase project configuration
-# Webhooks from external services (Stripe, Shopify) cannot send a Supabase JWT,
-# so we disable JWT verification for those endpoints.
+# Webhooks from external services (Stripe, Shopify, Persona, Alchemy) cannot send a
+# Supabase JWT, so we disable JWT verification for those endpoints.
 # Signature verification (HMAC) is enforced inside each function body.
 
 [functions.stripe-webhook]
 verify_jwt = false
 
 [functions.shopify-webhook]
+verify_jwt = false
+
+# Persona KYC webhook — HMAC verified in function body (see docs/KYC.md).
+[functions.persona-webhook]
+verify_jwt = false
+
+# Alchemy NFT Transfer webhook — HMAC verified (see docs/WEB3.md).
+[functions.alchemy-nft-webhook]
+verify_jwt = false
+
+# tree-metadata is a public ERC-721 metadata endpoint consumed by OpenSea/Zora.
+[functions.tree-metadata]
+verify_jwt = false
+
+# refund-expired-redemption uses a custom ADMIN_BEARER_TOKEN, not a Supabase JWT.
+# Called by pg_cron to refund mazorcas for redemptions that expired without claim.
+[functions.refund-expired-redemption]
+verify_jwt = false
+
+# Coinbase Commerce charge:* webhook — HMAC verified in function body.
+[functions.coinbase-commerce-webhook]
+verify_jwt = false
+
+# IoT weekly Merkle-root poster — cron-triggered, ADMIN_BEARER_TOKEN auth (see docs/WEB3.md).
+[functions.post-iot-root]
 verify_jwt = false

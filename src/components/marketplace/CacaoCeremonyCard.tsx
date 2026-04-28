@@ -50,7 +50,24 @@ export default function CacaoCeremonyCard() {
       const { data, error } = await supabase.functions.invoke('create-shopify-discount', {
         body: { mazorcas_to_redeem: mazorcasToRedeem },
       })
-      if (error) throw new Error(error.message ?? 'Edge function error')
+      if (error) {
+        // supabase-js wraps non-2xx into FunctionsHttpError with the original Response on .context.
+        // Extract the server's `error`/`detail` so the user sees a real reason.
+        let serverMsg: string | null = null
+        let status = 0
+        try {
+          const ctx = (error as unknown as { context?: { response?: Response } }).context
+          status = ctx?.response?.status ?? 0
+          const body = await ctx?.response?.clone().json().catch(() => null)
+          serverMsg = body?.error ?? body?.detail ?? null
+        } catch { /* fall through */ }
+
+        // Friendlier message for the most common failure: Shopify token not yet configured.
+        if (status === 503 || /SHOPIFY_ADMIN_TOKEN/.test(serverMsg ?? '')) {
+          throw new Error('Cacao Ceremony todavía no está conectado a Shopify. Tu descuento queda registrado y se activará cuando la tienda esté lista. (config: SHOPIFY_ADMIN_TOKEN)')
+        }
+        throw new Error(serverMsg ?? error.message ?? 'Edge function error')
+      }
       if (!data?.checkout_url) throw new Error('No checkout URL returned')
       if (typeof window !== 'undefined' && (window as unknown as { hsq?: unknown[] }).hsq) {
         ((window as unknown as { hsq: unknown[] }).hsq).push(['trackEvent', { id: 'cacao_ceremony_traffic_sent', value: data.discount_pct }])

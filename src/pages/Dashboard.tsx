@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BRAND, FONTS, GUARDIANS } from '../utils/constants'
+import { BRAND, FONTS, GUARDIANS, MAZORCA_TO_CACAO_RATE } from '../utils/constants'
 import { useAuth } from '../context/AuthContext'
 import { useCocoaTrees } from '../hooks/useCocoaTrees'
 import { useTokenBalance } from '../hooks/useTokenBalance'
 import HubspotLeadForm from '../components/ui/HubspotLeadForm'
+import RedeemMazorcasModal from '../components/web3/RedeemMazorcasModal'
 import { useLang } from '../context/LangContext'
 import { makeT } from '../utils/i18n'
 import {
@@ -22,6 +24,8 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const { trees, loading: treesLoading } = useCocoaTrees()
   const { mazorcas, beans } = useTokenBalance()
+  const [redeemOpen, setRedeemOpen] = useState(false)
+  const canRedeemOnChain = mazorcas >= MAZORCA_TO_CACAO_RATE
 
   // Per-portfolio rollups anchored to investor-landing Unit Economics
   const adoptedCount     = trees.length
@@ -156,15 +160,33 @@ export default function Dashboard() {
                       : `${mazorcas} mazorcas · ${beans.toFixed(1)} beans. Redeem for real ceremonial chocolate in Marketplace.`}
                   </div>
                 </div>
-                <button onClick={() => navigate('/marketplace#cacao-ceremony')} style={{
-                  padding: '10px 18px', borderRadius: 999,
-                  background: `linear-gradient(135deg, ${BRAND.mazorca}, ${BRAND.brown})`,
-                  color: BRAND.bgDeep, border: 'none', cursor: 'pointer',
-                  fontFamily: FONTS.display, fontWeight: 700, fontSize: 11, letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
-                }}>
-                  {lang === 'es' ? 'Canjear →' : 'Redeem →'}
-                </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <button onClick={() => navigate('/marketplace#cacao-ceremony')} style={{
+                    padding: '10px 18px', borderRadius: 999,
+                    background: `linear-gradient(135deg, ${BRAND.mazorca}, ${BRAND.brown})`,
+                    color: BRAND.bgDeep, border: 'none', cursor: 'pointer',
+                    fontFamily: FONTS.display, fontWeight: 700, fontSize: 11, letterSpacing: '0.12em',
+                    textTransform: 'uppercase', whiteSpace: 'nowrap',
+                  }}>
+                    {lang === 'es' ? '🍫 Canjear chocolate →' : '🍫 Redeem chocolate →'}
+                  </button>
+                  <button
+                    onClick={() => setRedeemOpen(true)}
+                    disabled={!canRedeemOnChain}
+                    title={canRedeemOnChain ? '' : `Need ≥ ${MAZORCA_TO_CACAO_RATE} mazorcas`}
+                    style={{
+                      padding: '10px 18px', borderRadius: 999,
+                      background: 'transparent',
+                      color: canRedeemOnChain ? BRAND.pod : `${BRAND.pod}66`,
+                      border: `1px solid ${canRedeemOnChain ? BRAND.pod : BRAND.pod + '44'}`,
+                      cursor: canRedeemOnChain ? 'pointer' : 'not-allowed',
+                      fontFamily: FONTS.display, fontWeight: 700, fontSize: 11, letterSpacing: '0.12em',
+                      textTransform: 'uppercase', whiteSpace: 'nowrap',
+                      opacity: canRedeemOnChain ? 1 : 0.6,
+                    }}>
+                    {lang === 'es' ? '⛓ Burn → $CACAO' : '⛓ Burn → $CACAO'}
+                  </button>
+                </div>
               </div>
             )}
 
@@ -302,6 +324,13 @@ export default function Dashboard() {
             }}
           />
         </div>
+
+        {/* Web3 redemption modal — opens from "Burn → $CACAO" CTA above */}
+        <RedeemMazorcasModal
+          open={redeemOpen}
+          onClose={() => setRedeemOpen(false)}
+          mazorcasBalance={mazorcas}
+        />
 
         {/* WhatsApp CTA */}
         <div style={{ textAlign: 'center', paddingBottom: 40 }}>

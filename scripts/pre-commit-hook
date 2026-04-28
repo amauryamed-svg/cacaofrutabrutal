@@ -1,4 +1,6 @@
 #!/bin/bash
 # Pre-commit hook for CAUA — runs health.py before commit
-python scripts/health.py
+PY=$(command -v python3 || command -v python)
+[ -z "$PY" ] && { echo "no python interpreter found, skipping health check"; exit 0; }
+"$PY" scripts/health.py
 exit $?

@@ -196,6 +196,12 @@ export interface CacaoTree {
   sunlight: number
   last_update_at: string
   created_at: string
+  // Web3 NFT fields — added by migration 029_tree_nft.sql
+  nft_token_id: number | null
+  nft_contract: string | null
+  nft_chain_id: number | null
+  nft_mint_tx: string | null
+  nft_minted_at: string | null
 }
 
 export interface TreeUpdate {

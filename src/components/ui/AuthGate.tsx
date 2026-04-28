@@ -4,7 +4,7 @@
  * and redirects to /auth for registration/login.
  * Public routes (/  /auth) are excluded in App.tsx.
  */
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { BRAND, FONTS } from '../../utils/constants'
 import { useAuth } from '../../context/AuthContext'
 
@@ -60,6 +60,12 @@ const BENEFITS = [
 export default function AuthGate({ children }: Props) {
   const { user, loading } = useAuth()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
+  // Carry the deep-link path so Auth.tsx can return the user here after OAuth.
+  // pathname is relative to BrowserRouter basename "/app", so /web3/onboarding stays bare.
+  const next = encodeURIComponent(pathname)
+  const signupHref = `/auth?next=${next}`
+  const loginHref  = `/auth?mode=login&next=${next}`
 
   // While Supabase is resolving the session, show nothing to avoid flicker
   if (loading) {
@@ -109,7 +115,7 @@ export default function AuthGate({ children }: Props) {
         {/* CTAs */}
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 48 }}>
           <button
-            onClick={() => navigate('/auth')}
+            onClick={() => navigate(signupHref)}
             style={{
               padding: '14px 32px', borderRadius: 999, border: 'none', cursor: 'pointer',
               background: `linear-gradient(135deg, ${BRAND.pod}, ${BRAND.amazon})`,
@@ -120,7 +126,7 @@ export default function AuthGate({ children }: Props) {
             CREAR CUENTA GRATIS
           </button>
           <button
-            onClick={() => navigate('/auth?mode=login')}
+            onClick={() => navigate(loginHref)}
             style={{
               padding: '14px 28px', borderRadius: 999, cursor: 'pointer',
               background: 'transparent',
@@ -171,7 +177,7 @@ export default function AuthGate({ children }: Props) {
           ¿Ya tienes una cuenta?
         </span>
         <button
-          onClick={() => navigate('/auth?mode=login')}
+          onClick={() => navigate(loginHref)}
           style={{
             padding: '8px 20px', borderRadius: 999, cursor: 'pointer',
             border: `1px solid ${BRAND.pod}55`,

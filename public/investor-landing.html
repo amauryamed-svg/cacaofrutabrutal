@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>caúa — With Nature We Walk</title>
+<title>caúa — Functional Cacao Ecosystem</title>
 <meta name="description" content="Caúa — plataforma funcional de cacao. Brief para inversores — Series Angel 2025.">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
@@ -102,10 +102,10 @@ section::before{content:'';position:absolute;inset:0;background:radial-gradient(
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:0;}
 
 .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;}
-.stat-box{padding:36px 32px;border:1px solid var(--line);position:relative;overflow:hidden;}
-.stat-ghost{font-family:'Barlow Condensed',sans-serif;font-size:clamp(80px,12vw,160px);font-weight:900;line-height:.85;letter-spacing:-4px;opacity:.1;position:absolute;top:12px;right:12px;pointer-events:none;user-select:none;}
-.stat-label{font-family:'Barlow Condensed',sans-serif;font-size:clamp(18px,2vw,28px);font-weight:700;text-transform:uppercase;line-height:1.1;color:var(--ink);position:relative;z-index:1;max-width:260px;}
-.stat-sub{margin-top:10px;font-family:'DM Mono',monospace;font-size:12px;color:var(--ink3);letter-spacing:1px;position:relative;z-index:1;}
+.stat-box{padding:36px 32px;border:1px solid var(--line);position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:flex-start;gap:14px;}
+.stat-ghost{font-family:'Barlow Condensed',sans-serif;font-size:clamp(64px,10vw,128px);font-weight:900;line-height:.85;letter-spacing:-3px;color:var(--gold);text-shadow:0 0 22px rgba(241,169,30,.18);position:relative;z-index:2;}
+.stat-label{font-family:'Barlow Condensed',sans-serif;font-size:clamp(16px,1.7vw,22px);font-weight:700;text-transform:uppercase;line-height:1.15;color:var(--ink);position:relative;z-index:1;max-width:280px;}
+.stat-sub{margin-top:0;font-family:'DM Mono',monospace;font-size:11px;color:var(--ink2);letter-spacing:1.4px;position:relative;z-index:1;text-transform:uppercase;}
 
 .big-h{font-family:'Barlow Condensed',sans-serif;font-size:clamp(40px,5.5vw,80px);font-weight:900;text-transform:uppercase;line-height:.92;letter-spacing:-1px;}
 .body-text{font-size:17px;line-height:1.75;color:var(--ink2);}
@@ -413,6 +413,126 @@ footer a:hover{color:var(--ink2);}
 @media (prefers-reduced-motion:reduce){
   .ue-card,.ue-card::before{transition:none;}
 }
+
+/* ── Caúa logo entrance — bean tilde flies in spinning, letters stroke-draw, bean breathes ── */
+@keyframes caua-bean-arrive {
+  0%   { opacity: 0; transform: translate(-160px, -200px) scale(0.25) rotate(0deg); }
+  45%  { opacity: 1; }
+  70%  { transform: translate(8px, 6px)   scale(1.18) rotate(680deg); }
+  85%  { transform: translate(-2px, -1px) scale(0.94) rotate(710deg); }
+  100% { opacity: 1; transform: translate(0, 0)         scale(1)    rotate(720deg); }
+}
+@keyframes caua-bean-pulse {
+  0%, 100% { filter: drop-shadow(0 0 0 rgba(145, 31, 112, 0)); }
+  50%      { filter: drop-shadow(0 0 14px rgba(145, 31, 112, 0.5)); }
+}
+@keyframes caua-letter-draw {
+  0%   { stroke-dashoffset: 700; fill-opacity: 0; }
+  55%  { stroke-dashoffset: 0;   fill-opacity: 0; }
+  100% { stroke-dashoffset: 0;   fill-opacity: 1; }
+}
+.caua-logo { overflow: visible; }
+.caua-logo .caua-bean {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation:
+    caua-bean-arrive 1.65s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both,
+    caua-bean-pulse  3.6s ease-in-out 2.4s infinite;
+}
+.caua-logo .caua-letter {
+  stroke-dasharray: 700;
+  stroke-dashoffset: 700;
+  fill-opacity: 0;
+  stroke-width: 0.5;
+  animation: caua-letter-draw 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.caua-logo .caua-letter-1 { animation-delay: 1.05s; }
+.caua-logo .caua-letter-2 { animation-delay: 1.30s; }
+.caua-logo .caua-letter-3 { animation-delay: 1.55s; }
+.caua-logo .caua-letter-4 { animation-delay: 1.80s; }
+@media (prefers-reduced-motion: reduce) {
+  .caua-logo .caua-bean, .caua-logo .caua-letter {
+    animation: none !important;
+    stroke-dashoffset: 0 !important;
+    fill-opacity: 1 !important;
+    opacity: 1 !important;
+  }
+}
+
+/* ── Origin / Transmutation section — hyperrealistic vector tree + cacao→heart morph ── */
+#origin {
+  position: relative;
+  min-height: 100vh;
+  padding: 96px 32px 120px;
+  overflow: hidden;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+#origin .origin-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.45;
+}
+#origin .origin-bg img {
+  height: 110%;
+  width: auto;
+  max-width: none;
+  filter: blur(1px) saturate(1.05);
+}
+#origin .origin-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    radial-gradient(ellipse at 50% 60%, rgba(4,12,6,0.0) 0%, rgba(4,12,6,0.55) 55%, rgba(4,12,6,0.92) 100%);
+  pointer-events: none;
+}
+#origin .origin-content {
+  position: relative;
+  z-index: 2;
+  max-width: 1180px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 56px;
+  align-items: center;
+}
+#origin .origin-morph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#origin .origin-morph img {
+  width: clamp(260px, 38vw, 480px);
+  height: auto;
+  filter: drop-shadow(0 24px 40px rgba(0,0,0,0.55))
+          drop-shadow(0 0 28px rgba(241,169,30,0.18));
+}
+#origin .origin-narrative {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+#origin .origin-narrative .ac { color: var(--gold); }
+#origin .origin-narrative blockquote {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  border-left: 2px solid var(--gold);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--ink2);
+}
+@media (max-width: 880px) {
+  #origin .origin-content { grid-template-columns: 1fr; gap: 36px; }
+  #origin .origin-morph img { width: clamp(220px, 70vw, 380px); }
+}
 </style>
 </head>
 <body>
@@ -426,15 +546,15 @@ footer a:hover{color:var(--ink2);}
 
 <nav>
   <a href="#" class="nav-logo" style="display:flex;align-items:center;text-decoration:none;" aria-label="caúa">
-    <svg viewBox="0 0 234.67 78.01" xmlns="http://www.w3.org/2000/svg" aria-label="caúa">
-      <path fill="#911f70" d="M155.3,2.76c.72,1.43.81,3.08.42,4.63-.29,1.12-.58,2.24-1.17,3.17-2.31,3.64-5.39,6.4-10,6.63-1.46.07-3.12.04-3.87-1.52-.73-1.52.04-2.91,1.08-4.03,1.91-2.08,3.09-4.47,3.8-7.2.88-3.38,2.76-4.71,5.77-4.39,1.87.2,3.16,1.09,3.97,2.71h0Z"/>
-      <path fill="#F7F1EE" d="M55.93,32.31l-6.45,3.55c-1.24.68-2.78.5-3.84-.45-1.7-1.51-3.38-2.62-5.04-3.31-2.22-.92-4.82-1.38-7.79-1.38-5.43,0-9.81,1.62-13.17,4.85-3.35,3.24-5.03,7.38-5.03,12.44s1.61,8.93,4.84,12.04,7.47,4.67,12.72,4.67,9.87-1.56,13.29-4.67c1.18-1.07,2.91-1.27,4.22-.37l5.99,4.1c1.69,1.16,1.99,3.59.56,5.06-5.97,6.11-13.87,9.16-23.71,9.16s-18.13-3.01-23.89-9.03C2.88,62.95,0,55.9,0,47.82c0-5.6,1.4-10.75,4.2-15.46s6.7-8.41,11.72-11.11c5.01-2.69,10.61-4.04,16.81-4.04,5.74,0,10.89,1.14,15.47,3.43,3.28,1.64,6.13,3.78,8.56,6.42,1.48,1.61,1.1,4.19-.82,5.24h-.01Z"/>
-      <path fill="#F7F1EE" d="M113,18.71h-8.43s-.03.02-.05.02c-2.38,0-2.47,2.47-2.47,2.47v3.89c-2.58-2.62-5.4-4.59-8.44-5.9-3.05-1.31-6.3-1.97-9.77-1.97-7.54,0-13.94,2.85-19.21,8.56-5.27,5.7-7.91,13.02-7.91,21.95s2.73,15.81,8.18,21.6c5.44,5.79,11.9,8.68,19.37,8.68,3.32,0,6.41-.59,9.26-1.78s5.69-3.13,8.52-5.82v2.91s-.16,3.14,3.14,3.14c.14,0,.16.05.27.06h7.55c1.96,0,3.55-1.59,3.55-3.55V22.26c0-1.96-1.59-3.55-3.55-3.55h-.01ZM98.18,59.97c-3,3.17-6.78,4.75-11.34,4.75s-8.13-1.61-11.15-4.84c-3.02-3.22-4.53-7.33-4.53-12.33s1.48-9.02,4.45-12.19c2.96-3.17,6.69-4.76,11.17-4.76s8.39,1.56,11.39,4.68c3,3.12,4.5,7.19,4.5,12.22s-1.5,9.29-4.5,12.46h0Z"/>
-      <path fill="#F7F1EE" d="M124.04,18.71h7.44c1.99,0,3.61,1.62,3.61,3.61v24.24c0,5.42.38,9.18,1.12,11.29s1.94,3.75,3.59,4.91c1.65,1.17,3.68,1.75,6.1,1.75s4.46-.57,6.15-1.72c1.68-1.15,2.94-2.84,3.75-5.08.61-1.66.91-5.22.91-10.68v-24.71c0-1.99,1.62-3.61,3.61-3.61h7.28c1.99,0,3.61,1.62,3.61,3.61v20.89c0,10.1-.8,17-2.39,20.72-1.95,4.53-4.82,8.01-8.61,10.44s-8.61,3.64-14.45,3.64c-6.34,0-11.47-1.42-15.38-4.25s-6.67-6.78-8.26-11.85c-1.13-3.51-1.7-9.88-1.7-19.13v-20.46c0-1.99,1.62-3.61,3.61-3.61h.01Z"/>
-      <path fill="#F7F1EE" d="M231.11,18.71h-8.43s-.03.02-.05.02c-2.38,0-2.47,2.47-2.47,2.47v3.89c-2.58-2.62-5.4-4.59-8.44-5.9-3.05-1.31-6.3-1.97-9.77-1.97-7.54,0-13.94,2.85-19.21,8.56-5.27,5.7-7.91,13.02-7.91,21.95s2.73,15.81,8.18,21.6c5.44,5.79,11.9,8.68,19.37,8.68,3.32,0,6.41-.59,9.26-1.78s5.69-3.13,8.52-5.82v2.91s-.16,3.14,3.14,3.14c.14,0,.16.05.27.06h7.55c1.96,0,3.55-1.59,3.55-3.55V22.26c0-1.96-1.59-3.55-3.55-3.55h-.01ZM216.29,59.97c-3,3.17-6.78,4.75-11.34,4.75s-8.13-1.61-11.15-4.84c-3.02-3.22-4.53-7.33-4.53-12.33s1.48-9.02,4.45-12.19c2.96-3.17,6.69-4.76,11.17-4.76s8.39,1.56,11.39,4.68c3,3.12,4.5,7.19,4.5,12.22s-1.5,9.29-4.5,12.46h0Z"/>
+    <svg class="caua-logo" viewBox="0 0 234.67 78.01" xmlns="http://www.w3.org/2000/svg" aria-label="caúa">
+      <path class="caua-bean" fill="#911f70" d="M155.3,2.76c.72,1.43.81,3.08.42,4.63-.29,1.12-.58,2.24-1.17,3.17-2.31,3.64-5.39,6.4-10,6.63-1.46.07-3.12.04-3.87-1.52-.73-1.52.04-2.91,1.08-4.03,1.91-2.08,3.09-4.47,3.8-7.2.88-3.38,2.76-4.71,5.77-4.39,1.87.2,3.16,1.09,3.97,2.71h0Z"/>
+      <path class="caua-letter caua-letter-1" fill="#F7F1EE" stroke="#F7F1EE" d="M55.93,32.31l-6.45,3.55c-1.24.68-2.78.5-3.84-.45-1.7-1.51-3.38-2.62-5.04-3.31-2.22-.92-4.82-1.38-7.79-1.38-5.43,0-9.81,1.62-13.17,4.85-3.35,3.24-5.03,7.38-5.03,12.44s1.61,8.93,4.84,12.04,7.47,4.67,12.72,4.67,9.87-1.56,13.29-4.67c1.18-1.07,2.91-1.27,4.22-.37l5.99,4.1c1.69,1.16,1.99,3.59.56,5.06-5.97,6.11-13.87,9.16-23.71,9.16s-18.13-3.01-23.89-9.03C2.88,62.95,0,55.9,0,47.82c0-5.6,1.4-10.75,4.2-15.46s6.7-8.41,11.72-11.11c5.01-2.69,10.61-4.04,16.81-4.04,5.74,0,10.89,1.14,15.47,3.43,3.28,1.64,6.13,3.78,8.56,6.42,1.48,1.61,1.1,4.19-.82,5.24h-.01Z"/>
+      <path class="caua-letter caua-letter-2" fill="#F7F1EE" stroke="#F7F1EE" d="M113,18.71h-8.43s-.03.02-.05.02c-2.38,0-2.47,2.47-2.47,2.47v3.89c-2.58-2.62-5.4-4.59-8.44-5.9-3.05-1.31-6.3-1.97-9.77-1.97-7.54,0-13.94,2.85-19.21,8.56-5.27,5.7-7.91,13.02-7.91,21.95s2.73,15.81,8.18,21.6c5.44,5.79,11.9,8.68,19.37,8.68,3.32,0,6.41-.59,9.26-1.78s5.69-3.13,8.52-5.82v2.91s-.16,3.14,3.14,3.14c.14,0,.16.05.27.06h7.55c1.96,0,3.55-1.59,3.55-3.55V22.26c0-1.96-1.59-3.55-3.55-3.55h-.01ZM98.18,59.97c-3,3.17-6.78,4.75-11.34,4.75s-8.13-1.61-11.15-4.84c-3.02-3.22-4.53-7.33-4.53-12.33s1.48-9.02,4.45-12.19c2.96-3.17,6.69-4.76,11.17-4.76s8.39,1.56,11.39,4.68c3,3.12,4.5,7.19,4.5,12.22s-1.5,9.29-4.5,12.46h0Z"/>
+      <path class="caua-letter caua-letter-3" fill="#F7F1EE" stroke="#F7F1EE" d="M124.04,18.71h7.44c1.99,0,3.61,1.62,3.61,3.61v24.24c0,5.42.38,9.18,1.12,11.29s1.94,3.75,3.59,4.91c1.65,1.17,3.68,1.75,6.1,1.75s4.46-.57,6.15-1.72c1.68-1.15,2.94-2.84,3.75-5.08.61-1.66.91-5.22.91-10.68v-24.71c0-1.99,1.62-3.61,3.61-3.61h7.28c1.99,0,3.61,1.62,3.61,3.61v20.89c0,10.1-.8,17-2.39,20.72-1.95,4.53-4.82,8.01-8.61,10.44s-8.61,3.64-14.45,3.64c-6.34,0-11.47-1.42-15.38-4.25s-6.67-6.78-8.26-11.85c-1.13-3.51-1.7-9.88-1.7-19.13v-20.46c0-1.99,1.62-3.61,3.61-3.61h.01Z"/>
+      <path class="caua-letter caua-letter-4" fill="#F7F1EE" stroke="#F7F1EE" d="M231.11,18.71h-8.43s-.03.02-.05.02c-2.38,0-2.47,2.47-2.47,2.47v3.89c-2.58-2.62-5.4-4.59-8.44-5.9-3.05-1.31-6.3-1.97-9.77-1.97-7.54,0-13.94,2.85-19.21,8.56-5.27,5.7-7.91,13.02-7.91,21.95s2.73,15.81,8.18,21.6c5.44,5.79,11.9,8.68,19.37,8.68,3.32,0,6.41-.59,9.26-1.78s5.69-3.13,8.52-5.82v2.91s-.16,3.14,3.14,3.14c.14,0,.16.05.27.06h7.55c1.96,0,3.55-1.59,3.55-3.55V22.26c0-1.96-1.59-3.55-3.55-3.55h-.01ZM216.29,59.97c-3,3.17-6.78,4.75-11.34,4.75s-8.13-1.61-11.15-4.84c-3.02-3.22-4.53-7.33-4.53-12.33s1.48-9.02,4.45-12.19c2.96-3.17,6.69-4.76,11.17-4.76s8.39,1.56,11.39,4.68c3,3.12,4.5,7.19,4.5,12.22s-1.5,9.29-4.5,12.46h0Z"/>
     </svg>
   </a>
-  <div class="nav-mono">Functional Cacao Platform · 2025</div>
+  <div class="nav-mono">Functional Cacao Ecosystem · 2026</div>
   <div style="display:flex;align-items:center;gap:10px;">
     <button id="sound-toggle" onclick="toggleSound()" title="Arcade chiptune" style="background:none;border:1px solid var(--line-b);color:var(--ink2);padding:7px 11px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;transition:border-color .2s,color .2s;display:flex;align-items:center;gap:6px;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="if(!window.__soundOn){this.style.borderColor='var(--line-b)';this.style.color='var(--ink2)'}">
       <svg id="snd-icon" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 6 L2 10 L5 10 L9 13 L9 3 L5 6 Z" fill="currentColor"/><line x1="12" y1="5" x2="15" y2="11"/><line x1="15" y1="5" x2="12" y2="11"/></svg>
@@ -455,10 +575,39 @@ footer a:hover{color:var(--ink2);}
     <h1 class="hero-h1 reveal d1" data-i18n="hero_h1">El<br>problema<br>no es el<br><span class="ac">cacao.</span></h1>
   </div>
   <div class="hero-right reveal d2">
-    <p class="hero-body" data-i18n="hero_body">Es todo lo que hicimos con él.<br><br>Una plataforma de biotecnología que reconstruye la relación entre la biología humana y el sistema funcional vivo más complejo de la tierra.</p>
+    <p class="hero-body" data-i18n="hero_body">Es todo lo que hicimos con él.<br><br>Un ecosistema de biotecnología que reconstruye la relación entre la biología humana y el sistema funcional vivo más complejo de la tierra.</p>
     <div style="display:flex;flex-direction:column;align-items:flex-start;">
       <div class="scroll-line"></div>
       <div class="scroll-lbl">Scroll</div>
+    </div>
+  </div>
+</section>
+
+<!-- 1.5 ORIGEN — hyperrealistic vector tree + cacao→heart transmutation -->
+<section id="origin">
+  <!-- Hyperrealistic vector tree as ambient backdrop -->
+  <div class="origin-bg">
+    <img src="/cacao-tree-illustration.svg" alt="Árbol de cacao en una finca de Hobo, Huila — tronco mossy con mazorcas cauliflory" loading="lazy"/>
+  </div>
+  <div class="origin-vignette"></div>
+
+  <div class="origin-content reveal">
+    <!-- A cacao pod beating like a heart — the cacao IS the heart of the earth -->
+    <div class="origin-morph">
+      <img src="/cacao-heart-morph.svg" alt="Una mazorca de cacao late como un corazón" loading="lazy"/>
+    </div>
+    <!-- Narrative -->
+    <div class="origin-narrative">
+      <div class="sec-idx" data-i18n="s015_idx">01.5 — Origen</div>
+      <h2 class="big-h" data-i18n="s015_h">Donde el<br>fruto<br>se transmuta<br>en <span class="ac">corazón</span>.</h2>
+      <p class="body-text" data-i18n="s015_body">
+        Cada mazorca madura es un acto de cuidado convertido en nutrición. El árbol entrega su fruto;
+        el fruto se vuelve el corazón del sistema. De la corteza mossy a la pulpa, del bosque al cuerpo —
+        un ciclo continuo de transformación.
+      </p>
+      <blockquote data-i18n="s015_quote">
+        Theobroma · 'alimento de los dioses' · Hobo, Huila · 2°31′N
+      </blockquote>
     </div>
   </div>
 </section>
@@ -1001,9 +1150,8 @@ footer a:hover{color:var(--ink2);}
   <div class="kit-wrap">
     <div class="sec-idx reveal" style="margin-bottom:0;" data-i18n="s106_idx">10.6 — Origen</div>
     <div class="kit-photo-frame reveal">
-      <img src="/uploads/amaury-rafael.jpg" alt="Amaury y Rafael en la finca — With Nature We Walk" loading="lazy">
+      <img src="/uploads/amaury-rafael.jpg" alt="Amaury y Rafael en la finca de cacao — Arbeláez" loading="lazy">
       <div class="kit-photo-veil"></div>
-      <h2 class="kit-overlay-phrase" data-i18n="walk_h">Con la<br>naturaleza<br>caminamos.</h2>
     </div>
     <div class="kit-caption reveal d2" data-i18n="walk_cap">Arbeláez · Finca La Querencia · 2025</div>
   </div>
@@ -1015,7 +1163,7 @@ footer a:hover{color:var(--ink2);}
     <div class="cta-pre reveal"><div class="cta-dot"></div> <span data-i18n="cta_pre">Early Access · Ronda Limitada</span></div>
     <h2 class="cta-h reveal d1" data-i18n="cta_h">Sé parte<br>del<br>sistema.</h2>
     <p class="cta-body reveal d2" data-i18n="cta_body">
-      Estamos construyendo la primera plataforma funcional de cacao — integración vertical desde el árbol hasta el cuerpo. Únete a los fundadores que caminan con la naturaleza, no contra ella.<br><br>
+      Estamos construyendo el primer ecosistema funcional de cacao — integración vertical desde el árbol hasta el cuerpo. Únete a los fundadores que construyen desde el origen.<br><br>
       Asegura tu posición vía Coinbase Wallet. USDC y ETH aceptados.
     </p>
   </div>
@@ -1054,15 +1202,15 @@ footer a:hover{color:var(--ink2);}
 
 <footer>
   <div class="f-logo" aria-label="caúa">
-    <svg viewBox="0 0 234.67 78.01" xmlns="http://www.w3.org/2000/svg" aria-label="caúa">
-      <path fill="#911f70" d="M155.3,2.76c.72,1.43.81,3.08.42,4.63-.29,1.12-.58,2.24-1.17,3.17-2.31,3.64-5.39,6.4-10,6.63-1.46.07-3.12.04-3.87-1.52-.73-1.52.04-2.91,1.08-4.03,1.91-2.08,3.09-4.47,3.8-7.2.88-3.38,2.76-4.71,5.77-4.39,1.87.2,3.16,1.09,3.97,2.71h0Z"/>
-      <path fill="#F7F1EE" d="M55.93,32.31l-6.45,3.55c-1.24.68-2.78.5-3.84-.45-1.7-1.51-3.38-2.62-5.04-3.31-2.22-.92-4.82-1.38-7.79-1.38-5.43,0-9.81,1.62-13.17,4.85-3.35,3.24-5.03,7.38-5.03,12.44s1.61,8.93,4.84,12.04,7.47,4.67,12.72,4.67,9.87-1.56,13.29-4.67c1.18-1.07,2.91-1.27,4.22-.37l5.99,4.1c1.69,1.16,1.99,3.59.56,5.06-5.97,6.11-13.87,9.16-23.71,9.16s-18.13-3.01-23.89-9.03C2.88,62.95,0,55.9,0,47.82c0-5.6,1.4-10.75,4.2-15.46s6.7-8.41,11.72-11.11c5.01-2.69,10.61-4.04,16.81-4.04,5.74,0,10.89,1.14,15.47,3.43,3.28,1.64,6.13,3.78,8.56,6.42,1.48,1.61,1.1,4.19-.82,5.24h-.01Z"/>
-      <path fill="#F7F1EE" d="M113,18.71h-8.43s-.03.02-.05.02c-2.38,0-2.47,2.47-2.47,2.47v3.89c-2.58-2.62-5.4-4.59-8.44-5.9-3.05-1.31-6.3-1.97-9.77-1.97-7.54,0-13.94,2.85-19.21,8.56-5.27,5.7-7.91,13.02-7.91,21.95s2.73,15.81,8.18,21.6c5.44,5.79,11.9,8.68,19.37,8.68,3.32,0,6.41-.59,9.26-1.78s5.69-3.13,8.52-5.82v2.91s-.16,3.14,3.14,3.14c.14,0,.16.05.27.06h7.55c1.96,0,3.55-1.59,3.55-3.55V22.26c0-1.96-1.59-3.55-3.55-3.55h-.01ZM98.18,59.97c-3,3.17-6.78,4.75-11.34,4.75s-8.13-1.61-11.15-4.84c-3.02-3.22-4.53-7.33-4.53-12.33s1.48-9.02,4.45-12.19c2.96-3.17,6.69-4.76,11.17-4.76s8.39,1.56,11.39,4.68c3,3.12,4.5,7.19,4.5,12.22s-1.5,9.29-4.5,12.46h0Z"/>
-      <path fill="#F7F1EE" d="M124.04,18.71h7.44c1.99,0,3.61,1.62,3.61,3.61v24.24c0,5.42.38,9.18,1.12,11.29s1.94,3.75,3.59,4.91c1.65,1.17,3.68,1.75,6.1,1.75s4.46-.57,6.15-1.72c1.68-1.15,2.94-2.84,3.75-5.08.61-1.66.91-5.22.91-10.68v-24.71c0-1.99,1.62-3.61,3.61-3.61h7.28c1.99,0,3.61,1.62,3.61,3.61v20.89c0,10.1-.8,17-2.39,20.72-1.95,4.53-4.82,8.01-8.61,10.44s-8.61,3.64-14.45,3.64c-6.34,0-11.47-1.42-15.38-4.25s-6.67-6.78-8.26-11.85c-1.13-3.51-1.7-9.88-1.7-19.13v-20.46c0-1.99,1.62-3.61,3.61-3.61h.01Z"/>
-      <path fill="#F7F1EE" d="M231.11,18.71h-8.43s-.03.02-.05.02c-2.38,0-2.47,2.47-2.47,2.47v3.89c-2.58-2.62-5.4-4.59-8.44-5.9-3.05-1.31-6.3-1.97-9.77-1.97-7.54,0-13.94,2.85-19.21,8.56-5.27,5.7-7.91,13.02-7.91,21.95s2.73,15.81,8.18,21.6c5.44,5.79,11.9,8.68,19.37,8.68,3.32,0,6.41-.59,9.26-1.78s5.69-3.13,8.52-5.82v2.91s-.16,3.14,3.14,3.14c.14,0,.16.05.27.06h7.55c1.96,0,3.55-1.59,3.55-3.55V22.26c0-1.96-1.59-3.55-3.55-3.55h-.01ZM216.29,59.97c-3,3.17-6.78,4.75-11.34,4.75s-8.13-1.61-11.15-4.84c-3.02-3.22-4.53-7.33-4.53-12.33s1.48-9.02,4.45-12.19c2.96-3.17,6.69-4.76,11.17-4.76s8.39,1.56,11.39,4.68c3,3.12,4.5,7.19,4.5,12.22s-1.5,9.29-4.5,12.46h0Z"/>
+    <svg class="caua-logo" viewBox="0 0 234.67 78.01" xmlns="http://www.w3.org/2000/svg" aria-label="caúa">
+      <path class="caua-bean" fill="#911f70" d="M155.3,2.76c.72,1.43.81,3.08.42,4.63-.29,1.12-.58,2.24-1.17,3.17-2.31,3.64-5.39,6.4-10,6.63-1.46.07-3.12.04-3.87-1.52-.73-1.52.04-2.91,1.08-4.03,1.91-2.08,3.09-4.47,3.8-7.2.88-3.38,2.76-4.71,5.77-4.39,1.87.2,3.16,1.09,3.97,2.71h0Z"/>
+      <path class="caua-letter caua-letter-1" fill="#F7F1EE" stroke="#F7F1EE" d="M55.93,32.31l-6.45,3.55c-1.24.68-2.78.5-3.84-.45-1.7-1.51-3.38-2.62-5.04-3.31-2.22-.92-4.82-1.38-7.79-1.38-5.43,0-9.81,1.62-13.17,4.85-3.35,3.24-5.03,7.38-5.03,12.44s1.61,8.93,4.84,12.04,7.47,4.67,12.72,4.67,9.87-1.56,13.29-4.67c1.18-1.07,2.91-1.27,4.22-.37l5.99,4.1c1.69,1.16,1.99,3.59.56,5.06-5.97,6.11-13.87,9.16-23.71,9.16s-18.13-3.01-23.89-9.03C2.88,62.95,0,55.9,0,47.82c0-5.6,1.4-10.75,4.2-15.46s6.7-8.41,11.72-11.11c5.01-2.69,10.61-4.04,16.81-4.04,5.74,0,10.89,1.14,15.47,3.43,3.28,1.64,6.13,3.78,8.56,6.42,1.48,1.61,1.1,4.19-.82,5.24h-.01Z"/>
+      <path class="caua-letter caua-letter-2" fill="#F7F1EE" stroke="#F7F1EE" d="M113,18.71h-8.43s-.03.02-.05.02c-2.38,0-2.47,2.47-2.47,2.47v3.89c-2.58-2.62-5.4-4.59-8.44-5.9-3.05-1.31-6.3-1.97-9.77-1.97-7.54,0-13.94,2.85-19.21,8.56-5.27,5.7-7.91,13.02-7.91,21.95s2.73,15.81,8.18,21.6c5.44,5.79,11.9,8.68,19.37,8.68,3.32,0,6.41-.59,9.26-1.78s5.69-3.13,8.52-5.82v2.91s-.16,3.14,3.14,3.14c.14,0,.16.05.27.06h7.55c1.96,0,3.55-1.59,3.55-3.55V22.26c0-1.96-1.59-3.55-3.55-3.55h-.01ZM98.18,59.97c-3,3.17-6.78,4.75-11.34,4.75s-8.13-1.61-11.15-4.84c-3.02-3.22-4.53-7.33-4.53-12.33s1.48-9.02,4.45-12.19c2.96-3.17,6.69-4.76,11.17-4.76s8.39,1.56,11.39,4.68c3,3.12,4.5,7.19,4.5,12.22s-1.5,9.29-4.5,12.46h0Z"/>
+      <path class="caua-letter caua-letter-3" fill="#F7F1EE" stroke="#F7F1EE" d="M124.04,18.71h7.44c1.99,0,3.61,1.62,3.61,3.61v24.24c0,5.42.38,9.18,1.12,11.29s1.94,3.75,3.59,4.91c1.65,1.17,3.68,1.75,6.1,1.75s4.46-.57,6.15-1.72c1.68-1.15,2.94-2.84,3.75-5.08.61-1.66.91-5.22.91-10.68v-24.71c0-1.99,1.62-3.61,3.61-3.61h7.28c1.99,0,3.61,1.62,3.61,3.61v20.89c0,10.1-.8,17-2.39,20.72-1.95,4.53-4.82,8.01-8.61,10.44s-8.61,3.64-14.45,3.64c-6.34,0-11.47-1.42-15.38-4.25s-6.67-6.78-8.26-11.85c-1.13-3.51-1.7-9.88-1.7-19.13v-20.46c0-1.99,1.62-3.61,3.61-3.61h.01Z"/>
+      <path class="caua-letter caua-letter-4" fill="#F7F1EE" stroke="#F7F1EE" d="M231.11,18.71h-8.43s-.03.02-.05.02c-2.38,0-2.47,2.47-2.47,2.47v3.89c-2.58-2.62-5.4-4.59-8.44-5.9-3.05-1.31-6.3-1.97-9.77-1.97-7.54,0-13.94,2.85-19.21,8.56-5.27,5.7-7.91,13.02-7.91,21.95s2.73,15.81,8.18,21.6c5.44,5.79,11.9,8.68,19.37,8.68,3.32,0,6.41-.59,9.26-1.78s5.69-3.13,8.52-5.82v2.91s-.16,3.14,3.14,3.14c.14,0,.16.05.27.06h7.55c1.96,0,3.55-1.59,3.55-3.55V22.26c0-1.96-1.59-3.55-3.55-3.55h-.01ZM216.29,59.97c-3,3.17-6.78,4.75-11.34,4.75s-8.13-1.61-11.15-4.84c-3.02-3.22-4.53-7.33-4.53-12.33s1.48-9.02,4.45-12.19c2.96-3.17,6.69-4.76,11.17-4.76s8.39,1.56,11.39,4.68c3,3.12,4.5,7.19,4.5,12.22s-1.5,9.29-4.5,12.46h0Z"/>
     </svg>
   </div>
-  <div class="f-mono">With Nature We Walk · Caúa Colombia SAS · 2025</div>
+  <div class="f-mono">Caúa Colombia SAS · 2026</div>
   <div class="f-mono"><a href="/app">App</a> &nbsp;·&nbsp; <a href="#investment">Deck</a> &nbsp;·&nbsp; <a href="/pitch_growth.html">Growth</a></div>
 </footer>
 
@@ -1095,6 +1243,7 @@ footer a:hover{color:var(--ink2);}
 <script src="https://unpkg.com/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
 <script src="https://unpkg.com/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
 <script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="/cacao-tree-builder.js"></script>
 <script src="/investor-3d.js"></script>
 
 <!-- Motion.dev scroll choreography — single scroll source for 3D + pin rail -->
@@ -1184,7 +1333,11 @@ const T = {
     nav_cta:'Invertir Ahora',
     hero_tag:'Caúa · Brief para Inversores · Series Angel · 2026',
     hero_h1:'El<br>problema<br>no es el<br><span class="ac">cacao.</span>',
-    hero_body:'Es todo lo que hicimos con él.<br><br>Una plataforma de biotecnología que reconstruye la relación entre la biología humana y el sistema funcional vivo más complejo de la tierra.',
+    hero_body:'Es todo lo que hicimos con él.<br><br>Un ecosistema de biotecnología que reconstruye la relación entre la biología humana y el sistema funcional vivo más complejo de la tierra.',
+    s015_idx:'01.5 — Origen',
+    s015_h:'Donde el<br>fruto<br>se transmuta<br>en <span class="ac">corazón</span>.',
+    s015_body:'Cada mazorca madura es un acto de cuidado convertido en nutrición. El árbol entrega su fruto; el fruto se vuelve el corazón del sistema. De la corteza mossy a la pulpa, del bosque al cuerpo — un ciclo continuo de transformación.',
+    s015_quote:'Theobroma · "alimento de los dioses" · Hobo, Huila · 2°31′N',
     sp_idx:'08.6 — Elige tu nivel',
     sp_h:'Aliméntate con el<br><span style="color:var(--gold)">propósito de Caúa.</span>',
     sp_sub:'El cacao acaba<br>de abrirse.<br>Elige tu rol.',
@@ -1316,11 +1469,11 @@ const T = {
     kit_h:'En tus manos.',
     kit_cap:'Un sistema · tres formas',
     s106_idx:'10.6 — Origen',
-    walk_h:'Con la<br>naturaleza<br>caminamos.',
+    walk_h:'',
     walk_cap:'Arbeláez · Finca La Querencia · 2025',
     cta_pre:'Early Access · Ronda Limitada',
     cta_h:'Sé parte<br>del<br>sistema.',
-    cta_body:'Estamos construyendo la primera plataforma funcional de cacao — integración vertical desde el árbol hasta el cuerpo. Únete a los fundadores que caminan con la naturaleza, no contra ella.<br><br>Asegura tu posición vía Coinbase Wallet. USDC y ETH aceptados.',
+    cta_body:'Estamos construyendo el primer ecosistema funcional de cacao — integración vertical desde el árbol hasta el cuerpo. Únete a los fundadores que construyen desde el origen.<br><br>Asegura tu posición vía Coinbase Wallet. USDC y ETH aceptados.',
     round_lbl:'Ronda Activa', round_badge:'Live · Limited',
     prog_lbl:'Progreso de ronda',
     rd_min:'Mínimo', rd_val:'Valoración', rd_ins:'Instrumento', rd_close:'Cierre',
@@ -1331,7 +1484,11 @@ const T = {
     nav_cta:'Invest Now',
     hero_tag:'Caúa · Investor Brief · Series Angel · 2026',
     hero_h1:'The<br>problem<br>is not<br><span class="ac">cacao.</span>',
-    hero_body:"It's what we turned it into.<br><br>A biotech platform rebuilding the relationship between human biology and the most complex functional living system on earth.",
+    hero_body:"It's what we turned it into.<br><br>A biotech ecosystem rebuilding the relationship between human biology and the most complex functional living system on earth.",
+    s015_idx:'01.5 — Origin',
+    s015_h:'Where the<br>fruit<br>transmutes<br>into a <span class="ac">heart</span>.',
+    s015_body:"Every ripe pod is care turned into nutrition. The tree gives its fruit; the fruit becomes the heart of the system. From mossy bark to pulp, from forest to body — a continuous cycle of transformation.",
+    s015_quote:'Theobroma · "food of the gods" · Hobo, Huila · 2°31′N',
     sp_idx:'08.6 — Choose your tier',
     sp_h:"Eat with<br><span style=\"color:var(--gold)\">Caúa's purpose.</span>",
     sp_sub:'The pod just<br>opened.<br>Choose your role.',
@@ -1463,11 +1620,11 @@ const T = {
     kit_h:'In your hands.',
     kit_cap:'One system · three forms',
     s106_idx:'10.6 — Origin',
-    walk_h:'With nature,<br>we walk.',
+    walk_h:'',
     walk_cap:'Arbeláez · Finca La Querencia · 2025',
     cta_pre:'Early Access · Limited Round',
     cta_h:'Become<br>part of<br>the system.',
-    cta_body:"We're building the first functional cacao platform — vertical integration from tree to body. Join founders walking with nature, not against it.<br><br>Secure your position via Coinbase Wallet. USDC and ETH accepted.",
+    cta_body:"We're building the first functional cacao ecosystem — vertical integration from tree to body. Join founders building from origin.<br><br>Secure your position via Coinbase Wallet. USDC and ETH accepted.",
     round_lbl:'Active Round', round_badge:'Live · Limited',
     prog_lbl:'Round progress',
     rd_min:'Minimum', rd_val:'Valuation', rd_ins:'Instrument', rd_close:'Closing',

@@ -242,3 +242,121 @@ export const TOKEN_RATES = {
   tree_update_read: { beans: 0.5, mazorcas: 0 },
   tree_harvest_share: { beans: 5, mazorcas: 2 },
 }
+
+// ─── Web3 constants ────────────────────────────────────────────────────────
+// See docs/WEB3.md, docs/COMPLIANCE.md, docs/CHARTER.md.
+
+/** Base mainnet (EIP-155). Multi-chain expansion requires Charter amendment. */
+export const BASE_CHAIN_ID = 8453
+export const BASE_SEPOLIA_CHAIN_ID = 84532
+
+/** Default RPC. User-configurable via VITE_BASE_RPC_URL for paid tiers. */
+export const BASE_RPC =
+  (typeof import.meta !== 'undefined' && (import.meta as { env?: Record<string, string> }).env?.VITE_BASE_RPC_URL) ||
+  'https://mainnet.base.org'
+
+/** Sanctioned jurisdictions — geo-block enforcement layer. See docs/COMPLIANCE.md. */
+export const GEO_BLOCKED_COUNTRIES = [
+  'IR', // Iran
+  'KP', // North Korea
+  'CU', // Cuba
+  'SY', // Syria
+  'RU', // Russia (sectoral)
+  'BY', // Belarus (sectoral)
+  'MM', // Myanmar (sectoral)
+] as const
+
+export type GeoBlockedCountry = typeof GEO_BLOCKED_COUNTRIES[number]
+
+/** KYC tiers — see docs/KYC.md. Lifetime caps in USD. */
+export const KYC_TIERS = {
+  0: { label: 'Anonymous',  cap_usd: 0,        actions: ['browse'] },
+  1: { label: 'Basic',      cap_usd: 1_000,    actions: ['browse','mint','redeem'] },
+  2: { label: 'Enhanced',   cap_usd: 10_000,   actions: ['browse','mint','redeem','adopt_crypto'] },
+  3: { label: 'Investor',   cap_usd: Infinity, actions: ['browse','mint','redeem','adopt_crypto','equity'] },
+} as const
+
+export type KycTier = keyof typeof KYC_TIERS
+
+/** Minimum tier required for each gated action. */
+export const KYC_TIER_REQUIREMENTS = {
+  mint:         1,
+  redeem:       1,
+  adopt_crypto: 2,
+  equity:       3,
+} as const
+
+export type GatedAction = keyof typeof KYC_TIER_REQUIREMENTS
+
+/** Smart contract addresses. Populated as contracts deploy (Phases 3–6). */
+export const WEB3_CONTRACTS = {
+  cacaoTreeNFT:       '' as `0x${string}` | '',
+  cacaoToken:         '' as `0x${string}` | '',
+  mazorcaRedemption:  '' as `0x${string}` | '',
+  treeAdoption:       '' as `0x${string}` | '',
+  iotAttestation:     '' as `0x${string}` | '',
+} as const
+
+/** SIWE message domain — must match `expectedDomain` in siwe-link-wallet Edge Function. */
+export const SIWE_DOMAIN = 'cacaofrutabrutal.com'
+
+/**
+ * Mazorca → $CACAO redemption rate. Server-side default; on-chain is authoritative
+ * (`MazorcaRedemption.mazorcasPerToken`). Update both when re-tuning game economy.
+ */
+export const MAZORCA_TO_CACAO_RATE = 1000
+
+/** Server signs EIP-712 payloads with this 7-day deadline by default. */
+export const REDEMPTION_DEADLINE_SECONDS = 7 * 24 * 60 * 60
+
+/** $CACAO ERC-20 has 18 decimals (Bitcoin homage cap, not equivalence). */
+export const CACAO_DECIMALS = 18
+export const CACAO_TOTAL_SUPPLY_CAP = 21_000_000n
+
+/** EIP-712 domain — must match `MazorcaRedemption.sol` constructor + sign-mazorca-burn. */
+export const MAZORCA_REDEMPTION_DOMAIN = {
+  name: 'CauaMazorcaRedemption',
+  version: '1',
+} as const
+
+export const MAZORCA_REDEMPTION_TYPES = {
+  MazorcaBurn: [
+    { name: 'user',         type: 'address' },
+    { name: 'mazorcaCount', type: 'uint256' },
+    { name: 'nonce',        type: 'bytes32' },
+    { name: 'deadline',     type: 'uint256' },
+  ],
+} as const
+
+/**
+ * Whitelisted ERC-20 assets accepted by `TreeAdoption.sol`. Addresses are
+ * Base mainnet canonical contracts. Sepolia uses different addresses (set
+ * via VITE_BASE_USDC etc env if needed for testing).
+ */
+export const BASE_ERC20 = {
+  USDC:  '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913' as const, // Base mainnet USDC
+  cbBTC: '0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf' as const, // Coinbase Wrapped BTC
+} as const
+
+/** Pseudo-address for native ETH in price/asset mappings. Mirrors TreeAdoption.sol. */
+export const ETH_PSEUDO_ADDRESS = '0x0000000000000000000000000000000000000000' as const
+
+/**
+ * Revenue split — hardcoded in TreeAdoption.sol per Charter principle I.1.
+ * Replicated here for UI display only.
+ */
+export const ADOPTION_SPLIT_BPS = {
+  guardian: 6000,
+  treasury: 3000,
+  protocol: 1000,
+  total: 10000,
+} as const
+
+/**
+ * IoT epoch-week index. Mirrors `compute_week_index(ts)` in migration 032
+ * and `week_index(unix_ts)` in api/iot_verify.py. Used by IoTAttestation.
+ */
+export const IOT_WEEK_SECONDS = 604_800
+export function iotWeekIndex(unixTs: number): number {
+  return Math.floor(unixTs / IOT_WEEK_SECONDS)
+}

@@ -1,22 +1,42 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { BRAND, FONTS } from '../utils/constants'
 import CauaLogo from '../components/ui/CauaLogo'
 import { supabase } from '../lib/supabase'
 import { useLang } from '../context/LangContext'
 import { makeT } from '../utils/i18n'
 
+// Whitelist of in-app paths that may receive an OAuth callback.
+// Each entry MUST also be whitelisted in Supabase Dashboard → Auth → URL Configuration → Redirect URLs.
+const ALLOWED_NEXT_PATHS = new Set<string>([
+  '/adoptar',
+  '/dashboard',
+  '/marketplace',
+  '/ritual',
+  '/fund',
+  '/impacto',
+  '/web3',
+  '/web3/onboarding',
+])
+
 export default function Auth() {
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState('')
+  const [searchParams]        = useSearchParams()
   const { lang } = useLang()
   const T = makeT(lang)
   const es = lang === 'es'
+
+  // Honor ?next= query so deep-links like /app/web3/onboarding return correctly.
+  // SPA basename is "/app", so the absolute URL is `${origin}/app${nextPath}`.
+  const nextRaw  = searchParams.get('next') || '/adoptar'
+  const nextPath = ALLOWED_NEXT_PATHS.has(nextRaw) ? nextRaw : '/adoptar'
 
   const handleGoogleLogin = async () => {
     setLoading(true); setError('')
     const { error: err } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/app/adoptar` },
+      options: { redirectTo: `${window.location.origin}/app${nextPath}` },
     })
     if (err) { setError(err.message); setLoading(false) }
   }
