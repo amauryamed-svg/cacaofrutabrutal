@@ -180,6 +180,10 @@ All 14 env vars required for mainnet deploy. **Status legend**: TBD = not yet pr
 | `PERSONA_API_KEY` (prod) | API auth | Persona dashboard prod | TBD |
 | `PERSONA_WEBHOOK_SECRET` (prod) | HMAC verify | Persona dashboard prod | TBD |
 | `CHAINALYSIS_API_KEY` | OFAC + sanctions screening pre-write | Chainalysis dashboard | live (Sepolia, 2026-04-29) — rotate before mainnet |
+| `COINBASE_COMMERCE_API_KEY` | Investor flow `create-coinbase-charge` | https://commerce.coinbase.com/dashboard/settings | provisioned 2026-04-29 (legacy Commerce key) |
+| `COINBASE_COMMERCE_WEBHOOK_SECRET` | HMAC verify `coinbase-commerce-webhook` | Same dashboard → Webhook subscriptions | TBD |
+| `CDP_API_KEY_NAME` | Onramp session token JWT issuer (`organizations/.../apiKeys/...`) | https://portal.cdp.coinbase.com/access/api after Onramp approval | TBD — gated by Onramp App ID approval (see `docs/cdp-onramp-application-response.md`) |
+| `CDP_API_KEY_SECRET` | Onramp session token JWT signer (PEM EC P-256 private key) | Same | TBD — paired with CDP_API_KEY_NAME |
 | `COINBASE_ONRAMP_APP_ID` | Onramp pop-up in Web3Onboarding | https://portal.cdp.coinbase.com/ | TBD |
 
 ### Vercel env vars (project `prj_Fc5Rbha3hlIRAXrevMIoIaBeXWoz`)
