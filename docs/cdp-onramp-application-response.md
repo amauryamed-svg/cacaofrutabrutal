@@ -4,7 +4,7 @@
 **From:** Amaury Amed · CTO · CauaCorp / Cacao Fruta Brutal
 **Re:** Onramp App ID approval
 
-> Copy this into the email reply. Replace `<placeholders>` with the live values when sending.
+> Copy this into the email reply. All placeholders resolved as of 2026-04-29.
 
 ---
 
@@ -75,13 +75,15 @@ The user disclosure copy lives in `src/pages/Web3Onboarding.tsx` and is shown bo
 
 The Onramp button currently shows **"ONRAMP CONFIG PENDING"** because we haven't been issued an App ID yet — that's exactly what this application is for. Once approved, the same component will render the live Onramp launcher (compliant flow described in §4).
 
-### GitHub (open source)
+### GitHub (open source, MIT)
 
-- Repo: https://github.com/<org>/cacao-fruta-brutal (MIT)
-- Charter: `docs/CHARTER.md`
-- Web3 architecture: `docs/WEB3.md`
-- KYC + tiers: `docs/KYC.md`
-- Compliance + geo-blocks: `docs/COMPLIANCE.md`
+- Repo: https://github.com/amauryamed-svg/cacaofrutabrutal
+- Charter: https://github.com/amauryamed-svg/cacaofrutabrutal/blob/main/docs/CHARTER.md
+- Web3 architecture: https://github.com/amauryamed-svg/cacaofrutabrutal/blob/main/docs/WEB3.md
+- KYC + tiers: https://github.com/amauryamed-svg/cacaofrutabrutal/blob/main/docs/KYC.md
+- Compliance + geo-blocks: https://github.com/amauryamed-svg/cacaofrutabrutal/blob/main/docs/COMPLIANCE.md
+- Onramp session token Edge Function (compliant, ready to wire CDP key): https://github.com/amauryamed-svg/cacaofrutabrutal/blob/main/supabase/functions/coinbase-onramp-session/index.ts
+- Onramp button (refactored, no wallet in URL): https://github.com/amauryamed-svg/cacaofrutabrutal/blob/main/src/components/web3/OnrampButton.tsx
 
 ---
 
@@ -91,7 +93,7 @@ We've reviewed https://docs.cdp.coinbase.com/onramp/security-requirements. Statu
 
 | Requirement | Status | Implementation |
 |-------------|--------|----------------|
-| Backend API authentication before requesting session token | **In progress** — see commit `<hash>` introducing `supabase/functions/coinbase-onramp-session` Edge Function. Auth via Supabase JWT (user must be logged in + KYC verified Tier 1+). | Ready to wire CDP API key + JWT signing once approved. |
+| Backend API authentication before requesting session token | **Done** — see commit [`ea26053`](https://github.com/amauryamed-svg/cacaofrutabrutal/commit/ea26053) introducing `supabase/functions/coinbase-onramp-session` Edge Function. Auth via Supabase JWT (user must be logged in + KYC verified Tier 1+) before any CDP token request. | Ready to wire CDP API key + JWT signing the day approval lands. |
 | `Access-Control-Allow-Origin` not `*` for authenticated endpoints | **Done** — `supabase/functions/cors-config.ts` enforces a strict allowlist (`cacaofrutabrutal.com`, `app.cacaofrutabrutal.com`, dev origins). | All authenticated Edge Functions inherit this config. |
 | Session token-based authentication | **Implementing now** — `coinbase-onramp-session` Edge Function will sign the CDP JWT server-side using our CDP API key and return a short-lived session token to the frontend. | Frontend (`OnrampButton.tsx`) refactored to request a session token before opening the popup. |
 | No wallet address in Onramp pay URL | **Will be enforced** — the new flow passes only the session token in the URL; wallet address is in the JWT payload server-side. | Old code (App ID + addresses[] in URL) is being deprecated. |
@@ -100,9 +102,10 @@ We've reviewed https://docs.cdp.coinbase.com/onramp/security-requirements. Statu
 
 ## 5. Test credentials
 
-- **Test user:** `cdp-review@cauaculture.co` · password: provided separately in your CRM ticket
-- **Sandbox KYC:** Persona sandbox template ID provided on request
-- **Test wallet:** Smart Wallet passkey created during onboarding — no manual import needed
+- **Direct contact for review:** `amaury@cauaculture.co` (CTO) — please email me directly with credentials request and I'll provision a review account on the spot. Happy to share screen-share or async Loom if helpful.
+- **Sandbox KYC:** the app uses Persona sandbox templates (`PERSONA_TMPL_BASIC`, `PERSONA_TMPL_ENHANCED`, `PERSONA_TMPL_INVESTOR`). Sandbox KYC takes ~30 seconds with their default test identities (full docs in `docs/KYC.md`).
+- **Test wallet:** Coinbase Smart Wallet passkey is created during onboarding — no manual seed import or extension required. Reviewer can use a fresh passkey on a clean profile.
+- **Test environment:** the live site (`cacaofrutabrutal.com/app/web3`) is currently pointed at Base Sepolia (chain 84532) per our pre-audit policy — see CHARTER §I.6. Same flow, no real funds at risk during review.
 
 ---
 
