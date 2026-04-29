@@ -7,8 +7,13 @@ import { base, baseSepolia } from 'wagmi/chains'
 import { coinbaseWallet, walletConnect, injected } from 'wagmi/connectors'
 import { BASE_RPC, BASE_CHAIN_ID } from '../../utils/constants'
 
+// WalletConnect Project ID is public by design — visible in any client bundle.
+// Vercel env (prod + dev) overrides this fallback when set. Hardcoded so preview
+// deploys without env var still get a working WalletConnect connector.
+const WALLETCONNECT_PROJECT_ID_FALLBACK = 'c686c263-811c-4eba-97e4-9eaea3d4375c'
 const walletConnectProjectId =
-  (import.meta.env.VITE_WALLETCONNECT_PROJECT_ID as string | undefined) ?? ''
+  (import.meta.env.VITE_WALLETCONNECT_PROJECT_ID as string | undefined) ||
+  WALLETCONNECT_PROJECT_ID_FALLBACK
 
 /**
  * wagmi config — Base mainnet primary, Sepolia testnet for dev.

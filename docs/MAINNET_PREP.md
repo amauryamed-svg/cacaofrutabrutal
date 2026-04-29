@@ -179,7 +179,7 @@ All 14 env vars required for mainnet deploy. **Status legend**: TBD = not yet pr
 | `PERSONA_TEMPLATE_ID` (prod) | KYC live template, replaces sandbox | Persona dashboard prod | TBD |
 | `PERSONA_API_KEY` (prod) | API auth | Persona dashboard prod | TBD |
 | `PERSONA_WEBHOOK_SECRET` (prod) | HMAC verify | Persona dashboard prod | TBD |
-| `CHAINALYSIS_API_KEY` | OFAC + sanctions screening pre-write | Chainalysis sales | TBD |
+| `CHAINALYSIS_API_KEY` | OFAC + sanctions screening pre-write | Chainalysis dashboard | live (Sepolia, 2026-04-29) — rotate before mainnet |
 | `COINBASE_ONRAMP_APP_ID` | Onramp pop-up in Web3Onboarding | https://portal.cdp.coinbase.com/ | TBD |
 
 ### Vercel env vars (project `prj_Fc5Rbha3hlIRAXrevMIoIaBeXWoz`)
@@ -190,6 +190,7 @@ All 14 env vars required for mainnet deploy. **Status legend**: TBD = not yet pr
 | `VITE_COINBASE_ONRAMP_APP_ID` | Public client ID | Coinbase Cloud dashboard | TBD |
 | `VITE_BASE_USDC` (mainnet) | Whitelisted ERC-20 | `0x833589fcd6edb6e08f4c7c32d4f71b54bda02913` (already in code) | live |
 | `VITE_ACTIVE_CHAIN_ID` | Chain switch — set to `8453` post-audit | Hardcode in `constants.ts` | TBD |
+| `VITE_WALLETCONNECT_PROJECT_ID` | Public WC reown ID — overrides hardcoded fallback in `src/lib/web3/wagmi.ts` | https://cloud.reown.com/ | live (Production + Development; preview falls back to hardcoded) |
 
 ### Secrets push command
 
