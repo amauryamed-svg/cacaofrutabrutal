@@ -122,11 +122,16 @@ serve(async (req) => {
     if (plantingErr) return jsonResponse({ error: 'planting_lookup_failed', detail: plantingErr.message }, 500)
     if (!planting)   return jsonResponse({ error: 'planting_not_found_or_unauthorized' }, 404)
 
-    // ── State + timer validation
-    if (planting.state !== 'ready') {
-      return jsonResponse({ error: 'planting_not_ready', state: planting.state }, 409)
-    }
-    if (!planting.ready_at || new Date(planting.ready_at).getTime() > Date.now()) {
+    // ── State + timer validation. 'growing' tiles auto-promote to harvestable
+    // once ready_at has elapsed (lazy flip — no cron tick required).
+    const elapsed = !!planting.ready_at && new Date(planting.ready_at).getTime() <= Date.now()
+    const isHarvestable =
+      (planting.state === 'ready' && elapsed) ||
+      (planting.state === 'growing' && elapsed)
+    if (!isHarvestable) {
+      if (planting.state !== 'ready' && planting.state !== 'growing') {
+        return jsonResponse({ error: 'planting_not_ready', state: planting.state }, 409)
+      }
       return jsonResponse({ error: 'timer_not_elapsed', ready_at: planting.ready_at }, 409)
     }
     if (!planting.crop_slug || !planting.mode) {

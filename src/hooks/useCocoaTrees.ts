@@ -142,6 +142,32 @@ export function useCocoaTrees() {
       message: `${action}: HP ${health}% H₂O ${moisture}% ☀️ ${sunlight}%`,
     }).then(() => {})
 
+    // Care faucet: reuse tree_update_read rate (+0.5 beans). Day-bucket dedup by
+    // (tree, action) so spamming the same care doesn't farm beans.
+    ;(async () => {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession()
+        const token = sessionData?.session?.access_token
+        const uid = sessionData?.session?.user?.id
+        if (!token || !uid) return
+        const day = new Date().toISOString().slice(0, 10)
+        const refId = `care:${treeId}:${day}:${action}`
+        const { data: existing } = await supabase
+          .from('token_events')
+          .select('id')
+          .eq('user_id', uid)
+          .eq('event_type', 'tree_update_read')
+          .eq('ref_id', refId)
+          .limit(1)
+        if (existing && existing.length > 0) return
+        await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/award-tokens`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ event_type: 'tree_update_read', ref_id: refId }),
+        })
+      } catch { /* non-critical */ }
+    })()
+
     return { health, moisture, sunlight }
   }
 

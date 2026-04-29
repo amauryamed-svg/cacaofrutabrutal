@@ -1,7 +1,10 @@
+import { useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { BRAND, FONTS } from '../utils/constants'
 import { useLang } from '../context/LangContext'
 import { useBlogPostBySlug } from '../hooks/useBlogPosts'
+import { useAuth } from '../context/AuthContext'
+import { supabase } from '../lib/supabase'
 import AuthorChip from '../components/blog/AuthorChip'
 import BlogTagPill from '../components/blog/BlogTagPill'
 
@@ -10,6 +13,35 @@ export default function BlogPost() {
   const navigate = useNavigate()
   const { lang, setLang } = useLang()
   const { post, loading } = useBlogPostBySlug(slug || '')
+  const { userId } = useAuth()
+  const awardedRef = useRef<string | null>(null)
+
+  // blog_read faucet: +0.2 beans per slug per UTC day (client-side dedup via token_events).
+  useEffect(() => {
+    if (!userId || !slug || !post || awardedRef.current === slug) return
+    awardedRef.current = slug
+    ;(async () => {
+      const todayStart = new Date()
+      todayStart.setUTCHours(0, 0, 0, 0)
+      const { data: existing } = await supabase
+        .from('token_events')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('event_type', 'blog_read')
+        .eq('ref_id', slug)
+        .gte('created_at', todayStart.toISOString())
+        .limit(1)
+      if (existing && existing.length > 0) return
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData?.session?.access_token
+      if (!token) return
+      await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/award-tokens`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ event_type: 'blog_read', ref_id: slug }),
+      }).catch(() => {})
+    })()
+  }, [userId, slug, post])
 
   const title = lang === 'en' ? post?.titleEn || post?.title : post?.title
   const subtitle = lang === 'en' ? post?.subtitleEn || post?.subtitle : post?.subtitle
