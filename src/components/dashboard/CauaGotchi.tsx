@@ -1,169 +1,567 @@
 import { motion } from 'framer-motion'
 import { BRAND, FONTS } from '../../utils/constants'
-import { PLANT_PROBLEMS } from '../../utils/growthSystem'
+import { PLANT_PROBLEMS, SPECIAL_ITEMS } from '../../utils/growthSystem'
+import LivingTree from './LivingTree'
+import type { CSSProperties, ReactNode } from 'react'
 
-interface CauaGotchiProps {
-  health: number
-  moisture: number
-  sunlight: number
-  stageText: string
+/**
+ * The unified Caua-Gotchi panel — one card, one tree, no device chrome.
+ *
+ * Center stage: a real cacao tree (`<LivingTree />`) growing through 8
+ * stages, modulating with vitals (moisture wets the soil, sunlight
+ * saturates leaves, low health wilts the canopy, problems tint the scene).
+ *
+ * Around the tree:
+ *   - top:    stage label, tree name, life-cycle progress ring
+ *   - sides:  3 stat orbs (HP, water, sun) — minimal, not bars
+ *   - bottom: action button row (water, sun, nutrients, pruning, melaza)
+ *   - bottom: harvest CTA when ready
+ *
+ * The parent (`TreeDetail`) owns game state and passes handlers down.
+ */
+
+export type CareAction = 'water' | 'sunlight' | 'nutrients' | 'pruning' | 'molasses'
+
+export interface CauaGotchiProps {
+  // Tree identity
+  stageId: number
+  stageName: string
   treeName: string
-  stageEmoji?: string
-  stageId?: number
-  problem?: string | null
-}
 
-const STAGE_PIXELS: Record<number, string[]> = {
-  0: ['        ', '   🌰   ', '  ░░░░  ', ' ░░░░░░ '],
-  1: ['   🌱   ', '   ┃    ', '  ≈≈≈≈  ', ' ░░░░░░ '],
-  2: [' 🍃🌿🍃 ', '   ┃    ', '  ≈≈≈≈  ', ' ░░░░░░ '],
-  3: [' 🌿🌾🌿 ', ' 🌾 🌾  ', '  ┃┃    ', ' ░░░░░░ '],
-  4: ['🌳🌳🌳  ', '🌳🌳🌳  ', '  ┃┃┃   ', ' ░░░░░░ '],
-  5: ['🌸🌳🌸  ', '🌳🌸🌳  ', '  ┃┃┃   ', ' ░░░░░░ '],
-  6: ['🌳🫘🌳  ', '🫘🌳🫘  ', '  ┃┃┃   ', ' ░░░░░░ '],
-  7: ['🌟🍫🌟  ', '🫘🌳🫘  ', ' ✨ ✨   ', ' ░░░░░░ '],
+  // Cycle progress
+  cycleProgress: number       // 0..1 of the 5h adoption cycle
+  cycleRemaining: string      // formatted "2h 13m"
+
+  // Vitals
+  health: number              // 0..100
+  moisture: number            // 0..100
+  sunlight: number            // 0..100
+  problem?: string | null
+
+  // Care
+  canCare: boolean
+  nextCareIn: string
+  inventory: { nutrients: number; pruning: number; molasses: number }
+  activeAction: string | null
+  onCare: (action: CareAction) => void
+
+  // Hidden interaction (triple-tap easter egg)
+  onTreeTap?: () => void
+
+  // Harvest
+  harvestReady: boolean
+  harvested: boolean
+  onHarvest: () => void
+  harvestRewards: { beans: number; mazorcas: number }
+
+  // Death (real Tamagotchi)
+  isDead: boolean
+  /** Formatted countdown to death (e.g. "3h 12m"). Empty string if dead/saved. */
+  timeUntilDeath: string
+  /** 0..1 — how close we are to death (1 = dead now). */
+  deathProgress: number
 }
 
 export default function CauaGotchi({
-  health, moisture, sunlight, stageText, treeName,
-  stageEmoji = '🌱', stageId = 0, problem = null,
+  stageId, stageName, treeName,
+  cycleProgress, cycleRemaining,
+  health, moisture, sunlight, problem = null,
+  canCare, nextCareIn, inventory, activeAction,
+  onCare, onTreeTap,
+  harvestReady, harvested, onHarvest, harvestRewards,
+  isDead, timeUntilDeath, deathProgress,
 }: CauaGotchiProps) {
 
-  const renderRetroBar = (value: number, color: string, label: string) => {
-    const blocks = Math.floor(value / 10)
-    const isLow = value < 30
-    return (
-      <div style={{ marginBottom: 10 }}>
-        <div style={{ marginBottom: 3, fontWeight: 'bold', fontSize: 11, display: 'flex', justifyContent: 'space-between' }}>
-          <span>{label}</span>
-          <span style={{ color: isLow ? '#e74c3c' : color }}>{value}%{isLow ? ' ⚠' : ''}</span>
-        </div>
-        <div style={{ display: 'flex', gap: 2 }}>
-          {[...Array(10)].map((_, i) => (
-            <div key={i} style={{
-              width: 12, height: 14,
-              background: i < blocks ? color : '#1a1a1a',
-              border: '1px solid #000',
-              boxShadow: i < blocks ? `0 0 4px ${color}66` : 'none',
-              transition: 'background 0.3s',
-            }} />
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  const pixels = STAGE_PIXELS[stageId] ?? STAGE_PIXELS[0]
   const prob = problem ? PLANT_PROBLEMS[problem] : null
+  // Death overrides every other UI state — no actions, dead overlay everywhere.
+  const showDeathWarning = harvestReady && !harvested && !isDead && deathProgress > 0
+  const lockActions = isDead || harvested
 
   return (
-    <div style={{
-      background: '#040C06',
-      border: `4px solid ${prob ? '#e74c3c' : BRAND.pod}`,
-      borderRadius: 16, padding: 20, marginBottom: 24,
-      fontFamily: "'Courier New', Courier, monospace",
-      color: '#2ecc71',
-      boxShadow: `0 0 20px ${prob ? '#e74c3c44' : BRAND.pod + '44'}, inset 0 0 40px #000`,
-      position: 'relative', overflow: 'hidden',
-      transition: 'border-color 0.5s',
-    }}>
-      {/* CRT Scanlines */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        background: 'linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.25) 50%), linear-gradient(90deg, rgba(255,0,0,0.04), rgba(0,255,0,0.02), rgba(0,0,255,0.04))',
-        backgroundSize: '100% 4px, 3px 100%',
-        pointerEvents: 'none', zIndex: 10,
-      }} />
+    <div style={panelStyle(prob, isDead)}>
 
-      <div style={{ display: 'flex', flexDirection: 'row', gap: 20, flexWrap: 'wrap' }}>
+      {/* Top bar — stage label + tree name + cycle countdown */}
+      <div style={topBarStyle}>
+        <div>
+          <div style={eyebrowStyle}>STAGE {stageId + 1}/8</div>
+          <div style={stageNameStyle}>{stageName}</div>
+        </div>
+        <div style={treeNameStyle}>{treeName}</div>
+      </div>
 
-        {/* Gameboy Screen */}
-        <div style={{
-          background: prob ? '#2a0a0a' : '#8da67f',
-          border: '8px solid #333', borderRadius: 8,
-          width: 200, height: 220,
-          display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center',
-          position: 'relative', flexShrink: 0,
-          transition: 'background 0.5s',
-        }}>
-          {/* Problem overlay */}
-          {prob && (
+      {/* Hero — the LivingTree, with stat orbs floating at left/right */}
+      <div style={heroWrapStyle}>
+        <CycleRing progress={cycleProgress} remaining={cycleRemaining} ready={harvestReady} />
+
+        <div style={treeFrameStyle} onClick={isDead ? undefined : onTreeTap} role={onTreeTap && !isDead ? 'button' : undefined} tabIndex={onTreeTap && !isDead ? 0 : undefined}>
+          <LivingTree
+            stage={stageId}
+            health={health}
+            moisture={moisture}
+            sunlight={sunlight}
+            problem={problem}
+            isDead={isDead}
+          />
+
+          {/* Death badge — overrides problem badge when dead */}
+          {isDead && (
+            <div style={{ ...problemBadgeStyle, background: '#000c', borderColor: '#e74c3c' }}>
+              <span style={{ fontSize: 16 }}>💀</span>
+              <span style={{ fontFamily: FONTS.display, fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', color: '#ff6b6b' }}>
+                MUERTO
+              </span>
+            </div>
+          )}
+
+          {/* Death warning — pulsing red countdown when in maturation window */}
+          {!isDead && showDeathWarning && (
             <motion.div
-              animate={{ opacity: [1, 0.3, 1] }}
-              transition={{ repeat: Infinity, duration: 0.8 }}
+              animate={{ opacity: [1, 0.55, 1] }}
+              transition={{ repeat: Infinity, duration: 1 }}
               style={{
-                position: 'absolute', inset: 0,
-                display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center',
-                background: 'rgba(139,0,0,0.7)', borderRadius: 2,
-                zIndex: 5,
+                ...problemBadgeStyle,
+                background: '#2a0808cc',
+                borderColor: '#e74c3c',
+                top: 'auto', bottom: 10, left: 10, right: 'auto',
               }}
             >
-              <div style={{ fontSize: 48 }}>{prob.emoji}</div>
-              <div style={{ fontSize: 11, color: '#ff6b6b', fontWeight: 'bold', textAlign: 'center', padding: '0 8px', marginTop: 4 }}>
+              <span style={{ fontSize: 16 }}>⏳</span>
+              <span style={{ fontFamily: FONTS.display, fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', color: '#ff6b6b' }}>
+                MUERE EN {timeUntilDeath}
+              </span>
+            </motion.div>
+          )}
+
+          {/* Problem badge — only when alive and a problem is active */}
+          {prob && !isDead && (
+            <motion.div
+              animate={{ opacity: [1, 0.6, 1] }}
+              transition={{ repeat: Infinity, duration: 1.4 }}
+              style={problemBadgeStyle}
+            >
+              <span style={{ fontSize: 16 }}>{prob.emoji}</span>
+              <span style={{ fontFamily: FONTS.display, fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', color: '#ff6b6b' }}>
                 {prob.name.toUpperCase()}
-              </div>
+              </span>
             </motion.div>
           )}
-
-          {/* Pixel art sprite */}
-          {!prob && (
-            <motion.div
-              animate={{ scale: [0.97, 1.04, 0.97] }}
-              transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-              style={{
-                fontFamily: 'monospace', fontSize: 22,
-                lineHeight: 1.2, textAlign: 'center',
-                imageRendering: 'pixelated',
-                filter: 'drop-shadow(0 0 8px rgba(145,166,59,0.4))',
-              }}
-            >
-              {pixels.map((line, i) => (
-                <div key={i}>{line}</div>
-              ))}
-            </motion.div>
-          )}
-
-          {/* Screen bottom labels */}
-          <div style={{
-            position: 'absolute', bottom: 6, left: 6, right: 6,
-            display: 'flex', justifyContent: 'space-between',
-            color: prob ? '#ff4444' : '#1e3810', fontWeight: 900, fontSize: 10,
-          }}>
-            <span>LVL {stageId + 1}</span>
-            <span>{treeName.toUpperCase().slice(0, 10)}</span>
-          </div>
-
-          {/* Stage emoji corner */}
-          <div style={{
-            position: 'absolute', top: 6, right: 6,
-            fontSize: 14,
-          }}>
-            {stageEmoji}
-          </div>
         </div>
 
-        {/* Stats Panel */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 0, zIndex: 2, minWidth: 140 }}>
-          <h2 style={{
-            fontFamily: FONTS.display, fontWeight: 900, fontSize: 24,
-            margin: '0 0 4px', color: BRAND.heirloom,
-            textShadow: `2px 2px 0 ${BRAND.pod}`,
-          }}>
-            CAUA-GOTCHI
-          </h2>
-          <div style={{ fontSize: 11, color: '#aaa', marginBottom: 12 }}>
-            STATUS: <span style={{ color: prob ? '#e74c3c' : BRAND.pod }}>
-              {prob ? `⚠ ${prob.name.toUpperCase()}` : stageText.toUpperCase()}
-            </span>
-          </div>
+        {/* Stat orbs — 3 at right side, vertical */}
+        <div style={orbsColStyle}>
+          <StatOrb icon="❤" value={health}   color="#e74c3c" label="VIDA" />
+          <StatOrb icon="💧" value={moisture} color="#3498db" label="AGUA" />
+          <StatOrb icon="☀" value={sunlight}  color="#f1c84a" label="SOL"  />
+        </div>
+      </div>
 
-          {renderRetroBar(health, '#2ecc71', 'HP')}
-          {renderRetroBar(moisture, '#3498db', 'H₂O')}
-          {renderRetroBar(sunlight, '#f1c40f', 'SUN')}
+      {/* Action row — disabled when dead. Live actions otherwise. */}
+      <div style={actionsWrapStyle}>
+        <ActionButton
+          label="REGAR"
+          icon="💧"
+          color="#3498db"
+          disabled={lockActions || !canCare || activeAction !== null}
+          active={activeAction === 'water'}
+          cooldown={!canCare && !isDead ? nextCareIn : null}
+          onClick={() => !isDead && onCare('water')}
+        />
+        <ActionButton
+          label="SOL"
+          icon="☀"
+          color="#f1c84a"
+          disabled={lockActions || !canCare || activeAction !== null}
+          active={activeAction === 'sunlight'}
+          cooldown={!canCare && !isDead ? nextCareIn : null}
+          onClick={() => !isDead && onCare('sunlight')}
+        />
+      </div>
+
+      {/* Special items — disabled when dead */}
+      <div style={itemsRowStyle}>
+        {(['nutrients', 'pruning', 'molasses'] as const).map((key) => {
+          const item = SPECIAL_ITEMS[key]
+          const count = inventory[key]
+          const empty = count <= 0
+          const action: CareAction = key
+          return (
+            <ItemPill
+              key={key}
+              emoji={item.emoji}
+              label={item.name}
+              count={count}
+              rarity={item.rarity}
+              disabled={lockActions || empty || activeAction !== null}
+              active={activeAction === action}
+              onClick={() => !isDead && onCare(action)}
+            />
+          )
+        })}
+      </div>
+
+      {/* Stage care tip — overridden by death tip when dead */}
+      <div style={tipStyle}>
+        {isDead ? (
+          <span style={{ color: '#e74c3c' }}>
+            💀 Tu árbol murió. Los granos + mazorcas que no cosechaste se queman.
+          </span>
+        ) : (
+          <>
+            <span style={{ color: BRAND.pod }}>💡</span> {careTipFor(stageId, prob)}
+          </>
+        )}
+      </div>
+
+      {/* Daily-care reminder — always visible while alive */}
+      {!isDead && !harvested && (
+        <div style={dailyReminderStyle}>
+          🌱 Cuida tu árbol cada día · Cosecha cada 5 días para mantenerlo vivo · Si muere, los tokens de gameplay se queman.
+        </div>
+      )}
+
+      {/* Harvest CTA — when ready and alive */}
+      {harvestReady && !harvested && !isDead && (
+        <button onClick={onHarvest} style={harvestCtaStyle}>
+          <div style={{ fontSize: 28 }}>🍫</div>
+          <div style={{ flex: 1, textAlign: 'left' }}>
+            <div style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 14, color: BRAND.bgDeep, letterSpacing: '0.1em' }}>
+              COSECHA LISTA · {timeUntilDeath}
+            </div>
+            <div style={{ fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.bgDeep}cc`, marginTop: 2 }}>
+              +{harvestRewards.beans} granos · +{harvestRewards.mazorcas} mazorcas · cosecha antes de que muera
+            </div>
+          </div>
+          <div style={{ fontFamily: FONTS.display, fontWeight: 800, color: BRAND.bgDeep, fontSize: 18 }}>▶</div>
+        </button>
+      )}
+
+      {harvested && !isDead && (
+        <div style={harvestedNoteStyle}>
+          <span style={{ fontSize: 18 }}>🍫✨</span>
+          <span style={{ fontFamily: FONTS.display, fontSize: 11, color: BRAND.mazorca, letterSpacing: '0.12em', fontWeight: 700 }}>
+            COSECHADO — REVISA TU MARKETPLACE
+          </span>
+        </div>
+      )}
+
+      {/* Dead screen — final state. NO refunds (Coinbase onramp policy). */}
+      {isDead && (
+        <div style={deadPanelStyle}>
+          <div style={{ fontSize: 36, textAlign: 'center', marginBottom: 6 }}>💀</div>
+          <div style={{
+            fontFamily: FONTS.display, fontWeight: 900, fontSize: 18,
+            color: '#e74c3c', letterSpacing: '0.08em', textAlign: 'center', marginBottom: 8,
+            textTransform: 'uppercase',
+          }}>
+            Tu árbol murió
+          </div>
+          <p style={{
+            fontFamily: FONTS.body, fontSize: 12, color: `${BRAND.heirloom}cc`,
+            lineHeight: 1.55, textAlign: 'center', margin: '0 0 12px',
+          }}>
+            Pasó la ventana sin cosecha. Los granos + mazorcas que no cosechaste se <strong style={{ color: '#e74c3c' }}>queman</strong>.
+            Como en un Caua-Gotchi real — si no lo cuidas, se muere.
+          </p>
+          <p style={{
+            fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}77`,
+            lineHeight: 1.5, textAlign: 'center', margin: '0 0 10px',
+            paddingTop: 10, borderTop: '1px solid #e74c3c33',
+          }}>
+            <strong style={{ color: `${BRAND.heirloom}aa` }}>Política de fondos:</strong> tu inversión inicial ya fue desplegada
+            al momento de adopción en el esquema 60/30/10 (60% guardián · 30% R&D · 10% comunidad).
+            <strong> No retenemos fondos en custodia</strong> — política compliant con Coinbase onramp.
+            Los tokens son rewards de gameplay, no instrumento financiero.
+          </p>
+          <p style={{
+            fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}88`,
+            lineHeight: 1.5, textAlign: 'center', margin: 0,
+          }}>
+            Adopta otro árbol y cuídalo a diario. Cada 5 días de floración y maduración puedes redimir tokens.
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Sub-components ──────────────────────────────────────────────────
+
+function CycleRing({ progress, remaining, ready }: { progress: number; remaining: string; ready: boolean }) {
+  const size = 56
+  const r = 24
+  const c = 2 * Math.PI * r
+  const dashOff = c * (1 - progress)
+  return (
+    <div style={cycleRingWrapStyle}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: 'block' }}>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={`${BRAND.amazon}`} strokeWidth="3" />
+        <circle
+          cx={size / 2} cy={size / 2} r={r} fill="none"
+          stroke={ready ? BRAND.mazorca : BRAND.pod}
+          strokeWidth="3" strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={dashOff}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          style={{ transition: 'stroke-dashoffset 0.8s ease-out, stroke 0.4s' }}
+        />
+      </svg>
+      <div style={cycleRingLabelStyle}>
+        {ready ? '🍫' : remaining}
+      </div>
+    </div>
+  )
+}
+
+function StatOrb({ icon, value, color, label }: { icon: string; value: number; color: string; label: string }) {
+  const v = Math.max(0, Math.min(100, value))
+  const isLow = v < 30
+  const r = 18
+  const c = 2 * Math.PI * r
+  const dashOff = c * (1 - v / 100)
+  return (
+    <div style={statOrbStyle}>
+      <svg width="44" height="44" viewBox="0 0 44 44">
+        <circle cx="22" cy="22" r={r} fill="none" stroke={`${BRAND.amazon}`} strokeWidth="3" />
+        <circle
+          cx="22" cy="22" r={r} fill="none"
+          stroke={isLow ? '#e74c3c' : color}
+          strokeWidth="3" strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={dashOff}
+          transform="rotate(-90 22 22)"
+          style={{ transition: 'stroke-dashoffset 0.6s ease-out, stroke 0.3s' }}
+        />
+        <text x="22" y="27" textAnchor="middle" fontSize="14" style={{ pointerEvents: 'none' }}>
+          {icon}
+        </text>
+      </svg>
+      <div style={statOrbLabelStyle}>
+        <div style={{ fontFamily: FONTS.display, fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: isLow ? '#e74c3c' : `${BRAND.heirloom}99` }}>
+          {label}
+        </div>
+        <div style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 13, color: isLow ? '#e74c3c' : BRAND.heirloom }}>
+          {Math.round(v)}{isLow ? ' ⚠' : ''}
         </div>
       </div>
     </div>
   )
+}
+
+function ActionButton({
+  label, icon, color, disabled, active, cooldown, onClick,
+}: {
+  label: string; icon: string; color: string;
+  disabled: boolean; active: boolean; cooldown: string | null;
+  onClick: () => void;
+}) {
+  return (
+    <button onClick={onClick} disabled={disabled}
+      style={actionBtnStyle(disabled, active, color)}
+      onMouseDown={(e) => { if (!disabled) (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(1px)' }}
+      onMouseUp={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = '' }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.transform = '' }}
+    >
+      <div style={{ fontSize: 22 }}>{icon}</div>
+      <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 12, letterSpacing: '0.12em' }}>{label}</div>
+      {cooldown && (
+        <div style={{ fontFamily: FONTS.body, fontSize: 9, color: `${BRAND.heirloom}99`, marginTop: 2 }}>
+          ⏱ {cooldown}
+        </div>
+      )}
+    </button>
+  )
+}
+
+function ItemPill({
+  emoji, label, count, rarity, disabled, active, onClick,
+}: {
+  emoji: string; label: string; count: number; rarity: string;
+  disabled: boolean; active: boolean; onClick: () => void;
+}) {
+  const accent = rarity === 'secret' ? BRAND.mazorca : BRAND.pod
+  return (
+    <button onClick={onClick} disabled={disabled} title={`${label} ×${count}`}
+      style={itemPillStyle(disabled, active, accent)}
+    >
+      <span style={{ fontSize: 16 }}>{emoji}</span>
+      <span style={{ fontFamily: FONTS.display, fontSize: 10, fontWeight: 700, color: disabled ? `${BRAND.heirloom}33` : accent, letterSpacing: '0.06em' }}>
+        ×{count}
+      </span>
+    </button>
+  )
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────
+
+function careTipFor(stageId: number, prob: { description: string } | null): ReactNode {
+  if (prob) return prob.description
+  switch (stageId) {
+    case 0: return 'Riega para activar la germinación.'
+    case 1: return 'Vigila — las plagas atacan brotes recién nacidos.'
+    case 2: return 'Si ves manchas oscuras, usa Melaza Orgánica.'
+    case 3: return 'La poda lateral estimula crecimiento vigoroso.'
+    case 4: return 'Aplica nutrientes — la estructura final depende del suelo.'
+    case 5: return 'Las flores son el futuro del cacao. Protégelas.'
+    case 6: return 'Las mazorcas se forman. El hongo es la mayor amenaza.'
+    case 7: return 'Cosecha lista — pulsa para canjear chocolate real.'
+    default: return ''
+  }
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────
+
+const panelStyle = (prob: { name: string } | null, isDead: boolean): CSSProperties => ({
+  background: isDead
+    ? 'linear-gradient(160deg, #1a0a0a 0%, #040c06 100%)'
+    : 'linear-gradient(160deg, #0e1e15 0%, #040c06 100%)',
+  border: `1px solid ${isDead ? '#e74c3c88' : prob ? '#e74c3c66' : `${BRAND.amazon}aa`}`,
+  borderRadius: 20,
+  padding: 'clamp(16px, 3vw, 24px)',
+  boxShadow: isDead
+    ? `0 0 40px #e74c3c33, inset 0 1px 0 ${BRAND.heirloom}11`
+    : prob
+    ? `0 0 32px #e74c3c22, inset 0 1px 0 ${BRAND.heirloom}11`
+    : `0 16px 48px #00000088, inset 0 1px 0 ${BRAND.heirloom}11`,
+  position: 'relative',
+  overflow: 'hidden',
+  transition: 'border-color 0.5s, box-shadow 0.5s',
+})
+
+const dailyReminderStyle: CSSProperties = {
+  marginTop: 8,
+  padding: '8px 12px',
+  background: `${BRAND.pod}10`,
+  border: `1px solid ${BRAND.pod}33`,
+  borderRadius: 10,
+  fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}99`,
+  textAlign: 'center', lineHeight: 1.55,
+}
+
+const deadPanelStyle: CSSProperties = {
+  marginTop: 14,
+  padding: '18px 16px',
+  background: '#2a0a0a',
+  border: '1px solid #e74c3c66',
+  borderRadius: 14,
+  boxShadow: 'inset 0 0 40px #00000066',
+}
+
+const topBarStyle: CSSProperties = {
+  display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+  marginBottom: 14, gap: 12,
+}
+const eyebrowStyle: CSSProperties = {
+  fontFamily: FONTS.display, fontSize: 9, fontWeight: 700,
+  color: BRAND.pod, letterSpacing: '0.22em', marginBottom: 4,
+}
+const stageNameStyle: CSSProperties = {
+  fontFamily: FONTS.display, fontSize: 24, fontWeight: 900,
+  color: BRAND.heirloom, letterSpacing: '0.04em', textTransform: 'uppercase',
+  lineHeight: 1,
+}
+const treeNameStyle: CSSProperties = {
+  fontFamily: FONTS.serif, fontStyle: 'italic',
+  color: BRAND.mazorca, fontSize: 13, letterSpacing: '0.1em',
+  textAlign: 'right',
+}
+
+const heroWrapStyle: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'auto 1fr auto',
+  alignItems: 'center',
+  gap: 'clamp(8px, 2vw, 14px)',
+  marginBottom: 16,
+  position: 'relative',
+}
+
+const cycleRingWrapStyle: CSSProperties = {
+  position: 'relative', width: 56, height: 56,
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+}
+const cycleRingLabelStyle: CSSProperties = {
+  position: 'absolute', inset: 0,
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  fontFamily: FONTS.display, fontSize: 10, fontWeight: 700,
+  color: BRAND.heirloom, letterSpacing: '0.04em',
+  pointerEvents: 'none',
+}
+
+const treeFrameStyle: CSSProperties = {
+  background: 'radial-gradient(ellipse at 50% 100%, #1f3a26 0%, #040C06 70%)',
+  border: `1px solid ${BRAND.amazon}66`,
+  borderRadius: 14,
+  padding: 'clamp(8px, 2vw, 14px)',
+  cursor: 'pointer',
+  minHeight: 280,
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  position: 'relative',
+}
+
+const problemBadgeStyle: CSSProperties = {
+  position: 'absolute', top: 10, left: 10,
+  display: 'inline-flex', alignItems: 'center', gap: 6,
+  background: '#2a0a0acc', backdropFilter: 'blur(6px)',
+  border: '1px solid #e74c3c66',
+  padding: '5px 10px', borderRadius: 999,
+}
+
+const orbsColStyle: CSSProperties = {
+  display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start',
+  flexShrink: 0,
+}
+const statOrbStyle: CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: 8,
+}
+const statOrbLabelStyle: CSSProperties = {
+  display: 'flex', flexDirection: 'column', lineHeight: 1.1,
+}
+
+const actionsWrapStyle: CSSProperties = {
+  display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8,
+}
+const actionBtnStyle = (disabled: boolean, active: boolean, color: string): CSSProperties => ({
+  background: active ? `${color}22` : `${BRAND.amazon}66`,
+  border: `1px solid ${disabled ? `${BRAND.amazon}44` : active ? color : `${color}55`}`,
+  borderRadius: 14, padding: '12px 8px',
+  cursor: disabled ? 'not-allowed' : 'pointer',
+  opacity: disabled ? 0.55 : 1,
+  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+  color: disabled ? `${BRAND.heirloom}66` : BRAND.heirloom,
+  transition: 'transform 0.08s, background 0.2s, border-color 0.2s',
+})
+
+const itemsRowStyle: CSSProperties = {
+  display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginBottom: 12,
+}
+const itemPillStyle = (disabled: boolean, active: boolean, accent: string): CSSProperties => ({
+  background: active ? `${accent}22` : 'transparent',
+  border: `1px solid ${disabled ? `${BRAND.amazon}44` : `${accent}55`}`,
+  borderRadius: 999, padding: '6px 10px',
+  cursor: disabled ? 'not-allowed' : 'pointer',
+  opacity: disabled ? 0.55 : 1,
+  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+  transition: 'all 0.2s',
+})
+
+const tipStyle: CSSProperties = {
+  fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}88`,
+  textAlign: 'center', padding: '6px 0', lineHeight: 1.5,
+  borderTop: `1px solid ${BRAND.amazon}33`,
+  paddingTop: 12,
+}
+
+const harvestCtaStyle: CSSProperties = {
+  width: '100%', marginTop: 14,
+  padding: '14px 16px', borderRadius: 14, border: 'none',
+  background: `linear-gradient(135deg, ${BRAND.mazorca}, #d49018)`,
+  cursor: 'pointer',
+  display: 'flex', alignItems: 'center', gap: 12,
+  boxShadow: `0 0 32px ${BRAND.mazorca}55, inset 0 1px 0 #ffffff44`,
+  animation: 'caua-harvest-pulse 2s ease-in-out infinite',
+}
+const harvestedNoteStyle: CSSProperties = {
+  marginTop: 14,
+  padding: '10px 14px', borderRadius: 999,
+  background: `${BRAND.mazorca}22`, border: `1px solid ${BRAND.mazorca}66`,
+  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
 }

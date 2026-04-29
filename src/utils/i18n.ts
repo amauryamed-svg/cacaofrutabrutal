@@ -52,11 +52,11 @@ const translations = {
                    en: 'Account created! Check your email to confirm.'       },
 
   // ── Marketplace ────────────────────────────────────────────────────────────
-  mkt_eyebrow:   { es: 'Ediciones limitadas · Novel Foods · Regenerativo',
-                   en: 'Limited Editions · Novel Foods · Regenerative'       },
+  mkt_eyebrow:   { es: 'Ediciones limitadas · Origen verificado · Regenerativo',
+                   en: 'Limited Editions · Verified Origin · Regenerative'       },
   mkt_title:     { es: 'MERCADO CAUA',            en: 'CAUA MARKET'          },
-  mkt_desc:      { es: 'Cacao colombiano de origen verificado. Cada compra redistribuye directamente a los Guardianes. Certificado para mercados europeos de Novel Foods.',
-                   en: 'Colombian cacao of verified origin. Each purchase redistributes directly to the Guardians. Certified for European Novel Foods markets.' },
+  mkt_desc:      { es: 'Cacao colombiano de origen verificado on-chain. Cada compra se reparte 60/30/10: 60% al Guardián, 30% a R&D, 10% a comunidad — directo al contrato, sin intermediarios.',
+                   en: 'Colombian cacao of on-chain verified origin. Each purchase splits 60/30/10: 60% to the Guardian, 30% to R&D, 10% to community — direct to the contract, no middlemen.' },
   mkt_all:       { es: 'TODOS',                   en: 'ALL'                  },
   mkt_preorder:  { es: 'PRE-ORDER',               en: 'PRE-ORDER'            },
   mkt_auction:   { es: 'SUBASTA',                 en: 'AUCTION'              },

@@ -29,9 +29,9 @@ export default function Fund() {
       {/* Payment return banner */}
       {status === 'success' && (
         <div style={{
-          position: 'fixed', top: 64, left: 0, right: 0, zIndex: 90,
+          position: 'fixed', top: 'var(--nav-h, 60px)', left: 0, right: 0, zIndex: 90,
           background: `${BRAND.pod}22`, borderBottom: `1px solid ${BRAND.pod}44`,
-          padding: '10px var(--space-page)', display: 'flex', alignItems: 'center', gap: 8,
+          padding: '10px var(--space-page)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
         }}>
           <span>✓</span>
           <span style={{ fontFamily: FONTS.body, fontSize: 13, color: BRAND.pod }}>
@@ -41,9 +41,9 @@ export default function Fund() {
       )}
       {status === 'cancelled' && (
         <div style={{
-          position: 'fixed', top: 64, left: 0, right: 0, zIndex: 90,
+          position: 'fixed', top: 'var(--nav-h, 60px)', left: 0, right: 0, zIndex: 90,
           background: `${BRAND.radioRed}18`, borderBottom: `1px solid ${BRAND.radioRed}33`,
-          padding: '10px var(--space-page)', display: 'flex', alignItems: 'center', gap: 8,
+          padding: '10px var(--space-page)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
         }}>
           <span style={{ fontFamily: FONTS.body, fontSize: 13, color: `${BRAND.radioRed}cc` }}>
             {lang === 'es' ? 'Pago cancelado. Puedes intentarlo de nuevo.' : 'Payment cancelled. You can try again.'}

@@ -5,13 +5,18 @@ import { BRAND, FONTS } from '../utils/constants'
 import { REGION_BIOME, type Region } from '../utils/colombiaGeo'
 import { useCauaBongaWorld, type BongaFarm } from '../hooks/useCauaBongaWorld'
 import { useTokenBalance } from '../hooks/useTokenBalance'
+import { useBreakpoint } from '../hooks/useBreakpoint'
 import ColombiaMap from '../components/ui/ColombiaMap'
 
 export default function CauaBonga() {
   const navigate = useNavigate()
   const { farms, loading } = useCauaBongaWorld()
   const { beans, mazorcas } = useTokenBalance()
+  const { width } = useBreakpoint()
   const [hovered, setHovered] = useState<BongaFarm | null>(null)
+  // Map resizes with the viewport. Was: Math.min(480, window.innerWidth - 80)
+  // computed only once at first render — broke responsive on rotate / resize.
+  const mapSize = Math.max(220, Math.min(480, width - 80))
 
   const goToFinca = (id: number) => navigate(`/caua-bonga/finca/${id}`)
   const goByRegion = (region: Region) => {
@@ -20,10 +25,10 @@ export default function CauaBonga() {
   }
 
   return (
-    <div style={{ background: BRAND.bgDeep, minHeight: '100vh', paddingTop: 80, paddingBottom: 80 }}>
+    <div style={{ background: BRAND.bgDeep, minHeight: '100vh', paddingTop: 'calc(var(--nav-h, 60px) + 12px)', paddingBottom: 'clamp(48px, 8vw, 80px)' }}>
 
       {/* Header */}
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '24px 20px 0', textAlign: 'center', position: 'relative' }}>
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '24px var(--space-page) 0', textAlign: 'center', position: 'relative' }}>
         <p style={{ fontFamily: FONTS.serif, fontStyle: 'italic', color: BRAND.pod, fontSize: 13, letterSpacing: '0.25em', marginBottom: 10 }}>
           mundo cacao fruta brutal
         </p>
@@ -42,29 +47,33 @@ export default function CauaBonga() {
         </p>
       </div>
 
-      {/* HUD — token balance top-right */}
+      {/* HUD — token balance top-right. Anchored to navbar height via --nav-h
+          and tightened on small screens so it never overlaps the page title. */}
       <div style={{
-        position: 'fixed', top: 84, right: 16, zIndex: 50,
+        position: 'fixed',
+        top: 'calc(var(--nav-h, 60px) + 8px)',
+        right: 'clamp(8px, 2vw, 16px)',
+        zIndex: 50,
         background: `${BRAND.bgDark}cc`, backdropFilter: 'blur(8px)',
         border: `1px solid ${BRAND.pod}33`, borderRadius: 12,
-        padding: '8px 14px', display: 'flex', gap: 14,
-        fontFamily: FONTS.display, fontSize: 12, fontWeight: 700, letterSpacing: '0.06em',
+        padding: '6px 10px', display: 'flex', gap: 10,
+        fontFamily: FONTS.display, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em',
       }}>
         <span style={{ color: BRAND.pod }}>🫘 {beans.toFixed(1)}</span>
         <span style={{ color: BRAND.mazorca }}>🌽 {mazorcas}</span>
       </div>
 
       {/* Map */}
-      <div style={{ maxWidth: 560, margin: '24px auto 0', padding: '0 20px', position: 'relative' }}>
+      <div style={{ maxWidth: 560, margin: '24px auto 0', padding: '0 var(--space-page)', position: 'relative' }}>
         <div style={{
           background: `radial-gradient(ellipse at 50% 40%, ${BRAND.amazon}88 0%, ${BRAND.bgDeep} 70%)`,
           borderRadius: 24,
           border: `1px solid ${BRAND.amazon}66`,
-          padding: '24px 16px',
+          padding: 'clamp(16px, 3vw, 24px) clamp(12px, 3vw, 16px)',
           position: 'relative',
         }}>
           <ColombiaMap
-            size={Math.min(480, typeof window !== 'undefined' ? window.innerWidth - 80 : 480)}
+            size={mapSize}
             showAllDepts
             showTerrain
             showLabels
@@ -102,7 +111,7 @@ export default function CauaBonga() {
       </div>
 
       {/* Finca tiles row */}
-      <div style={{ maxWidth: 720, margin: '32px auto 0', padding: '0 20px' }}>
+      <div style={{ maxWidth: 720, margin: '32px auto 0', padding: '0 var(--space-page)' }}>
         <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 10, letterSpacing: '0.25em', color: `${BRAND.heirloom}55`, marginBottom: 12, textAlign: 'center', textTransform: 'uppercase' }}>
           Las 5 fincas
         </div>
@@ -113,8 +122,8 @@ export default function CauaBonga() {
         ) : (
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-            gap: 10,
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(110px, 100%), 1fr))',
+            gap: 'clamp(8px, 2vw, 12px)',
           }}>
             {farms.map(f => {
               const bio = REGION_BIOME[f.region]
@@ -157,7 +166,7 @@ export default function CauaBonga() {
       </div>
 
       {/* Future-features footer */}
-      <div style={{ maxWidth: 560, margin: '40px auto 0', padding: '0 20px', textAlign: 'center' }}>
+      <div style={{ maxWidth: 560, margin: '40px auto 0', padding: '0 var(--space-page)', textAlign: 'center' }}>
         <div style={{
           background: `${BRAND.bgDark}99`, border: `1px dashed ${BRAND.amazon}88`,
           borderRadius: 14, padding: '16px 18px',

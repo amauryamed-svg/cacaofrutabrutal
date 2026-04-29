@@ -34,6 +34,13 @@ export const ROLE_CONFIG: Record<CauaRole, RoleConfig> = {
   },
 }
 
+/**
+ * Precio único de adopción por árbol (USD).
+ * Al pagar via Coinbase onramp, el monto se deploya inmediatamente en el
+ * esquema 60/30/10 — no retenemos fondos en custodia.
+ */
+export const TREE_ADOPTION_PRICE_USD = 3
+
 export const BRAND = {
   heirloom:   '#F7F1EE',
   amazon:     '#1C3B26',

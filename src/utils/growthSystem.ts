@@ -139,6 +139,24 @@ export const CARE_INTERVAL_MS  = CARE_INTERVAL_MIN * 60 * 1000
 /** Threshold para que el árbol esté listo a cosechar (hours). Coincide con stage 7 Maduración. */
 export const HARVEST_HOURS_THRESHOLD = 4.6
 
+/**
+ * Ventana de muerte real (Tamagotchi): tras alcanzar Maduración, el adoptante
+ * tiene este número de horas para cosechar. Si no lo hace, el árbol muere y
+ * los tokens acumulados van al fondo de tecnologías (forfeit).
+ */
+export const DEATH_HOURS_AFTER_MATURITY = 5
+
+/** Vida total del árbol (germinación → muerte si no se cosecha). */
+export const TOTAL_LIFE_HOURS = ADOPTION_HOURS + DEATH_HOURS_AFTER_MATURITY
+
+/**
+ * Negligencia diaria: si pasa este número de horas sin NINGUNA acción de
+ * cuidado, el árbol también muere (regla "se muere al finalizar el día sin
+ * cuidado"). Coexiste con la ventana de Maduración — la primera que se
+ * cumpla mata el árbol.
+ */
+export const NEGLECT_HOURS_LIMIT = 24
+
 export function getStageByHours(hoursSince: number): GrowthStage {
   const sorted = [...GROWTH_STAGES].sort((a, b) => b.hoursThreshold - a.hoursThreshold)
   return sorted.find(s => hoursSince >= s.hoursThreshold) ?? GROWTH_STAGES[0]
@@ -183,6 +201,69 @@ export function getCycleProgress(adoptedAt: Date | string): number {
 /** True cuando el árbol está listo para cosechar (stage Maduración). */
 export function isHarvestReady(adoptedAt: Date | string): boolean {
   return hoursSinceAdoption(adoptedAt) >= HARVEST_HOURS_THRESHOLD
+}
+
+/**
+ * Fecha en la que el árbol muere si no se cosecha. Empieza a contar al
+ * llegar a Maduración (HARVEST_HOURS_THRESHOLD) y dura DEATH_HOURS_AFTER_MATURITY.
+ */
+export function getDeathDeadline(adoptedAt: Date | string): Date {
+  const t = typeof adoptedAt === 'string' ? new Date(adoptedAt) : adoptedAt
+  return new Date(t.getTime() + (HARVEST_HOURS_THRESHOLD + DEATH_HOURS_AFTER_MATURITY) * 3600000)
+}
+
+/**
+ * El árbol está muerto cuando se cumple cualquiera de estas reglas:
+ *   1. Pasó la ventana de Maduración sin haberse cosechado.
+ *   2. Pasaron NEGLECT_HOURS_LIMIT horas desde el último cuidado.
+ * Si fue cosechado (`harvested=true`), nunca muere.
+ */
+export function isTreeDead(
+  adoptedAt: Date | string,
+  lastCaredAt: Date | string | null | undefined,
+  harvested: boolean,
+): boolean {
+  if (harvested) return false
+  // Regla 1: ventana de Maduración expirada sin cosecha.
+  if (Date.now() >= getDeathDeadline(adoptedAt).getTime()) return true
+  // Regla 2: negligencia diaria — 24h sin acción de cuidado.
+  if (lastCaredAt) {
+    const t = typeof lastCaredAt === 'string' ? new Date(lastCaredAt) : lastCaredAt
+    if (Date.now() - t.getTime() >= NEGLECT_HOURS_LIMIT * 3600000) return true
+  }
+  return false
+}
+
+/**
+ * Zona de peligro: el árbol está en Maduración (cosechable) pero NO cosechado
+ * y NO ha muerto todavía. Mostrar countdown rojo y notificar.
+ */
+export function isInDeathDanger(
+  adoptedAt: Date | string,
+  lastCaredAt: Date | string | null | undefined,
+  harvested: boolean,
+): boolean {
+  if (harvested) return false
+  if (isTreeDead(adoptedAt, lastCaredAt, harvested)) return false
+  // Maturation danger
+  if (isHarvestReady(adoptedAt)) return true
+  // Neglect danger — last 4h before 24h cap
+  if (lastCaredAt) {
+    const t = typeof lastCaredAt === 'string' ? new Date(lastCaredAt) : lastCaredAt
+    const hoursSinceCare = (Date.now() - t.getTime()) / 3600000
+    if (hoursSinceCare >= NEGLECT_HOURS_LIMIT - 4) return true
+  }
+  return false
+}
+
+/**
+ * 0..1 — qué tan avanzada está la ventana de muerte. 0 = recién llegó a
+ * Maduración. 1 = muerto justo ahora. Útil para tintar UI con urgencia.
+ */
+export function getDeathProgress(adoptedAt: Date | string): number {
+  const elapsedAfterHarvest = hoursSinceAdoption(adoptedAt) - HARVEST_HOURS_THRESHOLD
+  if (elapsedAfterHarvest < 0) return 0
+  return Math.max(0, Math.min(1, elapsedAfterHarvest / DEATH_HOURS_AFTER_MATURITY))
 }
 
 // ─── ERC-721 metadata helpers ───────────────────────────────────────────

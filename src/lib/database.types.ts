@@ -202,6 +202,11 @@ export interface CacaoTree {
   nft_chain_id: number | null
   nft_mint_tx: string | null
   nft_minted_at: string | null
+  // Death + harvest timestamps — added by migration 036_tree_death_forfeit.sql
+  // `died_at`      → set by the tree-death-forfeit Edge Function
+  // `harvested_at` → set by award-tokens when tree_harvest_share fires
+  died_at: string | null
+  harvested_at: string | null
 }
 
 export interface TreeUpdate {

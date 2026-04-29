@@ -104,7 +104,7 @@ export default function CauaBongaPlot() {
 
       {/* Plot stats bar */}
       <div style={{
-        display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 10,
+        display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100px, 100%), 1fr))', gap: 'clamp(6px, 1.5vw, 10px)',
         marginBottom: 16,
       }}>
         <Stat label="Soil promedio" value={`${Math.round(plot.avg_soil_health)}%`} accent={soilMultiplier(plot.avg_soil_health) >= 1.4 ? '#A1D464' : BRAND.pod} />
@@ -139,10 +139,13 @@ export default function CauaBongaPlot() {
         })}
       </div>
 
-      {/* 3×3 grid */}
+      {/* 3×3 grid — tile gap + padding scale down on narrow viewports */}
       <div style={{
-        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8,
-        background: BRAND.bgDark, padding: 8, borderRadius: 14,
+        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: 'clamp(4px, 1.5vw, 8px)',
+        background: BRAND.bgDark,
+        padding: 'clamp(6px, 2vw, 8px)',
+        borderRadius: 14,
         border: `1px solid ${BRAND.amazon}55`,
       }}>
         {innerIdxs.slice(0, MVP_TILE_COUNT).map(idx => {
@@ -285,7 +288,7 @@ function Tile({ tile, tileIdx, isPending, onPlant, onHarvest, onCare }: {
         <div style={{ fontSize: 9, color: `${BRAND.heirloom}77`, marginTop: 2, fontFamily: FONTS.body }}>
           {remainingMin !== null ? (remainingMin >= 60 ? `${Math.floor(remainingMin / 60)}h ${remainingMin % 60}m` : `${remainingMin}m`) : '...'}
         </div>
-        <div style={{ display: 'flex', gap: 3, marginTop: 5 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 3, marginTop: 5, width: '100%', maxWidth: 90 }}>
           <CareBtn icon="💧" onClick={() => onCare('water')}    disabled={isPending} title="Regar" />
           <CareBtn icon="☀️" onClick={() => onCare('sun')}      disabled={isPending} title="Sol" />
           <CareBtn icon="🌾" onClick={() => onCare('nutrient')} disabled={isPending} title="Nutriente" />
@@ -360,13 +363,13 @@ function PlotShell({ title, children, navigate, guardianId }: {
   guardianId: number
 }) {
   return (
-    <div style={{ background: BRAND.bgDeep, minHeight: '100vh', paddingTop: 80, paddingBottom: 80 }}>
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '16px 20px 0' }}>
+    <div style={{ background: BRAND.bgDeep, minHeight: '100vh', paddingTop: 'calc(var(--nav-h, 60px) + 12px)', paddingBottom: 'clamp(48px, 8vw, 80px)' }}>
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '16px var(--space-page) 0' }}>
         <button onClick={() => navigate(`/caua-bonga/finca/${guardianId}`)} style={backBtn}>
           ← Volver a la finca
         </button>
       </div>
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '14px 20px 0' }}>
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '14px var(--space-page) 0' }}>
         <h1 style={{
           fontFamily: FONTS.display, fontWeight: 900, fontSize: 'clamp(22px,5vw,32px)',
           color: BRAND.heirloom, margin: 0, marginBottom: 18, textTransform: 'uppercase', letterSpacing: '0.06em',

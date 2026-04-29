@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import { useCocoaTrees } from '../hooks/useCocoaTrees'
 import SwipeableTreeCard from '../components/ui/SwipeableTreeCard'
 import TokenReward from '../components/ritual/TokenReward'
-import { BRAND, FONTS, GUARDIANS, TOKEN_RATES } from '../utils/constants'
+import { BRAND, FONTS, GUARDIANS, TOKEN_RATES, TREE_ADOPTION_PRICE_USD } from '../utils/constants'
+import { isTreeDead, isInDeathDanger, isHarvestReady, getStageByHours, hoursSinceAdoption } from '../utils/growthSystem'
 
 type Phase = 'idle' | 'confirming' | 'adopting' | 'done'
 
@@ -12,7 +13,7 @@ export default function Adoptar() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { trees, loading: treesLoading, adoptTree } = useCocoaTrees()
+  const { trees, loading: treesLoading, adoptTree, deleteTree } = useCocoaTrees()
 
   // Deep-link from CauaBonga finca: /adoptar?guardian=2 lands directly on that guardian's card.
   // Resolved at mount via lazy initializer to avoid setState-in-effect cascades.
@@ -68,10 +69,10 @@ export default function Adoptar() {
   }
 
   return (
-    <div style={{ background: '#040C06', minHeight: '100vh', paddingTop: 80 }}>
+    <div style={{ background: '#040C06', minHeight: '100vh', paddingTop: 'calc(var(--nav-h, 60px) + 12px)' }}>
 
       {/* Header */}
-      <div style={{ maxWidth: 640, margin: '0 auto', padding: 'clamp(24px,5vw,40px) 20px 0', textAlign: 'center' }}>
+      <div style={{ maxWidth: 640, margin: '0 auto', padding: 'clamp(20px,5vw,40px) var(--space-page) 0', textAlign: 'center' }}>
         <p style={{ fontFamily: FONTS.serif, fontStyle: 'italic', color: BRAND.pod, fontSize: 13, letterSpacing: '0.25em', marginBottom: 10 }}>
           cacao fruta brutal
         </p>
@@ -87,25 +88,88 @@ export default function Adoptar() {
           <span style={{ color: '#e74c3c' }}>← izquierda</span> para pasar
         </p>
 
-        {/* Adopted trees chips */}
+        {/* Adopted trees chips — color-coded by status:
+              💀 muerto  → rojo + botón × delete
+              ⏳ peligro → mazorca + countdown a cosecha/muerte
+              🍫 cosecha listo → mazorca pulse
+              🌱 saludable → verde pod + stage actual */}
         {!treesLoading && trees.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginBottom: 20 }}>
-            {trees.map(t => (
-              <button key={t.id} onClick={() => navigate(`/tree/${t.id}`)} style={{
-                background: `${BRAND.pod}18`, border: `1px solid ${BRAND.pod}44`,
-                borderRadius: 999, padding: '5px 14px', cursor: 'pointer',
-                fontFamily: FONTS.display, fontWeight: 700, fontSize: 11,
-                color: BRAND.pod, letterSpacing: '0.08em',
-              }}>
-                🌱 {GUARDIANS[t.guardian_id]?.name ?? 'Árbol'} · {t.stage}
-              </button>
-            ))}
+            {trees.map(t => {
+              const harvested = !!t.harvested_at
+              const dead = !!t.died_at || isTreeDead(t.adopted_at, t.last_update_at, harvested)
+              const danger = !dead && !harvested && isInDeathDanger(t.adopted_at, t.last_update_at, harvested)
+              const ready  = !dead && !harvested && isHarvestReady(t.adopted_at)
+              const stage  = getStageByHours(hoursSinceAdoption(t.adopted_at))
+
+              const accent = dead ? '#e74c3c'
+                           : danger ? '#F1A91E'
+                           : harvested ? BRAND.mazorca
+                           : ready ? BRAND.mazorca
+                           : BRAND.pod
+              const icon   = dead ? '💀'
+                           : danger ? '⏳'
+                           : harvested ? '🍫'
+                           : ready ? '🍫'
+                           : '🌱'
+              const label  = dead ? 'Muerto'
+                           : danger ? 'Peligro · cuidar'
+                           : harvested ? 'Cosechado'
+                           : ready ? 'Listo a cosechar'
+                           : stage.name
+
+              return (
+                <div key={t.id} style={{
+                  display: 'inline-flex', alignItems: 'center',
+                  background: `${accent}18`,
+                  border: `1px solid ${accent}${danger || ready ? 'aa' : '66'}`,
+                  borderRadius: 999,
+                  overflow: 'hidden',
+                  transition: 'border-color 0.2s, background 0.2s, box-shadow 0.2s',
+                  boxShadow: (danger || ready) ? `0 0 14px ${accent}55` : 'none',
+                  animation: ready ? 'caua-chip-pulse 1.6s ease-in-out infinite' : 'none',
+                }}>
+                  <button onClick={() => navigate(`/tree/${t.id}`)} style={{
+                    background: 'transparent', border: 'none', cursor: 'pointer',
+                    padding: '5px 12px',
+                    fontFamily: FONTS.display, fontWeight: 700, fontSize: 11,
+                    color: accent, letterSpacing: '0.08em',
+                  }}>
+                    {icon} {GUARDIANS[t.guardian_id]?.name ?? 'Árbol'} · {label}
+                  </button>
+                  {dead && (
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation()
+                        if (!confirm(`¿Devolver el árbol de ${GUARDIANS[t.guardian_id]?.name ?? 'guardián'} a la tierra? Su biomasa nutre el suelo de la próxima generación. Esta acción no se puede deshacer.`)) return
+                        try { await deleteTree(t.id) }
+                        catch (err) { alert(`No se pudo devolver: ${err instanceof Error ? err.message : 'Error desconocido'}`) }
+                      }}
+                      title="Devolver a la tierra · regenerar"
+                      aria-label="Devolver árbol a la tierra"
+                      style={{
+                        background: 'transparent',
+                        border: 'none', borderLeft: `1px solid ${accent}44`,
+                        cursor: 'pointer', padding: '5px 10px',
+                        color: BRAND.pod, fontSize: 13, lineHeight: 1,
+                      }}
+                    >🌱</button>
+                  )}
+                </div>
+              )
+            })}
+            <style>{`
+              @keyframes caua-chip-pulse {
+                0%, 100% { box-shadow: 0 0 14px ${BRAND.mazorca}55; }
+                50%      { box-shadow: 0 0 24px ${BRAND.mazorca}aa; }
+              }
+            `}</style>
           </div>
         )}
       </div>
 
       {/* Main area */}
-      <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 20px clamp(48px,8vw,80px)' }}>
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 var(--space-page) clamp(48px,8vw,80px)' }}>
 
         {tokenReward && <TokenReward beans={tokenReward.beans} mazorcas={tokenReward.mazorcas} />}
 
@@ -125,8 +189,8 @@ export default function Adoptar() {
         {/* Card stack + controls */}
         {phase !== 'done' && (
           <>
-            {/* Card stack */}
-            <div style={{ position: 'relative', height: 520, marginBottom: 20 }}>
+            {/* Card stack — height fluid so short phones (≤568px) don't clip */}
+            <div style={{ position: 'relative', height: 'clamp(420px, 62vh, 540px)', marginBottom: 20 }}>
 
               {/* Background card (next guardian peek) */}
               <div style={{
@@ -154,6 +218,96 @@ export default function Adoptar() {
                 />
               )}
 
+              {/* Confirming overlay — sits ON TOP of the card, centered, so
+                  the user sees clearly what they swiped into. Big emoji + price
+                  + circular CTA. The two buttons (confirm/cancel) live INSIDE
+                  the same card frame so the swipe→action thread is unbroken. */}
+              {phase === 'confirming' && (
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  background: `linear-gradient(160deg, ${BRAND.amazon} 0%, #091a10 50%, ${BRAND.bgDeep} 100%)`,
+                  borderRadius: 24, padding: 'clamp(20px, 4vw, 32px)',
+                  display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', justifyContent: 'space-between',
+                  boxShadow: `inset 0 0 60px ${BRAND.pod}22, 0 0 32px ${BRAND.pod}33`,
+                  border: `1px solid ${BRAND.pod}66`,
+                  animation: 'caua-confirm-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both',
+                }}>
+                  {/* Top: eyebrow */}
+                  <div style={{
+                    fontFamily: FONTS.display, fontWeight: 700, fontSize: 10,
+                    color: BRAND.pod, letterSpacing: '0.25em', textTransform: 'uppercase',
+                  }}>
+                    Confirma tu adopción
+                  </div>
+
+                  {/* Center: emoji + name + region + price */}
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{
+                      fontSize: 'clamp(60px, 14vw, 88px)',
+                      marginBottom: 14,
+                      filter: `drop-shadow(0 12px 24px ${BRAND.pod}55)`,
+                    }}>{guardian.emoji}</div>
+                    <div style={{
+                      fontFamily: FONTS.display, fontWeight: 900,
+                      fontSize: 'clamp(22px, 5vw, 30px)',
+                      color: BRAND.heirloom, letterSpacing: '0.04em',
+                      textTransform: 'uppercase', lineHeight: 1,
+                    }}>{guardian.name}</div>
+                    <div style={{
+                      fontFamily: FONTS.serif, fontStyle: 'italic',
+                      color: BRAND.mazorca, fontSize: 13, marginTop: 4,
+                      letterSpacing: '0.06em',
+                    }}>
+                      {guardian.region} · {guardian.varieties[0]}
+                    </div>
+                    <div style={{
+                      marginTop: 18,
+                      fontFamily: FONTS.display, fontWeight: 900,
+                      fontSize: 'clamp(36px, 9vw, 56px)',
+                      color: BRAND.mazorca, letterSpacing: '-0.01em',
+                      textShadow: `0 4px 24px ${BRAND.mazorca}66`,
+                    }}>
+                      ${TREE_ADOPTION_PRICE_USD}<span style={{ fontSize: 14, color: `${BRAND.heirloom}66`, marginLeft: 6, fontWeight: 700, letterSpacing: '0.16em' }}>USD</span>
+                    </div>
+                    <div style={{
+                      fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}88`,
+                      marginTop: 4, letterSpacing: '0.04em',
+                    }}>🫘 +10 granos · 🌽 +3 mazorcas al adoptar</div>
+                  </div>
+
+                  {/* Bottom: confirm + cancel + tiny disclaimer */}
+                  <div style={{ width: '100%' }}>
+                    <button onClick={confirmAdoption} style={{
+                      width: '100%', padding: '14px',
+                      background: `linear-gradient(135deg, ${BRAND.pod}, ${BRAND.amazon})`,
+                      border: 'none', borderRadius: 999, cursor: 'pointer',
+                      color: BRAND.heirloom,
+                      fontFamily: FONTS.display, fontWeight: 800,
+                      fontSize: 13, letterSpacing: '0.16em', textTransform: 'uppercase',
+                      boxShadow: `0 12px 28px ${BRAND.pod}55`,
+                    }}>
+                      ✓ Adoptar por ${TREE_ADOPTION_PRICE_USD}
+                    </button>
+                    <button onClick={cancelConfirm} style={{
+                      width: '100%', padding: 10, marginTop: 8,
+                      background: 'transparent', border: 'none', cursor: 'pointer',
+                      color: `${BRAND.heirloom}66`,
+                      fontFamily: FONTS.display, fontWeight: 700,
+                      fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase',
+                    }}>
+                      ← Volver
+                    </button>
+                    <div style={{
+                      textAlign: 'center', fontSize: 9, color: `${BRAND.heirloom}55`,
+                      lineHeight: 1.5, marginTop: 6,
+                    }}>
+                      Pago se despliega 60/30/10 vía Coinbase Onramp.
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Adopting overlay */}
               {phase === 'adopting' && (
                 <div style={{
@@ -170,6 +324,12 @@ export default function Adoptar() {
                   </div>
                 </div>
               )}
+              <style>{`
+                @keyframes caua-confirm-in {
+                  0%   { opacity: 0; transform: scale(0.92); }
+                  100% { opacity: 1; transform: scale(1); }
+                }
+              `}</style>
             </div>
 
             {/* Guardian dots */}
@@ -202,47 +362,8 @@ export default function Adoptar() {
               </div>
             )}
 
-            {/* Confirming panel */}
-            {phase === 'confirming' && (
-              <div style={{
-                background: '#0D1A10', border: `1px solid ${BRAND.pod}44`,
-                borderRadius: 14, padding: '20px',
-              }}>
-                <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 10, color: BRAND.pod, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 12 }}>
-                  Confirma tu adopción
-                </div>
-                <p style={{ fontFamily: FONTS.body, color: `${BRAND.heirloom}aa`, fontSize: 13, lineHeight: 1.6, margin: '0 0 4px' }}>
-                  Guardián: <strong style={{ color: BRAND.heirloom }}>{guardian.name}</strong>
-                </p>
-                <p style={{ fontFamily: FONTS.body, color: `${BRAND.heirloom}aa`, fontSize: 13, lineHeight: 1.6, margin: '0 0 4px' }}>
-                  Región: <strong style={{ color: BRAND.heirloom }}>{guardian.region}</strong>
-                </p>
-                <p style={{ fontFamily: FONTS.body, color: `${BRAND.heirloom}aa`, fontSize: 13, lineHeight: 1.6, margin: '0 0 16px' }}>
-                  Variedad: <strong style={{ color: BRAND.pod }}>{guardian.varieties[0]}</strong>
-                </p>
-                <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-                  <button onClick={confirmAdoption} style={{
-                    flex: 2, padding: 13, borderRadius: 10,
-                    background: `${BRAND.pod}22`, border: `1px solid ${BRAND.pod}66`,
-                    color: BRAND.pod, cursor: 'pointer',
-                    fontFamily: FONTS.display, fontWeight: 700, fontSize: 12, letterSpacing: '0.1em', textTransform: 'uppercase',
-                  }}>
-                    ✓ Confirmar adopción
-                  </button>
-                  <button onClick={cancelConfirm} style={{
-                    flex: 1, padding: 13, borderRadius: 10,
-                    background: '#132B1C', border: `1px solid ${BRAND.amazon}66`,
-                    color: `${BRAND.heirloom}66`, cursor: 'pointer',
-                    fontFamily: FONTS.display, fontWeight: 700, fontSize: 12, letterSpacing: '0.1em',
-                  }}>
-                    Cancelar
-                  </button>
-                </div>
-                <div style={{ textAlign: 'center', fontSize: 11, color: BRAND.mazorca }}>
-                  🫘 +10 granos · 🌽 +3 mazorcas al adoptar
-                </div>
-              </div>
-            )}
+            {/* Confirming overlay lives ON the card now (above) — no separate
+                panel below to avoid the disconnected confirm button. */}
           </>
         )}
       </div>

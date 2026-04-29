@@ -42,7 +42,7 @@ export default function Blog() {
     <div style={{
       minHeight: '100vh',
       background: BRAND.bgDeep,
-      paddingTop: 80,
+      paddingTop: 'calc(var(--nav-h, 60px) + 12px)',
     }}>
       {/* Hero */}
       <BlogHero />

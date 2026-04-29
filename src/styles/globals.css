@@ -3,8 +3,13 @@
 
 /* ── Responsive spacing tokens ─────────────────────────────────────────────── */
 :root {
-  --space-page:    clamp(16px, 5vw, 24px);    /* horizontal page padding */
-  --space-section: clamp(48px, 8vw, 100px);   /* vertical section gaps   */
+  --space-page:    clamp(14px, 4.5vw, 32px);  /* horizontal page padding */
+  --space-section: clamp(40px, 8vw, 100px);   /* vertical section gaps   */
+  --nav-h:         60px;                       /* fixed NavBar height     */
+}
+
+@media (min-width: 768px) {
+  :root { --nav-h: 64px; }
 }
 
 * {
@@ -12,6 +17,9 @@
   margin: 0;
   padding: 0;
 }
+
+/* Prevent any hero glow / decorative absolute element from forcing a horizontal scrollbar */
+html, body { overflow-x: hidden; max-width: 100%; }
 
 /* ── Root container ─────────────────────────────────────────────────────────── */
 #root {

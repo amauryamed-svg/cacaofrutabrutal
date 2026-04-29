@@ -7,11 +7,13 @@ import { BRAND, FONTS, GUARDIANS, TOKEN_RATES } from '../utils/constants'
 import CauaGotchi from '../components/dashboard/CauaGotchi'
 import MintTreeButton from '../components/dashboard/MintTreeButton'
 import type { CacaoTree } from '../lib/database.types'
+import type { CSSProperties } from 'react'
 import {
-  PLANT_PROBLEMS, SPECIAL_ITEMS,
+  PLANT_PROBLEMS,
   getStageByHours, getNextCareTime, formatTimeUntil,
   hoursSinceAdoption, getCycleProgress, isHarvestReady,
   ADOPTION_HOURS, CARE_INTERVAL_MIN,
+  getDeathDeadline, isTreeDead, getDeathProgress,
 } from '../utils/growthSystem'
 
 interface Inventory {
@@ -63,6 +65,7 @@ export default function TreeDetail() {
   const comboResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const initializedTree = useRef<string | null>(null)
+  const forfeitFiredRef = useRef(false)
 
   // Inject Press Start 2P (retro pixel font) once on mount
   useEffect(() => {
@@ -161,6 +164,30 @@ export default function TreeDetail() {
     }, 20000)
     return () => clearInterval(check)
   }, [lastCareTime, currentProblem])
+
+  // ── Death forfeit fire-and-forget ──────────────────────────────────
+  // Lives ABOVE the early returns so React's hook count stays consistent
+  // across renders (tree may be null on first paint). All guards inside.
+  useEffect(() => {
+    if (!tree || harvested || forfeitFiredRef.current) return
+    const computedDead = isTreeDead(tree.adopted_at, lastCareTime, harvested)
+    const isDead = !!tree.died_at || computedDead
+    if (!isDead) return
+    forfeitFiredRef.current = true
+    ;(async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session?.access_token) return
+        await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/tree-death-forfeit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+          body: JSON.stringify({ tree_id: tree.id, reason: 'maturation_window_expired_or_neglected' }),
+        })
+      } catch {
+        // Best-effort — server-side cron sweep will catch anything we miss.
+      }
+    })()
+  }, [tree, harvested, lastCareTime])
 
   const triggerEffect = (name: string) => {
     setActiveEffect(name)
@@ -310,15 +337,25 @@ export default function TreeDetail() {
   const cyclePct = getCycleProgress(tree.adopted_at) * 100
   const cycleRemaining = formatTimeUntil(new Date(new Date(tree.adopted_at).getTime() + ADOPTION_HOURS * 3600000))
   const harvestReady = isHarvestReady(tree.adopted_at)
-  const prob = currentProblem ? PLANT_PROBLEMS[currentProblem] : null
+  // PLANT_PROBLEMS lookup happens inside <CauaGotchi /> now; we just pass
+  // the problem id through. The old `prob` variable was used by the device
+  // shell that no longer exists.
   // cycleTick is consumed via the live ticker effect; reference here keeps re-renders in sync
   void cycleTick
 
+  // ── Death (real Tamagotchi) ─────────────────────────────────────────
+  // Two ways to die: Maduración window expired, or 24h without any care.
+  // Server-side died_at (set by tree-death-forfeit Edge Function) is the
+  // source of truth; client-side compute is the fallback for the period
+  // between the death moment and the server processing the forfeit.
+  const computedDead = isTreeDead(tree.adopted_at, lastCareTime, harvested)
+  const dead = !!tree.died_at || computedDead
+  const deathDeadline = getDeathDeadline(tree.adopted_at)
+  const timeUntilDeath = formatTimeUntil(deathDeadline)
+  const deathProgress = getDeathProgress(tree.adopted_at)
+
   return (
     <div style={{ background: BRAND.bgDeep, minHeight: '100vh', paddingBottom: '5rem', position: 'relative', overflow: 'hidden' }}>
-
-      {/* CRT scanline overlay — fixed, low-opacity, decorative */}
-      <div aria-hidden="true" style={crtScanlineStyle} />
 
       {/* Floating damage / heal numbers — emit on doCare, fade up */}
       <div aria-hidden="true" style={floatLayerStyle}>
@@ -353,213 +390,67 @@ export default function TreeDetail() {
         </div>
       )}
 
-      {/* ─── CAUA-GOTCHI HANDHELD DEVICE ─────────────────────────────────
-        Plastic shell, brand strap, LED, embedded screen, hardware keypad.
-        The whole care loop happens here — touch = press a button. */}
-      <div style={deviceOuterStyle}>
-        <div style={deviceShellStyle}>
-
-          {/* Top strap: back · brand · LED status */}
-          <div style={deviceStrapStyle}>
-            <button onClick={() => navigate('/adoptar')} style={strapBackBtnStyle} aria-label="Exit to adoption list">
-              ◀
-            </button>
-            <div style={brandPlateStyle}>
-              <div style={brandPlateInnerStyle}>CAUA‑GOTCHI</div>
-              <div style={brandPlateModelStyle}>MODEL: CACAO V.1</div>
-            </div>
-            <div style={ledStackStyle}>
-              <div style={ledStyle(canCare ? '#2ecc71' : `${BRAND.heirloom}22`, canCare)} title={canCare ? 'Ready' : 'Cooldown'} />
-              <div style={ledStyle(prob ? '#e74c3c' : `${BRAND.heirloom}22`, !!prob)} title={prob ? 'Alert' : 'OK'} />
-              <div style={ledStyle(harvestReady ? BRAND.mazorca : `${BRAND.heirloom}22`, harvestReady)} title={harvestReady ? 'Harvest ready' : 'Growing'} />
-            </div>
+      {/* ─── UNIFIED CAUA-GOTCHI PANEL ──────────────────────────────────
+        Single card with the LivingTree as hero, vital orbs, action row,
+        harvest CTA. All the game logic (combo, crit, problem, harvest,
+        secret molasses) still lives here in TreeDetail; we just hand it
+        down to the panel as props. */}
+      <div style={pageWrapStyle}>
+        {/* Page header — back link + tree name */}
+        <div style={pageHeaderStyle}>
+          <button onClick={() => navigate('/adoptar')} style={backBtnStyle}>
+            ← Volver
+          </button>
+          <div style={comboPillStyle(combo, comboFlash)}>
+            COMBO ×{combo}
           </div>
+        </div>
 
-          {/* Speaker grille — purely decorative plastic detail */}
-          <div style={speakerGrilleStyle} aria-hidden="true">
-            {Array.from({ length: 24 }).map((_, i) => (
-              <div key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: '#0a0a0a' }} />
-            ))}
+        <CauaGotchi
+          stageId={stage.id}
+          stageName={stage.name}
+          treeName={guardian.name}
+          cycleProgress={cyclePct / 100}
+          cycleRemaining={cycleRemaining}
+          health={health}
+          moisture={moisture}
+          sunlight={sunlight}
+          problem={currentProblem}
+          canCare={canCare}
+          nextCareIn={nextCareIn || `${CARE_INTERVAL_MIN}M`}
+          inventory={inventory}
+          activeAction={activeEffect}
+          onCare={doCare}
+          onTreeTap={handleTreeTap}
+          harvestReady={harvestReady}
+          harvested={harvested}
+          onHarvest={doHarvest}
+          harvestRewards={TOKEN_RATES.tree_harvest_share}
+          isDead={dead}
+          timeUntilDeath={timeUntilDeath}
+          deathProgress={deathProgress}
+        />
+
+        {secretFound && (
+          <div style={secretFoundStyle}>
+            🍯✨ <strong style={{ color: BRAND.mazorca }}>Melaza Orgánica</strong> añadida — úsala desde el item secreto.
           </div>
+        )}
 
-          {/* Mini status row — quest + combo as tiny on-device readout */}
-          <div style={deviceStatusRowStyle}>
-            <div style={{ fontFamily: PRESS_START_FONT, fontSize: 7, color: BRAND.mazorca, letterSpacing: '0.1em' }}>
-              ⚔ {harvestReady ? 'HARVEST READY!' : `${cycleRemaining} LEFT`}
-            </div>
-            <div style={{
-              fontFamily: PRESS_START_FONT, fontSize: 9,
-              color: combo > 0 ? BRAND.mazorca : `${BRAND.heirloom}33`,
-              textShadow: combo >= 3 ? `0 0 10px ${BRAND.mazorca}aa` : 'none',
-              transform: comboFlash ? 'scale(1.25)' : 'scale(1)',
-              transition: 'transform 0.18s cubic-bezier(.16,1,.3,1)',
-            }}>
-              COMBO x{combo}
-            </div>
-          </div>
-
-          {/* Embedded screen — the existing CauaGotchi component, styled as the device's CRT */}
-          <div style={deviceScreenMountStyle}>
-            <CauaGotchi
-              health={health} moisture={moisture} sunlight={sunlight}
-              stageText={stage.name} treeName={guardian.name}
-              stageEmoji={stage.emoji} stageId={stage.id}
-              problem={currentProblem}
-            />
-          </div>
-
-          {/* Hardware keypad — A (WATER) · B (SUN) · MENU (handleTreeTap easter egg) */}
-          <div style={keypadStyle}>
-            <DeviceButton
-              label="WATER"
-              hotkey="A"
-              icon="💧"
-              color="#3498db"
-              disabled={!canCare || activeEffect !== null}
-              active={activeEffect === 'water'}
-              onClick={() => doCare('water')}
-              cooldown={!canCare ? (nextCareIn || `${CARE_INTERVAL_MIN}M`) : null}
-            />
-            <DeviceButton
-              label="SUN"
-              hotkey="B"
-              icon="☀️"
-              color="#f1c40f"
-              disabled={!canCare || activeEffect !== null}
-              active={activeEffect === 'sunlight'}
-              onClick={() => doCare('sunlight')}
-              cooldown={!canCare ? (nextCareIn || `${CARE_INTERVAL_MIN}M`) : null}
-            />
-            <DeviceButton
-              label="MENU"
-              hotkey="✺"
-              icon="🍯"
-              color={BRAND.mazorca}
-              disabled={false}
-              active={false}
-              onClick={handleTreeTap}
-              cooldown={null}
-            />
-          </div>
-
-          {/* Special items inventory — compact slot row */}
-          <div style={itemsRowStyle}>
-            {(Object.entries(SPECIAL_ITEMS) as [keyof Inventory, typeof SPECIAL_ITEMS[string]][]).map(([key, item]) => {
-              const count = inventory[key as keyof Inventory]
-              const isEmpty = count === 0
-              return (
-                <button
-                  key={key}
-                  onClick={() => doCare(key as 'nutrients' | 'pruning' | 'molasses')}
-                  disabled={isEmpty || activeEffect !== null}
-                  style={itemSlotStyle(isEmpty, item.rarity === 'secret')}
-                  title={`${item.name} ×${count}`}
-                >
-                  <div style={{ fontSize: 18 }}>{item.emoji}</div>
-                  <div style={{
-                    fontFamily: PRESS_START_FONT, fontSize: 7,
-                    color: count > 0 ? (item.rarity === 'secret' ? BRAND.mazorca : BRAND.pod) : `${BRAND.heirloom}33`,
-                    marginTop: 2,
-                  }}>
-                    ×{count}
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-
-          {/* Stage info ticker — brief care tip rotating into view */}
-          <div style={stageTickerStyle}>
-            <span style={stageTickerLabelStyle}>STAGE {stage.id + 1}/8 · {stage.name.toUpperCase()}</span>
-            <span style={stageTickerTipStyle}>💡 {stage.careTip}</span>
-          </div>
-
-          {/* Conditional state strips inside the device — alerts override below the keypad */}
-          {prob && (
-            <div style={alertStripStyle}>
-              <span style={{ fontSize: 16 }}>{prob.emoji}</span>
-              <div>
-                <div style={{ fontFamily: PRESS_START_FONT, fontSize: 8, color: '#ff6b6b', letterSpacing: '0.08em' }}>
-                  ⚠ {prob.name.toUpperCase()}
-                </div>
-                <div style={{ fontFamily: FONTS.body, fontSize: 11, color: '#ccc', marginTop: 2 }}>
-                  {prob.description}
-                </div>
-              </div>
-            </div>
-          )}
-          {secretFound && (
-            <div style={{ ...alertStripStyle, borderColor: BRAND.mazorca, background: `${BRAND.mazorca}15` }}>
-              <span style={{ fontSize: 16 }}>🍯✨</span>
-              <div>
-                <div style={{ fontFamily: PRESS_START_FONT, fontSize: 8, color: BRAND.mazorca, letterSpacing: '0.08em' }}>
-                  SECRET UNLOCKED
-                </div>
-                <div style={{ fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}cc`, marginTop: 2 }}>
-                  Melaza Orgánica added · use it via 🍯 button
-                </div>
-              </div>
-            </div>
-          )}
-          {harvestReady && !harvested && (
-            <button onClick={doHarvest} disabled={harvesting} style={harvestStripStyle}>
-              <span style={{ fontSize: 22 }}>🍫</span>
-              <span style={{ flex: 1, textAlign: 'left' }}>
-                <div style={{ fontFamily: PRESS_START_FONT, fontSize: 9, color: BRAND.bgDeep, letterSpacing: '0.08em' }}>
-                  {harvesting ? 'HARVESTING…' : 'CLAIM HARVEST'}
-                </div>
-                <div style={{ fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.bgDeep}cc`, marginTop: 2 }}>
-                  +{TOKEN_RATES.tree_harvest_share.beans} granos · +{TOKEN_RATES.tree_harvest_share.mazorcas} mazorcas
-                </div>
-              </span>
-              <span style={{ fontFamily: PRESS_START_FONT, fontSize: 10, color: BRAND.bgDeep }}>▶</span>
-            </button>
-          )}
-          {harvested && (
-            <button onClick={() => navigate('/dashboard')} style={postHarvestStripStyle}>
-              <span style={{ fontSize: 16 }}>🍫✨</span>
-              <span style={{ flex: 1, textAlign: 'left' }}>
-                <div style={{ fontFamily: PRESS_START_FONT, fontSize: 8, color: BRAND.mazorca, letterSpacing: '0.08em' }}>
-                  HARVESTED · CLAIM CHOCOLATE
-                </div>
-              </span>
-              <span style={{ fontFamily: PRESS_START_FONT, fontSize: 9, color: BRAND.mazorca }}>▶</span>
-            </button>
-          )}
-
-          {/* NFT mint mini-row — only shown if KYC + wallet linked OR already minted */}
-          <div style={nftMiniRowStyle}>
-            <MintTreeButton
-              treeId={tree.id}
-              alreadyMintedTokenId={tree.nft_token_id}
-              alreadyMintedContract={tree.nft_contract}
-            />
-          </div>
-
-          {/* Bottom plate — brand mark + cycle progress as a tiny battery-style indicator */}
-          <div style={deviceBottomPlateStyle}>
-            <div style={brandSubMarkStyle}>CACAO FRUTA BRUTAL</div>
-            <div style={batteryWrapStyle} title={`${Math.round(cyclePct)}% growth cycle`}>
-              <div style={batteryFillStyle(cyclePct)} />
-              <div style={batteryNubStyle} />
-            </div>
-          </div>
+        {/* NFT mint row */}
+        <div style={{ marginTop: 16 }}>
+          <MintTreeButton
+            treeId={tree.id}
+            alreadyMintedTokenId={tree.nft_token_id}
+            alreadyMintedContract={tree.nft_contract}
+          />
         </div>
       </div>
 
 
       <style>{`
-        @keyframes fall {
-          0%   { transform: translateY(-20px); opacity: 0; }
-          20%  { opacity: 1; }
-          100% { transform: translateY(60px); opacity: 0; }
-        }
-        @keyframes bounce {
-          0%, 100% { transform: translateY(0); }
-          50%      { transform: translateY(-8px); }
-        }
         @keyframes caua-float-up {
-          0%   { transform: translateY(0)    scale(0.8); opacity: 0; }
+          0%   { transform: translateY(0)     scale(0.8); opacity: 0; }
           15%  { transform: translateY(-12px) scale(1.1); opacity: 1; }
           100% { transform: translateY(-90px) scale(1);   opacity: 0; }
         }
@@ -570,13 +461,9 @@ export default function TreeDetail() {
           85%  { transform: translateX(0);    opacity: 1; }
           100% { transform: translateX(120%); opacity: 0; }
         }
-        @keyframes caua-scanline {
-          0%   { background-position: 0 0; }
-          100% { background-position: 0 4px; }
-        }
-        @keyframes caua-crit-pulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(241,169,30,0); }
-          50%      { box-shadow: 0 0 28px 4px rgba(241,169,30,.6); }
+        @keyframes caua-harvest-pulse {
+          0%, 100% { box-shadow: 0 0 32px ${BRAND.mazorca}55, inset 0 1px 0 #ffffff44; }
+          50%      { box-shadow: 0 0 48px ${BRAND.mazorca}aa, inset 0 1px 0 #ffffff44; }
         }
       `}</style>
     </div>
@@ -584,296 +471,56 @@ export default function TreeDetail() {
 }
 
 
-// ── CAUA-GOTCHI handheld device ──────────────────────────────────────
+// ── Styles ──────────────────────────────────────────────────────────
 
-function DeviceButton({ label, hotkey, icon, color, disabled, active, onClick, cooldown }: {
-  label: string; hotkey: string; icon: string; color: string;
-  disabled: boolean; active: boolean; onClick: () => void; cooldown: string | null
-}) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        position: 'relative',
-        background: active ? color : disabled ? '#1a1a1a' : '#2a2a2a',
-        border: `2px solid ${disabled ? '#444' : color}`,
-        borderRadius: 16,
-        padding: '14px 10px',
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        opacity: disabled ? 0.55 : 1,
-        textAlign: 'center',
-        boxShadow: active
-          ? `0 0 18px ${color}aa, inset 0 -3px 0 ${BRAND.bgDeep}, inset 0 1px 0 #ffffff22`
-          : `inset 0 -3px 0 #000000cc, inset 0 1px 0 #ffffff15`,
-        transition: 'transform 0.08s, background 0.2s, box-shadow 0.2s',
-      }}
-      onMouseDown={(e) => { if (!disabled) {
-        e.currentTarget.style.transform = 'translateY(2px)'
-      } }}
-      onMouseUp={(e) => { e.currentTarget.style.transform = 'none' }}
-      onMouseLeave={(e) => { e.currentTarget.style.transform = 'none' }}
-    >
-      <div style={{
-        position: 'absolute', top: 4, right: 6,
-        fontFamily: PRESS_START_FONT, fontSize: 8,
-        color: disabled ? '#555' : color,
-        border: `1px solid ${disabled ? '#444' : color}`,
-        padding: '1px 4px',
-        borderRadius: 3,
-      }}>
-        {hotkey}
-      </div>
-      <div style={{ fontSize: 22, marginBottom: 4 }}>{icon}</div>
-      <div style={{
-        fontFamily: PRESS_START_FONT, fontSize: 9,
-        color: active ? BRAND.bgDeep : BRAND.heirloom,
-        letterSpacing: '0.06em',
-      }}>
-        {label}
-      </div>
-      {cooldown && (
-        <div style={{
-          fontFamily: PRESS_START_FONT, fontSize: 6,
-          color: `${BRAND.heirloom}77`, marginTop: 3,
-          letterSpacing: '0.04em',
-        }}>
-          CD {cooldown}
-        </div>
-      )}
-    </button>
-  )
+const pageWrapStyle: CSSProperties = {
+  position: 'relative', zIndex: 2,
+  padding: 'calc(var(--nav-h, 60px) + 16px) clamp(12px, 3vw, 24px) 80px',
+  display: 'flex', flexDirection: 'column', gap: 12,
+  maxWidth: 480, margin: '0 auto',
 }
-
-const deviceOuterStyle: React.CSSProperties = {
-  position: 'relative',
-  zIndex: 2,
-  padding: 'clamp(20px, 4vw, 32px) clamp(12px, 3vw, 24px) 80px',
-  display: 'flex', justifyContent: 'center',
+const pageHeaderStyle: CSSProperties = {
+  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
 }
-const deviceShellStyle: React.CSSProperties = {
-  width: '100%',
-  maxWidth: 440,
-  background: 'linear-gradient(160deg, #1a2a1f 0%, #0d1a12 50%, #1a2a1f 100%)',
-  border: `2px solid ${BRAND.amazon}`,
-  borderRadius: 36,
-  padding: 14,
-  boxShadow: [
-    'inset 0 2px 0 #ffffff18',
-    'inset 0 -3px 0 #00000099',
-    '0 24px 60px #000000bb',
-    `0 0 0 1px ${BRAND.amazon}`,
-  ].join(', '),
-  position: 'relative',
-}
-const deviceStrapStyle: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'auto 1fr auto',
-  alignItems: 'center',
-  gap: 10,
-  padding: '8px 12px',
-  background: '#0a0f0c',
-  border: `1px solid ${BRAND.amazon}`,
-  borderRadius: 22,
-  marginBottom: 10,
-  boxShadow: 'inset 0 1px 0 #ffffff10, inset 0 -2px 0 #00000088',
-}
-const strapBackBtnStyle: React.CSSProperties = {
-  background: '#1f2a23',
-  border: `1px solid ${BRAND.amazon}`,
-  color: BRAND.heirloom,
-  width: 32, height: 32,
-  borderRadius: 8,
-  fontFamily: PRESS_START_FONT, fontSize: 10,
+const backBtnStyle: CSSProperties = {
+  background: 'transparent', border: `1px solid ${BRAND.amazon}aa`,
+  color: BRAND.heirloom, padding: '6px 14px', borderRadius: 999,
+  fontFamily: FONTS.display, fontSize: 11, fontWeight: 700, letterSpacing: '0.12em',
   cursor: 'pointer',
-  boxShadow: 'inset 0 1px 0 #ffffff15, inset 0 -2px 0 #000000aa',
 }
-const brandPlateStyle: React.CSSProperties = {
-  textAlign: 'center',
-  background: '#000',
-  border: `1px solid ${BRAND.amazon}`,
-  borderRadius: 6,
-  padding: '5px 8px',
-}
-const brandPlateInnerStyle: React.CSSProperties = {
+const comboPillStyle = (combo: number, flash: boolean): CSSProperties => ({
   fontFamily: PRESS_START_FONT, fontSize: 11,
-  color: BRAND.mazorca,
-  letterSpacing: '0.08em',
-  textShadow: `0 0 8px ${BRAND.mazorca}66`,
-}
-const brandPlateModelStyle: React.CSSProperties = {
-  fontFamily: PRESS_START_FONT, fontSize: 6,
-  color: `${BRAND.heirloom}55`,
-  marginTop: 3,
+  color: combo > 0 ? BRAND.mazorca : `${BRAND.heirloom}33`,
+  textShadow: combo >= 3 ? `0 0 10px ${BRAND.mazorca}aa` : 'none',
+  transform: flash ? 'scale(1.25)' : 'scale(1)',
+  transition: 'transform 0.18s cubic-bezier(.16,1,.3,1)',
   letterSpacing: '0.1em',
-}
-const ledStackStyle: React.CSSProperties = {
-  display: 'flex', gap: 5,
-}
-function ledStyle(color: string, lit: boolean): React.CSSProperties {
-  return {
-    width: 8, height: 8, borderRadius: '50%',
-    background: color,
-    border: `1px solid ${BRAND.bgDeep}`,
-    boxShadow: lit ? `0 0 8px ${color}, 0 0 2px #ffffff66 inset` : 'inset 0 -1px 0 #00000088',
-  }
-}
-const speakerGrilleStyle: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(12, 1fr)',
-  gap: 4,
-  padding: '6px 14px',
-  background: '#050805',
-  borderTop: `1px solid ${BRAND.amazon}`,
-  borderBottom: `1px solid ${BRAND.amazon}`,
-  marginBottom: 8,
-}
-const deviceStatusRowStyle: React.CSSProperties = {
-  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-  padding: '6px 12px',
-  background: '#000',
-  border: `1px solid ${BRAND.amazon}`,
-  borderRadius: 6,
-  marginBottom: 8,
-}
-const deviceScreenMountStyle: React.CSSProperties = {
-  background: '#000',
-  border: `1px solid ${BRAND.amazon}`,
-  padding: 6,
-  borderRadius: 8,
-  marginBottom: 12,
-  boxShadow: 'inset 0 0 22px #000, inset 0 1px 0 #ffffff10',
-}
-const keypadStyle: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: '1fr 1fr 1fr',
-  gap: 8,
-  padding: '10px 4px',
-  marginBottom: 8,
-}
-const itemsRowStyle: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: '1fr 1fr 1fr',
-  gap: 6,
-  padding: '6px 4px',
-  marginBottom: 8,
-}
-function itemSlotStyle(empty: boolean, secret: boolean): React.CSSProperties {
-  const accent = secret ? BRAND.mazorca : BRAND.pod
-  return {
-    background: empty ? '#0a0a0a' : `${accent}11`,
-    border: `1px solid ${empty ? '#333' : `${accent}66`}`,
-    borderRadius: 8,
-    padding: '6px 4px',
-    cursor: empty ? 'not-allowed' : 'pointer',
-    opacity: empty ? 0.4 : 1,
-    boxShadow: 'inset 0 1px 0 #ffffff10, inset 0 -2px 0 #00000088',
-  }
-}
-const stageTickerStyle: React.CSSProperties = {
-  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-  gap: 8, flexWrap: 'wrap',
-  padding: '6px 12px',
-  background: '#0a1410',
-  border: `1px solid ${BRAND.amazon}55`,
-  borderRadius: 6,
-  marginBottom: 8,
-}
-const stageTickerLabelStyle: React.CSSProperties = {
-  fontFamily: PRESS_START_FONT, fontSize: 7,
-  color: BRAND.pod, letterSpacing: '0.1em',
-}
-const stageTickerTipStyle: React.CSSProperties = {
-  fontFamily: FONTS.body, fontSize: 11,
-  color: `${BRAND.heirloom}99`,
-}
-const alertStripStyle: React.CSSProperties = {
-  display: 'flex', alignItems: 'center', gap: 10,
-  padding: '8px 12px',
-  background: '#2a0808',
-  border: '1px solid #e74c3c66',
-  borderRadius: 6,
-  marginBottom: 8,
-}
-const harvestStripStyle: React.CSSProperties = {
-  display: 'flex', alignItems: 'center', gap: 10,
-  width: '100%',
-  padding: '10px 14px',
-  background: `linear-gradient(135deg, ${BRAND.mazorca}, #d49018)`,
-  border: 'none',
-  borderRadius: 8,
-  cursor: 'pointer',
-  marginBottom: 8,
-  boxShadow: `0 0 20px ${BRAND.mazorca}66, inset 0 1px 0 #ffffff44, inset 0 -3px 0 #00000044`,
-}
-const postHarvestStripStyle: React.CSSProperties = {
-  display: 'flex', alignItems: 'center', gap: 10,
-  width: '100%',
-  padding: '8px 12px',
-  background: `${BRAND.mazorca}22`,
-  border: `1px solid ${BRAND.mazorca}66`,
-  borderRadius: 6,
-  cursor: 'pointer',
-  marginBottom: 8,
-}
-const nftMiniRowStyle: React.CSSProperties = {
-  marginBottom: 8,
-}
-const deviceBottomPlateStyle: React.CSSProperties = {
-  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-  padding: '8px 14px',
-  background: '#0a0f0c',
-  border: `1px solid ${BRAND.amazon}`,
-  borderRadius: 22,
-  boxShadow: 'inset 0 1px 0 #ffffff10, inset 0 -2px 0 #00000088',
-  marginTop: 4,
-}
-const brandSubMarkStyle: React.CSSProperties = {
-  fontFamily: PRESS_START_FONT, fontSize: 6,
-  color: `${BRAND.heirloom}44`,
-  letterSpacing: '0.16em',
-}
-const batteryWrapStyle: React.CSSProperties = {
-  position: 'relative',
-  width: 36, height: 14,
-  border: `1px solid ${BRAND.heirloom}55`,
-  borderRadius: 2,
-  padding: 1,
-}
-function batteryFillStyle(pct: number): React.CSSProperties {
-  return {
-    width: `${pct}%`, height: '100%',
-    background: pct > 60 ? BRAND.pod : pct > 25 ? BRAND.mazorca : '#e74c3c',
-    transition: 'width 1s',
-  }
-}
-const batteryNubStyle: React.CSSProperties = {
-  position: 'absolute',
-  right: -4, top: 3,
-  width: 3, height: 6,
-  background: `${BRAND.heirloom}55`,
-  borderRadius: '0 1px 1px 0',
+})
+const secretFoundStyle: CSSProperties = {
+  marginTop: 8,
+  padding: '10px 14px', borderRadius: 12,
+  background: `${BRAND.mazorca}18`, border: `1px solid ${BRAND.mazorca}66`,
+  fontFamily: FONTS.body, fontSize: 12, color: `${BRAND.heirloom}cc`,
+  display: 'flex', alignItems: 'center', gap: 8, lineHeight: 1.5,
 }
 
-// ── Page-level overlays (CRT scanlines, floating damage/heal numbers, achievement toast) ──
+// ── Page-level overlays (floating damage/heal numbers, achievement toast) ──
 
-const crtScanlineStyle: React.CSSProperties = {
-  position: 'fixed', inset: 0, zIndex: 1, pointerEvents: 'none',
-  backgroundImage: `repeating-linear-gradient(0deg, rgba(0,0,0,0.18) 0px, rgba(0,0,0,0.18) 1px, transparent 1px, transparent 4px)`,
-  mixBlendMode: 'multiply',
-  opacity: 0.55,
-}
-const floatLayerStyle: React.CSSProperties = {
+const floatLayerStyle: CSSProperties = {
   position: 'fixed', left: 0, right: 0, bottom: '40%',
   height: 0, zIndex: 50, pointerEvents: 'none',
 }
-const achievementToastStyle: React.CSSProperties = {
-  position: 'fixed', top: 86, right: 16, zIndex: 60,
+const achievementToastStyle: CSSProperties = {
+  position: 'fixed',
+  top: 'calc(var(--nav-h, 60px) + 12px)',
+  right: 'clamp(8px, 2vw, 16px)',
+  left: 'auto',
+  zIndex: 60,
   background: BRAND.bgDark,
   border: `2px solid ${BRAND.mazorca}`,
   padding: '12px 16px',
   display: 'flex', alignItems: 'center', gap: 12,
   boxShadow: `0 0 28px ${BRAND.mazorca}44, inset 0 0 0 2px ${BRAND.bgDeep}`,
   animation: 'caua-toast-in 2.8s cubic-bezier(.16,1,.3,1) forwards',
-  maxWidth: 280,
+  maxWidth: 'min(280px, calc(100vw - 24px))',
 }

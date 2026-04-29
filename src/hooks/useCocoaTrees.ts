@@ -171,5 +171,27 @@ export function useCocoaTrees() {
     return { health, moisture, sunlight }
   }
 
-  return { trees, loading, error, adoptTree, careForTree, fetchUpdatesForTree }
+  /**
+   * Delete a tree row (typically a dead one the user wants out of their list).
+   * RLS on cacao_trees scopes the delete to the owning user — the WHERE in
+   * the supabase client is belt-and-suspenders, the policy is the real lock.
+   * Tokens were already burned by tree-death-forfeit; deleting the row just
+   * removes it from the UI list.
+   */
+  const deleteTree = async (treeId: string): Promise<void> => {
+    const { data: sbUser, error: authErr } = await supabase.auth.getUser()
+    if (authErr || !sbUser.user) throw new Error('Not authenticated')
+
+    const { error: delErr } = await supabase
+      .from('cacao_trees')
+      .delete()
+      .eq('id', treeId)
+      .eq('user_id', sbUser.user.id)
+
+    if (delErr) throw new Error(delErr.message)
+
+    setTrees(prev => prev.filter(t => t.id !== treeId))
+  }
+
+  return { trees, loading, error, adoptTree, careForTree, fetchUpdatesForTree, deleteTree }
 }

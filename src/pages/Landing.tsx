@@ -4,6 +4,10 @@ import { BRAND, FONTS, GUARDIANS } from '../utils/constants'
 import CauaButton from '../components/ui/CauaButton'
 import { useLang } from '../context/LangContext'
 import { makeT } from '../utils/i18n'
+import { useScrollProgress } from '../hooks/useScrollProgress'
+import ScrollDebugOverlay from '../components/landing/ScrollDebugOverlay'
+import CacaoGallery from '../components/landing/CacaoGallery'
+import CauaWordmark from '../components/landing/CauaWordmark'
 
 // Brand icons — thin stroke, ~1.5px, Pod Green — matching brand icon sheet (p.22)
 
@@ -66,46 +70,29 @@ export default function Landing() {
   const { lang } = useLang()
   const T = makeT(lang)
 
+  // Scroll contract — writes --p / --pd to :root for the gallery's Ken Burns
+  // playback. Validated by ?scrollDebug=1 query (overlay reads both vars live).
+  useScrollProgress()
+
+  // The gallery is photos + opacity/transform — works the same on every
+  // device, including mobile and reduced-motion. The component itself
+  // honors reduced-motion by freezing transforms (no rAF needed).
   useEffect(() => { setTimeout(() => setVisible(true), 80) }, [])
 
   return (
-    <div style={{ background: BRAND.bgDeep, minHeight: '100vh' }}>
+    // bgDeep is the page's solid base. The gallery covers it with photos
+    // (with a built-in scrim for legibility). Sections sit at z-index ≥ 1.
+    <div style={{ background: BRAND.bgDeep, minHeight: '100vh', position: 'relative' }}>
+        <ScrollDebugOverlay />
+        <CacaoGallery />
 
       {/* ── Hero ── */}
       <div style={{
         minHeight: '100vh', display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
         padding: 'clamp(80px,12vw,100px) var(--space-page) clamp(48px,8vw,60px)',
-        position: 'relative', overflow: 'hidden',
+        position: 'relative', zIndex: 1, overflow: 'hidden',
       }}>
-
-        {/* Atmospheric radial glow behind hero text */}
-        <div style={{
-          position: 'absolute', top: '30%', left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: 600, height: 600,
-          background: `radial-gradient(ellipse, ${BRAND.pod}08 0%, transparent 70%)`,
-          pointerEvents: 'none',
-        }} />
-
-        {/* Molecular SVG bg */}
-        <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0.05 }}
-          viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          {[...Array(18)].map((_, i) => (
-            <circle key={i} cx={80 + (i * 41) % 660} cy={60 + (i * 57) % 480}
-              r={1.5 + (i % 3)} fill={BRAND.pod} opacity={0.4 + (i % 4) * 0.1}>
-              <animate attributeName="cy"
-                values={`${60+(i*57)%480};${90+(i*57)%480};${60+(i*57)%480}`}
-                dur={`${5+i%3}s`} repeatCount="indefinite" />
-            </circle>
-          ))}
-          {[...Array(8)].map((_, i) => (
-            <line key={`l${i}`}
-              x1={80+(i*41)%660} y1={60+(i*57)%480}
-              x2={80+((i+2)*41)%660} y2={60+((i+2)*57)%480}
-              stroke={BRAND.pod} strokeWidth="0.4" opacity="0.12" />
-          ))}
-        </svg>
 
         <div style={{
           textAlign: 'center', position: 'relative', zIndex: 2,
@@ -114,91 +101,13 @@ export default function Landing() {
           transform: visible ? 'translateY(0)' : 'translateY(48px)',
           transition: 'all 1.4s cubic-bezier(0.16, 1, 0.3, 1)',
         }}>
-          {/* Caúa wordmark — animated entrance.
-              The purple tilde is a cocoa bean that flies in, lands above the "u",
-              and "plants" the rest of the wordmark: each letter strokes-in with a stagger,
-              then fills in. The bean keeps a soft idle pulse forever.
-              Honors prefers-reduced-motion via the stylesheet below. */}
-          <div className="caua-logo-stage" style={{
-            display: 'flex', justifyContent: 'center',
-            marginBottom: 'clamp(24px, 5vw, 56px)',
-          }}>
-            <svg
-              className="caua-logo"
-              viewBox="0 0 234.67 78.01"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-label="caúa"
-              role="img"
-              style={{
-                width: 'clamp(200px, 46vw, 640px)',
-                height: 'auto',
-                display: 'block',
-                filter: `drop-shadow(0 8px 28px ${BRAND.pod}22)`,
-                overflow: 'visible',
-              }}
-            >
-              {/* The bean — purple cocoa seed acting as the diacritic over "u". Animates in first. */}
-              <path
-                className="caua-bean"
-                fill="#911f70"
-                stroke="#911f70"
-                strokeWidth="0"
-                d="M155.3,2.76c.72,1.43.81,3.08.42,4.63-.29,1.12-.58,2.24-1.17,3.17-2.31,3.64-5.39,6.4-10,6.63-1.46.07-3.12.04-3.87-1.52-.73-1.52.04-2.91,1.08-4.03,1.91-2.08,3.09-4.47,3.8-7.2.88-3.38,2.76-4.71,5.77-4.39,1.87.2,3.16,1.09,3.97,2.71h0Z"
-              />
-              {/* Each letter strokes in around the bean's landing point, then fills */}
-              <path className="caua-letter caua-letter-1" fill={BRAND.heirloom} stroke={BRAND.heirloom} strokeWidth="0.5" d="M55.93,32.31l-6.45,3.55c-1.24.68-2.78.5-3.84-.45-1.7-1.51-3.38-2.62-5.04-3.31-2.22-.92-4.82-1.38-7.79-1.38-5.43,0-9.81,1.62-13.17,4.85-3.35,3.24-5.03,7.38-5.03,12.44s1.61,8.93,4.84,12.04,7.47,4.67,12.72,4.67,9.87-1.56,13.29-4.67c1.18-1.07,2.91-1.27,4.22-.37l5.99,4.1c1.69,1.16,1.99,3.59.56,5.06-5.97,6.11-13.87,9.16-23.71,9.16s-18.13-3.01-23.89-9.03C2.88,62.95,0,55.9,0,47.82c0-5.6,1.4-10.75,4.2-15.46s6.7-8.41,11.72-11.11c5.01-2.69,10.61-4.04,16.81-4.04,5.74,0,10.89,1.14,15.47,3.43,3.28,1.64,6.13,3.78,8.56,6.42,1.48,1.61,1.1,4.19-.82,5.24h-.01Z"/>
-              <path className="caua-letter caua-letter-2" fill={BRAND.heirloom} stroke={BRAND.heirloom} strokeWidth="0.5" d="M113,18.71h-8.43s-.03.02-.05.02c-2.38,0-2.47,2.47-2.47,2.47v3.89c-2.58-2.62-5.4-4.59-8.44-5.9-3.05-1.31-6.3-1.97-9.77-1.97-7.54,0-13.94,2.85-19.21,8.56-5.27,5.7-7.91,13.02-7.91,21.95s2.73,15.81,8.18,21.6c5.44,5.79,11.9,8.68,19.37,8.68,3.32,0,6.41-.59,9.26-1.78s5.69-3.13,8.52-5.82v2.91s-.16,3.14,3.14,3.14c.14,0,.16.05.27.06h7.55c1.96,0,3.55-1.59,3.55-3.55V22.26c0-1.96-1.59-3.55-3.55-3.55h-.01ZM98.18,59.97c-3,3.17-6.78,4.75-11.34,4.75s-8.13-1.61-11.15-4.84c-3.02-3.22-4.53-7.33-4.53-12.33s1.48-9.02,4.45-12.19c2.96-3.17,6.69-4.76,11.17-4.76s8.39,1.56,11.39,4.68c3,3.12,4.5,7.19,4.5,12.22s-1.5,9.29-4.5,12.46h0Z"/>
-              <path className="caua-letter caua-letter-3" fill={BRAND.heirloom} stroke={BRAND.heirloom} strokeWidth="0.5" d="M124.04,18.71h7.44c1.99,0,3.61,1.62,3.61,3.61v24.24c0,5.42.38,9.18,1.12,11.29s1.94,3.75,3.59,4.91c1.65,1.17,3.68,1.75,6.1,1.75s4.46-.57,6.15-1.72c1.68-1.15,2.94-2.84,3.75-5.08.61-1.66.91-5.22.91-10.68v-24.71c0-1.99,1.62-3.61,3.61-3.61h7.28c1.99,0,3.61,1.62,3.61,3.61v20.89c0,10.1-.8,17-2.39,20.72-1.95,4.53-4.82,8.01-8.61,10.44s-8.61,3.64-14.45,3.64c-6.34,0-11.47-1.42-15.38-4.25s-6.67-6.78-8.26-11.85c-1.13-3.51-1.7-9.88-1.7-19.13v-20.46c0-1.99,1.62-3.61,3.61-3.61h.01Z"/>
-              <path className="caua-letter caua-letter-4" fill={BRAND.heirloom} stroke={BRAND.heirloom} strokeWidth="0.5" d="M231.11,18.71h-8.43s-.03.02-.05.02c-2.38,0-2.47,2.47-2.47,2.47v3.89c-2.58-2.62-5.4-4.59-8.44-5.9-3.05-1.31-6.3-1.97-9.77-1.97-7.54,0-13.94,2.85-19.21,8.56-5.27,5.7-7.91,13.02-7.91,21.95s2.73,15.81,8.18,21.6c5.44,5.79,11.9,8.68,19.37,8.68,3.32,0,6.41-.59,9.26-1.78s5.69-3.13,8.52-5.82v2.91s-.16,3.14,3.14,3.14c.14,0,.16.05.27.06h7.55c1.96,0,3.55-1.59,3.55-3.55V22.26c0-1.96-1.59-3.55-3.55-3.55h-.01ZM216.29,59.97c-3,3.17-6.78,4.75-11.34,4.75s-8.13-1.61-11.15-4.84c-3.02-3.22-4.53-7.33-4.53-12.33s1.48-9.02,4.45-12.19c2.96-3.17,6.69-4.76,11.17-4.76s8.39,1.56,11.39,4.68c3,3.12,4.5,7.19,4.5,12.22s-1.5,9.29-4.5,12.46h0Z"/>
-            </svg>
+          {/* Caúa wordmark — static here. The animated entrance lives in
+              <AppIntro /> (full-screen splash on first visit). framer-motion
+              tweens the wordmark from the intro position into this hero
+              position via the shared `layoutId` declared inside CauaWordmark. */}
+          <div style={{ marginBottom: 'clamp(24px, 5vw, 56px)' }}>
+            <CauaWordmark variant="hero" />
           </div>
-          <style>{`
-            /* Bean entrance: rolls in from upper-left while spinning + scaling, then settles. */
-            @keyframes caua-bean-arrive {
-              0%   { opacity: 0; transform: translate(-160px, -200px) scale(0.25) rotate(0deg);   }
-              45%  { opacity: 1; }
-              70%  { transform: translate(8px, 6px)   scale(1.18) rotate(680deg);                  }
-              85%  { transform: translate(-2px, -1px) scale(0.94) rotate(710deg);                  }
-              100% { opacity: 1; transform: translate(0, 0)         scale(1)    rotate(720deg);    }
-            }
-            /* Bean idle pulse — soft purple glow that breathes after entrance settles. */
-            @keyframes caua-bean-pulse {
-              0%, 100% { filter: drop-shadow(0 0 0 rgba(145, 31, 112, 0)); }
-              50%      { filter: drop-shadow(0 0 14px rgba(145, 31, 112, 0.5)); }
-            }
-            /* Letters: stroke draws around the silhouette, then the fill blooms in. */
-            @keyframes caua-letter-draw {
-              0%   { stroke-dashoffset: 700; fill-opacity: 0; }
-              55%  { stroke-dashoffset: 0;   fill-opacity: 0; }
-              100% { stroke-dashoffset: 0;   fill-opacity: 1; }
-            }
-            .caua-logo .caua-bean {
-              transform-box: fill-box;
-              transform-origin: center;
-              animation:
-                caua-bean-arrive 1.65s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both,
-                caua-bean-pulse  3.6s ease-in-out 2.4s infinite;
-            }
-            .caua-logo .caua-letter {
-              stroke-dasharray: 700;
-              stroke-dashoffset: 700;
-              fill-opacity: 0;
-              animation: caua-letter-draw 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            }
-            .caua-logo .caua-letter-1 { animation-delay: 1.05s; }
-            .caua-logo .caua-letter-2 { animation-delay: 1.30s; }
-            .caua-logo .caua-letter-3 { animation-delay: 1.55s; }
-            .caua-logo .caua-letter-4 { animation-delay: 1.80s; }
-            @media (prefers-reduced-motion: reduce) {
-              .caua-logo .caua-bean,
-              .caua-logo .caua-letter {
-                animation: none !important;
-                stroke-dashoffset: 0 !important;
-                fill-opacity: 1 !important;
-                opacity: 1 !important;
-              }
-            }
-          `}</style>
 
           {/* Eyebrow — bigger, more breathable */}
           <p style={{
@@ -213,7 +122,7 @@ export default function Landing() {
           {/* Main wordmark-scale hero — bigger min, bigger max, steeper growth */}
           <h1 style={{
             fontFamily: FONTS.display, fontWeight: 900,
-            fontSize: 'clamp(56px, 14vw, 184px)',
+            fontSize: 'clamp(44px, 14vw, 184px)',
             lineHeight: 0.86,
             letterSpacing: '-0.02em', color: BRAND.heirloom,
             textTransform: 'uppercase', margin: '0 0 clamp(8px, 1.5vw, 16px)',
@@ -245,7 +154,8 @@ export default function Landing() {
 
           <p style={{
             fontFamily: FONTS.body, color: `${BRAND.heirloom}70`,
-            fontSize: 16, maxWidth: 480, margin: '0 auto 36px', lineHeight: 1.75,
+            fontSize: 'clamp(14px, 2.4vw, 16px)', maxWidth: 480,
+            margin: '0 auto 36px', lineHeight: 1.75,
           }}>
             {T('land_sub')}<br />
             <span style={{ fontFamily: FONTS.serif, fontStyle: 'italic', color: BRAND.mazorca }}>
@@ -297,7 +207,7 @@ export default function Landing() {
       </div>
 
       {/* ── Guardianes ── */}
-      <div style={{ padding: 'var(--space-section) var(--space-page) clamp(48px,8vw,80px)', maxWidth: 1040, margin: '0 auto' }}>
+      <div style={{ padding: 'var(--space-section) var(--space-page) clamp(48px,8vw,80px)', maxWidth: 1040, margin: '0 auto', position: 'relative', zIndex: 1 }}>
         <div style={{ marginBottom: 48 }}>
           <p style={{
             fontFamily: FONTS.serif, fontStyle: 'italic',
@@ -310,7 +220,7 @@ export default function Landing() {
           }}>{T('land_guardians')}</h2>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(180px, 45%), 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(150px, 100%), 1fr))', gap: 'clamp(10px, 2vw, 16px)' }}>
           {GUARDIANS.map((g, i) => (
             <div key={i} style={{
               background: BRAND.bgCard,
@@ -375,6 +285,7 @@ export default function Landing() {
       {/* ── Value Props ── */}
       <div style={{
         padding: '0 var(--space-page) var(--space-section)', maxWidth: 960, margin: '0 auto',
+        position: 'relative', zIndex: 1,
       }}>
         {/* Section divider */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 48 }}>
@@ -429,6 +340,7 @@ export default function Landing() {
         borderBottom: `1px solid ${BRAND.amazon}33`,
         textAlign: 'center',
         background: `${BRAND.amazon}08`,
+        position: 'relative', zIndex: 1,
       }}>
         <p style={{
           fontFamily: FONTS.serif, fontStyle: 'italic',
@@ -444,9 +356,10 @@ export default function Landing() {
       </div>
 
       {/* ── Únete / CTA final ── */}
-      <div style={{
+      <div id="join" style={{
         padding: 'clamp(48px,8vw,80px) var(--space-page) clamp(64px,10vw,120px)',
         maxWidth: 480, margin: '0 auto', textAlign: 'center',
+        position: 'relative', zIndex: 1,
       }}>
         <p style={{
           fontFamily: FONTS.serif, fontStyle: 'italic',

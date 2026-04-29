@@ -45,8 +45,8 @@ export default function Marketplace() {
   const filtered            = filter === 'all' ? PRODUCTS : PRODUCTS.filter((p: Product) => p.type === filter)
 
   return (
-    <div style={{ background: '#040C06', minHeight: '100vh', paddingTop: 80 }}>
-      <div style={{ maxWidth: 1000, margin: '0 auto', padding: 'clamp(24px,5vw,40px) var(--space-page)' }}>
+    <div style={{ background: '#040C06', minHeight: '100vh', paddingTop: 'calc(var(--nav-h, 60px) + 12px)' }}>
+      <div style={{ maxWidth: 1000, margin: '0 auto', padding: 'clamp(20px,5vw,40px) var(--space-page) clamp(40px,8vw,80px)' }}>
 
         <p style={{
           fontFamily: FONTS.serif, fontStyle: 'italic',
@@ -113,10 +113,10 @@ export default function Marketplace() {
         {/* Crowdfunding bar */}
         <div style={{
           marginTop: 40, background: '#132B1C', border: `1px solid ${BRAND.amazon}66`,
-          borderRadius: 12, padding: 24,
+          borderRadius: 12, padding: 'clamp(16px, 3vw, 24px)',
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
-            <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
+            <div style={{ flex: '1 1 220px', minWidth: 0 }}>
               <div style={{ fontFamily: FONTS.display, fontWeight: 700, color: BRAND.heirloom, fontSize: 14, letterSpacing: '0.08em' }}>
                 CROWDFUNDING · RONDA SEMILLA
               </div>
@@ -124,7 +124,7 @@ export default function Marketplace() {
                 Transparencia total — cada compra impulsa el desarrollo rural
               </div>
             </div>
-            <div style={{ fontFamily: FONTS.display, fontWeight: 900, color: BRAND.pod, fontSize: 24 }}>
+            <div style={{ fontFamily: FONTS.display, fontWeight: 900, color: BRAND.pod, fontSize: 'clamp(20px, 4vw, 24px)' }}>
               23%
             </div>
           </div>

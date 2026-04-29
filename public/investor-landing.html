@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>caúa — Functional Cacao Ecosystem</title>
+<title>caúa — Cacao Platform</title>
 <meta name="description" content="Caúa — plataforma funcional de cacao. Brief para inversores — Series Angel 2025.">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
@@ -30,8 +30,6 @@
 <meta name="twitter:image:alt" content="CACAO FRUTA BRUTAL — biotecnología del cacao colombiano">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=DM+Sans:wght@400;500&family=DM+Mono:wght@400;500&family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
 <!-- Preload hero 3D assets (populated when user uploads). Missing files fail silently. -->
-<link rel="preload" as="fetch" href="/assets/3d/agroforest.glb" type="model/gltf-binary" crossorigin>
-<link rel="preload" as="fetch" href="/assets/3d/hdri/huila-sunrise-1k.hdr" crossorigin>
 
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -57,15 +55,518 @@ body::before{content:'';position:fixed;inset:0;z-index:999;pointer-events:none;o
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size:200px 200px;}
 
-#gl-canvas{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none;}
+/* Static dark backdrop — clean, no animated gallery, no intro video. Hero
+   visual is the rotating chocolate bar (#caua-bar). Mockups section pitches
+   sign-in / web3 / tree adoption with phone-frame previews. */
+body{background:#040C06;}
 #scroll-root{position:relative;z-index:1;}
 
-/* Hero intro video — pre-rendered Hyperframes moment that hands off to the live 3D scene. */
-#hero-intro-video{position:fixed;inset:0;width:100vw;height:100vh;z-index:2;
-  object-fit:cover;pointer-events:none;background:var(--bg);
-  opacity:1;transition:opacity 1.2s var(--enter);}
-#hero-intro-video.fade-out{opacity:0;}
-@media (prefers-reduced-motion: reduce){#hero-intro-video{display:none;}}
+/* Hero intro video moved to the SPA `/app/` (see src/components/landing/AppIntro.tsx).
+   Investor landing stays clean / static — no looping background animation. */
+
+/* ─── Fiat onboarding — for users who never touched crypto. Shows the
+   Coinbase Onramp + Offramp flow in friendly steps + phone mockup. */
+#fiat-flow{
+  padding:clamp(80px,12vw,140px) clamp(24px,5vw,48px);
+  background:linear-gradient(180deg,#040c06 0%,#0a1410 60%,#040c06 100%);
+}
+.ff-head{ max-width:920px; margin:0 auto clamp(48px,7vw,80px); text-align:center; }
+.ff-head h2{ font-family:'Barlow Condensed',sans-serif; font-weight:900;
+  font-size:clamp(36px,7vw,72px); line-height:.95; text-transform:uppercase;
+  letter-spacing:-0.01em; color:var(--ink); margin:14px 0 18px; }
+.ff-head h2 .ac{ color:#0052FF; font-style:italic; font-family:'Cormorant Garamond',serif; font-weight:400; text-transform:none; }
+.ff-head p{ font-family:'DM Sans',sans-serif; font-size:15px; line-height:1.65;
+  color:var(--ink2); max-width:580px; margin:0 auto; }
+.ff-grid{ display:grid; grid-template-columns:1fr 1fr; gap:clamp(24px,4vw,56px);
+  max-width:1200px; margin:0 auto; align-items:center; }
+@media (max-width:900px){ .ff-grid{ grid-template-columns:1fr; max-width:480px; } }
+
+/* Mockup left: Coinbase Onramp pay screen */
+.ff-mockup{ display:flex; justify-content:center; }
+.ff-pay-card{ background:linear-gradient(135deg,#0052FF22,#003EBF22);
+  border:1px solid #0052FF66; border-radius:14px; padding:14px;
+  display:flex; align-items:center; gap:10px; }
+.ff-pay-icon{ width:36px; height:36px; border-radius:8px; background:#0052FF;
+  color:#fff; display:flex; align-items:center; justify-content:center;
+  font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:14px; flex-shrink:0; }
+.ff-pay-meta{ flex:1; min-width:0; }
+.ff-pay-method{ font-family:'Barlow Condensed',sans-serif; font-weight:800;
+  font-size:13px; color:#F7F1EE; letter-spacing:.04em; }
+.ff-pay-fee{ font-family:'DM Mono',monospace; font-size:9px; color:#F7F1EE99;
+  letter-spacing:.08em; margin-top:2px; }
+.ff-amount-row{ background:#0a1410; border:1px solid #1C3B26; border-radius:12px;
+  padding:14px; display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
+.ff-amount-from,.ff-amount-to{ display:flex; flex-direction:column; gap:3px; }
+.ff-amount-label{ font-family:'Barlow Condensed',sans-serif; font-weight:700;
+  font-size:9px; letter-spacing:.18em; color:#F7F1EE66; text-transform:uppercase; }
+.ff-amount-val{ font-family:'Barlow Condensed',sans-serif; font-weight:900;
+  font-size:22px; color:#F7F1EE; line-height:1; }
+.ff-amount-val small{ font-size:11px; color:#F7F1EE99; margin-left:3px; font-weight:700; }
+.ff-arrow{ font-size:18px; color:#0052FF; }
+.ff-route{ display:flex; flex-direction:column; gap:6px; padding:12px 14px;
+  background:#040c06; border:1px solid #1C3B2666; border-radius:10px;
+  font-family:'DM Mono',monospace; font-size:10px; color:#F7F1EEaa;
+  letter-spacing:.06em; }
+.ff-route-step{ display:flex; align-items:center; gap:8px; }
+.ff-route-dot{ width:6px; height:6px; border-radius:50%; background:#0052FF; flex-shrink:0; }
+.ff-onramp-cta{ background:linear-gradient(135deg,#0052FF,#003EBF); color:#fff;
+  padding:11px; border:none; border-radius:10px;
+  font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:11px;
+  letter-spacing:.16em; text-align:center; text-transform:uppercase; margin-top:auto; }
+
+/* Right: 4 friendly steps */
+.ff-steps{ display:flex; flex-direction:column; gap:14px; }
+.ff-step{
+  display:flex; align-items:flex-start; gap:14px; padding:16px 18px;
+  background:#0a1410; border:1px solid #1C3B26aa; border-radius:14px;
+  transition:border-color .25s ease, transform .25s ease;
+}
+.ff-step:hover{ border-color:#0052FF66; transform:translateY(-2px); }
+.ff-step-num{ font-family:'Barlow Condensed',sans-serif; font-weight:900;
+  font-size:24px; color:#0052FF; line-height:1; flex-shrink:0; min-width:32px;}
+.ff-step-meta{ flex:1; min-width:0; }
+.ff-step-title{ font-family:'Barlow Condensed',sans-serif; font-weight:900;
+  font-size:15px; color:var(--ink); text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px; }
+.ff-step-desc{ font-family:'DM Sans',sans-serif; font-size:12px;
+  color:var(--ink2); line-height:1.6; }
+.ff-step-tag{ display:inline-block; margin-top:6px; padding:3px 10px; border-radius:999px;
+  background:#0052FF18; border:1px solid #0052FF44;
+  font-family:'DM Mono',monospace; font-size:9px; color:#0052FF;
+  letter-spacing:.12em; text-transform:uppercase; }
+
+/* Onramp / Offramp split */
+.ff-flows{ max-width:1100px; margin:clamp(36px,5vw,56px) auto 0;
+  display:grid; grid-template-columns:1fr 1fr; gap:clamp(16px,2vw,28px); }
+@media (max-width:700px){ .ff-flows{ grid-template-columns:1fr; max-width:480px; } }
+.ff-flow{ padding:18px 20px; background:#0a1410; border:1px solid #0052FF44;
+  border-radius:14px; }
+.ff-flow-title{ font-family:'Barlow Condensed',sans-serif; font-weight:900;
+  font-size:13px; color:#0052FF; letter-spacing:.16em; text-transform:uppercase; margin-bottom:10px;
+  display:flex; align-items:center; gap:8px; }
+.ff-flow-arrow{ font-family:'DM Mono',monospace; font-size:13px; color:var(--ink);
+  letter-spacing:.04em; line-height:1.6; }
+.ff-flow-arrow strong{ color:#F1A91E; font-weight:700; }
+.ff-flow-note{ margin-top:8px; font-family:'DM Sans',sans-serif; font-size:11px;
+  color:var(--ink3); line-height:1.55; }
+
+.ff-disclaimer{ max-width:800px; margin:clamp(32px,4vw,48px) auto 0; text-align:center;
+  font-family:'DM Sans',sans-serif; font-size:11px; color:var(--ink3); line-height:1.6; }
+
+/* ─── Web3 contracts — 5 deployed contracts on Base Sepolia + cryptobro
+   adoption flow. Pitches the on-chain layer to crypto-native adopters. */
+#web3-stack{
+  padding:clamp(80px,12vw,140px) clamp(24px,5vw,48px);
+  background:linear-gradient(180deg,#040c06 0%,#0a0a14 60%,#040c06 100%);
+  position:relative;
+}
+.w3-head{ max-width:920px; margin:0 auto clamp(48px,7vw,80px); text-align:center; }
+.w3-head h2{ font-family:'Barlow Condensed',sans-serif; font-weight:900;
+  font-size:clamp(36px,7vw,72px); line-height:.95; text-transform:uppercase;
+  letter-spacing:-0.01em; color:var(--ink); margin:14px 0 18px;}
+.w3-head h2 .ac{ color:#8D2679; font-style:italic; font-family:'Cormorant Garamond',serif; font-weight:400; text-transform:none;}
+.w3-head p{ font-family:'DM Sans',sans-serif; font-size:15px; line-height:1.65;
+  color:var(--ink2); max-width:560px; margin:0 auto;}
+.w3-grid{ display:grid; grid-template-columns:1fr 1fr; gap:clamp(24px,4vw,56px);
+  max-width:1200px; margin:0 auto; align-items:center; }
+@media (max-width:900px){ .w3-grid{ grid-template-columns:1fr; max-width:480px; } }
+
+/* Wallet phone mockup — left side */
+.w3-mockup{ display:flex; justify-content:center; }
+.w3-wallet-card{ background:linear-gradient(135deg,#8D267922,#3a153022);
+  border:1px solid #8D267988; border-radius:14px; padding:14px;
+  display:flex; align-items:center; gap:12px; }
+.w3-wallet-icon{ width:38px; height:38px; border-radius:50%;
+  background:linear-gradient(135deg,#F1A91E,#8D2679); display:flex;
+  align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.w3-wallet-meta{ flex:1; min-width:0; }
+.w3-wallet-addr{ font-family:'DM Mono',monospace; font-size:10px; color:#F7F1EE;
+  letter-spacing:.04em; }
+.w3-wallet-net{ font-family:'DM Mono',monospace; font-size:8px; color:#91A63B;
+  letter-spacing:.16em; text-transform:uppercase; margin-top:2px; }
+.w3-nft-card{ background:linear-gradient(160deg,#1C3B26,#091a10);
+  border:1px solid #91A63B66; border-radius:14px; padding:14px;
+  text-align:center; }
+.w3-nft-img{ width:90px; height:90px; margin:0 auto 10px;
+  border-radius:10px; background:radial-gradient(circle at 30% 25%,#a06030,#3a1f0c);
+  display:flex; align-items:center; justify-content:center; font-size:48px;
+  border:2px solid #F1A91E; box-shadow:0 0 20px #F1A91E33; }
+.w3-nft-id{ font-family:'DM Mono',monospace; font-size:9px; color:#F1A91E;
+  letter-spacing:.16em; text-transform:uppercase; }
+.w3-nft-name{ font-family:'Barlow Condensed',sans-serif; font-weight:900;
+  font-size:14px; color:#F7F1EE; text-transform:uppercase; letter-spacing:.04em; margin-top:4px;}
+.w3-cacao-bal{ background:linear-gradient(135deg,#F1A91E22,#583915aa);
+  border:1px solid #F1A91E66; border-radius:12px; padding:12px; text-align:center; }
+.w3-cacao-amount{ font-family:'Barlow Condensed',sans-serif; font-weight:900;
+  font-size:28px; color:#F7F1EE; line-height:1; }
+.w3-cacao-amount small{ font-size:12px; color:#F7F1EE88; margin-left:4px; }
+.w3-cacao-label{ font-family:'Barlow Condensed',sans-serif; font-weight:700;
+  font-size:9px; color:#F1A91E; letter-spacing:.22em; text-transform:uppercase; margin-top:4px;}
+
+/* Contract list — right side */
+.w3-contracts{ display:flex; flex-direction:column; gap:12px; }
+.w3-contract{
+  display:flex; align-items:flex-start; gap:14px; padding:14px 16px;
+  background:#0a0a14; border:1px solid #1C3B26aa; border-radius:12px;
+  transition:border-color .25s ease, transform .25s ease;
+}
+.w3-contract:hover{ border-color:#8D267988; transform:translateY(-2px); }
+.w3-contract-num{ font-family:'DM Mono',monospace; font-size:11px; color:#8D2679;
+  letter-spacing:.16em; padding:6px 10px; border:1px solid #8D267955;
+  border-radius:6px; flex-shrink:0; min-width:36px; text-align:center; font-weight:700; }
+.w3-contract-meta{ flex:1; min-width:0; }
+.w3-contract-name{ font-family:'Barlow Condensed',sans-serif; font-weight:900;
+  font-size:14px; color:var(--ink); text-transform:uppercase; letter-spacing:.05em; }
+.w3-contract-tech{ font-family:'DM Mono',monospace; font-size:10px; color:#91A63B;
+  letter-spacing:.08em; margin-top:2px; }
+.w3-contract-desc{ font-family:'DM Sans',sans-serif; font-size:11px; color:var(--ink2);
+  line-height:1.55; margin-top:6px; }
+.w3-contract-addr{ font-family:'DM Mono',monospace; font-size:9px; color:var(--ink3);
+  letter-spacing:.04em; margin-top:6px; padding-top:6px; border-top:1px solid #1C3B2666;
+  display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.w3-contract-addr a{ color:#F1A91E; text-decoration:none;
+  border:1px solid #F1A91E55; padding:2px 8px; border-radius:4px; font-weight:700;
+  letter-spacing:.1em; transition:background .2s ease; }
+.w3-contract-addr a:hover{ background:#F1A91E22; }
+
+/* Footer row — split + CTAs + chain badge */
+.w3-foot{ max-width:1200px; margin:clamp(36px,5vw,56px) auto 0;
+  display:flex; flex-wrap:wrap; gap:16px; align-items:center; justify-content:center; }
+.w3-chain-badge{ display:inline-flex; align-items:center; gap:8px;
+  padding:8px 16px; border-radius:999px; background:#0052FF22; border:1px solid #0052FF66;
+  font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px;
+  letter-spacing:.16em; color:#0052FF; text-transform:uppercase; }
+.w3-cta{
+  display:inline-flex; align-items:center; gap:8px; padding:11px 22px; border-radius:999px;
+  font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:12px;
+  letter-spacing:.16em; text-decoration:none; text-transform:uppercase;
+  transition:transform .2s ease, box-shadow .2s ease;
+}
+.w3-cta-primary{ background:linear-gradient(135deg,#8D2679,#3a1530); color:#F7F1EE; }
+.w3-cta-primary:hover{ transform:translateY(-2px); box-shadow:0 12px 28px rgba(141,38,121,.4); }
+.w3-cta-secondary{ background:transparent; color:#F1A91E; border:1px solid #F1A91E66; }
+.w3-cta-secondary:hover{ background:#F1A91E11; transform:translateY(-2px); }
+.w3-disclaimer{ max-width:800px; margin:18px auto 0; text-align:center;
+  font-family:'DM Sans',sans-serif; font-size:11px; color:var(--ink3); line-height:1.55; }
+
+/* ─── Investor previews — Growth Dashboard chart + Shopify Cacao Ceremony.
+   Two desktop-style cards side by side, sit between #cta and footer. */
+#investor-previews{
+  padding:clamp(60px,10vw,100px) clamp(24px,5vw,48px) clamp(40px,6vw,80px);
+  background:#040c06;
+}
+.ip-head{ max-width:920px; margin:0 auto clamp(36px,5vw,56px); text-align:center; }
+.ip-head h2{ font-family:'Barlow Condensed',sans-serif; font-weight:900;
+  font-size:clamp(28px,5vw,52px); line-height:1; text-transform:uppercase;
+  letter-spacing:-0.01em; color:var(--ink); margin:14px 0 14px;}
+.ip-head h2 .ac{ color:var(--gold); }
+.ip-head p{ font-family:'DM Sans',sans-serif; font-size:14px; color:var(--ink2);
+  line-height:1.6; max-width:540px; margin:0 auto;}
+.ip-grid{ display:grid; grid-template-columns:1fr 1fr; gap:clamp(20px,3vw,40px); max-width:1200px; margin:0 auto;}
+@media (max-width:900px){ .ip-grid{ grid-template-columns:1fr; max-width:540px; } }
+.ip-card{
+  background:linear-gradient(180deg,#0a1a10 0%,#040c06 100%);
+  border:1px solid #1C3B26aa; border-radius:18px; overflow:hidden;
+  display:flex; flex-direction:column;
+}
+.ip-window{
+  padding:10px 14px; background:#040c06; border-bottom:1px solid #1C3B2666;
+  display:flex; align-items:center; gap:6px;
+  font-family:'DM Mono',monospace; font-size:10px; color:#F7F1EE66; letter-spacing:.1em;
+}
+.ip-window-dots{ display:flex; gap:5px; margin-right:8px; }
+.ip-window-dots span{ width:9px; height:9px; border-radius:50%; }
+.ip-window-dots span:nth-child(1){ background:#e74c3c; }
+.ip-window-dots span:nth-child(2){ background:#f1c84a; }
+.ip-window-dots span:nth-child(3){ background:#2ecc71; }
+.ip-window-url{ flex:1; text-align:center; opacity:.7; }
+.ip-body{ padding:24px; flex:1; }
+.ip-body h3{ font-family:'Barlow Condensed',sans-serif; font-weight:900;
+  font-size:22px; text-transform:uppercase; color:var(--ink); margin:0 0 14px; letter-spacing:.04em; }
+.ip-meta-row{ display:flex; justify-content:space-between; gap:14px; margin-bottom:18px; }
+.ip-stat{ flex:1; }
+.ip-stat-label{ font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:9px;
+  letter-spacing:.22em; color:#91A63B; text-transform:uppercase; }
+.ip-stat-val{ font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:24px;
+  color:var(--ink); margin-top:2px; letter-spacing:-.01em;}
+.ip-stat-val small{ font-size:13px; color:var(--ink2); margin-left:3px; }
+.ip-foot{ padding:14px 24px 22px; border-top:1px solid #1C3B2666; }
+.ip-foot p{ font-family:'DM Sans',sans-serif; font-size:12px; color:var(--ink2);
+  line-height:1.55; margin:0 0 14px; }
+.ip-cta{
+  display:inline-flex; align-items:center; gap:8px; padding:9px 18px; border-radius:999px;
+  background:linear-gradient(135deg,#F1A91E,#583915); color:#040c06;
+  font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:11px;
+  letter-spacing:.16em; text-decoration:none; text-transform:uppercase;
+  transition:transform .2s ease, box-shadow .2s ease;
+}
+.ip-cta:hover{ transform:translateY(-2px); box-shadow:0 12px 28px rgba(241,169,30,.3); }
+/* Growth chart — inline SVG line chart, simple area fill */
+.ip-chart{ width:100%; height:160px; display:block; }
+/* Shopify product preview */
+.ip-product{ display:flex; gap:16px; align-items:center; }
+.ip-product-img{
+  width:88px; height:88px; flex-shrink:0; border-radius:10px;
+  background:radial-gradient(circle at 30% 25%, #e8a132 0%, #8b3f1c 60%, #4a1f0c 100%);
+  display:flex; align-items:center; justify-content:center; font-size:46px;
+  border:1px solid #1C3B26aa;
+}
+.ip-product-meta{ flex:1; }
+.ip-product-name{ font-family:'Barlow Condensed',sans-serif; font-weight:900;
+  font-size:18px; text-transform:uppercase; color:var(--ink); letter-spacing:.04em; }
+.ip-product-tag{ font-family:'Cormorant Garamond',serif; font-style:italic;
+  font-size:13px; color:var(--gold); margin-top:2px; }
+.ip-product-price{ font-family:'Barlow Condensed',sans-serif; font-weight:900;
+  font-size:22px; color:#91A63B; margin-top:8px; }
+.ip-product-price small{ font-size:11px; color:var(--ink2); margin-left:6px; font-weight:700;}
+.ip-discount-row{
+  margin-top:14px; padding:10px 14px; border-radius:10px;
+  background:#91A63B14; border:1px solid #91A63B55;
+  font-family:'DM Sans',sans-serif; font-size:11px; color:var(--ink); line-height:1.55;
+}
+.ip-discount-row strong{ color:#91A63B; }
+
+/* ─── App mockups — 3 phone-frame previews of /app/ flows ──────────────
+   Mocks: Adopt / Nurture / Earn. Each phone has a real-screen-style content
+   block + caption + CTA linking to the live SPA route. */
+#app-mockups{
+  padding:clamp(80px,12vw,140px) clamp(24px,5vw,48px);
+  background:linear-gradient(180deg,#040c06 0%,#0a1a10 60%,#040c06 100%);
+}
+.app-mockups-head{ max-width:920px; margin:0 auto clamp(48px,7vw,80px); text-align:center; }
+.app-mockups-head .sec-idx{ margin-bottom:14px; }
+.app-mockups-head h2{ font-family:'Barlow Condensed',sans-serif; font-weight:900;
+  font-size:clamp(36px,7vw,72px); line-height:.95; text-transform:uppercase;
+  letter-spacing:-0.01em; color:var(--ink); margin:0 0 18px;}
+.app-mockups-head h2 .ac{ color:var(--gold); }
+.app-mockups-head p{ font-family:'DM Sans',system-ui,sans-serif; font-size:15px;
+  line-height:1.65; color:var(--ink2); max-width:520px; margin:0 auto;}
+.app-mockups-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:clamp(16px,2.5vw,32px); max-width:1280px; margin:0 auto;}
+@media (max-width:1100px){ .app-mockups-grid{ grid-template-columns:repeat(2,1fr); max-width:640px; } }
+@media (max-width:600px){  .app-mockups-grid{ grid-template-columns:1fr; gap:60px; max-width:380px; } }
+.app-mockup{ display:flex; flex-direction:column; align-items:center; gap:24px; }
+/* Phone frame */
+.phone{
+  position:relative; width:240px; height:480px; border-radius:38px;
+  background:linear-gradient(160deg,#1a1a1a 0%,#0a0a0a 100%);
+  border:1px solid #2a2a2a; padding:10px;
+  box-shadow:0 24px 60px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.06);
+}
+.phone-notch{
+  position:absolute; top:18px; left:50%; transform:translateX(-50%);
+  width:80px; height:22px; background:#000; border-radius:14px; z-index:3;
+}
+.phone-screen{
+  position:relative; width:100%; height:100%; border-radius:30px; overflow:hidden;
+  background:#040C06; padding:42px 14px 14px;
+  display:flex; flex-direction:column; gap:10px;
+}
+.phone-status{ font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.18em;
+  color:#F7F1EE55; text-transform:uppercase; display:flex; justify-content:space-between; padding:0 8px;}
+/* Phone screen blocks — generic */
+.ps-card{ background:#132B1C; border:1px solid #1C3B26aa; border-radius:14px; padding:14px; }
+.ps-eyebrow{ font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:9px;
+  letter-spacing:.22em; color:#91A63B; text-transform:uppercase; }
+.ps-title{ font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:14px;
+  color:#F7F1EE; text-transform:uppercase; letter-spacing:.05em; margin:4px 0 6px; }
+.ps-sub{ font-family:'DM Sans',sans-serif; font-size:10px; color:#F7F1EE99; line-height:1.5; }
+.ps-tag{ display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:999px;
+  background:#91A63B20; border:1px solid #91A63B55; font-family:'Barlow Condensed',sans-serif;
+  font-weight:700; font-size:9px; letter-spacing:.08em; color:#91A63B; }
+/* Card 1 — ADOPT */
+.ps-adopt-card{
+  flex:1; border-radius:18px; padding:18px;
+  background:linear-gradient(160deg,#1C3B26 0%,#091a10 50%,#040c06 100%);
+  border:1px solid #1C3B26; display:flex; flex-direction:column; justify-content:space-between;
+  position:relative; overflow:hidden;
+}
+.ps-adopt-emoji{ font-size:64px; text-align:center; filter:drop-shadow(0 8px 20px rgba(241,169,30,.3)); }
+.ps-adopt-map{ display:block; width:120px; height:auto; margin:6px auto 4px; filter:drop-shadow(0 4px 12px rgba(241,169,30,.25)); }
+.ps-adopt-map .pin{ animation:ps-pin-pulse 2s ease-in-out infinite; transform-origin:center; transform-box:fill-box; }
+@keyframes ps-pin-pulse{
+  0%,100%{ r:3;   opacity:.5; }
+  50%    { r:5.5; opacity:0;  }
+}
+.ps-adopt-name{ font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:24px;
+  text-transform:uppercase; color:#F7F1EE; text-align:center; letter-spacing:.04em;}
+.ps-adopt-region{ font-family:'Cormorant Garamond',serif; font-style:italic; font-size:13px;
+  color:#F1A91Ecc; text-align:center; }
+.ps-adopt-swipe{ display:flex; justify-content:space-between; padding:0 6px; margin-top:auto;
+  font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10px; letter-spacing:.12em; }
+.ps-adopt-swipe span:first-child{ color:#e74c3c88; }
+.ps-adopt-swipe span:last-child{  color:#2ecc7188; }
+/* Card 2 — NURTURE */
+.ps-tree-frame{
+  flex:1; background:radial-gradient(ellipse at 50% 100%,#1f3a26 0%,#040C06 70%);
+  border-radius:14px; padding:12px;
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  border:1px solid #1C3B26; position:relative;
+}
+.ps-tree-svg{ flex:1; display:flex; align-items:center; justify-content:center; min-height:120px;}
+.ps-orbs{ display:flex; gap:6px; justify-content:center; }
+.ps-orb{ width:30px; height:30px; border-radius:50%; border:2px solid;
+  display:flex; align-items:center; justify-content:center; font-size:11px;
+  font-family:'Barlow Condensed',sans-serif; font-weight:800;}
+.ps-orb-hp{ border-color:#e74c3c; color:#e74c3c; background:#e74c3c10; }
+.ps-orb-h2o{ border-color:#3498db; color:#3498db; background:#3498db10; }
+.ps-orb-sun{ border-color:#f1c84a; color:#f1c84a; background:#f1c84a10; }
+.ps-actions{ display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:0 6px; }
+.ps-action{ padding:8px; border-radius:10px; background:#1C3B2666; border:1px solid #91A63B55;
+  font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10px;
+  color:#F7F1EE; text-align:center; letter-spacing:.1em;}
+/* Card 4 — RITUAL */
+.ps-tarot{
+  flex:1; padding:14px;
+  background:linear-gradient(160deg,#1a0a1f 0%,#3a1530 60%,#040c06 100%);
+  border:1px solid #8D267988; border-radius:14px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+  position:relative; overflow:hidden;
+}
+.ps-tarot::before{
+  content:''; position:absolute; inset:-30%;
+  background:radial-gradient(circle at 50% 40%, rgba(241,169,30,.18) 0%, transparent 60%);
+  pointer-events:none;
+}
+.ps-card-art{
+  width:90px; height:130px; border-radius:8px;
+  background:linear-gradient(160deg,#583915 0%,#3a1f0c 100%);
+  border:2px solid #F1A91E; padding:8px;
+  display:flex; flex-direction:column; align-items:center; justify-content:space-between;
+  position:relative; z-index:1;
+  box-shadow:0 8px 24px rgba(0,0,0,.5), inset 0 0 16px rgba(241,169,30,.15);
+}
+.ps-card-art-frame{
+  width:100%; height:100%; border:1px solid #F1A91E66;
+  border-radius:4px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  font-family:'Cormorant Garamond',serif; color:#F1A91E;
+}
+.ps-card-art-symbol{ font-size:32px; line-height:1; margin-bottom:6px; }
+.ps-card-art-name{ font-size:8px; letter-spacing:.18em; text-transform:uppercase; font-weight:700; }
+.ps-streak{
+  display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:999px;
+  background:#F1A91E18; border:1px solid #F1A91E55;
+  font-family:'Barlow Condensed',sans-serif; font-weight:700;
+  font-size:10px; letter-spacing:.1em; color:#F1A91E;
+  position:relative; z-index:1;
+}
+/* Card 3 — EARN */
+.ps-balance{ background:linear-gradient(135deg,#F1A91E22,#583915aa); border:1px solid #F1A91E66;
+  border-radius:14px; padding:14px; }
+.ps-balance-label{ font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:9px;
+  letter-spacing:.22em; color:#F1A91E; text-transform:uppercase; }
+.ps-balance-amount{ font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:30px;
+  color:#F7F1EE; margin:6px 0 2px; letter-spacing:-.01em;}
+.ps-balance-amount small{ font-size:13px; color:#F7F1EE88; font-weight:700; margin-left:4px;}
+.ps-balance-sub{ font-family:'DM Sans',sans-serif; font-size:10px; color:#F7F1EEcc; }
+.ps-tx-row{ display:flex; align-items:center; gap:8px; padding:8px 10px; border-bottom:1px solid #1C3B2666; }
+.ps-tx-row:last-child{ border-bottom:none; }
+.ps-tx-icon{ width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px;
+  background:#91A63B22; border:1px solid #91A63B55; }
+.ps-tx-meta{ flex:1; }
+.ps-tx-title{ font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px; color:#F7F1EE; letter-spacing:.06em; }
+.ps-tx-sub{ font-family:'DM Sans',sans-serif; font-size:9px; color:#F7F1EE66; margin-top:1px;}
+.ps-tx-amt{ font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:13px; color:#91A63B;}
+.ps-connect{ margin-top:auto; padding:10px; border-radius:10px;
+  background:linear-gradient(135deg,#91A63B,#1C3B26); color:#040C06;
+  font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:11px;
+  letter-spacing:.14em; text-align:center; text-transform:uppercase; border:none;}
+/* Mockup caption + CTA */
+.app-mockup-meta{ text-align:center; max-width:240px; }
+.app-mockup-meta .sec-idx{ margin-bottom:8px; color:#F1A91E; }
+.app-mockup-title{ font-family:'Barlow Condensed',sans-serif; font-weight:900;
+  font-size:22px; line-height:1; color:#F7F1EE; text-transform:uppercase;
+  margin:0 0 10px; letter-spacing:.02em;}
+.app-mockup-desc{ font-family:'DM Sans',sans-serif; font-size:13px; line-height:1.55;
+  color:#F7F1EE99; margin:0 0 18px;}
+.app-mockup-cta{
+  display:inline-flex; align-items:center; gap:8px; padding:11px 22px; border-radius:999px;
+  background:linear-gradient(135deg,#91A63B,#1C3B26); color:#F7F1EE;
+  font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:12px;
+  letter-spacing:.16em; text-decoration:none; text-transform:uppercase;
+  transition:transform .2s ease, box-shadow .2s ease;
+}
+.app-mockup-cta:hover{ transform:translateY(-2px); box-shadow:0 12px 28px rgba(145,166,59,.3); }
+
+/* ─── Chocolate bar entry — 3D rotating tablet with backlight ──────────
+   The user's first visible element. Pure CSS 3D — six faces composed via
+   transform-style:preserve-3d, no Three.js. Backlight is a blurred radial
+   gradient that pulses warm-gold ↔ leaf-green to suggest the cacao→chocolate
+   transmutation. */
+#caua-bar-entry{
+  position:relative; min-height:100vh;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:clamp(28px,5vw,56px); padding:clamp(80px,10vw,120px) 24px;
+  background:radial-gradient(ellipse at 50% 45%, #0e1e15 0%, #040c06 70%);
+  text-align:center;
+}
+/* Chocolate bar — Three.js 3D scene mounted in #caua-bar-3d via
+   /chocolate-bar-3d.js. Container is portrait to fit the bar's 6×12 ratio.
+   Backed by a radial cosmic-criollo glow that pulses behind the canvas. */
+.caua-bar-stage{
+  position:relative;
+  width:clamp(280px,42vw,460px); height:clamp(380px,55vw,640px);
+  display:flex; align-items:center; justify-content:center;
+}
+.caua-bar-glow{
+  position:absolute; inset:-20% -15%;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(241,169,30,0.40) 0%, rgba(145,166,59,0.20) 30%, transparent 65%),
+    radial-gradient(circle at 50% 70%, rgba(141,38,121,0.32) 0%, rgba(141,38,121,0.10) 35%, transparent 60%);
+  filter:blur(60px); pointer-events:none;
+  animation:caua-bar-glow 6s ease-in-out infinite;
+}
+@keyframes caua-bar-glow{
+  0%,100%{ opacity:.55; transform:scale(1); }
+  50%    { opacity:.95; transform:scale(1.10); }
+}
+#caua-bar-3d{
+  position:relative; z-index:1;
+  width:100%; height:100%;
+  display:block;
+}
+#caua-bar-3d canvas{ display:block; width:100%; height:100%; }
+@media (prefers-reduced-motion:reduce){
+  .caua-bar-glow{ animation:none; opacity:.85; }
+}
+.caua-bar-headline{
+  position:relative; max-width:820px; padding:0 16px;
+  font-family:'Barlow Condensed',sans-serif; font-weight:900;
+  font-size:clamp(32px,6vw,64px); line-height:.95; letter-spacing:-0.01em;
+  text-transform:uppercase; color:#F7F1EE; text-align:center;
+  text-shadow:0 4px 24px rgba(0,0,0,0.55);
+  margin:0;
+}
+.caua-bar-headline .ac{ color:#F1A91E; font-style:italic; font-family:'Cormorant Garamond',serif; font-weight:400; text-transform:none; }
+.caua-bar-subhead{
+  position:relative; max-width:680px; padding:0 16px;
+  font-family:'Cormorant Garamond','Playfair Display',Georgia,serif;
+  font-style:italic; font-size:clamp(16px,2.4vw,22px); letter-spacing:0.04em;
+  color:#F7F1EEcc; line-height:1.55; text-align:center;
+  margin-top:clamp(-12px,-1vw,-4px);
+}
+.caua-bar-eyebrow{
+  font-family:'DM Mono',monospace; font-size:11px; letter-spacing:0.32em;
+  color:#91A63B; text-transform:uppercase;
+}
+.caua-bar-scroll-hint{
+  font-family:'Barlow Condensed',sans-serif; font-weight:700;
+  font-size:10px; letter-spacing:0.28em; text-transform:uppercase;
+  color:#F7F1EE55;
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  animation:caua-bar-bob 2.4s ease-in-out infinite;
+}
+.caua-bar-scroll-hint::after{
+  content:''; display:block; width:1px; height:32px;
+  background:linear-gradient(to bottom,#91A63B66,transparent);
+}
+@keyframes caua-bar-bob{
+  0%,100%{ transform:translateY(0); opacity:.7; }
+  50%    { transform:translateY(4px); opacity:1; }
+}
+@media (prefers-reduced-motion:reduce){
+  .caua-bar{ animation:none; transform:rotateX(-10deg) rotateY(-22deg); }
+  .caua-bar-glow{ animation:none; opacity:.85; }
+  .caua-bar-scroll-hint{ animation:none; }
+}
 
 .reveal{opacity:0;transform:translateY(20px);transition:opacity 1s var(--enter),transform 1s var(--enter);}
 .reveal.visible{opacity:1;transform:translateY(0);}
@@ -537,12 +1038,6 @@ footer a:hover{color:var(--ink2);}
 </head>
 <body>
 
-<canvas id="gl-canvas"></canvas>
-
-<video id="hero-intro-video" autoplay muted playsinline preload="auto"
-       poster="/videos/hero-intro-poster.jpg" aria-hidden="true">
-  <source src="/videos/hero-intro.mp4" type="video/mp4">
-</video>
 
 <nav>
   <a href="#" class="nav-logo" style="display:flex;align-items:center;text-decoration:none;" aria-label="caúa">
@@ -554,7 +1049,7 @@ footer a:hover{color:var(--ink2);}
       <path class="caua-letter caua-letter-4" fill="#F7F1EE" stroke="#F7F1EE" d="M231.11,18.71h-8.43s-.03.02-.05.02c-2.38,0-2.47,2.47-2.47,2.47v3.89c-2.58-2.62-5.4-4.59-8.44-5.9-3.05-1.31-6.3-1.97-9.77-1.97-7.54,0-13.94,2.85-19.21,8.56-5.27,5.7-7.91,13.02-7.91,21.95s2.73,15.81,8.18,21.6c5.44,5.79,11.9,8.68,19.37,8.68,3.32,0,6.41-.59,9.26-1.78s5.69-3.13,8.52-5.82v2.91s-.16,3.14,3.14,3.14c.14,0,.16.05.27.06h7.55c1.96,0,3.55-1.59,3.55-3.55V22.26c0-1.96-1.59-3.55-3.55-3.55h-.01ZM216.29,59.97c-3,3.17-6.78,4.75-11.34,4.75s-8.13-1.61-11.15-4.84c-3.02-3.22-4.53-7.33-4.53-12.33s1.48-9.02,4.45-12.19c2.96-3.17,6.69-4.76,11.17-4.76s8.39,1.56,11.39,4.68c3,3.12,4.5,7.19,4.5,12.22s-1.5,9.29-4.5,12.46h0Z"/>
     </svg>
   </a>
-  <div class="nav-mono">Functional Cacao Ecosystem · 2026</div>
+  <div class="nav-mono">Cacao Platform · 2026</div>
   <div style="display:flex;align-items:center;gap:10px;">
     <button id="sound-toggle" onclick="toggleSound()" title="Arcade chiptune" style="background:none;border:1px solid var(--line-b);color:var(--ink2);padding:7px 11px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;transition:border-color .2s,color .2s;display:flex;align-items:center;gap:6px;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="if(!window.__soundOn){this.style.borderColor='var(--line-b)';this.style.color='var(--ink2)'}">
       <svg id="snd-icon" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 6 L2 10 L5 10 L9 13 L9 3 L5 6 Z" fill="currentColor"/><line x1="12" y1="5" x2="15" y2="11"/><line x1="15" y1="5" x2="12" y2="11"/></svg>
@@ -568,19 +1063,517 @@ footer a:hover{color:var(--ink2);}
 
 <div id="scroll-root">
 
-<!-- 1. HERO -->
-<section id="hero">
-  <div>
-    <div class="hero-tag reveal" data-i18n="hero_tag">Caúa · Investor Brief · Series Angel · 2026</div>
-    <h1 class="hero-h1 reveal d1" data-i18n="hero_h1">El<br>problema<br>no es el<br><span class="ac">cacao.</span></h1>
+<!-- 0. ENTRY — 3D rotating chocolate bar with backlight (CSS-only, no Three.js).
+     The user's first visible element. Sits above the existing investor hero. -->
+<section id="caua-bar-entry">
+  <div class="caua-bar-stage">
+    <div class="caua-bar-glow"></div>
+    <!-- Mount point for the Three.js chocolate bar (chocolate-bar-3d.js).
+         Real geometry: box base + 6 raised segments + extruded torn purple
+         wrapper + silver foil peeking through, lit with PBR + ACES tone
+         mapping. Auto-rotates with multi-axis choreography. -->
+    <div id="caua-bar-3d" aria-label="Chocolate bar 3D"></div>
   </div>
-  <div class="hero-right reveal d2">
-    <p class="hero-body" data-i18n="hero_body">Es todo lo que hicimos con él.<br><br>Un ecosistema de biotecnología que reconstruye la relación entre la biología humana y el sistema funcional vivo más complejo de la tierra.</p>
-    <div style="display:flex;flex-direction:column;align-items:flex-start;">
-      <div class="scroll-line"></div>
-      <div class="scroll-lbl">Scroll</div>
+  <h1 class="caua-bar-headline" data-i18n="bar_headline">
+    No se trata <span class="ac">del chocolate.</span>
+  </h1>
+  <p class="caua-bar-subhead" data-i18n="bar_subhead">
+    Se trata de reinterpretar la industria del cacao.
+  </p>
+  <div class="caua-bar-scroll-hint" data-i18n="bar_scroll">desliza</div>
+</section>
+
+<!-- 1.2 APP MOCKUPS — phone previews of the SPA flows. CTAs link to the
+     live /app/ routes (auth, adoptar, web3 onboarding) so a visitor can
+     jump straight into the experience. -->
+<section id="app-mockups">
+  <div class="app-mockups-head reveal">
+    <div class="sec-idx" data-i18n="mk_idx">01.2 — La aplicación</div>
+    <h2 data-i18n="mk_h">Adopta. Cuida. <span class="ac">Cosecha.</span></h2>
+    <p data-i18n="mk_sub">Tres pasos para entrar al ecosistema Caúa. Cada árbol verificado, cada acción on-chain.</p>
+  </div>
+
+  <div class="app-mockups-grid">
+
+    <!-- Card 1: ADOPT — guardian card swipe -->
+    <div class="app-mockup reveal">
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span>●●●●</span></div>
+          <div style="text-align:center;margin:6px 0 4px;">
+            <div class="ps-eyebrow">Adopta un árbol</div>
+            <div class="ps-title" style="font-size:11px;letter-spacing:.18em;">desliza</div>
+          </div>
+          <div class="ps-adopt-card">
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span class="ps-tag">Hobo · Huila</span>
+                <span style="font-size:18px;">🍃</span>
+              </div>
+              <!-- Mini mapa Colombia con Huila resaltado + pin en Hobo.
+                   Mismo viewBox / mismas coordenadas que src/components/ui/ColombiaMap.tsx
+                   y src/utils/colombiaGeo.ts (TOWN_PINS.Huila = {x:28,y:76}). -->
+              <svg class="ps-adopt-map" viewBox="0 0 100 130" aria-label="Hobo, Huila — Colombia">
+                <!-- Outline país (faint) -->
+                <path d="M 9,32 L 11,30 L 14,32 L 17,30 L 19,26 L 22,22 L 26,17 L 28,14 L 30,11 L 33,10 L 35,9 L 38,12 L 42,10 L 45,7 L 48,4 L 51,1 L 55,0 L 58,3 L 59,7 L 56,11 L 53,17 L 50,24 L 48,32 L 51,38 L 60,42 L 68,42 L 78,46 L 90,50 L 88,60 L 84,66 L 90,72 L 88,82 L 80,90 L 74,98 L 70,106 L 67,114 L 68,123 L 64,126 L 56,118 L 44,110 L 32,102 L 22,94 L 14,86 L 11,76 L 12,66 L 14,56 L 11,46 L 9,38 Z"
+                  fill="rgba(247,241,238,0.04)" stroke="rgba(247,241,238,0.28)" stroke-width="0.6" stroke-linejoin="round"/>
+                <!-- Huila highlighted -->
+                <path d="M 22,68 L 26,64 L 30,64 L 34,68 L 38,74 L 38,80 L 34,84 L 28,84 L 22,80 L 19,74 Z"
+                  fill="#91A63B" fill-opacity="0.45" stroke="#91A63B" stroke-width="0.7" stroke-linejoin="round"/>
+                <!-- Hobo pin halo (pulsing) -->
+                <circle class="pin" cx="28" cy="76" r="3" fill="#F1A91E" fill-opacity="0.4"/>
+                <!-- Hobo pin core -->
+                <circle cx="28" cy="76" r="1.6" fill="#F1A91E"/>
+                <circle cx="28" cy="76" r="0.6" fill="#F7F1EE"/>
+                <!-- Label -->
+                <text x="42" y="78" font-family="'DM Mono',monospace" font-size="3.6" font-weight="700" fill="#F7F1EE" letter-spacing="0.4">HOBO</text>
+                <line x1="32" y1="76" x2="40" y2="76" stroke="#F1A91E" stroke-width="0.4" opacity="0.6"/>
+              </svg>
+              <div class="ps-adopt-name">Lucho</div>
+              <div class="ps-adopt-region">Híbrido Acriollado</div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:center;gap:5px;margin-bottom:14px;">
+                <div style="width:18px;height:5px;border-radius:3px;background:#91A63B;"></div>
+                <div style="width:5px;height:5px;border-radius:50%;background:#F7F1EE33;"></div>
+                <div style="width:5px;height:5px;border-radius:50%;background:#F7F1EE33;"></div>
+                <div style="width:5px;height:5px;border-radius:50%;background:#F7F1EE33;"></div>
+                <div style="width:5px;height:5px;border-radius:50%;background:#F7F1EE33;"></div>
+              </div>
+              <div class="ps-adopt-swipe">
+                <span>← pasar</span>
+                <span>adoptar →</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="app-mockup-meta">
+        <div class="sec-idx">01</div>
+        <div class="app-mockup-title" data-i18n="mk1_t">Adopta un árbol</div>
+        <p class="app-mockup-desc" data-i18n="mk1_d">Elige un guardián entre las 5 fincas Caúa. <strong style="color:#F1A91E;">$3 USD</strong> por árbol — pago se despliega 60/30/10 al instante.</p>
+        <a href="/app/adoptar" class="app-mockup-cta" data-i18n="mk1_cta">Adoptar por $3 →</a>
+      </div>
+    </div>
+
+    <!-- Card 2: RITUAL — daily tarot draw, streak builder, sign-in incentive -->
+    <div class="app-mockup reveal d1">
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span>●●●●</span></div>
+          <div style="text-align:center;margin:6px 0 4px;">
+            <div class="ps-eyebrow" style="color:#8D2679;">Ritual diario</div>
+            <div class="ps-title" style="font-size:11px;letter-spacing:.18em;color:#F7F1EE;">draw your card</div>
+          </div>
+          <div class="ps-tarot">
+            <div class="ps-card-art">
+              <div class="ps-card-art-frame">
+                <div class="ps-card-art-symbol">🫘</div>
+                <div class="ps-card-art-name">La Mazorca</div>
+              </div>
+            </div>
+            <div class="ps-streak">🔥 7 días streak</div>
+          </div>
+          <div class="ps-card" style="padding:10px 12px;text-align:center;">
+            <div class="ps-eyebrow" style="color:#F1A91E;">Recompensa diaria</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:11px;color:#F7F1EEcc;margin-top:4px;line-height:1.5;">
+              "Ciclos y abundancia. Lo que sembraste está volviendo — recíbelo."
+            </div>
+          </div>
+          <button class="ps-connect" style="background:linear-gradient(135deg,#8D2679,#3a1530);">Iniciar sesión</button>
+        </div>
+      </div>
+      <div class="app-mockup-meta">
+        <div class="sec-idx">02</div>
+        <div class="app-mockup-title" data-i18n="mk_rit_t">Ritual diario</div>
+        <p class="app-mockup-desc" data-i18n="mk_rit_d">Sorteo de carta tarot del cacao + streak diario. Cada 7 días sin romper el streak desbloquea tokens bonus.</p>
+        <a href="/app/auth" class="app-mockup-cta" data-i18n="mk_rit_cta">Iniciar sesión →</a>
+      </div>
+    </div>
+
+    <!-- Card 3: NURTURE — Caua Gotchi tree growing -->
+    <div class="app-mockup reveal d1">
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span>●●●●</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px;">
+            <div>
+              <div class="ps-eyebrow">Stage 5/8</div>
+              <div class="ps-title" style="margin:2px 0 0;">Floración</div>
+            </div>
+            <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:11px;color:#F1A91Ecc;">Lucho</div>
+          </div>
+          <div class="ps-tree-frame">
+            <div class="ps-tree-svg">
+              <!-- Mini tree SVG — slim trunk + canopy + small white flowers -->
+              <svg viewBox="0 0 100 130" width="100" height="130" aria-hidden="true">
+                <ellipse cx="50" cy="118" rx="42" ry="8" fill="#3a2914"/>
+                <path d="M48 118 Q47 95 49 70 L51 70 Q53 95 52 118 Z" fill="#cfd1c5"/>
+                <ellipse cx="44" cy="100" rx="2.5" ry="1.8" fill="#8aa45a" opacity=".6"/>
+                <ellipse cx="55" cy="86" rx="2" ry="1.5" fill="#8aa45a" opacity=".6"/>
+                <g fill="url(#mt-leaf)">
+                  <ellipse cx="32" cy="58" rx="11" ry="5" transform="rotate(-22 32 58)"/>
+                  <ellipse cx="68" cy="56" rx="11" ry="5" transform="rotate(20 68 56)"/>
+                  <ellipse cx="50" cy="42" rx="13" ry="6"/>
+                  <ellipse cx="38" cy="48" rx="9" ry="4" transform="rotate(-10 38 48)"/>
+                  <ellipse cx="62" cy="50" rx="9" ry="4" transform="rotate(15 62 50)"/>
+                  <ellipse cx="44" cy="68" rx="8" ry="4" transform="rotate(-30 44 68)"/>
+                  <ellipse cx="58" cy="70" rx="8" ry="4" transform="rotate(28 58 70)"/>
+                </g>
+                <circle cx="46" cy="92" r="2" fill="#fff7e8"/>
+                <circle cx="54" cy="84" r="1.8" fill="#fff7e8"/>
+                <circle cx="50" cy="100" r="1.8" fill="#fff7e8"/>
+                <defs>
+                  <linearGradient id="mt-leaf" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#2f6b1a"/>
+                    <stop offset="100%" stop-color="#173a0e"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            <div class="ps-orbs">
+              <div class="ps-orb ps-orb-hp">82</div>
+              <div class="ps-orb ps-orb-h2o">68</div>
+              <div class="ps-orb ps-orb-sun">75</div>
+            </div>
+          </div>
+          <div class="ps-actions">
+            <div class="ps-action">💧 Regar</div>
+            <div class="ps-action">☀ Sol</div>
+          </div>
+        </div>
+      </div>
+      <div class="app-mockup-meta">
+        <div class="sec-idx">03</div>
+        <div class="app-mockup-title" data-i18n="mk2_t">Cuídalo en tiempo real</div>
+        <p class="app-mockup-desc" data-i18n="mk2_d">Caua-Gotchi: ves el árbol crecer en 8 stages. Riega, expón al sol, cosecha mazorcas.</p>
+        <a href="/app/auth" class="app-mockup-cta" data-i18n="mk2_cta">Iniciar sesión →</a>
+      </div>
+    </div>
+
+    <!-- Card 3: EARN — wallet $CACAO + tx history -->
+    <div class="app-mockup reveal d2">
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span>●●●●</span></div>
+          <div class="ps-balance">
+            <div class="ps-balance-label">$CACAO Balance</div>
+            <div class="ps-balance-amount">1,420<small>.85</small></div>
+            <div class="ps-balance-sub">≈ $284 USD · Base mainnet</div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <div class="ps-card" style="flex:1;text-align:center;padding:10px;">
+              <div class="ps-eyebrow" style="color:#F1A91E;">Mazorcas</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;color:#F1A91E;margin-top:2px;">38</div>
+            </div>
+            <div class="ps-card" style="flex:1;text-align:center;padding:10px;">
+              <div class="ps-eyebrow">Árboles</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;color:#91A63B;margin-top:2px;">3</div>
+            </div>
+          </div>
+          <div class="ps-card" style="padding:6px 8px;flex:1;overflow:hidden;">
+            <div class="ps-eyebrow" style="padding:6px 6px 4px;">Actividad</div>
+            <div class="ps-tx-row">
+              <div class="ps-tx-icon">🍫</div>
+              <div class="ps-tx-meta">
+                <div class="ps-tx-title">Cosecha</div>
+                <div class="ps-tx-sub">Lucho · hace 2h</div>
+              </div>
+              <div class="ps-tx-amt">+12</div>
+            </div>
+            <div class="ps-tx-row">
+              <div class="ps-tx-icon">💧</div>
+              <div class="ps-tx-meta">
+                <div class="ps-tx-title">Care</div>
+                <div class="ps-tx-sub">Marta · hace 6h</div>
+              </div>
+              <div class="ps-tx-amt">+0.5</div>
+            </div>
+            <div class="ps-tx-row">
+              <div class="ps-tx-icon">🌱</div>
+              <div class="ps-tx-meta">
+                <div class="ps-tx-title">Adopción</div>
+                <div class="ps-tx-sub">Rafael · ayer</div>
+              </div>
+              <div class="ps-tx-amt">+10</div>
+            </div>
+          </div>
+          <button class="ps-connect">Conectar Wallet</button>
+        </div>
+      </div>
+      <div class="app-mockup-meta">
+        <div class="sec-idx">04</div>
+        <div class="app-mockup-title" data-i18n="mk3_t">Cosecha y canjea</div>
+        <p class="app-mockup-desc" data-i18n="mk3_d">$CACAO on Base. Mazorcas ↔ chocolate ceremonial real. Wallet linked vía SIWE + KYC.</p>
+        <a href="/app/web3/onboarding" class="app-mockup-cta" data-i18n="mk3_cta">KYC + Wallet →</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- 1.25 FIAT FLOW — for users who never touched crypto. Confirms Coinbase
+     Onramp (fiat → USDC → adopción) and Offramp (cosecha → USDC → tu banco).
+     Sits between general app mockups and the Web3 contract stack so the
+     fiat-first audience reads it before the crypto-native deep dive. -->
+<section id="fiat-flow">
+  <div class="ff-head reveal">
+    <div class="sec-idx" data-i18n="ff_idx">01.25 — Sin saber de cripto</div>
+    <h2 data-i18n="ff_h">Pagas con tu tarjeta. <span class="ac">Cobras a tu banco.</span></h2>
+    <p data-i18n="ff_sub">
+      No necesitas saber qué es una wallet, ni gas, ni seed phrase. Coinbase Onramp
+      hace el puente: tu tarjeta o transferencia bancaria → USDC → adopción.
+      Cuando cosechas, $CACAO → USDC → tu banco. Nosotros nunca tocamos tu plata.
+    </p>
+  </div>
+
+  <div class="ff-grid">
+
+    <!-- Phone mockup of the Coinbase Onramp pay screen -->
+    <div class="ff-mockup reveal">
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span>●●●●</span></div>
+
+          <div style="text-align:center;margin:6px 0 4px;">
+            <div class="ps-eyebrow" style="color:#0052FF;">Coinbase Onramp</div>
+            <div class="ps-title" style="font-size:11px;letter-spacing:.18em;">paga con tarjeta</div>
+          </div>
+
+          <div class="ff-pay-card">
+            <div class="ff-pay-icon">VISA</div>
+            <div class="ff-pay-meta">
+              <div class="ff-pay-method">•••• 4242</div>
+              <div class="ff-pay-fee">debit · 1.5% Coinbase fee</div>
+            </div>
+          </div>
+
+          <div class="ff-amount-row">
+            <div class="ff-amount-from">
+              <div class="ff-amount-label">pagas</div>
+              <div class="ff-amount-val">$3<small>USD</small></div>
+            </div>
+            <div class="ff-arrow">→</div>
+            <div class="ff-amount-to">
+              <div class="ff-amount-label">recibes</div>
+              <div class="ff-amount-val" style="color:#F1A91E;">1<small>árbol NFT</small></div>
+            </div>
+          </div>
+
+          <div class="ff-route">
+            <div class="ff-route-step"><div class="ff-route-dot"></div>tarjeta → USDC en Base</div>
+            <div class="ff-route-step"><div class="ff-route-dot"></div>contrato split 60/30/10</div>
+            <div class="ff-route-step"><div class="ff-route-dot"></div>NFT mint a tu wallet</div>
+          </div>
+
+          <button class="ff-onramp-cta">Adoptar con tarjeta</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 friendly steps -->
+    <div class="ff-steps reveal d1">
+
+      <div class="ff-step">
+        <div class="ff-step-num">1</div>
+        <div class="ff-step-meta">
+          <div class="ff-step-title" data-i18n="ff_s1_t">Sign in con tu email</div>
+          <div class="ff-step-desc" data-i18n="ff_s1_d">No hay seed phrase, no hay extensiones de browser. Coinbase Smart Wallet te crea una wallet pasaporte vinculada a tu email — la recuperas en cualquier device con tu cuenta.</div>
+          <span class="ff-step-tag">passkey · 0 fricción</span>
+        </div>
+      </div>
+
+      <div class="ff-step">
+        <div class="ff-step-num">2</div>
+        <div class="ff-step-meta">
+          <div class="ff-step-title" data-i18n="ff_s2_t">Pagas $3 USD con tarjeta</div>
+          <div class="ff-step-desc" data-i18n="ff_s2_d">Coinbase Onramp acepta Visa, Mastercard, Apple Pay, transferencia ACH (US) y SEPA (EU). Ellos manejan KYC, AML y procesamiento — nosotros no tocamos fiat ni guardamos números de tarjeta. Fee Coinbase 1-2%.</div>
+          <span class="ff-step-tag">fiat → USDC</span>
+        </div>
+      </div>
+
+      <div class="ff-step">
+        <div class="ff-step-num">3</div>
+        <div class="ff-step-meta">
+          <div class="ff-step-title" data-i18n="ff_s3_t">Adoptas + cuidas tu árbol</div>
+          <div class="ff-step-desc" data-i18n="ff_s3_d">El contrato Tree Adoption recibe los $3 USDC, los reparte 60% guardián / 30% R&D / 10% comunidad y mintea tu NFT al instante. Tú entras a la app a cuidar tu árbol como un Caua-Gotchi.</div>
+          <span class="ff-step-tag">adopción on-chain</span>
+        </div>
+      </div>
+
+      <div class="ff-step">
+        <div class="ff-step-num">4</div>
+        <div class="ff-step-meta">
+          <div class="ff-step-title" data-i18n="ff_s4_t">Cosechas $CACAO → tu banco</div>
+          <div class="ff-step-desc" data-i18n="ff_s4_d">Cuando rediman tus mazorcas por $CACAO ERC-20, podes (a) canjear por chocolate ceremonial real en Cauaculture.co, (b) holdear, o (c) usar Coinbase Offramp: $CACAO → USDC → transferencia a tu banco. Sin tocar exchanges externos.</div>
+          <span class="ff-step-tag">offramp → fiat</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Onramp / Offramp visualization -->
+  <div class="ff-flows reveal d2">
+    <div class="ff-flow">
+      <div class="ff-flow-title">⬇ Onramp</div>
+      <div class="ff-flow-arrow"><strong>$3 USD</strong> tarjeta → USDC Base → contrato adopción → árbol NFT</div>
+      <div class="ff-flow-note">Coinbase maneja KYC + procesamiento. Tu pago se despliega 60/30/10 en la misma transacción on-chain.</div>
+    </div>
+    <div class="ff-flow">
+      <div class="ff-flow-title">⬆ Offramp</div>
+      <div class="ff-flow-arrow">cosecha → <strong>$CACAO</strong> → USDC → ACH / SEPA → <strong>tu banco</strong></div>
+      <div class="ff-flow-note">Coinbase Offramp procesa la salida a fiat. Disponible en US, EU, MX, BR, CO. Tarda 1-3 días hábiles hábiles según el corredor.</div>
     </div>
   </div>
+
+  <p class="ff-disclaimer reveal d3" data-i18n="ff_disc">
+    <strong style="color:#F7F1EEcc;">Coinbase Onramp confirmado · Coinbase Offramp confirmado · Base L2 chain ID 84532 (Sepolia ahora, mainnet post Series Angel).</strong>
+    Cero custodia nuestra — Coinbase intermedia el rail fiat ↔ cripto bajo su licencia (Texas MSA, NY BitLicense, EU MiCA-pending).
+    Caúa Corp nunca toca tu dinero ni tus llaves. Lo que ves on-chain es lo que tienes.
+  </p>
+</section>
+
+<!-- 1.3 WEB3 STACK — for crypto-native adopters who quieren capitalizar
+     Caúa Web3. 5 contratos en Base Sepolia + Coinbase Onramp + EIP-712
+     redemption. Mismos $3 USD que adopción off-chain pero on-chain proof. -->
+<section id="web3-stack">
+  <div class="w3-head reveal">
+    <div class="sec-idx" data-i18n="w3_idx">01.3 — Web3 nativo</div>
+    <h2 data-i18n="w3_h">Adopta on-chain. <span class="ac">Capitaliza el cacao.</span></h2>
+    <p data-i18n="w3_sub">
+      Si vienes de cripto: tu árbol es un NFT, tu cosecha es $CACAO ERC-20, y todo se firma
+      con tu wallet. 5 contratos auditables en Base Sepolia (mainnet pronto). Sin custodia
+      nuestra — Coinbase Onramp para fiat→USDC, tú firmas todo lo demás.
+    </p>
+  </div>
+
+  <div class="w3-grid">
+
+    <!-- Left: phone mockup of the wallet view -->
+    <div class="w3-mockup reveal">
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span>●●●●</span></div>
+
+          <div class="w3-wallet-card">
+            <div class="w3-wallet-icon">🔗</div>
+            <div class="w3-wallet-meta">
+              <div class="w3-wallet-addr">0x79e3…5348</div>
+              <div class="w3-wallet-net">● Base · linked</div>
+            </div>
+          </div>
+
+          <div class="w3-nft-card">
+            <div class="w3-nft-img">🌳</div>
+            <div class="w3-nft-id">Token #2 · Lucho · Hobo</div>
+            <div class="w3-nft-name">Caúa Tree NFT</div>
+          </div>
+
+          <div class="w3-cacao-bal">
+            <div class="w3-cacao-amount">1,420<small>.85 $CACAO</small></div>
+            <div class="w3-cacao-label">balance · burn → claim</div>
+          </div>
+
+          <button class="ps-connect" style="background:linear-gradient(135deg,#8D2679,#3a1530);margin-top:auto;">
+            Burn 1000 mz → 1 $CACAO
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: 5 contract cards stacked -->
+    <div class="w3-contracts reveal d1">
+
+      <div class="w3-contract">
+        <div class="w3-contract-num">01</div>
+        <div class="w3-contract-meta">
+          <div class="w3-contract-name" data-i18n="w3_c1_n">Caúa Tree NFT</div>
+          <div class="w3-contract-tech">ERC-721 · árbol como activo</div>
+          <div class="w3-contract-desc" data-i18n="w3_c1_d">Cada árbol adoptado mintea un NFT a tu wallet. La metadata vive on-chain con el guardián, finca, variedad y stage actual. Vendible en cualquier marketplace que soporte ERC-721.</div>
+          <div class="w3-contract-addr">
+            <span>0xf5f2…ad23</span>
+            <a href="https://sepolia.basescan.org/address/0xf5f2dE2237334680fC74cFD1dbCFaF5E5285ad23" target="_blank" rel="noopener noreferrer">BaseScan ↗</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="w3-contract">
+        <div class="w3-contract-num">02</div>
+        <div class="w3-contract-meta">
+          <div class="w3-contract-name">$CACAO Token</div>
+          <div class="w3-contract-tech">ERC-20 · cap 21M · 18 dec</div>
+          <div class="w3-contract-desc" data-i18n="w3_c2_d">Token de utilidad. Cap simbólico de 21M (homenaje Bitcoin, no equivalencia). Solo se mintea desde MazorcaRedemption — ningún founder mint outside gameplay (Charter I.3 a nivel bytecode).</div>
+          <div class="w3-contract-addr">
+            <span>0x8f5f…D7E1</span>
+            <a href="https://sepolia.basescan.org/address/0x8f5f9d696F8004b7d77c915c70569eec3234D7E1" target="_blank" rel="noopener noreferrer">BaseScan ↗</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="w3-contract">
+        <div class="w3-contract-num">03</div>
+        <div class="w3-contract-meta">
+          <div class="w3-contract-name">Mazorca Redemption</div>
+          <div class="w3-contract-tech">EIP-712 burn → mint · ratio 1000:1</div>
+          <div class="w3-contract-desc" data-i18n="w3_c3_d">Tus mazorcas off-chain (gameplay) las quemas con una firma EIP-712 y el contrato te mintea $CACAO ERC-20. El ORACLE backend firma el payload, tú envías la tx — flow gasless-ready.</div>
+          <div class="w3-contract-addr">
+            <span>0x9Aa8…44e6</span>
+            <a href="https://sepolia.basescan.org/address/0x9Aa80f33067316De88757ff8c21660f5672644e6" target="_blank" rel="noopener noreferrer">BaseScan ↗</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="w3-contract">
+        <div class="w3-contract-num">04</div>
+        <div class="w3-contract-meta">
+          <div class="w3-contract-name">Tree Adoption</div>
+          <div class="w3-contract-tech">escrow split 60/30/10 · mint NFT en mismo tx</div>
+          <div class="w3-contract-desc" data-i18n="w3_c4_d">Pagas $3 USDC y en la misma transacción: 60% va al guardián, 30% a R&D, 10% a comunidad, y se mintea tu NFT. Sin intermediarios — el contrato es el escrow.</div>
+          <div class="w3-contract-addr">
+            <span>0x1c67…5711</span>
+            <a href="https://sepolia.basescan.org/address/0x1c6724cdfe8906ae5a2042c431169b6987755711" target="_blank" rel="noopener noreferrer">BaseScan ↗</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="w3-contract">
+        <div class="w3-contract-num">05</div>
+        <div class="w3-contract-meta">
+          <div class="w3-contract-name">IoT Attestation</div>
+          <div class="w3-contract-tech">Merkle roots semanales · IOT_ORACLE</div>
+          <div class="w3-contract-desc" data-i18n="w3_c5_d">Cada semana el oracle IoT publica un Merkle root con las mediciones (humedad, CO₂, salud) de cada finca. Tú verificas tu árbol contra el root — proof on-chain de que el árbol existe físicamente y está siendo cuidado.</div>
+          <div class="w3-contract-addr">
+            <span>0x0077…7e53</span>
+            <a href="https://sepolia.basescan.org/address/0x0077649ed45ce82225b3a3d5a364a4f804007e53" target="_blank" rel="noopener noreferrer">BaseScan ↗</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Footer: chain badge + CTAs + disclaimer -->
+  <div class="w3-foot reveal d2">
+    <div class="w3-chain-badge">⬡ Base · chain 84532 (Sepolia)</div>
+    <a href="/app/web3/onboarding" class="w3-cta w3-cta-primary" data-i18n="w3_cta_kyc">KYC + Wallet →</a>
+    <a href="/app/adoptar" class="w3-cta w3-cta-secondary" data-i18n="w3_cta_adopt">Adoptar on-chain →</a>
+  </div>
+
+  <p class="w3-disclaimer reveal d3" data-i18n="w3_disc">
+    <strong style="color:#F7F1EEcc;">Pila confirmada:</strong> Base L2 · Coinbase Smart Wallet · Coinbase Onramp para fiat→USDC ·
+    EIP-712 typed-data en toda firma · OZ AccessControl en los 5 contratos ·
+    KYC tier-2 antes de mint/redeem (Persona). Cero custodia nuestra — tu wallet, tus llaves.
+    Mainnet rollout post Series Angel close.
+  </p>
 </section>
 
 <!-- 1.5 ORIGEN — hyperrealistic vector tree + cacao→heart transmutation -->
@@ -608,6 +1601,22 @@ footer a:hover{color:var(--ink2);}
       <blockquote data-i18n="s015_quote">
         Theobroma · 'alimento de los dioses' · Hobo, Huila · 2°31′N
       </blockquote>
+    </div>
+  </div>
+</section>
+
+<!-- 1.7 HERO — the argument. Sits right after the cacao→corazón origin so
+     the philosophical reset hands off into the brief's main thesis. -->
+<section id="hero">
+  <div>
+    <div class="hero-tag reveal" data-i18n="hero_tag">Caúa · Investor Brief · Series Angel · 2026</div>
+    <h1 class="hero-h1 reveal d1" data-i18n="hero_h1">El<br>problema<br>no es el<br><span class="ac">cacao.</span></h1>
+  </div>
+  <div class="hero-right reveal d2">
+    <p class="hero-body" data-i18n="hero_body">Es todo lo que hicimos con él.<br><br>Un abanico de posibilidades que reconstruye la relación entre la biología humana y el sistema funcional vivo más complejo de la tierra.</p>
+    <div style="display:flex;flex-direction:column;align-items:flex-start;">
+      <div class="scroll-line"></div>
+      <div class="scroll-lbl">Scroll</div>
     </div>
   </div>
 </section>
@@ -1157,13 +2166,108 @@ footer a:hover{color:var(--ink2);}
   </div>
 </section>
 
-<!-- 11. CTA -->
+<!-- 9.5 INVESTOR PREVIEWS — Growth Dashboard equity returns + Shopify Cacao
+     Ceremony product preview. Shows what's behind the SAFE on the left, and
+     what the consumer journey ends with on the right. -->
+<section id="investor-previews">
+  <div class="ip-head reveal">
+    <div class="sec-idx" data-i18n="ip_idx">09.5 — Lo que ya está corriendo</div>
+    <h2 data-i18n="ip_h">Métricas vivas. <span class="ac">Producto real.</span></h2>
+    <p data-i18n="ip_sub">Growth Dashboard de equity proyectada y la línea de Cacao Ceremony en Cauaculture.co — el final del viaje del adoptante.</p>
+  </div>
+  <div class="ip-grid">
+
+    <!-- Card 1: Growth Dashboard equity returns -->
+    <div class="ip-card reveal">
+      <div class="ip-window">
+        <div class="ip-window-dots"><span></span><span></span><span></span></div>
+        <div class="ip-window-url">caua.investor — growth dashboard</div>
+      </div>
+      <div class="ip-body">
+        <h3 data-i18n="ip_g_h">Equity Growth Projection</h3>
+        <div class="ip-meta-row">
+          <div class="ip-stat">
+            <div class="ip-stat-label" data-i18n="ip_g_round">Series Angel</div>
+            <div class="ip-stat-val">$5K<small>min</small></div>
+          </div>
+          <div class="ip-stat">
+            <div class="ip-stat-label" data-i18n="ip_g_val">Valoración</div>
+            <div class="ip-stat-val">$4.2M</div>
+          </div>
+          <div class="ip-stat">
+            <div class="ip-stat-label" data-i18n="ip_g_proj">3yr proj.</div>
+            <div class="ip-stat-val" style="color:#91A63B;">8.4×</div>
+          </div>
+        </div>
+        <!-- Inline SVG area chart — equity multiple over 36 months -->
+        <svg class="ip-chart" viewBox="0 0 400 160" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="chart-fill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"  stop-color="#91A63B" stop-opacity="0.55"/>
+              <stop offset="100%" stop-color="#91A63B" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <!-- gridlines -->
+          <line x1="0" y1="40"  x2="400" y2="40"  stroke="#1C3B26" stroke-dasharray="3 5"/>
+          <line x1="0" y1="80"  x2="400" y2="80"  stroke="#1C3B26" stroke-dasharray="3 5"/>
+          <line x1="0" y1="120" x2="400" y2="120" stroke="#1C3B26" stroke-dasharray="3 5"/>
+          <!-- area + line: 1× → 8.4× over 36 months. Curve: hockey stick. -->
+          <path d="M 0 145 L 33 142 L 66 138 L 100 132 L 133 124 L 166 113 L 200 99 L 233 82 L 266 62 L 300 42 L 333 26 L 366 18 L 400 14 L 400 160 L 0 160 Z"
+                fill="url(#chart-fill)"/>
+          <path d="M 0 145 L 33 142 L 66 138 L 100 132 L 133 124 L 166 113 L 200 99 L 233 82 L 266 62 L 300 42 L 333 26 L 366 18 L 400 14"
+                fill="none" stroke="#91A63B" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- Marker at 36mo (final) -->
+          <circle cx="400" cy="14" r="5" fill="#F1A91E" stroke="#040c06" stroke-width="2"/>
+          <text x="392" y="10" text-anchor="end"
+                style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:13px;fill:#F1A91E;">8.4×</text>
+          <!-- X axis labels -->
+          <text x="0"   y="158" style="font-family:'DM Mono',monospace;font-size:8px;fill:#F7F1EE55;">2026</text>
+          <text x="200" y="158" text-anchor="middle" style="font-family:'DM Mono',monospace;font-size:8px;fill:#F7F1EE55;">2027</text>
+          <text x="400" y="158" text-anchor="end" style="font-family:'DM Mono',monospace;font-size:8px;fill:#F7F1EE55;">2029</text>
+        </svg>
+      </div>
+      <div class="ip-foot">
+        <p data-i18n="ip_g_note">SAFE Note · valoración cap $4.2M · ronda Series Angel cierra Jun 30. Proyección a 3 años conservadora basada en M2 LATAM food-tech comps.</p>
+        <a href="#cta" class="ip-cta" data-i18n="ip_g_cta">Ver brief completo →</a>
+      </div>
+    </div>
+
+    <!-- Card 2: Shopify Cacao Ceremony preview (Cauaculture.co) -->
+    <div class="ip-card reveal d1">
+      <div class="ip-window">
+        <div class="ip-window-dots"><span></span><span></span><span></span></div>
+        <div class="ip-window-url">cauaculture.co — cacao ceremony</div>
+      </div>
+      <div class="ip-body">
+        <h3 data-i18n="ip_s_h">Cacao Ceremony · Real Product</h3>
+        <div class="ip-product">
+          <div class="ip-product-img">🍫</div>
+          <div class="ip-product-meta">
+            <div class="ip-product-name" data-i18n="ip_s_name">Bloque Criollo 250g</div>
+            <div class="ip-product-tag" data-i18n="ip_s_tag">Fine-flavor · Hobo, Huila · trazable</div>
+            <div class="ip-product-price">$28<small>USD · envío incluido</small></div>
+          </div>
+        </div>
+        <div class="ip-discount-row" data-i18n="ip_s_disc">
+          Cada adoptante con wallet linked recibe <strong>10–35% off</strong> según tier — el descuento se inyecta on-chain al checkout.
+        </div>
+      </div>
+      <div class="ip-foot">
+        <p data-i18n="ip_s_note">El final del journey: del árbol adoptado en /app/ al chocolate ceremonial en tu mesa. Mismo cacao, misma finca, misma trazabilidad.</p>
+        <a href="https://cauaculture.co/shop" target="_blank" rel="noopener noreferrer" class="ip-cta" data-i18n="ip_s_cta">Ver tienda →</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- 11. CTA — final section. "Sé parte del sistema" closes the brief. -->
 <section id="cta">
   <div class="cta-left">
     <div class="cta-pre reveal"><div class="cta-dot"></div> <span data-i18n="cta_pre">Early Access · Ronda Limitada</span></div>
     <h2 class="cta-h reveal d1" data-i18n="cta_h">Sé parte<br>del<br>sistema.</h2>
     <p class="cta-body reveal d2" data-i18n="cta_body">
-      Estamos construyendo el primer ecosistema funcional de cacao — integración vertical desde el árbol hasta el cuerpo. Únete a los fundadores que construyen desde el origen.<br><br>
+      Estamos construyendo la primera plataforma de cacao — integración vertical desde el árbol hasta el cuerpo. Únete a los fundadores que construyen desde el origen.<br><br>
       Asegura tu posición vía Coinbase Wallet. USDC y ETH aceptados.
     </p>
   </div>
@@ -1236,18 +2340,32 @@ footer a:hover{color:var(--ink2);}
 </div>
 
 <!-- Three.js core + post-processing addons for divine reveal bloom (anchored to section 09) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
-<script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
-<script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
-<script src="https://unpkg.com/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
-<script src="https://unpkg.com/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
-<script src="https://unpkg.com/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
-<script src="/cacao-tree-builder.js"></script>
-<script src="/investor-3d.js"></script>
+<!-- Investor landing: clean / static. No background animation. -->
+
 
 <!-- Motion.dev scroll choreography — single scroll source for 3D + pin rail -->
 <script type="module" src="/investor-scroll.js"></script>
+
+<!-- Three.js importmap — REQUIRED before chocolate-bar-3d.js loads.
+     RoundedBoxGeometry (a three/addons module) internally does
+     `import { ... } from 'three'` as a bare specifier. Without this
+     importmap that import would fail silently and the whole 3D module
+     would never run. Map matches the standalone viewer the user authored. -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<!-- Chocolate bar 3D — Three.js scene auto-mounts on #caua-bar-3d. -->
+<script type="module">
+  import { mountChocolateBar } from '/chocolate-bar-3d.js'
+  const el = document.getElementById('caua-bar-3d')
+  if (el) mountChocolateBar(el)
+</script>
 
 
 <script>
@@ -1331,9 +2449,66 @@ function selToken(el){document.querySelectorAll('.crypto-t').forEach(t=>t.classL
 const T = {
   es: {
     nav_cta:'Invertir Ahora',
+    bar_headline:'No se trata <span class="ac">del chocolate.</span>',
+    bar_subhead:'Se trata de reinterpretar la industria del cacao.',
+    bar_scroll:'desliza',
+    mk_idx:'01.2 — La aplicación',
+    mk_h:'Adopta. Cuida. <span class="ac">Cosecha.</span>',
+    mk_sub:'Tres pasos para entrar al ecosistema Caúa. Cada árbol verificado, cada acción on-chain.',
+    mk1_t:'Adopta un árbol',
+    mk1_d:'Elige un guardián entre las 5 fincas Caúa. <strong style="color:#F1A91E;">$3 USD</strong> por árbol — pago se despliega 60/30/10 al instante.',
+    mk1_cta:'Adoptar por $3 →',
+    mk_rit_t:'Ritual diario',
+    mk_rit_d:'Sorteo de carta tarot del cacao + streak diario. Cada 7 días sin romper el streak desbloquea tokens bonus.',
+    mk_rit_cta:'Iniciar sesión →',
+    mk2_t:'Cuídalo en tiempo real',
+    mk2_d:'Caua-Gotchi: ves el árbol crecer en 8 stages. Riega, expón al sol, cosecha mazorcas. <strong style="color:#e74c3c;">Si lo dejas morir, los tokens se queman.</strong>',
+    mk2_cta:'Iniciar sesión →',
+    mk3_t:'Cosecha y canjea',
+    mk3_d:'$CACAO on Base. Mazorcas ↔ chocolate ceremonial real. Wallet linked vía SIWE + KYC.',
+    mk3_cta:'KYC + Wallet →',
+    ff_idx:'01.25 — Sin saber de cripto',
+    ff_h:'Pagas con tu tarjeta. <span class="ac">Cobras a tu banco.</span>',
+    ff_sub:'No necesitas saber qué es una wallet, ni gas, ni seed phrase. Coinbase Onramp hace el puente: tu tarjeta o transferencia bancaria → USDC → adopción. Cuando cosechas, $CACAO → USDC → tu banco. Nosotros nunca tocamos tu plata.',
+    ff_s1_t:'Sign in con tu email',
+    ff_s1_d:'No hay seed phrase, no hay extensiones de browser. Coinbase Smart Wallet te crea una wallet pasaporte vinculada a tu email — la recuperas en cualquier device con tu cuenta.',
+    ff_s2_t:'Pagas $3 USD con tarjeta',
+    ff_s2_d:'Coinbase Onramp acepta Visa, Mastercard, Apple Pay, transferencia ACH (US) y SEPA (EU). Ellos manejan KYC, AML y procesamiento — nosotros no tocamos fiat ni guardamos números de tarjeta. Fee Coinbase 1-2%.',
+    ff_s3_t:'Adoptas + cuidas tu árbol',
+    ff_s3_d:'El contrato Tree Adoption recibe los $3 USDC, los reparte 60% guardián / 30% R&D / 10% comunidad y mintea tu NFT al instante. Tú entras a la app a cuidar tu árbol como un Caua-Gotchi.',
+    ff_s4_t:'Cosechas $CACAO → tu banco',
+    ff_s4_d:'Cuando rediman tus mazorcas por $CACAO ERC-20, podes (a) canjear por chocolate ceremonial real en Cauaculture.co, (b) holdear, o (c) usar Coinbase Offramp: $CACAO → USDC → transferencia a tu banco. Sin tocar exchanges externos.',
+    ff_disc:'<strong style="color:#F7F1EEcc;">Coinbase Onramp confirmado · Coinbase Offramp confirmado · Base L2 chain ID 84532 (Sepolia ahora, mainnet post Series Angel).</strong> Cero custodia nuestra — Coinbase intermedia el rail fiat ↔ cripto bajo su licencia (Texas MSA, NY BitLicense, EU MiCA-pending). Caúa Corp nunca toca tu dinero ni tus llaves. Lo que ves on-chain es lo que tienes.',
+    w3_idx:'01.3 — Web3 nativo',
+    w3_h:'Adopta on-chain. <span class="ac">Capitaliza el cacao.</span>',
+    w3_sub:'Si vienes de cripto: tu árbol es un NFT, tu cosecha es $CACAO ERC-20, y todo se firma con tu wallet. 5 contratos auditables en Base Sepolia (mainnet pronto). Sin custodia nuestra — Coinbase Onramp para fiat→USDC, tú firmas todo lo demás.',
+    w3_c1_n:'Caúa Tree NFT',
+    w3_c1_d:'Cada árbol adoptado mintea un NFT a tu wallet. La metadata vive on-chain con el guardián, finca, variedad y stage actual. Vendible en cualquier marketplace que soporte ERC-721.',
+    w3_c2_d:'Token de utilidad. Cap simbólico de 21M (homenaje Bitcoin, no equivalencia). Solo se mintea desde MazorcaRedemption — ningún founder mint outside gameplay (Charter I.3 a nivel bytecode).',
+    w3_c3_d:'Tus mazorcas off-chain (gameplay) las quemas con una firma EIP-712 y el contrato te mintea $CACAO ERC-20. El ORACLE backend firma el payload, tú envías la tx — flow gasless-ready.',
+    w3_c4_d:'Pagas $3 USDC y en la misma transacción: 60% va al guardián, 30% a R&D, 10% a comunidad, y se mintea tu NFT. Sin intermediarios — el contrato es el escrow.',
+    w3_c5_d:'Cada semana el oracle IoT publica un Merkle root con las mediciones (humedad, CO₂, salud) de cada finca. Tú verificas tu árbol contra el root — proof on-chain de que el árbol existe físicamente y está siendo cuidado.',
+    w3_cta_kyc:'KYC + Wallet →',
+    w3_cta_adopt:'Adoptar on-chain →',
+    w3_disc:'<strong style="color:#F7F1EEcc;">Pila confirmada:</strong> Base L2 · Coinbase Smart Wallet · Coinbase Onramp para fiat→USDC · EIP-712 typed-data en toda firma · OZ AccessControl en los 5 contratos · KYC tier-2 antes de mint/redeem (Persona). Cero custodia nuestra — tu wallet, tus llaves. Mainnet rollout post Series Angel close.',
     hero_tag:'Caúa · Brief para Inversores · Series Angel · 2026',
     hero_h1:'El<br>problema<br>no es el<br><span class="ac">cacao.</span>',
-    hero_body:'Es todo lo que hicimos con él.<br><br>Un ecosistema de biotecnología que reconstruye la relación entre la biología humana y el sistema funcional vivo más complejo de la tierra.',
+    hero_body:'Es todo lo que hicimos con él.<br><br>Un abanico de posibilidades que reconstruye la relación entre la biología humana y el sistema funcional vivo más complejo de la tierra.',
+    ip_idx:'09.5 — Lo que ya está corriendo',
+    ip_h:'Métricas vivas. <span class="ac">Producto real.</span>',
+    ip_sub:'Growth Dashboard de equity proyectada y la línea de Cacao Ceremony en Cauaculture.co — el final del viaje del adoptante.',
+    ip_g_h:'Equity Growth Projection',
+    ip_g_round:'Series Angel',
+    ip_g_val:'Valoración',
+    ip_g_proj:'Proy. 3 años',
+    ip_g_note:'SAFE Note · valoración cap $4.2M · ronda Series Angel cierra Jun 30. Proyección a 3 años conservadora basada en M2 LATAM food-tech comps.',
+    ip_g_cta:'Ver brief completo →',
+    ip_s_h:'Cacao Ceremony · Producto real',
+    ip_s_name:'Bloque Criollo 250g',
+    ip_s_tag:'Fine-flavor · Hobo, Huila · trazable',
+    ip_s_disc:'Cada adoptante con wallet linked recibe <strong>10–35% off</strong> según tier — el descuento se inyecta on-chain al checkout.',
+    ip_s_note:'El final del journey: del árbol adoptado en /app/ al chocolate ceremonial en tu mesa. Mismo cacao, misma finca, misma trazabilidad.',
+    ip_s_cta:'Ver tienda →',
     s015_idx:'01.5 — Origen',
     s015_h:'Donde el<br>fruto<br>se transmuta<br>en <span class="ac">corazón</span>.',
     s015_body:'Cada mazorca madura es un acto de cuidado convertido en nutrición. El árbol entrega su fruto; el fruto se vuelve el corazón del sistema. De la pulpa fresca, del bosque al cuerpo — un ciclo continuo de transformación.',
@@ -1473,7 +2648,7 @@ const T = {
     walk_cap:'Arbeláez · Finca La Querencia · 2025',
     cta_pre:'Early Access · Ronda Limitada',
     cta_h:'Sé parte<br>del<br>sistema.',
-    cta_body:'Estamos construyendo el primer ecosistema funcional de cacao — integración vertical desde el árbol hasta el cuerpo. Únete a los fundadores que construyen desde el origen.<br><br>Asegura tu posición vía Coinbase Wallet. USDC y ETH aceptados.',
+    cta_body:'Estamos construyendo la primera plataforma de cacao — integración vertical desde el árbol hasta el cuerpo. Únete a los fundadores que construyen desde el origen.<br><br>Asegura tu posición vía Coinbase Wallet. USDC y ETH aceptados.',
     round_lbl:'Ronda Activa', round_badge:'Live · Limited',
     prog_lbl:'Progreso de ronda',
     rd_min:'Mínimo', rd_val:'Valoración', rd_ins:'Instrumento', rd_close:'Cierre',
@@ -1482,9 +2657,66 @@ const T = {
   },
   en: {
     nav_cta:'Invest Now',
+    bar_headline:'It is not <span class="ac">about chocolate.</span>',
+    bar_subhead:'It is about reinterpreting the cacao industry.',
+    bar_scroll:'scroll',
+    mk_idx:'01.2 — The app',
+    mk_h:'Adopt. Nurture. <span class="ac">Harvest.</span>',
+    mk_sub:'Three steps into the Caúa ecosystem. Every tree verified, every action on-chain.',
+    mk1_t:'Adopt a tree',
+    mk1_d:'Pick a guardian from the 5 Caúa farms. <strong style="color:#F1A91E;">$3 USD</strong> per tree — funds deploy 60/30/10 instantly.',
+    mk1_cta:'Adopt for $3 →',
+    mk_rit_t:'Daily ritual',
+    mk_rit_d:'Cacao tarot card draw + daily streak. Every 7 days unbroken unlocks bonus tokens.',
+    mk_rit_cta:'Sign in →',
+    mk2_t:'Care for it live',
+    mk2_d:'Caua-Gotchi: watch the tree grow through 8 stages. Water, sun, harvest mazorcas. <strong style="color:#e74c3c;">If you let it die, tokens burn.</strong>',
+    mk2_cta:'Sign in →',
+    mk3_t:'Harvest and redeem',
+    mk3_d:'$CACAO on Base. Mazorcas ↔ real ceremonial chocolate. Wallet linked via SIWE + KYC.',
+    mk3_cta:'KYC + Wallet →',
+    ff_idx:'01.25 — No crypto needed',
+    ff_h:'Pay with your card. <span class="ac">Cash out to your bank.</span>',
+    ff_sub:'No need to know what a wallet is, gas, or seed phrase. Coinbase Onramp bridges it: your card or bank transfer → USDC → adoption. When you harvest, $CACAO → USDC → your bank. We never touch your money.',
+    ff_s1_t:'Sign in with your email',
+    ff_s1_d:'No seed phrase, no browser extensions. Coinbase Smart Wallet creates a passkey wallet linked to your email — recoverable on any device with your account.',
+    ff_s2_t:'Pay $3 USD with your card',
+    ff_s2_d:'Coinbase Onramp accepts Visa, Mastercard, Apple Pay, ACH (US) and SEPA (EU). They handle KYC, AML and processing — we never touch fiat or store card numbers. Coinbase fee 1-2%.',
+    ff_s3_t:'Adopt + care for your tree',
+    ff_s3_d:'The Tree Adoption contract receives the $3 USDC, splits 60% guardian / 30% R&D / 10% community and mints your NFT instantly. You enter the app to care for your tree like a Caua-Gotchi.',
+    ff_s4_t:'Harvest $CACAO → your bank',
+    ff_s4_d:'When you redeem mazorcas for $CACAO ERC-20, you can (a) swap for real ceremonial chocolate at Cauaculture.co, (b) hold, or (c) use Coinbase Offramp: $CACAO → USDC → bank transfer. No external exchanges needed.',
+    ff_disc:'<strong style="color:#F7F1EEcc;">Coinbase Onramp confirmed · Coinbase Offramp confirmed · Base L2 chain ID 84532 (Sepolia now, mainnet post Series Angel).</strong> Zero custody from us — Coinbase intermediates the fiat ↔ crypto rail under their licenses (Texas MSA, NY BitLicense, EU MiCA-pending). Caúa Corp never touches your money or your keys. What you see on-chain is what you own.',
+    w3_idx:'01.3 — Web3 native',
+    w3_h:'Adopt on-chain. <span class="ac">Capitalize cacao.</span>',
+    w3_sub:'If you come from crypto: your tree is an NFT, your harvest is $CACAO ERC-20, and everything is signed with your wallet. 5 auditable contracts on Base Sepolia (mainnet soon). No custody from us — Coinbase Onramp for fiat→USDC, you sign everything else.',
+    w3_c1_n:'Caúa Tree NFT',
+    w3_c1_d:'Each adopted tree mints an NFT to your wallet. Metadata lives on-chain with guardian, farm, variety and current stage. Sellable on any marketplace that supports ERC-721.',
+    w3_c2_d:'Utility token. 21M symbolic cap (Bitcoin homage, not equivalence). Only mintable from MazorcaRedemption — no founder mint outside gameplay (Charter I.3 at the bytecode level).',
+    w3_c3_d:'Your off-chain mazorcas (gameplay) get burned with an EIP-712 signature and the contract mints you $CACAO ERC-20. ORACLE backend signs the payload, you send the tx — gasless-ready flow.',
+    w3_c4_d:'You pay $3 USDC and in the same transaction: 60% to the guardian, 30% to R&D, 10% to community, and your NFT mints. No middlemen — the contract is the escrow.',
+    w3_c5_d:'Every week the IoT oracle publishes a Merkle root with measurements (humidity, CO₂, health) from each farm. You verify your tree against the root — on-chain proof that the tree physically exists and is being cared for.',
+    w3_cta_kyc:'KYC + Wallet →',
+    w3_cta_adopt:'Adopt on-chain →',
+    w3_disc:'<strong style="color:#F7F1EEcc;">Stack confirmed:</strong> Base L2 · Coinbase Smart Wallet · Coinbase Onramp for fiat→USDC · EIP-712 typed-data on every signature · OZ AccessControl on all 5 contracts · KYC tier-2 before mint/redeem (Persona). Zero custody from us — your wallet, your keys. Mainnet rollout post Series Angel close.',
     hero_tag:'Caúa · Investor Brief · Series Angel · 2026',
     hero_h1:'The<br>problem<br>is not<br><span class="ac">cacao.</span>',
-    hero_body:"It's what we turned it into.<br><br>A biotech ecosystem rebuilding the relationship between human biology and the most complex functional living system on earth.",
+    hero_body:"It's what we turned it into.<br><br>A spectrum of possibilities rebuilding the relationship between human biology and the most complex functional living system on earth.",
+    ip_idx:'09.5 — What is already live',
+    ip_h:'Live metrics. <span class="ac">Real product.</span>',
+    ip_sub:'Growth Dashboard with projected equity returns and the Cacao Ceremony line on Cauaculture.co — the end of the adopter journey.',
+    ip_g_h:'Equity Growth Projection',
+    ip_g_round:'Series Angel',
+    ip_g_val:'Valuation',
+    ip_g_proj:'3yr proj.',
+    ip_g_note:'SAFE Note · valuation cap $4.2M · Series Angel closes Jun 30. Conservative 3-year projection based on M2 LATAM food-tech comps.',
+    ip_g_cta:'See full brief →',
+    ip_s_h:'Cacao Ceremony · Real product',
+    ip_s_name:'Criollo Block 250g',
+    ip_s_tag:'Fine-flavor · Hobo, Huila · traceable',
+    ip_s_disc:'Every adopter with a linked wallet gets <strong>10–35% off</strong> depending on tier — the discount is injected on-chain at checkout.',
+    ip_s_note:'End of the journey: from the tree you adopted in /app/ to ceremonial chocolate on your table. Same cacao, same farm, same traceability.',
+    ip_s_cta:'Visit the shop →',
     s015_idx:'01.5 — Origin',
     s015_h:'Where the<br>fruit<br>transmutes<br>into a <span class="ac">heart</span>.',
     s015_body:"Every ripe pod is care turned into nutrition. The tree gives its fruit; the fruit becomes the heart of the system. From fresh pulp, from forest to body — a continuous cycle of transformation.",
@@ -1624,7 +2856,7 @@ const T = {
     walk_cap:'Arbeláez · Finca La Querencia · 2025',
     cta_pre:'Early Access · Limited Round',
     cta_h:'Become<br>part of<br>the system.',
-    cta_body:"We're building the first functional cacao ecosystem — vertical integration from tree to body. Join founders building from origin.<br><br>Secure your position via Coinbase Wallet. USDC and ETH accepted.",
+    cta_body:"We're building the first cacao platform — vertical integration from tree to body. Join founders building from origin.<br><br>Secure your position via Coinbase Wallet. USDC and ETH accepted.",
     round_lbl:'Active Round', round_badge:'Live · Limited',
     prog_lbl:'Round progress',
     rd_min:'Minimum', rd_val:'Valuation', rd_ins:'Instrument', rd_close:'Closing',

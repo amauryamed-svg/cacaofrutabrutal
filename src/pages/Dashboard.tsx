@@ -11,6 +11,7 @@ import { makeT } from '../utils/i18n'
 import {
   getStageByHours, hoursSinceAdoption, getCycleProgress, isHarvestReady,
   ADOPTION_HOURS, formatTimeUntil,
+  isTreeDead, isInDeathDanger,
 } from '../utils/growthSystem'
 
 // Unit Economics anchors — keep in sync with public/investor-landing.html §8.4 data-target values.
@@ -22,9 +23,10 @@ export default function Dashboard() {
   const { lang } = useLang()
   const T = makeT(lang)
   const navigate = useNavigate()
-  const { trees, loading: treesLoading } = useCocoaTrees()
+  const { trees, loading: treesLoading, deleteTree } = useCocoaTrees()
   const { mazorcas, beans } = useTokenBalance()
   const [redeemOpen, setRedeemOpen] = useState(false)
+  const [deadBannerDismissed, setDeadBannerDismissed] = useState(false)
   const canRedeemOnChain = mazorcas >= MAZORCA_TO_CACAO_RATE
 
   // Per-portfolio rollups anchored to investor-landing Unit Economics
@@ -32,12 +34,33 @@ export default function Dashboard() {
   const totalCo2Kg       = trees.reduce((sum, t) => sum + (t.co2_kg ?? 0), 0)
   const totalRevenueUsd  = trees.reduce((sum, t) => sum + getCycleProgress(t.adopted_at) * UE_REVENUE_PER_TREE_YEAR_USD, 0)
   const harvestReadyCount = trees.filter(t => isHarvestReady(t.adopted_at)).length
+  // Real-Tamagotchi state — death mechanic from growthSystem.
+  // Server-side `died_at` and `harvested_at` (migration 036) are the source
+  // of truth. Client-side compute is the fallback when the server hasn't
+  // processed the forfeit yet.
+  // "At risk" = either close to dying (death danger window) OR low vitals
+  // (health < 40 or moisture < 30 or sunlight < 30) → plague-prone state.
+  // Both surfaces as a YELLOW banner; only fully-dead trees go RED.
+  const atRiskCount = trees.filter(t => {
+    if (t.died_at || t.harvested_at) return false
+    const inDanger = isInDeathDanger(t.adopted_at, t.last_update_at, !!t.harvested_at)
+    const lowVitals =
+      (t.health   != null && t.health   < 40) ||
+      (t.moisture != null && t.moisture < 30) ||
+      (t.sunlight != null && t.sunlight < 30)
+    return inDanger || lowVitals
+  }).length
+  const deadCount   = trees.filter(t =>
+    !!t.died_at || (!t.harvested_at && isTreeDead(t.adopted_at, t.last_update_at, false))
+  ).length
 
+  // Unit Economics anchored al modelo de adopción $3 USD on-chain.
+  // Datos verificables — no proyecciones aspiracionales.
   const METRICS = [
-    { label: lang === 'es' ? 'Toneladas Desviadas'    : 'Tons Diverted',         value: '2.4', unit: 'ton',  icon: '♻️', color: BRAND.pod     },
-    { label: lang === 'es' ? 'Familias Impactadas'    : 'Families Impacted',      value: '5',   unit: 'fam.', icon: '👨‍👩‍👧‍👦', color: BRAND.mazorca },
-    { label: lang === 'es' ? 'Ingreso +% Agricultor'  : 'Farmer Income Increase', value: '+180',unit: '%',    icon: '📈', color: BRAND.heroic  },
-    { label: lang === 'es' ? 'Biodiversidad Protegida': 'Protected Biodiversity', value: '12',  unit: 'ha',   icon: '🌳', color: BRAND.pod     },
+    { label: lang === 'es' ? 'Precio adopción'       : 'Adoption price',         value: '$3',  unit: 'USD',     icon: '🌱', color: BRAND.pod     },
+    { label: lang === 'es' ? 'Al guardián directo'   : 'To guardian direct',     value: '60',  unit: '%',       icon: '👨‍🌾', color: BRAND.mazorca },
+    { label: lang === 'es' ? 'Ratio canje on-chain'  : 'On-chain redeem ratio',  value: '1000',unit: ': 1',     icon: '🍫', color: BRAND.heroic  },
+    { label: lang === 'es' ? 'Cap $CACAO ERC-20'     : '$CACAO supply cap',      value: '21',  unit: 'M',       icon: '⬡', color: BRAND.criollo  },
   ]
 
   const TIMELINE = [
@@ -49,18 +72,18 @@ export default function Dashboard() {
     { q: '2028-29', title: lang === 'es' ? 'Consolidación'    : 'Consolidation',     status: 'future',   items: ['$1M+ revenue', lang === 'es' ? 'Licencias IP' : 'IP Licenses', lang === 'es' ? '5 países' : '5 countries'] },
   ]
 
+  // Distribución 60/30/10 — el split que enforce el contrato TreeAdoption
+  // on-chain en cada $3 USDC adoptado. Igual lo que dice la app, igual lo
+  // que ejecuta el escrow, igual lo que ve el usuario en /uploads.
   const DISTRIBUTION = [
-    { label: lang === 'es' ? 'Agricultor (Guardián)'   : 'Farmer (Guardian)',        pct: 35, color: BRAND.pod      },
-    { label: lang === 'es' ? 'Producción + R&D'        : 'Production + R&D',         pct: 25, color: BRAND.muisca   },
-    { label: lang === 'es' ? 'Operaciones + Logística' : 'Operations + Logistics',   pct: 15, color: BRAND.mazorca  },
-    { label: lang === 'es' ? 'Marketing + Comunidad'   : 'Marketing + Community',    pct: 10, color: BRAND.theobroma},
-    { label: lang === 'es' ? 'Reinversión + Impacto'   : 'Reinvestment + Impact',    pct: 10, color: BRAND.criollo  },
-    { label: 'Equipo CAUA',                                                           pct: 5,  color: BRAND.heroic   },
+    { label: lang === 'es' ? 'Guardián (finca)'         : 'Guardian (farm)',           pct: 60, color: BRAND.pod      },
+    { label: lang === 'es' ? 'R&D + Producción'         : 'R&D + Production',          pct: 30, color: BRAND.muisca   },
+    { label: lang === 'es' ? 'Comunidad + Reinversión'  : 'Community + Reinvestment',  pct: 10, color: BRAND.criollo  },
   ]
 
   return (
-    <div style={{ background: '#040C06', minHeight: '100vh', paddingTop: 80 }}>
-      <div style={{ maxWidth: 1000, margin: '0 auto', padding: 'clamp(24px,5vw,40px) var(--space-page)' }}>
+    <div style={{ background: '#040C06', minHeight: '100vh', paddingTop: 'calc(var(--nav-h, 60px) + 12px)' }}>
+      <div style={{ maxWidth: 1000, margin: '0 auto', padding: 'clamp(20px,5vw,40px) var(--space-page) clamp(40px,8vw,80px)' }}>
 
         <p style={{ fontFamily: FONTS.serif, fontStyle: 'italic', color: BRAND.mazorca, fontSize: 12, letterSpacing: '0.2em', marginBottom: 8 }}>
           {T('dash_eyebrow')}
@@ -70,6 +93,79 @@ export default function Dashboard() {
           fontSize: 'clamp(36px, 8vw, 56px)', color: BRAND.heirloom,
           textTransform: 'uppercase', margin: '0 0 32px', lineHeight: 0.95,
         }}>{T('dash_title').split(' ')[0]} <span style={{ color: BRAND.pod }}>{T('dash_title').split(' ')[1]}</span></h2>
+
+        {/* Tamagotchi reality check — yellow for at-risk (plaga + próximo a
+            morir), red only for actually dead. Yellow = "te queda tiempo,
+            cuídalo"; red = "ya no se puede salvar". */}
+        {!treesLoading && atRiskCount > 0 && (
+          <div style={{
+            background: `${BRAND.mazorca}1a`, border: `1px solid ${BRAND.mazorca}88`,
+            borderRadius: 12, padding: '14px 18px', marginBottom: 16,
+            display: 'flex', alignItems: 'center', gap: 14,
+            boxShadow: `0 0 24px ${BRAND.mazorca}33`,
+          }}>
+            <span style={{ fontSize: 26 }}>⚠️</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                fontFamily: FONTS.display, fontWeight: 800, fontSize: 13,
+                color: BRAND.mazorca, letterSpacing: '0.1em', textTransform: 'uppercase',
+              }}>
+                {atRiskCount} árbol{atRiskCount !== 1 ? 'es' : ''} en riesgo
+              </div>
+              <div style={{ fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}aa`, marginTop: 2, lineHeight: 1.5 }}>
+                Plaga, sed o ventana de cosecha por cerrar. Riega + expón al sol cuanto antes — si muere, los tokens de gameplay se queman.
+              </div>
+            </div>
+          </div>
+        )}
+        {!treesLoading && deadCount > 0 && !deadBannerDismissed && (
+          <div style={{
+            background: '#1a0606', border: '1px solid #e74c3c44',
+            borderRadius: 12, padding: '12px 16px', marginBottom: 16,
+            display: 'flex', alignItems: 'center', gap: 12,
+            position: 'relative',
+          }}>
+            <span style={{ fontSize: 22, opacity: 0.8 }}>💀</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                fontFamily: FONTS.display, fontWeight: 700, fontSize: 11,
+                color: BRAND.pod, letterSpacing: '0.12em', textTransform: 'uppercase',
+              }}>
+                {deadCount} árbol{deadCount !== 1 ? 'es' : ''} listo{deadCount !== 1 ? 's' : ''} para compostar
+              </div>
+              <div style={{ fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}88`, marginTop: 2, lineHeight: 1.5 }}>
+                Devuelve su biomasa a la tierra para nutrir la próxima siembra. Los tokens de gameplay no cosechados se quemaron; tu inversión inicial ya fue desplegada (60/30/10) al adoptar — no retenemos fondos en custodia (Coinbase onramp).
+              </div>
+            </div>
+            <button
+              onClick={() => setDeadBannerDismissed(true)}
+              aria-label="Cerrar"
+              title="Cerrar"
+              style={{
+                background: 'transparent', border: 'none', cursor: 'pointer',
+                color: '#e74c3caa', fontSize: 18, lineHeight: 1, padding: '4px 8px',
+                fontFamily: FONTS.display, fontWeight: 700,
+                flexShrink: 0,
+              }}
+            >×</button>
+          </div>
+        )}
+
+        {/* Daily-care reminder — soft nudge for users who have trees but no danger yet */}
+        {!treesLoading && adoptedCount > 0 && atRiskCount === 0 && deadCount === 0 && (
+          <div style={{
+            background: `${BRAND.pod}11`, border: `1px solid ${BRAND.pod}33`,
+            borderRadius: 10, padding: '10px 14px', marginBottom: 16,
+            fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}aa`,
+            display: 'flex', alignItems: 'center', gap: 10, lineHeight: 1.5,
+          }}>
+            <span style={{ fontSize: 16 }}>🌱</span>
+            <span>
+              <strong style={{ color: BRAND.pod }}>Cuida tu árbol cada día.</strong>{' '}
+              Cosecha cada 5 días de floración y maduración. Si lo dejas morir, como un Caua-Gotchi real, los tokens de gameplay se queman.
+            </span>
+          </div>
+        )}
 
         {/* Tus Árboles · Unit Economics — replaces the embedded CauaGotchi panel.
             Anchors each adoption to the macro Unit Economics shown in investor-landing.html §8.4
@@ -124,7 +220,7 @@ export default function Dashboard() {
             </div>
 
             {/* Per-portfolio rollups (anchored to UE) */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 20 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(120px, 100%), 1fr))', gap: 'clamp(8px, 2vw, 12px)', marginBottom: 20 }}>
               <div style={ueTileStyle(BRAND.pod)}>
                 <div style={ueLabelStyle}>{lang === 'es' ? 'Revenue contribución' : 'Revenue contribution'}</div>
                 <div style={ueNumStyle(BRAND.pod)}>${Math.round(totalRevenueUsd).toLocaleString('en-US')}<span style={ueUnitStyle}>USD</span></div>
@@ -160,13 +256,13 @@ export default function Dashboard() {
                       : `${mazorcas} mazorcas · ${beans.toFixed(1)} beans. Redeem for real ceremonial chocolate in Marketplace.`}
                   </div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', flexDirection: 'row', gap: 8, flexWrap: 'wrap', width: '100%', justifyContent: 'flex-end' }}>
                   <button onClick={() => navigate('/marketplace#cacao-ceremony')} style={{
-                    padding: '10px 18px', borderRadius: 999,
+                    flex: '1 1 200px', padding: '10px 16px', borderRadius: 999,
                     background: `linear-gradient(135deg, ${BRAND.mazorca}, ${BRAND.brown})`,
                     color: BRAND.bgDeep, border: 'none', cursor: 'pointer',
-                    fontFamily: FONTS.display, fontWeight: 700, fontSize: 11, letterSpacing: '0.12em',
-                    textTransform: 'uppercase', whiteSpace: 'nowrap',
+                    fontFamily: FONTS.display, fontWeight: 700, fontSize: 11, letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
                   }}>
                     {lang === 'es' ? '🍫 Canjear chocolate →' : '🍫 Redeem chocolate →'}
                   </button>
@@ -175,13 +271,13 @@ export default function Dashboard() {
                     disabled={!canRedeemOnChain}
                     title={canRedeemOnChain ? '' : `Need ≥ ${MAZORCA_TO_CACAO_RATE} mazorcas`}
                     style={{
-                      padding: '10px 18px', borderRadius: 999,
+                      flex: '1 1 160px', padding: '10px 16px', borderRadius: 999,
                       background: 'transparent',
                       color: canRedeemOnChain ? BRAND.pod : `${BRAND.pod}66`,
                       border: `1px solid ${canRedeemOnChain ? BRAND.pod : BRAND.pod + '44'}`,
                       cursor: canRedeemOnChain ? 'pointer' : 'not-allowed',
-                      fontFamily: FONTS.display, fontWeight: 700, fontSize: 11, letterSpacing: '0.12em',
-                      textTransform: 'uppercase', whiteSpace: 'nowrap',
+                      fontFamily: FONTS.display, fontWeight: 700, fontSize: 11, letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
                       opacity: canRedeemOnChain ? 1 : 0.6,
                     }}>
                     {lang === 'es' ? '⛓ Burn → $CACAO' : '⛓ Burn → $CACAO'}
@@ -190,36 +286,152 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* Tree tiles */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 10 }}>
+            {/* Tree tiles — Jardín / Labranza. Tiles más grandes y visuales:
+                emoji grande, status color (sano/peligro/cosecha/muerto), nombre
+                + stage, tiempo restante o "muerto", barra de progreso del ciclo. */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))', gap: 'clamp(12px, 2.5vw, 18px)' }}>
               {trees.map(t => {
                 const g = GUARDIANS[t.guardian_id]
                 const hours = hoursSinceAdoption(t.adopted_at)
                 const stage = getStageByHours(hours)
                 const cyclePct = getCycleProgress(t.adopted_at) * 100
-                const ready = isHarvestReady(t.adopted_at)
+                const harvested = !!t.harvested_at
+                const dead = !!t.died_at || isTreeDead(t.adopted_at, t.last_update_at, harvested)
+                const ready = !dead && !harvested && isHarvestReady(t.adopted_at)
+                const danger = !dead && !harvested && (
+                  isInDeathDanger(t.adopted_at, t.last_update_at, harvested) ||
+                  (t.health   != null && t.health   < 40) ||
+                  (t.moisture != null && t.moisture < 30) ||
+                  (t.sunlight != null && t.sunlight < 30)
+                )
                 const remaining = formatTimeUntil(new Date(new Date(t.adopted_at).getTime() + ADOPTION_HOURS * 3600000))
+
+                const accent = dead ? '#e74c3c'
+                             : danger ? BRAND.mazorca
+                             : ready ? BRAND.mazorca
+                             : BRAND.pod
+                const statusLabel = dead ? 'Muerto'
+                                  : danger ? 'En riesgo'
+                                  : ready ? 'Cosecha lista'
+                                  : harvested ? 'Cosechado'
+                                  : stage.name
+                const statusEmoji = dead ? '💀'
+                                  : danger ? '⚠️'
+                                  : ready ? '🍫'
+                                  : harvested ? '✓'
+                                  : stage.emoji
+
                 return (
-                  <button key={t.id} onClick={() => navigate(`/tree/${t.id}`)} style={{
-                    background: ready ? `${BRAND.mazorca}1a` : BRAND.bgCard,
-                    border: `1px solid ${ready ? BRAND.mazorca + 'aa' : BRAND.amazon + '88'}`,
-                    borderRadius: 12, padding: '12px 14px', cursor: 'pointer',
+                  <div key={t.id} style={{
+                    background: dead ? '#1a0606'
+                              : danger ? `${BRAND.mazorca}10`
+                              : ready ? `${BRAND.mazorca}1a`
+                              : `linear-gradient(160deg, ${BRAND.bgCard}, ${BRAND.bgDeep})`,
+                    border: `1px solid ${accent}${danger || ready || dead ? 'aa' : '66'}`,
+                    borderRadius: 16, padding: 'clamp(16px, 3vw, 22px)',
                     color: BRAND.heirloom, textAlign: 'left',
+                    boxShadow: ready ? `0 0 24px ${BRAND.mazorca}33`
+                             : danger ? `0 0 18px ${BRAND.mazorca}22`
+                             : dead ? 'inset 0 0 30px #e74c3c22'
+                             : 'none',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    display: 'flex', flexDirection: 'column', gap: 12,
+                    minHeight: 200, position: 'relative',
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span style={{ fontSize: 22 }}>{stage.emoji}</span>
-                      {ready && <span style={{ fontFamily: FONTS.display, fontSize: 9, fontWeight: 800, color: BRAND.mazorca, letterSpacing: '0.12em', background: `${BRAND.mazorca}33`, padding: '2px 6px', borderRadius: 4 }}>🍫 LISTO</span>}
+                  <button onClick={() => navigate(`/tree/${t.id}`)} style={{
+                    background: 'transparent', border: 'none', cursor: 'pointer',
+                    color: 'inherit', padding: 0, textAlign: 'left',
+                    display: 'flex', flexDirection: 'column', gap: 12,
+                    width: '100%',
+                  }}
+                    onMouseEnter={e => { ((e.currentTarget as HTMLButtonElement).parentElement as HTMLDivElement).style.transform = 'translateY(-3px)' }}
+                    onMouseLeave={e => { ((e.currentTarget as HTMLButtonElement).parentElement as HTMLDivElement).style.transform = 'translateY(0)' }}
+                  >
+                    {/* Top row: stage emoji XL + status badge */}
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                      <span style={{
+                        fontSize: 'clamp(44px, 7vw, 60px)',
+                        lineHeight: 1, opacity: dead ? 0.5 : 1,
+                        filter: dead ? 'grayscale(0.7)' : 'none',
+                      }}>{statusEmoji}</span>
+                      <span style={{
+                        fontFamily: FONTS.display, fontSize: 9, fontWeight: 800,
+                        color: accent, letterSpacing: '0.12em',
+                        background: `${accent}22`, padding: '4px 10px', borderRadius: 999,
+                        textTransform: 'uppercase',
+                      }}>
+                        {statusLabel}
+                      </span>
                     </div>
-                    <div style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 13, color: BRAND.heirloom }}>
-                      {g?.name ?? 'Árbol'} · <span style={{ color: BRAND.pod }}>{stage.name}</span>
+
+                    {/* Name + stage */}
+                    <div>
+                      <div style={{
+                        fontFamily: FONTS.display, fontWeight: 900,
+                        fontSize: 'clamp(18px, 3vw, 22px)',
+                        color: BRAND.heirloom, lineHeight: 1, letterSpacing: '0.02em',
+                      }}>
+                        {g?.name ?? 'Árbol'}
+                      </div>
+                      <div style={{
+                        fontFamily: FONTS.serif, fontStyle: 'italic',
+                        color: dead ? `${BRAND.heirloom}55` : accent,
+                        fontSize: 13, marginTop: 4, letterSpacing: '0.04em',
+                      }}>
+                        {stage.name} · {g?.region ?? '—'}
+                      </div>
                     </div>
-                    <div style={{ fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}66`, marginTop: 2 }}>
-                      {ready ? (lang === 'es' ? 'Cosecha disponible' : 'Harvest available') : `${remaining} ${lang === 'es' ? 'restantes' : 'left'}`}
+
+                    {/* Time / status detail */}
+                    <div style={{
+                      fontFamily: FONTS.body, fontSize: 11,
+                      color: `${BRAND.heirloom}88`, marginTop: 'auto',
+                    }}>
+                      {dead ? 'Tokens quemados — pulsa para info'
+                       : ready ? (lang === 'es' ? '¡Cosecha disponible ahora!' : 'Harvest ready now!')
+                       : danger ? (lang === 'es' ? 'Cuídalo cuanto antes' : 'Care now')
+                       : `${remaining} ${lang === 'es' ? 'al ciclo completo' : 'to full cycle'}`}
                     </div>
-                    <div style={{ marginTop: 8, height: 4, background: `${BRAND.amazon}55`, borderRadius: 2, overflow: 'hidden' }}>
-                      <div style={{ width: `${cyclePct}%`, height: '100%', background: `linear-gradient(90deg, ${BRAND.pod}, ${BRAND.mazorca})` }} />
+
+                    {/* Cycle progress bar */}
+                    <div style={{ height: 6, background: `${BRAND.amazon}66`, borderRadius: 999, overflow: 'hidden' }}>
+                      <div style={{
+                        width: `${dead ? 100 : cyclePct}%`, height: '100%',
+                        background: dead ? '#e74c3c'
+                                  : `linear-gradient(90deg, ${BRAND.pod}, ${BRAND.mazorca})`,
+                        transition: 'width 0.6s',
+                      }} />
                     </div>
                   </button>
+
+                  {/* Devolver a la tierra — solo en árboles muertos. Lenguaje
+                      regenerativo: la biomasa nutre la próxima siembra. */}
+                  {dead && (
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation()
+                        if (!confirm(`¿Devolver el árbol de ${g?.name ?? 'guardián'} a la tierra? Su biomasa nutre el suelo de la próxima generación. Esta acción no se puede deshacer.`)) return
+                        try { await deleteTree(t.id) }
+                        catch (err) { alert(`No se pudo devolver: ${err instanceof Error ? err.message : 'Error desconocido'}`) }
+                      }}
+                      title="Devolver a la tierra · regenerar"
+                      aria-label="Devolver árbol a la tierra"
+                      style={{
+                        width: '100%', marginTop: 4,
+                        padding: '10px 14px', borderRadius: 999,
+                        background: `${BRAND.pod}18`,
+                        border: `1px solid ${BRAND.pod}66`,
+                        color: BRAND.pod, cursor: 'pointer',
+                        fontFamily: FONTS.display, fontWeight: 700,
+                        fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      }}
+                    >
+                      <span style={{ fontSize: 14 }}>🌱</span>
+                      Devolver a la tierra
+                    </button>
+                  )}
+                  </div>
                 )
               })}
             </div>
@@ -238,7 +450,7 @@ export default function Dashboard() {
         )}
 
         {/* Metrics */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 45%), 1fr))', gap: 16, marginBottom: 48 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(140px, 100%), 1fr))', gap: 'clamp(10px, 2vw, 16px)', marginBottom: 'clamp(32px, 6vw, 48px)' }}>
           {METRICS.map((m, i) => (
             <div key={i} style={{ background: '#132B1C', border: `1px solid ${BRAND.amazon}66`, borderRadius: 12, padding: 20, textAlign: 'center' }}>
               <div style={{ fontSize: 28, marginBottom: 8 }}>{m.icon}</div>
@@ -257,7 +469,7 @@ export default function Dashboard() {
         <div style={{ position: 'relative', marginBottom: 48 }}>
           <div style={{ position: 'absolute', left: 16, top: 0, bottom: 0, width: 2, background: `linear-gradient(${BRAND.pod}, ${BRAND.amazon}44)` }} />
           {TIMELINE.map((t, i) => (
-            <div key={i} style={{ display: 'flex', gap: 20, marginBottom: 24 }}>
+            <div key={i} style={{ display: 'flex', gap: 'clamp(12px, 3vw, 20px)', marginBottom: 24 }}>
               <div style={{
                 width: 34, minWidth: 34, height: 34, borderRadius: '50%', zIndex: 2,
                 background: t.status === 'active' ? BRAND.pod : '#132B1C',

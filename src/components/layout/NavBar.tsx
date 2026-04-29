@@ -305,23 +305,25 @@ export default function NavBar() {
         justifyContent: 'space-between',
       }}>
         {/* Logo + link back to public investor landing */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <Link to="/" style={{ textDecoration: 'none' }}>
-            <CauaLogo size={26} variant="white" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 14, minWidth: 0 }}>
+          <Link to="/" style={{ textDecoration: 'none', flexShrink: 0 }}>
+            <CauaLogo size={isMobile ? 22 : 26} variant="white" />
           </Link>
-          <a
-            href="/"
-            aria-label="Volver al investor landing"
-            style={{
-              padding: '4px 10px', borderRadius: 999,
-              fontFamily: FONTS.display, fontWeight: 700,
-              fontSize: 10, letterSpacing: '0.14em', textDecoration: 'none',
-              color: `${BRAND.mazorca}99`, border: `1px solid ${BRAND.mazorca}33`,
-              transition: 'all 0.3s',
-            }}
-          >
-            ← INVESTOR
-          </a>
+          {!isMobile && (
+            <a
+              href="/"
+              aria-label="Volver al investor landing"
+              style={{
+                padding: '4px 10px', borderRadius: 999,
+                fontFamily: FONTS.display, fontWeight: 700,
+                fontSize: 10, letterSpacing: '0.14em', textDecoration: 'none',
+                color: `${BRAND.mazorca}99`, border: `1px solid ${BRAND.mazorca}33`,
+                transition: 'all 0.3s', whiteSpace: 'nowrap',
+              }}
+            >
+              ← INVESTOR
+            </a>
+          )}
         </div>
 
         {/* Right cluster — desktop utilities + burger (universal). Tabs all live in the drawer. */}

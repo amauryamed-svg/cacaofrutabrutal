@@ -56,7 +56,7 @@ export default function BlogPost() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingTop: 80,
+        paddingTop: 'calc(var(--nav-h, 60px) + 12px)',
       }}>
         <div style={{
           fontFamily: FONTS.body,
@@ -77,7 +77,7 @@ export default function BlogPost() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingTop: 80,
+        paddingTop: 'calc(var(--nav-h, 60px) + 12px)',
       }}>
         <div style={{
           textAlign: 'center',
@@ -102,7 +102,7 @@ export default function BlogPost() {
     <div style={{
       minHeight: '100vh',
       background: BRAND.bgDeep,
-      paddingTop: 80,
+      paddingTop: 'calc(var(--nav-h, 60px) + 12px)',
     }}>
       {/* Back button + language toggle */}
       <div style={{

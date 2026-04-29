@@ -32,21 +32,21 @@ export default function CauaBongaFinca() {
   const myTrees = trees.filter(t => t.guardian_id === guardianId)
 
   return (
-    <div style={{ background: BRAND.bgDeep, minHeight: '100vh', paddingTop: 80, paddingBottom: 80 }}>
+    <div style={{ background: BRAND.bgDeep, minHeight: '100vh', paddingTop: 'calc(var(--nav-h, 60px) + 12px)', paddingBottom: 'clamp(48px, 8vw, 80px)' }}>
 
       {/* Back */}
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '16px 20px 0' }}>
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '16px var(--space-page) 0' }}>
         <button onClick={() => navigate('/caua-bonga')} style={backBtn}>
           ← Volver al mundo
         </button>
       </div>
 
       {/* Hero — guardian header con mapa al lado */}
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '12px 20px 0' }}>
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '12px var(--space-page) 0' }}>
         <div style={{
-          display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap',
+          display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center',
           background: `linear-gradient(135deg, ${BRAND.amazon}88, ${BRAND.bgDark})`,
-          border: `1px solid ${bio.accent}55`, borderRadius: 18, padding: 18,
+          border: `1px solid ${bio.accent}55`, borderRadius: 18, padding: 'clamp(14px, 2.5vw, 18px)',
         }}>
           <div style={{ flexShrink: 0 }}>
             <ColombiaMap region={region} size={120} showTerrain showLabels />
@@ -73,7 +73,7 @@ export default function CauaBongaFinca() {
 
       {/* NPC dialogue */}
       {farm && farm.npc_dialogue.length > 0 && (
-        <div style={{ maxWidth: 720, margin: '20px auto 0', padding: '0 20px' }}>
+        <div style={{ maxWidth: 720, margin: '20px auto 0', padding: '0 var(--space-page)' }}>
           {farm.npc_dialogue.map((line, i) => (
             <motion.div
               key={i}
@@ -97,7 +97,7 @@ export default function CauaBongaFinca() {
       )}
 
       {/* Mis árboles aquí */}
-      <div style={{ maxWidth: 720, margin: '24px auto 0', padding: '0 20px' }}>
+      <div style={{ maxWidth: 720, margin: '24px auto 0', padding: '0 var(--space-page)' }}>
         <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 10, letterSpacing: '0.25em', color: `${BRAND.heirloom}55`, marginBottom: 12, textTransform: 'uppercase' }}>
           Mis árboles en esta finca
         </div>
@@ -129,7 +129,7 @@ export default function CauaBongaFinca() {
             </button>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(140px, 100%), 1fr))', gap: 'clamp(8px, 2vw, 12px)' }}>
             {myTrees.map(t => (
               <button
                 key={t.id}
@@ -157,7 +157,7 @@ export default function CauaBongaFinca() {
       </div>
 
       {/* CauaBonga plot CTA — entry to the P2E farming layer */}
-      <div style={{ maxWidth: 560, margin: '32px auto 0', padding: '0 20px', textAlign: 'center' }}>
+      <div style={{ maxWidth: 560, margin: '32px auto 0', padding: '0 var(--space-page)', textAlign: 'center' }}>
         <button
           onClick={() => navigate(`/caua-bonga/finca/${guardianId}/plot`)}
           style={{

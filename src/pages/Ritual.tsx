@@ -132,7 +132,7 @@ export default function Ritual() {
   const cardColor = selectedCard ? ELEMENT_COLORS[selectedCard.element] : BRAND.criollo
 
   return (
-    <div style={{ background: '#040C06', minHeight: '100vh', paddingTop: 80 }}>
+    <div style={{ background: '#040C06', minHeight: '100vh', paddingTop: 'calc(var(--nav-h, 60px) + 12px)' }}>
 
       {/* Hero header */}
       <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(24px,5vw,40px) var(--space-page) 0', textAlign: 'center' }}>

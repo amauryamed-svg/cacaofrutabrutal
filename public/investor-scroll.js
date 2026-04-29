@@ -1,5 +1,5 @@
 // Single scroll source for investor-landing.html.
-// Writes progress to :root as --p so investor-3d.js reads off one listener.
+// Writes progress to :root as --p so investor-gallery.js reads off one listener.
 // Also runs Fortified-style scroll-triggered counters for the Unit Economics section.
 // motion v12 loaded via esm.sh (public/ assets bypass Vite transform — direct CDN URL is simplest)
 import { scroll, animate } from "https://esm.sh/motion@12";
@@ -7,7 +7,7 @@ import { scroll, animate } from "https://esm.sh/motion@12";
 // Hard kill switch honors docs/context/ui-ux-bar.md — reduced-motion means no scrubbing, no counter tween.
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-// Global scroll progress — investor-3d.js reads this via getComputedStyle(--p)
+// Global scroll progress — investor-gallery.js reads this via getComputedStyle(--p)
 if (!reduceMotion) {
   scroll((p) => {
     document.documentElement.style.setProperty("--p", p.toFixed(4));
@@ -17,7 +17,7 @@ if (!reduceMotion) {
 }
 
 // Section 09 (#investment) proximity — writes --pd (0..1) to :root.
-// Drives the divine mazorca reveal in investor-3d.js so the climax is anchored
+// Drives the divine mazorca reveal in investor-gallery.js so the climax is anchored
 // to "Building the first functional cacao platform" rather than a raw page %.
 if (!reduceMotion) {
   const investment = document.getElementById("investment");
