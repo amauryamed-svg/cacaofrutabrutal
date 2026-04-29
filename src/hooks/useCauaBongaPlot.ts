@@ -55,8 +55,19 @@ export interface UseCauaBongaPlot {
   error:       string | null
   refresh:     () => Promise<void>
   ensurePlot:  () => Promise<PlotRow | null>
-  plantTile:   (tileIdx: number, cropSlug: CropSlug, mode?: 'regen' | 'traditional') => Promise<void>
+  plantTile:   (tileIdx: number, cropSlug: CropSlug, mode?: 'regen' | 'traditional') => Promise<PlantResult>
   harvestTile: (tile: TileRow) => Promise<HarvestResult>
+  careTile:    (tile: TileRow, action: CareAction) => Promise<CareResult>
+}
+
+export type CareAction = 'water' | 'sun' | 'nutrient' | 'pruning'
+
+export interface PlantResult {
+  ok:           boolean
+  ready_at?:    string
+  new_balance?: number
+  seed_cost?:   number
+  error?:       string
 }
 
 export interface HarvestResult {
@@ -66,6 +77,14 @@ export interface HarvestResult {
   soil_after?:  number
   fallow_until?: string
   error?:       string
+}
+
+export interface CareResult {
+  ok:            boolean
+  soil_after?:   number
+  ready_at?:     string
+  care_actions?: number
+  error?:        string
 }
 
 export function useCauaBongaPlot(guardianId: number): UseCauaBongaPlot {
@@ -166,45 +185,96 @@ export function useCauaBongaPlot(guardianId: number): UseCauaBongaPlot {
     tileIdx: number,
     cropSlug: CropSlug,
     mode: 'regen' | 'traditional' = 'regen',
-  ): Promise<void> => {
-    if (!userId || !plot) {
-      setError('plot_required')
-      return
-    }
+  ): Promise<PlantResult> => {
+    if (!userId || !plot) return { ok: false, error: 'plot_required' }
     const crop = CROPS[cropSlug]
-    if (!crop) { setError('unknown_crop'); return }
-    if (crop.seedCost === null) { setError('crop_drop_only'); return }
+    if (!crop) return { ok: false, error: 'unknown_crop' }
+    if (crop.seedCost === null) return { ok: false, error: 'crop_drop_only' }
 
-    const plantedAt = new Date()
-    const readyAt = new Date(plantedAt.getTime() + crop.growMinutes * 60_000)
+    // Find the planting row for this tile so the Edge Function can lock it.
+    const tile = tiles.find(t => t.tile_idx === tileIdx)
+    if (!tile) return { ok: false, error: 'tile_not_found' }
 
-    const { error: updErr } = await supabase
-      .from('cauabonga_plantings')
-      .update({
-        state:        'growing',
-        crop_slug:    cropSlug,
-        mode,
-        planted_at:   plantedAt.toISOString(),
-        ready_at:     readyAt.toISOString(),
-        fallow_until: null,
-      })
-      .eq('plot_id', plot.id)
-      .eq('tile_idx', tileIdx)
-      .eq('user_id', userId)
-      .eq('state', 'empty')                            // optimistic-concurrency guard
+    const { data: { session } } = await supabase.auth.getSession()
+    const accessToken = session?.access_token
+    if (!accessToken) return { ok: false, error: 'no_session' }
 
-    if (updErr) {
-      setError(updErr.message)
-      return
+    let res: Response
+    try {
+      res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/cauabonga-plant-seed`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY as string,
+          },
+          body: JSON.stringify({ planting_id: tile.id, crop_slug: cropSlug, mode }),
+        },
+      )
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : 'network_error' }
     }
-    // Action log (best-effort, RLS may reject; that's ok for MVP)
-    void supabase.from('cauabonga_action_log').insert({
-      user_id: userId,
-      plot_id: plot.id,
-      action: 'plant',
-    })
+    const json = await res.json().catch(() => null) as Record<string, unknown> | null
+    if (!res.ok || !json?.ok) {
+      const err = typeof json?.error === 'string' ? json.error : `http_${res.status}`
+      setError(err)
+      return { ok: false, error: err }
+    }
+    const plant = json.plant as Record<string, unknown> | undefined
     await refresh()
-  }, [userId, plot, refresh])
+    return {
+      ok:          true,
+      ready_at:    plant?.ready_at as string | undefined,
+      new_balance: plant?.new_balance as number | undefined,
+      seed_cost:   plant?.seed_cost as number | undefined,
+    }
+  }, [userId, plot, tiles, refresh])
+
+  const careTile = useCallback(async (
+    tile: TileRow,
+    action: CareAction,
+  ): Promise<CareResult> => {
+    if (!userId) return { ok: false, error: 'unauthenticated' }
+    if (tile.state !== 'growing' && tile.state !== 'seeded') {
+      return { ok: false, error: 'tile_not_growing' }
+    }
+    const { data: { session } } = await supabase.auth.getSession()
+    const accessToken = session?.access_token
+    if (!accessToken) return { ok: false, error: 'no_session' }
+
+    let res: Response
+    try {
+      res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/cauabonga-care-action`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY as string,
+          },
+          body: JSON.stringify({ planting_id: tile.id, action }),
+        },
+      )
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : 'network_error' }
+    }
+    const json = await res.json().catch(() => null) as Record<string, unknown> | null
+    if (!res.ok || !json?.ok) {
+      const err = typeof json?.error === 'string' ? json.error : `http_${res.status}`
+      return { ok: false, error: err }
+    }
+    const care = json.care as Record<string, unknown> | undefined
+    await refresh()
+    return {
+      ok:           true,
+      soil_after:   care?.soil_after as number | undefined,
+      ready_at:     care?.ready_at as string | undefined,
+      care_actions: care?.care_actions as number | undefined,
+    }
+  }, [userId, refresh])
 
   const harvestTile = useCallback(async (tile: TileRow): Promise<HarvestResult> => {
     if (!userId) return { ok: false, error: 'unauthenticated' }
@@ -256,5 +326,6 @@ export function useCauaBongaPlot(guardianId: number): UseCauaBongaPlot {
     ensurePlot,
     plantTile,
     harvestTile,
+    careTile,
   }
 }

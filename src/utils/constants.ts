@@ -288,14 +288,23 @@ export const KYC_TIER_REQUIREMENTS = {
 
 export type GatedAction = keyof typeof KYC_TIER_REQUIREMENTS
 
-/** Smart contract addresses. Populated as contracts deploy (Phases 3–6). */
+/**
+ * Smart contract addresses — Base Sepolia (chain 84532) deployment, 2026-04-28.
+ * Source of truth: memory/project_web3_sepolia_deploy.md.
+ *
+ * Mainnet (chain 8453) deployment requires fresh wallets + Safe multisig + audit
+ * (Phase 7). Until then these stay Sepolia-only and Web3 features run on testnet.
+ */
 export const WEB3_CONTRACTS = {
-  cacaoTreeNFT:       '' as `0x${string}` | '',
-  cacaoToken:         '' as `0x${string}` | '',
-  mazorcaRedemption:  '' as `0x${string}` | '',
-  treeAdoption:       '' as `0x${string}` | '',
-  iotAttestation:     '' as `0x${string}` | '',
+  cacaoTreeNFT:       '0xf5f2dE2237334680fC74cFD1dbCFaF5E5285ad23' as `0x${string}`,
+  cacaoToken:         '0x8f5f9d696F8004b7d77c915c70569eec3234D7E1' as `0x${string}`,
+  mazorcaRedemption:  '0x9Aa80f33067316De88757ff8c21660f5672644e6' as `0x${string}`,
+  treeAdoption:       '0x1c6724cdfe8906ae5a2042c431169b6987755711' as `0x${string}`,
+  iotAttestation:     '0x0077649ed45ce82225b3a3d5a364a4f804007e53' as `0x${string}`,
 } as const
+
+/** Active chain for Web3 user actions (mint, burn, adopt). Switch to BASE_CHAIN_ID post-audit. */
+export const ACTIVE_CHAIN_ID = BASE_SEPOLIA_CHAIN_ID
 
 /** SIWE message domain — must match `expectedDomain` in siwe-link-wallet Edge Function. */
 export const SIWE_DOMAIN = 'cacaofrutabrutal.com'

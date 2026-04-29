@@ -40,16 +40,18 @@ export default function Ritual() {
     Aire:   T('rit_el_aire'),
   }
 
-  const awardTokens = async (eventType: string, amount?: number) => {
+  const awardTokens = async (eventType: string, opts?: { amount?: number; ref_id?: string }) => {
     if (!user) return
     try {
+      const { supabase } = await import('../lib/supabase')
+      const session = (await supabase.auth.getSession()).data.session
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/award-tokens`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await import('../lib/supabase').then(m => m.supabase.auth.getSession())).data.session?.access_token}`,
+          'Authorization': `Bearer ${session?.access_token}`,
         },
-        body: JSON.stringify({ event_type: eventType, amount }),
+        body: JSON.stringify({ event_type: eventType, amount: opts?.amount, ref_id: opts?.ref_id }),
       })
       const data = await response.json()
       if (data.beans_awarded || data.mazorcas_awarded) {
@@ -64,6 +66,45 @@ export default function Ritual() {
     }
   }
 
+  // Streak milestones: fires +streak_7 every 7 days, +streak_30 once at exactly 30.
+  // Server-side dedup via ref_id (`streak_7:<userId>:<bucket>`) so a re-render or a
+  // tab refocus on the same day never double-credits.
+  const maybeAwardStreakMilestone = async (currentStreak: number) => {
+    const { supabase } = await import('../lib/supabase')
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.user?.id) return
+    const userId = session.user.id
+
+    if (currentStreak > 0 && currentStreak % 7 === 0) {
+      const bucket = Math.floor(currentStreak / 7)
+      const refId = `streak_7:${userId}:${bucket}`
+      const { data: existing } = await supabase
+        .from('token_events')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('event_type', 'streak_7')
+        .eq('ref_id', refId)
+        .limit(1)
+      if (!existing || existing.length === 0) {
+        await awardTokens('streak_7', { ref_id: refId })
+      }
+    }
+
+    if (currentStreak === 30) {
+      const refId = `streak_30:${userId}`
+      const { data: existing } = await supabase
+        .from('token_events')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('event_type', 'streak_30')
+        .eq('ref_id', refId)
+        .limit(1)
+      if (!existing || existing.length === 0) {
+        await awardTokens('streak_30', { ref_id: refId })
+      }
+    }
+  }
+
   const drawCard = () => {
     if (!user) { navigate('/auth'); return }
     setPhase('drawing')
@@ -75,6 +116,7 @@ export default function Ritual() {
       const newCount = drawCount + 1
       setDrawCount(newCount)
       awardTokens('ritual_draw')
+      maybeAwardStreakMilestone(streak)
       if (profile?.email) {
         hsUpdateRitual({
           email:                        profile.email,

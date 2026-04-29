@@ -3,7 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { BRAND, FONTS, GUARDIANS } from '../utils/constants'
 import { CROPS, MVP_CROPS, soilMultiplier, computeYield, type CropSlug } from '../utils/cauabonga'
-import { useCauaBongaPlot, type TileRow } from '../hooks/useCauaBongaPlot'
+import { useCauaBongaPlot, type TileRow, type CareAction } from '../hooks/useCauaBongaPlot'
+import { useTokenBalance } from '../hooks/useTokenBalance'
+import CacaoCeremonyCTA from '../components/marketplace/CacaoCeremonyCTA'
 
 /**
  * CauaBongaPlot — MVP per-plot view (3×3 inner grid of Lucho's finca).
@@ -22,7 +24,8 @@ export default function CauaBongaPlot() {
   const guardianId = Number(id)
   const guardian = GUARDIANS[guardianId]
 
-  const { plot, tiles, loading, error, ensurePlot, plantTile, harvestTile } = useCauaBongaPlot(guardianId)
+  const { plot, tiles, loading, error, ensurePlot, plantTile, harvestTile, careTile } = useCauaBongaPlot(guardianId)
+  const { beans, mazorcas } = useTokenBalance()
   const [selectedCrop, setSelectedCrop] = useState<CropSlug>('cacao_criollo')
   const [actionMessage, setActionMessage] = useState<string | null>(null)
   const [pending, setPending] = useState<string | null>(null)        // tile id mid-action
@@ -91,6 +94,14 @@ export default function CauaBongaPlot() {
   return (
     <PlotShell title={`Parcela · ${guardian.emoji} ${guardian.name}`} navigate={navigate} guardianId={guardianId}>
 
+      {/* Token HUD — single source of truth via useTokenBalance, polls every 5s */}
+      <div style={{
+        display: 'flex', gap: 10, marginBottom: 14, justifyContent: 'flex-end', flexWrap: 'wrap',
+      }}>
+        <BalancePill label="mazorcas" value={Math.floor(mazorcas)} accent={BRAND.mazorca} icon="🫘" />
+        <BalancePill label="beans"    value={beans.toFixed(1)}      accent={BRAND.pod}     icon="🌱" />
+      </div>
+
       {/* Plot stats bar */}
       <div style={{
         display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 10,
@@ -147,8 +158,13 @@ export default function CauaBongaPlot() {
                 if (!tile) return
                 setPending(tile.id)
                 setActionMessage(null)
-                await plantTile(idx, selectedCrop, 'regen')
+                const res = await plantTile(idx, selectedCrop, 'regen')
                 setPending(null)
+                if (res.ok) {
+                  setActionMessage(`Sembrado · -${res.seed_cost} mz · listo en ${formatRemaining(res.ready_at)}`)
+                } else {
+                  setActionMessage(`No se pudo sembrar: ${res.error}`)
+                }
               }}
               onHarvest={async () => {
                 if (!tile) return
@@ -160,6 +176,18 @@ export default function CauaBongaPlot() {
                   setActionMessage(`+${res.yield_mz ?? 0} mazorcas · soil ahora ${res.soil_after}`)
                 } else {
                   setActionMessage(`No se pudo cosechar: ${res.error}`)
+                }
+              }}
+              onCare={async (action) => {
+                if (!tile) return
+                setPending(tile.id)
+                setActionMessage(null)
+                const res = await careTile(tile, action)
+                setPending(null)
+                if (res.ok) {
+                  setActionMessage(`${careLabel(action)} ✓ · soil ahora ${res.soil_after}% · listo en ${formatRemaining(res.ready_at)}`)
+                } else {
+                  setActionMessage(`${careLabel(action)} bloqueado: ${res.error}`)
                 }
               }}
             />
@@ -184,18 +212,26 @@ export default function CauaBongaPlot() {
 
       {/* Yield preview — single source of truth (CB-006) */}
       <YieldPreview cropSlug={selectedCrop} avgSoilHealth={plot.avg_soil_health} guardianId={guardianId} />
+
+      {/* Mazorca sink — visible only once user has earned at least 1 mz */}
+      {Math.floor(mazorcas) >= 1 && (
+        <div style={{ marginTop: 18 }}>
+          <CacaoCeremonyCTA variant="impacto" />
+        </div>
+      )}
     </PlotShell>
   )
 }
 
 // ─── Sub-components ────────────────────────────────────────────────
 
-function Tile({ tile, tileIdx, isPending, onPlant, onHarvest }: {
+function Tile({ tile, tileIdx, isPending, onPlant, onHarvest, onCare }: {
   tile: TileRow | undefined
   tileIdx: number
   isPending: boolean
   onPlant: () => void
   onHarvest: () => void
+  onCare: (action: CareAction) => void
 }) {
   if (!tile) {
     return (
@@ -240,14 +276,20 @@ function Tile({ tile, tileIdx, isPending, onPlant, onHarvest }: {
     )
   }
 
-  // ── GROWING
+  // ── GROWING — show 4 care buttons
   if (tile.state === 'growing') {
     return (
       <div style={tileBase}>
-        <div style={{ fontSize: 22, opacity: 0.7 }}>{crop?.family === 'platano' ? '🌿' : '🌱'}</div>
-        <div style={tileLabel}>{crop?.label}</div>
-        <div style={{ fontSize: 9, color: `${BRAND.heirloom}77`, marginTop: 3, fontFamily: FONTS.body }}>
+        <div style={{ fontSize: 20, opacity: 0.7 }}>{crop?.family === 'platano' ? '🌿' : '🌱'}</div>
+        <div style={{ ...tileLabel, marginTop: 2 }}>{crop?.label}</div>
+        <div style={{ fontSize: 9, color: `${BRAND.heirloom}77`, marginTop: 2, fontFamily: FONTS.body }}>
           {remainingMin !== null ? (remainingMin >= 60 ? `${Math.floor(remainingMin / 60)}h ${remainingMin % 60}m` : `${remainingMin}m`) : '...'}
+        </div>
+        <div style={{ display: 'flex', gap: 3, marginTop: 5 }}>
+          <CareBtn icon="💧" onClick={() => onCare('water')}    disabled={isPending} title="Regar" />
+          <CareBtn icon="☀️" onClick={() => onCare('sun')}      disabled={isPending} title="Sol" />
+          <CareBtn icon="🌾" onClick={() => onCare('nutrient')} disabled={isPending} title="Nutriente" />
+          <CareBtn icon="✂️" onClick={() => onCare('pruning')}  disabled={isPending} title="Podar" />
         </div>
       </div>
     )
@@ -408,4 +450,75 @@ function primaryBtn(disabled: boolean): React.CSSProperties {
 const errorStyle: React.CSSProperties = {
   marginTop: 12, color: '#E47966',
   fontFamily: FONTS.body, fontSize: 11, textAlign: 'center',
+}
+
+function CareBtn({ icon, onClick, disabled, title }: {
+  icon: string
+  onClick: () => void
+  disabled: boolean
+  title: string
+}) {
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); onClick() }}
+      disabled={disabled}
+      title={title}
+      aria-label={title}
+      style={{
+        background: BRAND.bgDeep,
+        border: `1px solid ${BRAND.amazon}aa`,
+        borderRadius: 6,
+        padding: '3px 5px',
+        fontSize: 11,
+        cursor: disabled ? 'wait' : 'pointer',
+        opacity: disabled ? 0.4 : 1,
+        lineHeight: 1,
+      }}
+    >
+      {icon}
+    </button>
+  )
+}
+
+function BalancePill({ label, value, accent, icon }: {
+  label: string
+  value: number | string
+  accent: string
+  icon: string
+}) {
+  return (
+    <div style={{
+      display: 'inline-flex', alignItems: 'center', gap: 8,
+      background: BRAND.bgCard, border: `1px solid ${accent}55`,
+      borderRadius: 999, padding: '6px 14px',
+    }}>
+      <span style={{ fontSize: 14 }}>{icon}</span>
+      <span style={{
+        fontFamily: FONTS.display, fontWeight: 800, fontSize: 13,
+        color: accent, letterSpacing: '0.04em',
+      }}>{value}</span>
+      <span style={{
+        fontFamily: FONTS.display, fontWeight: 600, fontSize: 9,
+        color: `${BRAND.heirloom}77`, letterSpacing: '0.18em',
+        textTransform: 'uppercase',
+      }}>{label}</span>
+    </div>
+  )
+}
+
+function careLabel(action: CareAction): string {
+  switch (action) {
+    case 'water':    return 'Riego'
+    case 'sun':      return 'Sol'
+    case 'nutrient': return 'Nutriente'
+    case 'pruning':  return 'Poda'
+  }
+}
+
+function formatRemaining(readyAt: string | undefined): string {
+  if (!readyAt) return '—'
+  const ms = new Date(readyAt).getTime() - Date.now()
+  if (ms <= 0) return 'listo'
+  const min = Math.ceil(ms / 60_000)
+  return min >= 60 ? `${Math.floor(min / 60)}h ${min % 60}m` : `${min}m`
 }
