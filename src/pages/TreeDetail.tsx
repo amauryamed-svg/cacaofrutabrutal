@@ -293,6 +293,15 @@ export default function TreeDetail() {
         subtitle: subtitleBits.join(' · '),
         icon: '🍫',
       })
+      // Post-harvest navigation — the modal asked the user where to go next.
+      // We wait until after the server call so the user lands on a page that
+      // already reflects the new balance (mazorcas in dashboard, redeem in
+      // marketplace).
+      if (payload.next_route === 'marketplace_redeem') {
+        navigate('/marketplace#cacao-ceremony')
+      } else if (payload.next_route === 'dashboard_impact') {
+        navigate('/dashboard')
+      }
     } catch {
       // best-effort; user can retry
     } finally {

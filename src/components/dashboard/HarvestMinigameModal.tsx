@@ -25,6 +25,10 @@ export interface HarvestMinigamePayload {
   pods_sliced:       number
   pods_total:        number
   combo_bonus:       boolean
+  /** Where the user wants to go AFTER the harvest fires server-side.
+   *  Parent component handles the actual navigation. null/absent = stay
+   *  on the current page. */
+  next_route?:       'marketplace_redeem' | 'dashboard_impact' | null
 }
 
 interface Props {
@@ -91,7 +95,7 @@ function Inner({
     onClose()
   }
 
-  const handleSummaryContinue = () => {
+  const handleClaim = (next: HarvestMinigamePayload['next_route']) => {
     if (!result) return
     onComplete({
       via:          'minigame',
@@ -102,6 +106,7 @@ function Inner({
       pods_sliced:  result.pods_sliced,
       pods_total:   result.pods_total,
       combo_bonus:  result.combo_bonus,
+      next_route:   next,
     })
     onClose()
   }
@@ -221,21 +226,58 @@ function Inner({
               </button>
             </>
           ) : (
-            <button
-              onClick={handleSummaryContinue}
-              style={{
-                width: '100%',
-                background: `linear-gradient(135deg, ${BRAND.mazorca}, ${BRAND.brown})`,
-                color: BRAND.bgDeep,
-                border: 'none', borderRadius: 999,
-                padding: '12px 18px', cursor: 'pointer',
-                fontFamily: FONTS.display, fontWeight: 800, fontSize: 13,
-                letterSpacing: '0.16em', textTransform: 'uppercase',
-                boxShadow: `0 12px 28px ${BRAND.mazorca}55`,
-              }}
-            >
-              {lang === 'es' ? 'Continuar · cobrar cosecha' : 'Continue · claim harvest'}
-            </button>
+            // Summary footer — three CTAs that all confirm the harvest server-side
+            // and then route the user to the most natural next step. The harvest
+            // payload (with next_route) goes to the parent which fires award-tokens
+            // and then navigate(). Stack vertically so each is full-width on mobile.
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <button
+                onClick={() => handleClaim('marketplace_redeem')}
+                style={{
+                  width: '100%',
+                  background: `linear-gradient(135deg, ${BRAND.mazorca}, ${BRAND.brown})`,
+                  color: BRAND.bgDeep,
+                  border: 'none', borderRadius: 999,
+                  padding: '14px 18px', cursor: 'pointer',
+                  fontFamily: FONTS.display, fontWeight: 800, fontSize: 13,
+                  letterSpacing: '0.16em', textTransform: 'uppercase',
+                  boxShadow: `0 12px 28px ${BRAND.mazorca}55`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}
+              >
+                <span style={{ fontSize: 18 }}>🍫</span>
+                {lang === 'es' ? 'Canjear mazorcas por chocolate →' : 'Redeem mazorcas for chocolate →'}
+              </button>
+              <button
+                onClick={() => handleClaim('dashboard_impact')}
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  color: BRAND.pod,
+                  border: `1px solid ${BRAND.pod}aa`,
+                  borderRadius: 999,
+                  padding: '12px 18px', cursor: 'pointer',
+                  fontFamily: FONTS.display, fontWeight: 700, fontSize: 12,
+                  letterSpacing: '0.14em', textTransform: 'uppercase',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}
+              >
+                <span style={{ fontSize: 16 }}>📊</span>
+                {lang === 'es' ? 'Ver mi jardín + impacto →' : 'View my garden + impact →'}
+              </button>
+              <button
+                onClick={() => handleClaim(null)}
+                style={{
+                  background: 'transparent', border: 'none', cursor: 'pointer',
+                  color: `${BRAND.heirloom}66`,
+                  fontFamily: FONTS.display, fontWeight: 700, fontSize: 10,
+                  letterSpacing: '0.16em', textTransform: 'uppercase',
+                  padding: '4px 8px',
+                }}
+              >
+                {lang === 'es' ? '← Volver al árbol' : '← Back to tree'}
+              </button>
+            </div>
           )}
         </div>
       </div>

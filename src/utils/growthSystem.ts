@@ -249,16 +249,40 @@ export function isTreeDead(tree: TreeLifecycle): boolean {
 }
 
 /**
- * Peligro de muerte: alguno de los vitals (health, moisture, sunlight) está
- * bajo el umbral. Se usa para mostrar el banner naranja "⚠️ Vitals críticos —
- * cuida tu árbol o morirá". Sin componente temporal — no hay countdown
- * "X horas para morir". El tiempo lo evalúa el server.
+ * 3-tier vital state. Phase 1.5 sin componente temporal en el cliente —
+ * el server cron decide muerte real. Estos solo son badges visuales:
+ *
+ *   - dying        → cualquier vital < VITAL_THRESHOLD (30) — banner ROJO
+ *                    "Va a morir · vitals críticos". El cron lo mata si
+ *                    queda así >24h.
+ *   - needsAttention → todos vitals ≥ 30 PERO al menos uno < 50 — banner
+ *                    AMARILLO "Necesita atención". Aún recuperable, sin
+ *                    riesgo inmediato.
+ *   - healthy      → todos vitals ≥ 50.
  */
-export function isInDeathDanger(tree: TreeLifecycle): boolean {
+const VITAL_NEEDS_ATTENTION = 50
+
+export function isDying(tree: TreeLifecycle): boolean {
   if (isTreeDead(tree)) return false
   return (tree.health   ?? 100) < VITAL_THRESHOLD
       || (tree.moisture ?? 100) < VITAL_THRESHOLD
       || (tree.sunlight ?? 100) < VITAL_THRESHOLD
+}
+
+export function needsAttention(tree: TreeLifecycle): boolean {
+  if (isTreeDead(tree) || isDying(tree)) return false
+  return (tree.health   ?? 100) < VITAL_NEEDS_ATTENTION
+      || (tree.moisture ?? 100) < VITAL_NEEDS_ATTENTION
+      || (tree.sunlight ?? 100) < VITAL_NEEDS_ATTENTION
+}
+
+/**
+ * Legacy helper — true cuando vitals están bajos en cualquier nivel
+ * (atención o crítico). Usado por la UI para mostrar el banner amarillo
+ * "VITALES CRÍTICOS" del CauaGotchi panel.
+ */
+export function isInDeathDanger(tree: TreeLifecycle): boolean {
+  return isDying(tree) || needsAttention(tree)
 }
 
 /**
