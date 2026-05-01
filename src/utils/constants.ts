@@ -247,8 +247,35 @@ export const TOKEN_RATES = {
   referral: { beans: 10, mazorcas: 3 },
   tree_adoption: { beans: 10, mazorcas: 3 },
   tree_update_read: { beans: 0.5, mazorcas: 0 },
-  tree_harvest_share: { beans: 5, mazorcas: 2 },
+  // Base flat rate (instant-harvest skip path). The Fruit-Ninja minigame
+  // path adds per-pod resources via per_pod_mucilage_g + per_pod_cacao_mass_g.
+  tree_harvest_share: {
+    beans: 5,
+    mazorcas: 2,
+    per_pod_mucilage_g: 60,
+    per_pod_cacao_mass_g: 50,
+    /** Combo bonus when all pods are sliced within COMBO_WINDOW_MS. */
+    combo_bonus_pct: 20,
+  },
+  // Phase 2.5 — Labranza machete regenerative bonus (granos for the labor of
+  // composting dead biomass back into the soil).
+  tree_compost_regen: { beans: 10, mazorcas: 0 },
+  // Phase 3+4 — chocolate-making consumes resources; the cost spec lives here
+  // so /lab and the Edge Function agree on the recipe.
+  chocolate_made: { mucilage_g: 300, cacao_mass_g: 250 },
 }
+
+/** Window (ms) in which the player must slice all pods to earn combo bonus. */
+export const HARVEST_COMBO_WINDOW_MS = 6000
+
+/** How often a tree can be harvested. Phase 1.5 — recurring, not one-time. */
+export const HARVEST_INTERVAL_HOURS = 5
+
+/** Below this %, a single vital qualifies the tree as "in danger" (orange
+ *  banner copy in CauaGotchi/Dashboard). Death is server-side (cron sees
+ *  vitals_critical_since > VITAL_GRACE_HOURS). */
+export const VITAL_THRESHOLD = 30
+export const VITAL_GRACE_HOURS = 24
 
 // ─── Web3 constants ────────────────────────────────────────────────────────
 // See docs/WEB3.md, docs/COMPLIANCE.md, docs/CHARTER.md.

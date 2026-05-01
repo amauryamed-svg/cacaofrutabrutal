@@ -54,12 +54,13 @@ export interface CauaGotchiProps {
   onHarvest: () => void
   harvestRewards: { beans: number; mazorcas: number }
 
-  // Death (real Tamagotchi)
+  // Phase 1.5 — death is server-decided (vitals_critical_since > grace).
   isDead: boolean
-  /** Formatted countdown to death (e.g. "3h 12m"). Empty string if dead/saved. */
-  timeUntilDeath: string
-  /** 0..1 — how close we are to death (1 = dead now). */
-  deathProgress: number
+  /** True cuando vitals están bajo umbral (cualquiera de health/moisture/sunlight).
+   *  El banner naranja "VITALES CRÍTICOS" se muestra sin componente temporal. */
+  inDanger: boolean
+  /** Countdown formateado a la próxima cosecha (e.g. "2h 30m") o "¡Listo!". */
+  nextHarvestLabel: string
 }
 
 export default function CauaGotchi({
@@ -69,13 +70,13 @@ export default function CauaGotchi({
   canCare, nextCareIn, inventory, activeAction,
   onCare, onTreeTap,
   harvestReady, harvested, onHarvest, harvestRewards,
-  isDead, timeUntilDeath, deathProgress,
+  isDead, inDanger, nextHarvestLabel,
 }: CauaGotchiProps) {
 
   const prob = problem ? PLANT_PROBLEMS[problem] : null
-  // Death overrides every other UI state — no actions, dead overlay everywhere.
-  const showDeathWarning = harvestReady && !harvested && !isDead && deathProgress > 0
-  const lockActions = isDead || harvested
+  // Phase 1.5 — la cosecha es recurrente. `harvested` es solo "ya cosechó al
+  // menos una vez", no bloquea acciones. Sólo isDead bloquea.
+  const lockActions = isDead
 
   return (
     <div style={panelStyle(prob, isDead)}>
@@ -113,21 +114,23 @@ export default function CauaGotchi({
             </div>
           )}
 
-          {/* Death warning — pulsing red countdown when in maturation window */}
-          {!isDead && showDeathWarning && (
+          {/* Vitals warning — pulsing orange when any vital < threshold.
+              Sin componente temporal: el árbol vive indefinido si el usuario
+              recupera los vitals. Solo el cron de servidor decide muerte. */}
+          {!isDead && inDanger && (
             <motion.div
               animate={{ opacity: [1, 0.55, 1] }}
-              transition={{ repeat: Infinity, duration: 1 }}
+              transition={{ repeat: Infinity, duration: 1.2 }}
               style={{
                 ...problemBadgeStyle,
-                background: '#2a0808cc',
-                borderColor: '#e74c3c',
+                background: '#2a1a08cc',
+                borderColor: '#F1A91E',
                 top: 'auto', bottom: 10, left: 10, right: 'auto',
               }}
             >
-              <span style={{ fontSize: 16 }}>⏳</span>
-              <span style={{ fontFamily: FONTS.display, fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', color: '#ff6b6b' }}>
-                MUERE EN {timeUntilDeath}
+              <span style={{ fontSize: 16 }}>⚠️</span>
+              <span style={{ fontFamily: FONTS.display, fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', color: '#F1A91E' }}>
+                VITALES CRÍTICOS
               </span>
             </motion.div>
           )}
@@ -212,34 +215,36 @@ export default function CauaGotchi({
         )}
       </div>
 
-      {/* Daily-care reminder — always visible while alive */}
-      {!isDead && !harvested && (
+      {/* Daily-care reminder — always visible while alive. Phase 1.5: la
+          cosecha es recurrente. El árbol vive mientras los vitals estén altos. */}
+      {!isDead && (
         <div style={dailyReminderStyle}>
-          🌱 Cuida tu árbol cada día · Cosecha cada 5 días para mantenerlo vivo · Si muere, los tokens de gameplay se queman.
+          🌱 Mantén los vitals altos para que tu árbol siga produciendo · Cada {`5h`} hay nueva cosecha
         </div>
       )}
 
-      {/* Harvest CTA — when ready and alive */}
-      {harvestReady && !harvested && !isDead && (
+      {/* Harvest CTA — siempre visible cuando está listo. Si ya cosechó pero
+          aún no toca de nuevo, mostramos el countdown a la próxima cosecha. */}
+      {harvestReady && !isDead && (
         <button onClick={onHarvest} style={harvestCtaStyle}>
           <div style={{ fontSize: 28 }}>🍫</div>
           <div style={{ flex: 1, textAlign: 'left' }}>
             <div style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 14, color: BRAND.bgDeep, letterSpacing: '0.1em' }}>
-              COSECHA LISTA · {timeUntilDeath}
+              COSECHA LISTA
             </div>
             <div style={{ fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.bgDeep}cc`, marginTop: 2 }}>
-              +{harvestRewards.beans} granos · +{harvestRewards.mazorcas} mazorcas · cosecha antes de que muera
+              +{harvestRewards.beans} granos · +{harvestRewards.mazorcas} mazorcas · rebana las mazorcas
             </div>
           </div>
           <div style={{ fontFamily: FONTS.display, fontWeight: 800, color: BRAND.bgDeep, fontSize: 18 }}>▶</div>
         </button>
       )}
 
-      {harvested && !isDead && (
+      {!harvestReady && harvested && !isDead && (
         <div style={harvestedNoteStyle}>
-          <span style={{ fontSize: 18 }}>🍫✨</span>
+          <span style={{ fontSize: 18 }}>⏳</span>
           <span style={{ fontFamily: FONTS.display, fontSize: 11, color: BRAND.mazorca, letterSpacing: '0.12em', fontWeight: 700 }}>
-            COSECHADO — REVISA TU MARKETPLACE
+            PRÓXIMA COSECHA · {nextHarvestLabel}
           </span>
         </div>
       )}
@@ -259,8 +264,9 @@ export default function CauaGotchi({
             fontFamily: FONTS.body, fontSize: 12, color: `${BRAND.heirloom}cc`,
             lineHeight: 1.55, textAlign: 'center', margin: '0 0 12px',
           }}>
-            Pasó la ventana sin cosecha. Los granos + mazorcas que no cosechaste se <strong style={{ color: '#e74c3c' }}>queman</strong>.
-            Como en un Caua-Gotchi real — si no lo cuidas, se muere.
+            Sus vitales quedaron bajo umbral demasiado tiempo. Los granos + mazorcas que no cosechaste se <strong style={{ color: '#e74c3c' }}>queman</strong>.
+            Como un Caua-Gotchi real — si no lo cuidas, se muere.
+            <br /><span style={{ fontStyle: 'italic', color: `${BRAND.pod}aa` }}>Llévalo a Labranza · rebánalo con el machete · regenera el lineage.</span>
           </p>
           <p style={{
             fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}77`,

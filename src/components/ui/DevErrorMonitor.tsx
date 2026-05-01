@@ -16,9 +16,35 @@ interface ErrorEntry {
   message: string
   source?: string
   time:    string
+  /** Number of times this same message fired in the last 10s. Shown as ×N badge. */
+  count:   number
+  /** Last time we saw this message (ms epoch). Used for windowed dedupe. */
+  lastSeen: number
 }
 
+const DEDUPE_WINDOW_MS = 10_000
 let _id = 0
+
+/**
+ * Recognize errors that supabase-js retries internally and that don't actually
+ * break the session. Examples: `_refreshAccessToken` blips during WiFi
+ * reconnect or brief Supabase degradation. They auto-recover within seconds —
+ * showing them in the dev monitor is just noise.
+ */
+function isTransientSupabaseFetchError(args: unknown[]): boolean {
+  const msg = args.map(String).join(' ')
+  if (!msg.includes('Failed to fetch') && !msg.includes('NetworkError')) return false
+  // Heuristic: the error object usually has a stack mentioning supabase-js.
+  for (const a of args) {
+    if (a && typeof a === 'object' && 'stack' in a && typeof (a as { stack?: string }).stack === 'string') {
+      const stack = (a as { stack: string }).stack
+      if (stack.includes('supabase-js') || stack.includes('_refreshAccessToken') || stack.includes('_callRefreshToken')) {
+        return true
+      }
+    }
+  }
+  return false
+}
 
 export default function DevErrorMonitor() {
   // Only render in dev
@@ -32,7 +58,7 @@ function Monitor() {
   const [open,   setOpen]     = useState(false)
   const [muted,  setMuted]    = useState<Set<string>>(new Set())
 
-  const push = useCallback((entry: Omit<ErrorEntry, 'id' | 'time'>) => {
+  const push = useCallback((entry: Omit<ErrorEntry, 'id' | 'time' | 'count' | 'lastSeen'>) => {
     const msg = entry.message
     if (muted.has(msg)) return
     // Filter out noise
@@ -40,7 +66,30 @@ function Monitor() {
     // RainbowKit / Reown analytics fetch returns 403 when no WALLETCONNECT_PROJECT_ID is set.
     // Benign — the wallet connectors still work (Coinbase Smart Wallet + injected). Skip.
     if (msg.includes('Reown') || msg.includes('WalletConnect') || msg.includes('Lit is in dev mode')) return
-    setErrors(prev => [{ ...entry, id: ++_id, time: new Date().toLocaleTimeString('es-CO') }, ...prev].slice(0, 20))
+
+    // Dedupe: if the same message fired within DEDUPE_WINDOW_MS, increment
+    // its count instead of adding a new row. Stops the "Failed to fetch ×6"
+    // wall-of-noise during a single network blip.
+    const now = Date.now()
+    setErrors(prev => {
+      const matchIdx = prev.findIndex(e =>
+        e.message === msg && (now - e.lastSeen) < DEDUPE_WINDOW_MS,
+      )
+      if (matchIdx !== -1) {
+        const next = [...prev]
+        next[matchIdx] = {
+          ...next[matchIdx],
+          count:    next[matchIdx].count + 1,
+          lastSeen: now,
+          time:     new Date().toLocaleTimeString('es-CO'),
+        }
+        return next
+      }
+      return [
+        { ...entry, id: ++_id, time: new Date().toLocaleTimeString('es-CO'), count: 1, lastSeen: now },
+        ...prev,
+      ].slice(0, 20)
+    })
     setOpen(true)
   }, [muted])
 
@@ -51,6 +100,9 @@ function Monitor() {
 
     console.error = (...args: unknown[]) => {
       origError(...args)
+      // Filter transient supabase-js auth refresh blips — they auto-retry
+      // and the session recovers without user intervention.
+      if (isTransientSupabaseFetchError(args)) return
       push({ type: 'error', message: args.map(String).join(' ') })
     }
     console.warn = (...args: unknown[]) => {
@@ -160,6 +212,15 @@ function Monitor() {
                   }}>
                     {typeLabel(e.type)}
                   </span>
+                  {e.count > 1 && (
+                    <span style={{
+                      fontFamily: FONTS.display, fontWeight: 700, fontSize: 8,
+                      letterSpacing: '0.08em', color: '#F1A91E',
+                      background: '#F1A91E22', padding: '2px 5px', borderRadius: 999,
+                    }} title="Veces que el mismo error se repitió">
+                      ×{e.count}
+                    </span>
+                  )}
                   <span style={{ fontFamily: FONTS.body, fontSize: 9, color: `${BRAND.heirloom}33` }}>{e.time}</span>
                   <button
                     onClick={() => setMuted(m => new Set([...m, e.message]))}

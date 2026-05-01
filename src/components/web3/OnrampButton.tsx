@@ -82,7 +82,7 @@ export default function OnrampButton({ presetUsd, asset = 'USDC', label }: Props
     )
   }
 
-  if (error === 'cdp_api_key_not_configured' || error === 'cdp_jwt_signing_not_implemented') {
+  if (error === 'cdp_api_key_not_configured') {
     return (
       <button
         disabled

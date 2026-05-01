@@ -6,6 +6,7 @@ import { useCocoaTrees } from '../hooks/useCocoaTrees'
 import { useTokenBalance } from '../hooks/useTokenBalance'
 import HubspotLeadForm from '../components/ui/HubspotLeadForm'
 import RedeemMazorcasModal from '../components/web3/RedeemMazorcasModal'
+import LabranzaMachete from '../components/dashboard/LabranzaMachete'
 import { useLang } from '../context/LangContext'
 import { makeT } from '../utils/i18n'
 import {
@@ -27,32 +28,19 @@ export default function Dashboard() {
   const { mazorcas, beans } = useTokenBalance()
   const [redeemOpen, setRedeemOpen] = useState(false)
   const [deadBannerDismissed, setDeadBannerDismissed] = useState(false)
+  const [labranzaMode, setLabranzaMode] = useState<'machete' | 'list'>('machete')
   const canRedeemOnChain = mazorcas >= MAZORCA_TO_CACAO_RATE
 
   // Per-portfolio rollups anchored to investor-landing Unit Economics
   const adoptedCount     = trees.length
   const totalCo2Kg       = trees.reduce((sum, t) => sum + (t.co2_kg ?? 0), 0)
   const totalRevenueUsd  = trees.reduce((sum, t) => sum + getCycleProgress(t.adopted_at) * UE_REVENUE_PER_TREE_YEAR_USD, 0)
-  const harvestReadyCount = trees.filter(t => isHarvestReady(t.adopted_at)).length
-  // Real-Tamagotchi state — death mechanic from growthSystem.
-  // Server-side `died_at` and `harvested_at` (migration 036) are the source
-  // of truth. Client-side compute is the fallback when the server hasn't
-  // processed the forfeit yet.
-  // "At risk" = either close to dying (death danger window) OR low vitals
-  // (health < 40 or moisture < 30 or sunlight < 30) → plague-prone state.
-  // Both surfaces as a YELLOW banner; only fully-dead trees go RED.
-  const atRiskCount = trees.filter(t => {
-    if (t.died_at || t.harvested_at) return false
-    const inDanger = isInDeathDanger(t.adopted_at, t.last_update_at, !!t.harvested_at)
-    const lowVitals =
-      (t.health   != null && t.health   < 40) ||
-      (t.moisture != null && t.moisture < 30) ||
-      (t.sunlight != null && t.sunlight < 30)
-    return inDanger || lowVitals
-  }).length
-  const deadCount   = trees.filter(t =>
-    !!t.died_at || (!t.harvested_at && isTreeDead(t.adopted_at, t.last_update_at, false))
-  ).length
+  const harvestReadyCount = trees.filter(t => isHarvestReady(t)).length
+  // Phase 1.5 lifecycle: muerte por vitals (server-side decided), peligro
+  // por vitals bajos. Sin componente temporal — ya no contamos "horas para
+  // morir". `died_at` es la única fuente de verdad de muerte.
+  const atRiskCount = trees.filter(t => !t.died_at && isInDeathDanger(t)).length
+  const deadCount   = trees.filter(t => isTreeDead(t)).length
 
   // Unit Economics anchored al modelo de adopción $3 USD on-chain.
   // Datos verificables — no proyecciones aspiracionales.
@@ -286,155 +274,277 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* Tree tiles — Jardín / Labranza. Tiles más grandes y visuales:
-                emoji grande, status color (sano/peligro/cosecha/muerto), nombre
-                + stage, tiempo restante o "muerto", barra de progreso del ciclo. */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))', gap: 'clamp(12px, 2.5vw, 18px)' }}>
-              {trees.map(t => {
+            {/* Mi Jardín · Labranza — split por estado de vida.
+                Vivos (sanos/peligro/cosecha) en el grid principal.
+                Muertos en sección Labranza · biomasa que regresa al suelo,
+                con acción "Regenerar" visible. Tiles más grandes (minmax 220,
+                minHeight 220) para que cada árbol respire. */}
+            {(() => {
+              const annotated = trees.map(t => {
                 const g = GUARDIANS[t.guardian_id]
                 const hours = hoursSinceAdoption(t.adopted_at)
                 const stage = getStageByHours(hours)
                 const cyclePct = getCycleProgress(t.adopted_at) * 100
+                // Phase 1.5: harvested deja de ser un lock (cosecha recurrente).
+                // Mantengo el flag por si la UI quiere distinguir "ya cosechó
+                // alguna vez" pero no bloquea ready/danger/dead.
                 const harvested = !!t.harvested_at
-                const dead = !!t.died_at || isTreeDead(t.adopted_at, t.last_update_at, harvested)
-                const ready = !dead && !harvested && isHarvestReady(t.adopted_at)
-                const danger = !dead && !harvested && (
-                  isInDeathDanger(t.adopted_at, t.last_update_at, harvested) ||
-                  (t.health   != null && t.health   < 40) ||
-                  (t.moisture != null && t.moisture < 30) ||
-                  (t.sunlight != null && t.sunlight < 30)
-                )
+                const dead   = isTreeDead(t)
+                const ready  = !dead && isHarvestReady(t)
+                const danger = !dead && isInDeathDanger(t)
                 const remaining = formatTimeUntil(new Date(new Date(t.adopted_at).getTime() + ADOPTION_HOURS * 3600000))
+                return { t, g, stage, cyclePct, harvested, dead, ready, danger, remaining }
+              })
+              const aliveTrees = annotated.filter(x => !x.dead)
+              const deadTrees  = annotated.filter(x =>  x.dead)
 
-                const accent = dead ? '#e74c3c'
-                             : danger ? BRAND.mazorca
-                             : ready ? BRAND.mazorca
-                             : BRAND.pod
-                const statusLabel = dead ? 'Muerto'
-                                  : danger ? 'En riesgo'
-                                  : ready ? 'Cosecha lista'
-                                  : harvested ? 'Cosechado'
-                                  : stage.name
-                const statusEmoji = dead ? '💀'
-                                  : danger ? '⚠️'
-                                  : ready ? '🍫'
-                                  : harvested ? '✓'
-                                  : stage.emoji
+              const sectionLabelStyle: React.CSSProperties = {
+                fontFamily: FONTS.display, fontWeight: 800, fontSize: 11,
+                color: `${BRAND.heirloom}aa`, letterSpacing: '0.22em',
+                textTransform: 'uppercase', marginBottom: 12,
+                display: 'flex', alignItems: 'center', gap: 10,
+              }
 
-                return (
-                  <div key={t.id} style={{
-                    background: dead ? '#1a0606'
-                              : danger ? `${BRAND.mazorca}10`
-                              : ready ? `${BRAND.mazorca}1a`
-                              : `linear-gradient(160deg, ${BRAND.bgCard}, ${BRAND.bgDeep})`,
-                    border: `1px solid ${accent}${danger || ready || dead ? 'aa' : '66'}`,
-                    borderRadius: 16, padding: 'clamp(16px, 3vw, 22px)',
-                    color: BRAND.heirloom, textAlign: 'left',
-                    boxShadow: ready ? `0 0 24px ${BRAND.mazorca}33`
-                             : danger ? `0 0 18px ${BRAND.mazorca}22`
-                             : dead ? 'inset 0 0 30px #e74c3c22'
-                             : 'none',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                    display: 'flex', flexDirection: 'column', gap: 12,
-                    minHeight: 200, position: 'relative',
-                  }}>
-                  <button onClick={() => navigate(`/tree/${t.id}`)} style={{
-                    background: 'transparent', border: 'none', cursor: 'pointer',
-                    color: 'inherit', padding: 0, textAlign: 'left',
-                    display: 'flex', flexDirection: 'column', gap: 12,
-                    width: '100%',
-                  }}
-                    onMouseEnter={e => { ((e.currentTarget as HTMLButtonElement).parentElement as HTMLDivElement).style.transform = 'translateY(-3px)' }}
-                    onMouseLeave={e => { ((e.currentTarget as HTMLButtonElement).parentElement as HTMLDivElement).style.transform = 'translateY(0)' }}
-                  >
-                    {/* Top row: stage emoji XL + status badge */}
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                      <span style={{
-                        fontSize: 'clamp(44px, 7vw, 60px)',
-                        lineHeight: 1, opacity: dead ? 0.5 : 1,
-                        filter: dead ? 'grayscale(0.7)' : 'none',
-                      }}>{statusEmoji}</span>
-                      <span style={{
-                        fontFamily: FONTS.display, fontSize: 9, fontWeight: 800,
-                        color: accent, letterSpacing: '0.12em',
-                        background: `${accent}22`, padding: '4px 10px', borderRadius: 999,
-                        textTransform: 'uppercase',
-                      }}>
-                        {statusLabel}
-                      </span>
-                    </div>
+              return (
+                <>
+                  {/* MI JARDÍN — árboles vivos */}
+                  {aliveTrees.length > 0 && (
+                    <>
+                      <div style={sectionLabelStyle}>
+                        <span>Mi Jardín</span>
+                        <span style={{ color: `${BRAND.pod}aa`, fontSize: 13 }}>· {aliveTrees.length}</span>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(220px, 100%), 1fr))', gap: 'clamp(14px, 2.5vw, 20px)', marginBottom: deadTrees.length > 0 ? 32 : 0 }}>
+                        {aliveTrees.map(({ t, g, stage, cyclePct, harvested, ready, danger, remaining }) => {
+                          const accent = danger ? BRAND.mazorca
+                                       : ready ? BRAND.mazorca
+                                       : BRAND.pod
+                          const statusLabel = danger ? 'En riesgo'
+                                            : ready ? 'Cosecha lista'
+                                            : harvested ? 'Cosechado'
+                                            : stage.name
+                          const statusEmoji = danger ? '⚠️'
+                                            : ready ? '🍫'
+                                            : harvested ? '✓'
+                                            : stage.emoji
 
-                    {/* Name + stage */}
-                    <div>
-                      <div style={{
-                        fontFamily: FONTS.display, fontWeight: 900,
-                        fontSize: 'clamp(18px, 3vw, 22px)',
-                        color: BRAND.heirloom, lineHeight: 1, letterSpacing: '0.02em',
-                      }}>
-                        {g?.name ?? 'Árbol'}
+                          return (
+                            <div key={t.id} style={{
+                              background: danger ? `${BRAND.mazorca}10`
+                                        : ready ? `${BRAND.mazorca}1a`
+                                        : `linear-gradient(160deg, ${BRAND.bgCard}, ${BRAND.bgDeep})`,
+                              border: `1px solid ${accent}${danger || ready ? 'aa' : '66'}`,
+                              borderRadius: 16, padding: 'clamp(18px, 3vw, 24px)',
+                              color: BRAND.heirloom, textAlign: 'left',
+                              boxShadow: ready ? `0 0 24px ${BRAND.mazorca}33`
+                                       : danger ? `0 0 18px ${BRAND.mazorca}22`
+                                       : 'none',
+                              transition: 'transform 0.2s, box-shadow 0.2s',
+                              display: 'flex', flexDirection: 'column', gap: 12,
+                              minHeight: 220, position: 'relative',
+                            }}>
+                              <button onClick={() => navigate(`/tree/${t.id}`)} style={{
+                                background: 'transparent', border: 'none', cursor: 'pointer',
+                                color: 'inherit', padding: 0, textAlign: 'left',
+                                display: 'flex', flexDirection: 'column', gap: 12,
+                                width: '100%',
+                              }}
+                                onMouseEnter={e => { ((e.currentTarget as HTMLButtonElement).parentElement as HTMLDivElement).style.transform = 'translateY(-3px)' }}
+                                onMouseLeave={e => { ((e.currentTarget as HTMLButtonElement).parentElement as HTMLDivElement).style.transform = 'translateY(0)' }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                                  <span style={{ fontSize: 'clamp(48px, 7.5vw, 64px)', lineHeight: 1 }}>{statusEmoji}</span>
+                                  <span style={{
+                                    fontFamily: FONTS.display, fontSize: 9, fontWeight: 800,
+                                    color: accent, letterSpacing: '0.12em',
+                                    background: `${accent}22`, padding: '4px 10px', borderRadius: 999,
+                                    textTransform: 'uppercase',
+                                  }}>
+                                    {statusLabel}
+                                  </span>
+                                </div>
+
+                                <div>
+                                  <div style={{
+                                    fontFamily: FONTS.display, fontWeight: 900,
+                                    fontSize: 'clamp(20px, 3vw, 24px)',
+                                    color: BRAND.heirloom, lineHeight: 1, letterSpacing: '0.02em',
+                                  }}>
+                                    {g?.name ?? 'Árbol'}
+                                  </div>
+                                  <div style={{
+                                    fontFamily: FONTS.serif, fontStyle: 'italic',
+                                    color: accent,
+                                    fontSize: 13, marginTop: 4, letterSpacing: '0.04em',
+                                  }}>
+                                    {stage.name} · {g?.region ?? '—'}
+                                  </div>
+                                </div>
+
+                                <div style={{
+                                  fontFamily: FONTS.body, fontSize: 11,
+                                  color: `${BRAND.heirloom}88`, marginTop: 'auto',
+                                }}>
+                                  {ready ? (lang === 'es' ? '¡Cosecha disponible ahora!' : 'Harvest ready now!')
+                                   : danger ? (lang === 'es' ? 'Cuídalo cuanto antes' : 'Care now')
+                                   : `${remaining} ${lang === 'es' ? 'al ciclo completo' : 'to full cycle'}`}
+                                </div>
+
+                                <div style={{ height: 6, background: `${BRAND.amazon}66`, borderRadius: 999, overflow: 'hidden' }}>
+                                  <div style={{
+                                    width: `${cyclePct}%`, height: '100%',
+                                    background: `linear-gradient(90deg, ${BRAND.pod}, ${BRAND.mazorca})`,
+                                    transition: 'width 0.6s',
+                                  }} />
+                                </div>
+                              </button>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </>
+                  )}
+
+                  {/* LABRANZA — árboles muertos. Por defecto el modo machete
+                      (Fruit-Ninja-style slicing); el usuario puede cambiar a
+                      list view si prefiere ver detalles antes de regenerar.
+                      Mismo deleteTree backend en ambos modos. */}
+                  {deadTrees.length > 0 && (
+                    <>
+                      <div style={{ ...sectionLabelStyle, justifyContent: 'space-between' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span>Labranza</span>
+                          <span style={{ color: '#e74c3caa', fontSize: 13 }}>· {deadTrees.length}</span>
+                        </span>
+                        <button
+                          onClick={() => setLabranzaMode(m => m === 'machete' ? 'list' : 'machete')}
+                          style={{
+                            background: 'transparent',
+                            border: `1px solid ${BRAND.heirloom}33`,
+                            color: `${BRAND.heirloom}aa`,
+                            borderRadius: 999, padding: '5px 12px', cursor: 'pointer',
+                            fontFamily: FONTS.display, fontWeight: 700, fontSize: 9,
+                            letterSpacing: '0.18em', textTransform: 'uppercase',
+                          }}
+                        >
+                          {labranzaMode === 'machete'
+                            ? (lang === 'es' ? '▭ Ver lista' : '▭ List view')
+                            : (lang === 'es' ? '⚔ Modo machete' : '⚔ Machete mode')}
+                        </button>
                       </div>
                       <div style={{
                         fontFamily: FONTS.serif, fontStyle: 'italic',
-                        color: dead ? `${BRAND.heirloom}55` : accent,
-                        fontSize: 13, marginTop: 4, letterSpacing: '0.04em',
+                        color: `${BRAND.heirloom}66`, fontSize: 12,
+                        marginTop: -6, marginBottom: 14, letterSpacing: '0.04em',
                       }}>
-                        {stage.name} · {g?.region ?? '—'}
+                        {labranzaMode === 'machete'
+                          ? (lang === 'es'
+                              ? 'Desliza el machete sobre cada árbol para regenerarlo · biomasa que regresa al suelo'
+                              : 'Swipe the machete across each tree to regenerate · biomass returning to soil')
+                          : (lang === 'es'
+                              ? 'Biomasa que regresa al suelo · regenera para sembrar de nuevo'
+                              : 'Biomass returning to soil · regenerate to plant again')}
                       </div>
-                    </div>
+                      {labranzaMode === 'machete' ? (
+                        <LabranzaMachete
+                          trees={deadTrees.map(({ t, g }) => ({ id: t.id, guardianName: g?.name ?? 'Árbol' }))}
+                          onRecycle={async (id) => { await deleteTree(id) }}
+                          lang={lang}
+                        />
+                      ) : (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(240px, 100%), 1fr))', gap: 'clamp(14px, 2.5vw, 20px)' }}>
+                        {deadTrees.map(({ t, g }) => (
+                          <div key={t.id} style={{
+                            background: '#1a0606',
+                            border: `1px solid #e74c3caa`,
+                            borderRadius: 16, padding: 'clamp(18px, 3vw, 24px)',
+                            color: BRAND.heirloom, textAlign: 'left',
+                            boxShadow: 'inset 0 0 30px #e74c3c22',
+                            display: 'flex', flexDirection: 'column', gap: 14,
+                            minHeight: 220, position: 'relative',
+                          }}>
+                            <button onClick={() => navigate(`/tree/${t.id}`)} style={{
+                              background: 'transparent', border: 'none', cursor: 'pointer',
+                              color: 'inherit', padding: 0, textAlign: 'left',
+                              display: 'flex', flexDirection: 'column', gap: 12,
+                              width: '100%',
+                            }}>
+                              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                                <span style={{
+                                  fontSize: 'clamp(48px, 7.5vw, 64px)', lineHeight: 1,
+                                  opacity: 0.55, filter: 'grayscale(0.7)',
+                                }}>💀</span>
+                                <span style={{
+                                  fontFamily: FONTS.display, fontSize: 9, fontWeight: 800,
+                                  color: '#e74c3c', letterSpacing: '0.12em',
+                                  background: '#e74c3c22', padding: '4px 10px', borderRadius: 999,
+                                  textTransform: 'uppercase',
+                                }}>
+                                  Muerto
+                                </span>
+                              </div>
 
-                    {/* Time / status detail */}
-                    <div style={{
-                      fontFamily: FONTS.body, fontSize: 11,
-                      color: `${BRAND.heirloom}88`, marginTop: 'auto',
-                    }}>
-                      {dead ? 'Tokens quemados — pulsa para info'
-                       : ready ? (lang === 'es' ? '¡Cosecha disponible ahora!' : 'Harvest ready now!')
-                       : danger ? (lang === 'es' ? 'Cuídalo cuanto antes' : 'Care now')
-                       : `${remaining} ${lang === 'es' ? 'al ciclo completo' : 'to full cycle'}`}
-                    </div>
+                              <div>
+                                <div style={{
+                                  fontFamily: FONTS.display, fontWeight: 900,
+                                  fontSize: 'clamp(20px, 3vw, 24px)',
+                                  color: BRAND.heirloom, lineHeight: 1, letterSpacing: '0.02em',
+                                  opacity: 0.85,
+                                }}>
+                                  {g?.name ?? 'Árbol'}
+                                </div>
+                                <div style={{
+                                  fontFamily: FONTS.serif, fontStyle: 'italic',
+                                  color: `${BRAND.heirloom}55`,
+                                  fontSize: 13, marginTop: 4, letterSpacing: '0.04em',
+                                }}>
+                                  {g?.region ?? '—'} · biomasa
+                                </div>
+                              </div>
 
-                    {/* Cycle progress bar */}
-                    <div style={{ height: 6, background: `${BRAND.amazon}66`, borderRadius: 999, overflow: 'hidden' }}>
-                      <div style={{
-                        width: `${dead ? 100 : cyclePct}%`, height: '100%',
-                        background: dead ? '#e74c3c'
-                                  : `linear-gradient(90deg, ${BRAND.pod}, ${BRAND.mazorca})`,
-                        transition: 'width 0.6s',
-                      }} />
-                    </div>
-                  </button>
+                              <div style={{
+                                fontFamily: FONTS.body, fontSize: 11,
+                                color: `${BRAND.heirloom}77`, marginTop: 'auto',
+                                lineHeight: 1.5,
+                              }}>
+                                {lang === 'es'
+                                  ? 'Tokens de gameplay quemados. Tu inversión inicial ya se desplegó al adoptar.'
+                                  : 'Gameplay tokens burned. Your initial investment was already deployed at adoption.'}
+                              </div>
+                            </button>
 
-                  {/* Devolver a la tierra — solo en árboles muertos. Lenguaje
-                      regenerativo: la biomasa nutre la próxima siembra. */}
-                  {dead && (
-                    <button
-                      onClick={async (e) => {
-                        e.stopPropagation()
-                        if (!confirm(`¿Devolver el árbol de ${g?.name ?? 'guardián'} a la tierra? Su biomasa nutre el suelo de la próxima generación. Esta acción no se puede deshacer.`)) return
-                        try { await deleteTree(t.id) }
-                        catch (err) { alert(`No se pudo devolver: ${err instanceof Error ? err.message : 'Error desconocido'}`) }
-                      }}
-                      title="Devolver a la tierra · regenerar"
-                      aria-label="Devolver árbol a la tierra"
-                      style={{
-                        width: '100%', marginTop: 4,
-                        padding: '10px 14px', borderRadius: 999,
-                        background: `${BRAND.pod}18`,
-                        border: `1px solid ${BRAND.pod}66`,
-                        color: BRAND.pod, cursor: 'pointer',
-                        fontFamily: FONTS.display, fontWeight: 700,
-                        fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                      }}
-                    >
-                      <span style={{ fontSize: 14 }}>🌱</span>
-                      Devolver a la tierra
-                    </button>
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation()
+                                if (!confirm(`¿Devolver el árbol de ${g?.name ?? 'guardián'} a la tierra?\n\nSu biomasa nutre el suelo de la próxima siembra. Esta acción no se puede deshacer.`)) return
+                                try { await deleteTree(t.id) }
+                                catch (err) { alert(`No se pudo devolver: ${err instanceof Error ? err.message : 'Error desconocido'}`) }
+                              }}
+                              title="Devolver a la tierra · regenerar"
+                              aria-label="Devolver árbol a la tierra"
+                              style={{
+                                width: '100%',
+                                padding: '12px 16px', borderRadius: 999,
+                                background: `${BRAND.pod}1f`,
+                                border: `1px solid ${BRAND.pod}88`,
+                                color: BRAND.pod, cursor: 'pointer',
+                                fontFamily: FONTS.display, fontWeight: 700,
+                                fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                              }}
+                            >
+                              <span style={{ fontSize: 16 }}>🌱</span>
+                              {lang === 'es' ? 'Regenerar · Devolver a la tierra' : 'Regenerate · Return to soil'}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      )}
+                    </>
                   )}
-                  </div>
-                )
-              })}
-            </div>
+                </>
+              )
+            })()}
 
             {/* Adopt-more CTA */}
             <div style={{ textAlign: 'center', marginTop: 16 }}>
