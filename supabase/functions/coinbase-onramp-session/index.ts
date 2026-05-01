@@ -8,8 +8,9 @@
  *   2. Verify Supabase JWT → user_id (memory feedback_supabase_jwt_no_jose).
  *   3. Enforce KYC tier ≥ 1 + wallet linked (CHARTER §I.10 web3 non-negotiables).
  *   4. Generate CDP-side JWT (ES256, kid=CDP_KEY_NAME) signed with CDP API
- *      private key (PEM). [TODO once CDP_API_KEY_NAME + CDP_API_KEY_SECRET
- *      are provisioned in Supabase secrets.]
+ *      private key (PEM). Native Web Crypto — no jose dep (memory
+ *      feedback_supabase_jwt_no_jose). Format mirrors the official CDP SDK
+ *      `cdp-sdk/typescript/src/auth/utils/jwt.ts`.
  *   5. POST https://api.developer.coinbase.com/onramp/v1/token with the
  *      user's wallet address as the destination — server-side, never in URL.
  *   6. Return { session_token, expires_at } to client; wallet address is
@@ -20,8 +21,9 @@
  * session token carries the addresses + assets in its signed payload, so
  * we never expose wallet addresses as URL params.
  *
- * Status: skeleton. JWT signing + CDP API call are stubbed until the user's
- * Onramp App ID and CDP API key are approved (see docs/cdp-onramp-application-response.md).
+ * Status: JWT signing implemented. Operational once CDP_API_KEY_NAME +
+ * CDP_API_KEY_SECRET land as Supabase secrets (post-Onramp approval; see
+ * docs/cdp-onramp-application-response.md).
  */
 
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'
@@ -59,48 +61,124 @@ async function verifyAuth(authHeader: string | null): Promise<string> {
   return user.id
 }
 
+// ─── ES256 JWT signing helpers (native Web Crypto) ──────────────────────────
+
+/** base64url encode bytes (no padding). */
+function b64url(bytes: Uint8Array): string {
+  let s = ''
+  for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i])
+  return btoa(s).replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_')
+}
+
+function bytesToHex(bytes: Uint8Array): string {
+  let h = ''
+  for (let i = 0; i < bytes.length; i++) h += bytes[i].toString(16).padStart(2, '0')
+  return h
+}
+
+function concatBytes(arrs: Uint8Array[]): Uint8Array {
+  let total = 0
+  for (const a of arrs) total += a.length
+  const out = new Uint8Array(total)
+  let off = 0
+  for (const a of arrs) { out.set(a, off); off += a.length }
+  return out
+}
+
+/** ASN.1 DER tag-length prefix (length up to 65535). */
+function tlPrefix(tag: number, length: number): Uint8Array {
+  if (length < 0x80) return new Uint8Array([tag, length])
+  if (length < 0x100) return new Uint8Array([tag, 0x81, length])
+  if (length < 0x10000) return new Uint8Array([tag, 0x82, length >> 8, length & 0xff])
+  throw new Error('cdp_pkcs8_length_overflow')
+}
+
+/**
+ * Wrap a SEC1 EC private key (P-256) into PKCS8 so Web Crypto can import it.
+ * Coinbase CDP exports PEM in either format; Web Crypto only accepts PKCS8.
+ *
+ *   PrivateKeyInfo ::= SEQUENCE {
+ *     version           INTEGER (0),
+ *     algorithm         AlgorithmIdentifier (id-ecPublicKey + secp256r1),
+ *     privateKey        OCTET STRING (containing the SEC1 ECPrivateKey)
+ *   }
+ */
+function wrapSec1IntoPkcs8P256(sec1: Uint8Array): Uint8Array {
+  const version = new Uint8Array([0x02, 0x01, 0x00])
+  const algId = new Uint8Array([
+    0x30, 0x13,
+    0x06, 0x07, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x02, 0x01,
+    0x06, 0x08, 0x2A, 0x86, 0x48, 0xCE, 0x3D, 0x03, 0x01, 0x07,
+  ])
+  const octet = concatBytes([tlPrefix(0x04, sec1.length), sec1])
+  const body  = concatBytes([version, algId, octet])
+  return concatBytes([tlPrefix(0x30, body.length), body])
+}
+
+function pemToDer(pem: string): { format: 'pkcs8' | 'sec1', der: Uint8Array } {
+  const isSec1 = /-----BEGIN EC PRIVATE KEY-----/.test(pem)
+  const isPkcs8 = /-----BEGIN PRIVATE KEY-----/.test(pem)
+  if (!isSec1 && !isPkcs8) throw new Error('cdp_key_format_unsupported')
+  const stripped = pem
+    .replace(/-----BEGIN [A-Z ]+-----/g, '')
+    .replace(/-----END [A-Z ]+-----/g, '')
+    .replace(/\s+/g, '')
+  const der = Uint8Array.from(atob(stripped), c => c.charCodeAt(0))
+  return { format: isPkcs8 ? 'pkcs8' : 'sec1', der }
+}
+
 /**
  * Generate the ES256-signed JWT that authenticates our backend to CDP's
- * Onramp token endpoint. Per https://docs.cdp.coinbase.com/api-v2/docs/cdp-api-keys#generating-a-jwt
+ * Onramp token endpoint. Mirrors `cdp-sdk/typescript/src/auth/utils/jwt.ts`:
  *
- * Required env vars (provision when CDP API key is created):
+ *   header  = { alg: 'ES256', kid, typ: 'JWT', nonce: <hex16> }
+ *   payload = { sub: kid, iss: 'cdp', uris: ['<METHOD> <host><path>'], iat, nbf, exp }
+ *
+ * Required env vars (set after Onramp approval):
  *   CDP_API_KEY_NAME    — `organizations/<orgId>/apiKeys/<keyId>`
- *   CDP_API_KEY_SECRET  — PEM-encoded EC private key (P-256). Multi-line.
- *
- * @returns JWT string suitable for Authorization: Bearer <jwt>.
+ *   CDP_API_KEY_SECRET  — PEM-encoded EC private key (P-256), PKCS8 or SEC1.
  */
-async function generateCdpJwt(_method: string, _host: string, _path: string): Promise<string> {
+async function generateCdpJwt(method: string, host: string, path: string): Promise<string> {
   const keyName   = Deno.env.get('CDP_API_KEY_NAME')
   const keySecret = Deno.env.get('CDP_API_KEY_SECRET')
-  if (!keyName || !keySecret) {
-    throw new Error('cdp_api_key_not_configured')
+  if (!keyName || !keySecret) throw new Error('cdp_api_key_not_configured')
+
+  const { format, der } = pemToDer(keySecret)
+  const pkcs8 = format === 'pkcs8' ? der : wrapSec1IntoPkcs8P256(der)
+
+  const cryptoKey = await crypto.subtle.importKey(
+    'pkcs8',
+    pkcs8,
+    { name: 'ECDSA', namedCurve: 'P-256' },
+    false,
+    ['sign'],
+  )
+
+  const nonce = bytesToHex(crypto.getRandomValues(new Uint8Array(16)))
+  const now   = Math.floor(Date.now() / 1000)
+
+  const header = { alg: 'ES256', kid: keyName, typ: 'JWT', nonce }
+  const payload = {
+    sub:  keyName,
+    iss:  'cdp',
+    uris: [`${method} ${host}${path}`],
+    iat:  now,
+    nbf:  now,
+    exp:  now + 120,
   }
-  // TODO(post-CDP-approval): implement ES256 JWT signing using crypto.subtle.
-  // Sketch:
-  //   const pem = keySecret.replace(/-----.*-----/g, '').replace(/\s+/g, '')
-  //   const keyData = Uint8Array.from(atob(pem), c => c.charCodeAt(0))
-  //   const key = await crypto.subtle.importKey(
-  //     'pkcs8',
-  //     keyData,
-  //     { name: 'ECDSA', namedCurve: 'P-256' },
-  //     false,
-  //     ['sign'],
-  //   )
-  //   const header  = { alg: 'ES256', kid: keyName, typ: 'JWT', nonce: crypto.randomUUID() }
-  //   const payload = {
-  //     sub: keyName,
-  //     iss: 'cdp',
-  //     nbf: Math.floor(Date.now() / 1000),
-  //     exp: Math.floor(Date.now() / 1000) + 120,
-  //     uri: `${_method} ${_host}${_path}`,
-  //   }
-  //   const enc = new TextEncoder()
-  //   const b64 = (s: string) => btoa(s).replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_')
-  //   const signingInput = `${b64(JSON.stringify(header))}.${b64(JSON.stringify(payload))}`
-  //   const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, enc.encode(signingInput))
-  //   const sigB64 = b64(String.fromCharCode(...new Uint8Array(sig)))
-  //   return `${signingInput}.${sigB64}`
-  throw new Error('cdp_jwt_signing_not_implemented')
+
+  const enc = new TextEncoder()
+  const signingInput = `${b64url(enc.encode(JSON.stringify(header)))}.${b64url(enc.encode(JSON.stringify(payload)))}`
+
+  // ECDSA via Web Crypto returns raw r||s (64 bytes for P-256) — exactly
+  // what JWT ES256 expects, no DER unwrap needed.
+  const sigBuf = await crypto.subtle.sign(
+    { name: 'ECDSA', hash: 'SHA-256' },
+    cryptoKey,
+    enc.encode(signingInput),
+  )
+
+  return `${signingInput}.${b64url(new Uint8Array(sigBuf))}`
 }
 
 serve(async (req) => {

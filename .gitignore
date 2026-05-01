@@ -39,3 +39,6 @@ videos/node_modules/
 videos/renders/
 videos/.hyperframes/
 videos/out/
+
+# External SDK reference (cloned for offline lookups; not part of our codebase)
+cdp-sdk/

@@ -5,6 +5,7 @@ import { useCocoaTrees, type CareAction } from '../hooks/useCocoaTrees'
 import { supabase } from '../lib/supabase'
 import { BRAND, FONTS, GUARDIANS, TOKEN_RATES } from '../utils/constants'
 import CauaGotchi from '../components/dashboard/CauaGotchi'
+import HarvestMinigameModal, { type HarvestMinigamePayload } from '../components/dashboard/HarvestMinigameModal'
 import MintTreeButton from '../components/dashboard/MintTreeButton'
 import type { CacaoTree } from '../lib/database.types'
 import type { CSSProperties } from 'react'
@@ -13,7 +14,7 @@ import {
   getStageByHours, getNextCareTime, formatTimeUntil,
   hoursSinceAdoption, getCycleProgress, isHarvestReady,
   ADOPTION_HOURS, CARE_INTERVAL_MIN,
-  getDeathDeadline, isTreeDead, getDeathProgress,
+  isTreeDead, isInDeathDanger, getHarvestCountdown,
 } from '../utils/growthSystem'
 
 interface Inventory {
@@ -55,6 +56,7 @@ export default function TreeDetail() {
   const [harvested, setHarvested] = useState(false)
   const [harvesting, setHarvesting] = useState(false)
   const [cycleTick, setCycleTick] = useState(0)  // forces re-render every second for live countdown
+  const [harvestModalOpen, setHarvestModalOpen] = useState(false)
 
   // Retro game layer — floating damage/heal numbers, combo counter, achievement toasts
   const [floats, setFloats] = useState<FloatNum[]>([])
@@ -65,7 +67,6 @@ export default function TreeDetail() {
   const comboResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const initializedTree = useRef<string | null>(null)
-  const forfeitFiredRef = useRef(false)
 
   // Inject Press Start 2P (retro pixel font) once on mount
   useEffect(() => {
@@ -165,29 +166,10 @@ export default function TreeDetail() {
     return () => clearInterval(check)
   }, [lastCareTime, currentProblem])
 
-  // ── Death forfeit fire-and-forget ──────────────────────────────────
-  // Lives ABOVE the early returns so React's hook count stays consistent
-  // across renders (tree may be null on first paint). All guards inside.
-  useEffect(() => {
-    if (!tree || harvested || forfeitFiredRef.current) return
-    const computedDead = isTreeDead(tree.adopted_at, lastCareTime, harvested)
-    const isDead = !!tree.died_at || computedDead
-    if (!isDead) return
-    forfeitFiredRef.current = true
-    ;(async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session?.access_token) return
-        await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/tree-death-forfeit`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-          body: JSON.stringify({ tree_id: tree.id, reason: 'maturation_window_expired_or_neglected' }),
-        })
-      } catch {
-        // Best-effort — server-side cron sweep will catch anything we miss.
-      }
-    })()
-  }, [tree, harvested, lastCareTime])
+  // ── Phase 1.5: muerte la decide el SERVIDOR ──────────────────────────
+  // El cron evaluate-tree-vitals horario evalúa vitals y setea died_at
+  // cuando vitals_critical_since supera VITAL_GRACE_HOURS. El cliente sólo
+  // refleja `tree.died_at`. Sin client-side death detection.
 
   const triggerEffect = (name: string) => {
     setActiveEffect(name)
@@ -265,10 +247,19 @@ export default function TreeDetail() {
     }
   }
 
-  // Harvest action — fires at stage 7 (Maduración 🍫). Awards mazorcas via existing
-  // tree_harvest_share token event; user can later canjear by chocolate in Marketplace.
-  const doHarvest = async () => {
-    if (!tree || harvested || harvesting) return
+  // Harvest action — opens the Fruit-Ninja minigame modal. The actual
+  // server call (award-tokens) fires from `submitHarvest` once the user
+  // either completes the minigame or chooses the instant-skip path.
+  const doHarvest = () => {
+    if (!tree || harvesting) return
+    setHarvestModalOpen(true)
+  }
+
+  // Called by HarvestMinigameModal.onComplete with either the minigame
+  // totals (mucilage + cacao_mass + optional combo bonus) or the instant
+  // baseline (no resources, no bonus).
+  const submitHarvest = async (payload: HarvestMinigamePayload) => {
+    if (!tree || harvesting) return
     setHarvesting(true)
     try {
       const { data: sessionData } = await supabase.auth.getSession()
@@ -279,15 +270,27 @@ export default function TreeDetail() {
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-            body: JSON.stringify({ event_type: 'tree_harvest_share', ref_id: tree.id }),
+            body: JSON.stringify({
+              event_type:        'tree_harvest_share',
+              ref_id:            tree.id,
+              mucilage_g:        payload.mucilage_g,
+              cacao_mass_g:      payload.cacao_mass_g,
+              beans_override:    payload.beans,
+              mazorcas_override: payload.mazorcas,
+            }),
           },
         )
       }
       setHarvested(true)
-      const reward = TOKEN_RATES.tree_harvest_share
+      const subtitleBits = [
+        `+${payload.beans.toFixed(1)} granos`,
+        `+${payload.mazorcas.toFixed(1)} mazorcas`,
+      ]
+      if (payload.mucilage_g > 0)   subtitleBits.push(`+${payload.mucilage_g.toFixed(0)}g mucílago`)
+      if (payload.cacao_mass_g > 0) subtitleBits.push(`+${payload.cacao_mass_g.toFixed(0)}g masa`)
       showAchievement({
-        title: 'HARVEST CLAIMED',
-        subtitle: `+${reward.beans} granos · +${reward.mazorcas} mazorcas`,
+        title: payload.combo_bonus ? '¡COSECHA PERFECTA!' : 'HARVEST CLAIMED',
+        subtitle: subtitleBits.join(' · '),
         icon: '🍫',
       })
     } catch {
@@ -336,23 +339,21 @@ export default function TreeDetail() {
   const stage = getStageByHours(hoursSince)
   const cyclePct = getCycleProgress(tree.adopted_at) * 100
   const cycleRemaining = formatTimeUntil(new Date(new Date(tree.adopted_at).getTime() + ADOPTION_HOURS * 3600000))
-  const harvestReady = isHarvestReady(tree.adopted_at)
+  const harvestReady = isHarvestReady(tree)
   // PLANT_PROBLEMS lookup happens inside <CauaGotchi /> now; we just pass
-  // the problem id through. The old `prob` variable was used by the device
-  // shell that no longer exists.
-  // cycleTick is consumed via the live ticker effect; reference here keeps re-renders in sync
+  // the problem id through.
   void cycleTick
 
-  // ── Death (real Tamagotchi) ─────────────────────────────────────────
-  // Two ways to die: Maduración window expired, or 24h without any care.
-  // Server-side died_at (set by tree-death-forfeit Edge Function) is the
-  // source of truth; client-side compute is the fallback for the period
-  // between the death moment and the server processing the forfeit.
-  const computedDead = isTreeDead(tree.adopted_at, lastCareTime, harvested)
-  const dead = !!tree.died_at || computedDead
-  const deathDeadline = getDeathDeadline(tree.adopted_at)
-  const timeUntilDeath = formatTimeUntil(deathDeadline)
-  const deathProgress = getDeathProgress(tree.adopted_at)
+  // ── Death (Phase 1.5 — vital-based, server-decided) ────────────────
+  // Sin timer absoluto. Sin "horas para morir". El cron horario marca
+  // died_at cuando vitals_critical_since supera VITAL_GRACE_HOURS.
+  const dead = isTreeDead(tree)
+  const inDanger = !dead && isInDeathDanger(tree)
+  // Próxima cosecha — feedback positivo, NO amenaza de muerte.
+  const nextHarvestMs = getHarvestCountdown(tree)
+  const nextHarvestLabel = nextHarvestMs <= 0
+    ? '¡Listo a cosechar!'
+    : formatTimeUntil(new Date(Date.now() + nextHarvestMs))
 
   return (
     <div style={{ background: BRAND.bgDeep, minHeight: '100vh', paddingBottom: '5rem', position: 'relative', overflow: 'hidden' }}>
@@ -427,8 +428,8 @@ export default function TreeDetail() {
           onHarvest={doHarvest}
           harvestRewards={TOKEN_RATES.tree_harvest_share}
           isDead={dead}
-          timeUntilDeath={timeUntilDeath}
-          deathProgress={deathProgress}
+          inDanger={inDanger}
+          nextHarvestLabel={nextHarvestLabel}
         />
 
         {secretFound && (
@@ -447,6 +448,18 @@ export default function TreeDetail() {
         </div>
       </div>
 
+      {/* Fruit-Ninja harvest minigame — opened by COSECHA LISTA in CauaGotchi.
+          The arena drops N mazorcas; each slice fills mucílago bottle + cacao
+          tank. Skip link in modal footer falls back to instant harvest. */}
+      <HarvestMinigameModal
+        isOpen={harvestModalOpen}
+        onClose={() => setHarvestModalOpen(false)}
+        onComplete={(payload) => { void submitHarvest(payload) }}
+        treeId={tree.id}
+        guardianName={guardian.name}
+        variety={tree.variety ?? '—'}
+        region={tree.region ?? guardian.region}
+      />
 
       <style>{`
         @keyframes caua-float-up {
