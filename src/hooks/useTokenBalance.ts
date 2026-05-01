@@ -11,6 +11,8 @@ interface TokenBalance {
   mucilageG: number
   /** Grams of fermented cacao mass — same lifecycle as mucilage. */
   cacaoMassG: number
+  /** Off-chain count of chocolate bars forged in the Lab (Phase 3 — mig 038). */
+  chocolateBarsMade: number
 }
 
 export function useTokenBalance(): TokenBalance & { loading: boolean; error: string | null } {
@@ -21,6 +23,7 @@ export function useTokenBalance(): TokenBalance & { loading: boolean; error: str
     beansLifetime: 0,
     mucilageG: 0,
     cacaoMassG: 0,
+    chocolateBarsMade: 0,
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -35,7 +38,7 @@ export function useTokenBalance(): TokenBalance & { loading: boolean; error: str
       try {
         const { data, error: err } = await supabase
           .from('user_profiles')
-          .select('beans_balance, mazorcas_balance, beans_lifetime, mucilage_g, cacao_mass_g')
+          .select('beans_balance, mazorcas_balance, beans_lifetime, mucilage_g, cacao_mass_g, chocolate_bars_made')
           .eq('user_id', userId)
           .single()
 
@@ -47,6 +50,7 @@ export function useTokenBalance(): TokenBalance & { loading: boolean; error: str
           beansLifetime: data?.beans_lifetime || 0,
           mucilageG: Number(data?.mucilage_g ?? 0),
           cacaoMassG: Number(data?.cacao_mass_g ?? 0),
+          chocolateBarsMade: Number(data?.chocolate_bars_made ?? 0),
         })
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Failed to fetch token balance')

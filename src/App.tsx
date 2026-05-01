@@ -20,6 +20,7 @@ import CauaBongaFinca    from './pages/CauaBongaFinca'
 import CauaBongaPlot     from './pages/CauaBongaPlot'
 import TreeDetail        from './pages/TreeDetail'
 import Dashboard         from './pages/Dashboard'
+import MiLaboratorio     from './pages/MiLaboratorio'
 import Fund              from './pages/Fund'
 import Impacto           from './pages/Impacto'
 import AdminCRM          from './pages/AdminCRM'
@@ -69,6 +70,7 @@ function AppShell() {
         <Route path="/caua-bonga/finca/:id/plot" element={<AuthGate><CauaBongaPlot /></AuthGate>} />
         <Route path="/tree/:id"              element={<AuthGate><TreeDetail /></AuthGate>} />
         <Route path="/dashboard"             element={<AuthGate><Dashboard /></AuthGate>} />
+        <Route path="/lab"                   element={<AuthGate><MiLaboratorio /></AuthGate>} />
         <Route path="/fund"                  element={<AuthGate><Fund /></AuthGate>} />
         <Route path="/impacto"               element={<AuthGate><Impacto /></AuthGate>} />
 
