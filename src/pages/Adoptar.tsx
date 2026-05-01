@@ -5,7 +5,7 @@ import { useCocoaTrees } from '../hooks/useCocoaTrees'
 import SwipeableTreeCard from '../components/ui/SwipeableTreeCard'
 import TokenReward from '../components/ritual/TokenReward'
 import { BRAND, FONTS, GUARDIANS, TOKEN_RATES, TREE_ADOPTION_PRICE_USD } from '../utils/constants'
-import { isTreeDead, isInDeathDanger, isHarvestReady, getStageByHours, hoursSinceAdoption } from '../utils/growthSystem'
+import { isTreeDead, isDying, needsAttention, isHarvestReady, getStageByHours, hoursSinceAdoption } from '../utils/growthSystem'
 
 type Phase = 'idle' | 'confirming' | 'adopting' | 'done'
 
@@ -13,7 +13,7 @@ export default function Adoptar() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { trees, loading: treesLoading, adoptTree, deleteTree } = useCocoaTrees()
+  const { trees, loading: treesLoading, adoptTree } = useCocoaTrees()
 
   // Deep-link from CauaBonga finca: /adoptar?guardian=2 lands directly on that guardian's card.
   // Resolved at mount via lazy initializer to avoid setState-in-effect cascades.
@@ -92,22 +92,48 @@ export default function Adoptar() {
               · Jardín       → vivos / en peligro / listos a cosechar / cosechados
               · Labranza     → muertos · biomasa que regresa al suelo (regenerativo) */}
         {!treesLoading && trees.length > 0 && (() => {
-          // Annotate each tree with its current life-status (Phase 1.5 — recurrente).
+          // Annotate each tree with its life-status. Phase 1.5 — 4 niveles
+          // visuales claramente distintos: ready / healthy / attention / dying.
+          // Death lo decide el server (died_at populated) — el cliente solo lo refleja.
           const annotated = trees.map(t => {
-            const harvested = !!t.harvested_at  // sólo "ya cosechó alguna vez" (no lock)
-            const dead   = isTreeDead(t)
-            const danger = !dead && isInDeathDanger(t)
-            const ready  = !dead && isHarvestReady(t)
-            const stage  = getStageByHours(hoursSinceAdoption(t.adopted_at))
-            return { t, harvested, dead, danger, ready, stage }
+            const harvested = !!t.harvested_at
+            const dead    = isTreeDead(t)
+            const dying   = !dead && isDying(t)        // vitals < 30 — VA A MORIR
+            const warn    = !dead && needsAttention(t) // 30 ≤ vitals < 50 — necesita atención
+            const ready   = !dead && isHarvestReady(t) // ≥ 4.6h + cooldown vencido
+            const stage   = getStageByHours(hoursSinceAdoption(t.adopted_at))
+            return { t, harvested, dead, dying, warn, ready, stage }
           })
           const aliveTrees = annotated.filter(x => !x.dead)
           const deadTrees  = annotated.filter(x =>  x.dead)
 
+          // Tier definition — exclusive priority: ready > dying > warn > healthy.
+          // Each tier has a dedicated color, emoji, label, animation.
+          type Tier = 'ready' | 'dying' | 'warn' | 'harvested' | 'healthy'
+          type TierStyle = {
+            color:     string
+            icon:      string
+            label:     string
+            pulse?:    boolean
+          }
+          const tierStyle = (t: typeof annotated[number]): TierStyle => {
+            if (t.ready)  return { color: BRAND.mazorca, icon: '🍫', label: 'Listo a cosechar', pulse: true }
+            if (t.dying)  return { color: '#e74c3c',     icon: '💀', label: 'Va a morir',       pulse: true }
+            if (t.warn)   return { color: '#F1A91E',     icon: '⚠️', label: 'Necesita atención' }
+            if (t.harvested) return { color: BRAND.pod,  icon: '🌳', label: 'Cosechado · próx ciclo' }
+            return { color: BRAND.pod, icon: '🌱', label: t.stage.name }
+          }
+          const tierOf = (t: typeof annotated[number]): Tier => {
+            if (t.ready) return 'ready'
+            if (t.dying) return 'dying'
+            if (t.warn)  return 'warn'
+            if (t.harvested) return 'harvested'
+            return 'healthy'
+          }
+
           return (
             <>
-              {/* JARDÍN — chips para árboles vivos. Tile un poco más grande
-                  (fontSize 12, padding 7×14) para legibilidad. */}
+              {/* JARDÍN — chips para árboles vivos. 4-tier color system. */}
               {aliveTrees.length > 0 && (
                 <>
                   <div style={{
@@ -117,34 +143,46 @@ export default function Adoptar() {
                   }}>
                     Mi Jardín · {aliveTrees.length}
                   </div>
+
+                  {/* Legend — visible siempre que hay árboles, ayuda a leer los chips */}
+                  <div style={{
+                    display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center',
+                    marginBottom: 12,
+                    fontFamily: FONTS.body, fontSize: 9, color: `${BRAND.heirloom}55`,
+                    letterSpacing: '0.04em',
+                  }}>
+                    <span><span style={{ color: BRAND.mazorca }}>🍫 Listo</span></span>
+                    <span><span style={{ color: '#e74c3c' }}>💀 Va a morir</span></span>
+                    <span><span style={{ color: '#F1A91E' }}>⚠️ Atención</span></span>
+                    <span><span style={{ color: BRAND.pod }}>🌱 Sano</span></span>
+                  </div>
+
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginBottom: 24 }}>
-                    {aliveTrees.map(({ t, harvested, danger, ready, stage }) => {
-                      const accent = danger ? '#F1A91E'
-                                   : harvested ? BRAND.mazorca
-                                   : ready ? BRAND.mazorca
-                                   : BRAND.pod
-                      const icon   = danger ? '⏳'
-                                   : harvested ? '🍫'
-                                   : ready ? '🍫'
-                                   : '🌱'
-                      const label  = danger ? 'Peligro · cuidar'
-                                   : harvested ? 'Cosechado'
-                                   : ready ? 'Listo a cosechar'
-                                   : stage.name
+                    {aliveTrees.map((row) => {
+                      const s = tierStyle(row)
+                      const t = row.t
+                      const tier = tierOf(row)
                       return (
-                        <button key={t.id} onClick={() => navigate(`/tree/${t.id}`)} style={{
-                          background: `${accent}18`,
-                          border: `1px solid ${accent}${danger || ready ? 'aa' : '66'}`,
-                          borderRadius: 999,
-                          padding: '7px 14px',
-                          cursor: 'pointer',
-                          fontFamily: FONTS.display, fontWeight: 700, fontSize: 12,
-                          color: accent, letterSpacing: '0.08em',
-                          boxShadow: (danger || ready) ? `0 0 14px ${accent}55` : 'none',
-                          animation: ready ? 'caua-chip-pulse 1.6s ease-in-out infinite' : 'none',
-                          transition: 'border-color 0.2s, background 0.2s, box-shadow 0.2s',
-                        }}>
-                          {icon} {GUARDIANS[t.guardian_id]?.name ?? 'Árbol'} · {label}
+                        <button
+                          key={t.id}
+                          onClick={() => navigate(`/tree/${t.id}`)}
+                          data-tier={tier}
+                          style={{
+                            background: `${s.color}1a`,
+                            border: `1px solid ${s.color}${s.pulse ? 'cc' : '66'}`,
+                            borderRadius: 999,
+                            padding: '7px 14px',
+                            cursor: 'pointer',
+                            fontFamily: FONTS.display, fontWeight: 700, fontSize: 12,
+                            color: s.color, letterSpacing: '0.08em',
+                            boxShadow: s.pulse ? `0 0 18px ${s.color}66` : 'none',
+                            animation: tier === 'ready' ? 'caua-chip-pulse 1.6s ease-in-out infinite'
+                                     : tier === 'dying' ? 'caua-chip-dying 1s ease-in-out infinite'
+                                     : 'none',
+                            transition: 'border-color 0.2s, background 0.2s, box-shadow 0.2s',
+                          }}
+                        >
+                          {s.icon} {GUARDIANS[t.guardian_id]?.name ?? 'Árbol'} · {s.label}
                         </button>
                       )
                     })}
@@ -152,69 +190,91 @@ export default function Adoptar() {
                 </>
               )}
 
-              {/* LABRANZA — árboles muertos. Tiles más grandes con acción
-                  "Devolver a la tierra" visible. Framing regenerativo: la
-                  biomasa muerta no es desperdicio, es preparación del suelo. */}
+              {/* LABRANZA — árboles muertos. Tiles más grandes + CTA al machete
+                  arena (vive en el dashboard). El click directo en "Regenerar"
+                  lleva al usuario al dashboard donde está el Fruit-Ninja arena
+                  con el machete 3D. Cierra el bucle muerte → regeneración. */}
               {deadTrees.length > 0 && (
                 <>
                   <div style={{
-                    fontFamily: FONTS.display, fontWeight: 800, fontSize: 10,
-                    color: `${BRAND.heirloom}88`, letterSpacing: '0.22em',
-                    textTransform: 'uppercase', marginBottom: 4, marginTop: aliveTrees.length > 0 ? 0 : 0,
+                    fontFamily: FONTS.display, fontWeight: 800, fontSize: 11,
+                    color: '#e74c3ccc', letterSpacing: '0.22em',
+                    textTransform: 'uppercase', marginBottom: 4,
+                    display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center',
                   }}>
-                    Labranza · {deadTrees.length}
+                    <span style={{ fontSize: 14 }}>💀</span>
+                    <span>Labranza · {deadTrees.length}</span>
                   </div>
                   <div style={{
                     fontFamily: FONTS.serif, fontStyle: 'italic',
-                    color: `${BRAND.heirloom}55`, fontSize: 11,
-                    marginBottom: 10, letterSpacing: '0.04em',
+                    color: `${BRAND.heirloom}66`, fontSize: 11,
+                    marginBottom: 10, letterSpacing: '0.04em', textAlign: 'center',
                   }}>
-                    Biomasa que regresa al suelo · regenerar para sembrar de nuevo
+                    Biomasa que regresa al suelo · machete · +10 granos por cada lineage regenerado
                   </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginBottom: 24 }}>
+
+                  {/* Sticky CTA — bigger, gradient, leads to the machete arena */}
+                  <button
+                    onClick={() => navigate('/dashboard#labranza')}
+                    style={{
+                      width: '100%',
+                      maxWidth: 420,
+                      margin: '0 auto 12px',
+                      display: 'flex',
+                      background: `linear-gradient(135deg, #1a0606 0%, ${BRAND.pod}33 100%)`,
+                      border: `1px solid ${BRAND.pod}88`,
+                      borderRadius: 14,
+                      padding: '14px 18px',
+                      cursor: 'pointer',
+                      alignItems: 'center', gap: 14,
+                      boxShadow: `0 0 24px ${BRAND.pod}33, inset 0 1px 0 ${BRAND.heirloom}11`,
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)' }}
+                  >
+                    <div style={{
+                      fontSize: 32,
+                      filter: `drop-shadow(0 4px 8px ${BRAND.pod}aa)`,
+                    }}>⚔</div>
+                    <div style={{ flex: 1, textAlign: 'left' }}>
+                      <div style={{
+                        fontFamily: FONTS.display, fontWeight: 800, fontSize: 13,
+                        color: BRAND.heirloom, letterSpacing: '0.12em', textTransform: 'uppercase',
+                      }}>
+                        Rebanar con machete →
+                      </div>
+                      <div style={{
+                        fontFamily: FONTS.body, fontSize: 10,
+                        color: `${BRAND.heirloom}99`, marginTop: 3, letterSpacing: '0.02em',
+                      }}>
+                        Fruit-Ninja arena · regenera · +10 granos × {deadTrees.length}
+                      </div>
+                    </div>
+                    <div style={{
+                      fontFamily: FONTS.display, fontWeight: 800, fontSize: 18,
+                      color: BRAND.pod,
+                    }}>▶</div>
+                  </button>
+
+                  {/* Compact list of pending regenerations — just for visibility */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center', marginBottom: 24 }}>
                     {deadTrees.map(({ t }) => (
                       <div key={t.id} style={{
-                        display: 'inline-flex', alignItems: 'stretch',
+                        display: 'inline-flex', alignItems: 'center', gap: 5,
                         background: '#1a0606',
-                        border: `1px solid #e74c3c66`,
-                        borderRadius: 14,
-                        overflow: 'hidden',
-                        boxShadow: 'inset 0 0 18px #e74c3c22',
+                        border: `1px solid #e74c3c44`,
+                        borderRadius: 999,
+                        padding: '5px 10px',
+                        opacity: 0.75,
                       }}>
-                        <button onClick={() => navigate(`/tree/${t.id}`)} style={{
-                          background: 'transparent', border: 'none', cursor: 'pointer',
-                          padding: '10px 14px',
-                          fontFamily: FONTS.display, fontWeight: 700, fontSize: 13,
-                          color: '#e74c3c', letterSpacing: '0.08em',
-                          display: 'flex', alignItems: 'center', gap: 6,
-                          opacity: 0.9,
+                        <span style={{ fontSize: 12, filter: 'grayscale(0.5)' }}>💀</span>
+                        <span style={{
+                          fontFamily: FONTS.display, fontWeight: 700, fontSize: 10,
+                          color: '#e74c3ccc', letterSpacing: '0.08em',
                         }}>
-                          <span style={{ fontSize: 18, filter: 'grayscale(0.4)' }}>💀</span>
                           {GUARDIANS[t.guardian_id]?.name ?? 'Árbol'}
-                          <span style={{ fontSize: 10, color: `#e74c3c88`, letterSpacing: '0.16em' }}>· MUERTO</span>
-                        </button>
-                        <button
-                          onClick={async (e) => {
-                            e.stopPropagation()
-                            if (!confirm(`¿Devolver el árbol de ${GUARDIANS[t.guardian_id]?.name ?? 'guardián'} a la tierra?\n\nSu biomasa nutre el suelo de la próxima siembra. Esta acción no se puede deshacer.`)) return
-                            try { await deleteTree(t.id) }
-                            catch (err) { alert(`No se pudo devolver: ${err instanceof Error ? err.message : 'Error desconocido'}`) }
-                          }}
-                          title="Devolver a la tierra · regenerar"
-                          aria-label="Devolver árbol a la tierra"
-                          style={{
-                            background: `${BRAND.pod}1f`,
-                            border: 'none', borderLeft: `1px solid ${BRAND.pod}44`,
-                            cursor: 'pointer', padding: '10px 14px',
-                            color: BRAND.pod,
-                            fontFamily: FONTS.display, fontWeight: 700, fontSize: 11,
-                            letterSpacing: '0.12em', textTransform: 'uppercase',
-                            display: 'flex', alignItems: 'center', gap: 6,
-                          }}
-                        >
-                          <span style={{ fontSize: 14 }}>🌱</span>
-                          Regenerar
-                        </button>
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -225,6 +285,10 @@ export default function Adoptar() {
                 @keyframes caua-chip-pulse {
                   0%, 100% { box-shadow: 0 0 14px ${BRAND.mazorca}55; }
                   50%      { box-shadow: 0 0 24px ${BRAND.mazorca}aa; }
+                }
+                @keyframes caua-chip-dying {
+                  0%, 100% { box-shadow: 0 0 12px #e74c3c66; opacity: 1; }
+                  50%      { box-shadow: 0 0 22px #e74c3caa; opacity: 0.85; }
                 }
               `}</style>
             </>

@@ -408,9 +408,11 @@ export default function Dashboard() {
                   {/* LABRANZA — árboles muertos. Por defecto el modo machete
                       (Fruit-Ninja-style slicing); el usuario puede cambiar a
                       list view si prefiere ver detalles antes de regenerar.
-                      Mismo deleteTree backend en ambos modos. */}
+                      Mismo deleteTree backend en ambos modos.
+                      `id="labranza"` así Adoptar.tsx puede deep-linkear con
+                      navigate('/dashboard#labranza') y el browser auto-scrolea. */}
                   {deadTrees.length > 0 && (
-                    <>
+                    <div id="labranza" style={{ scrollMarginTop: 80 }}>
                       <div style={{ ...sectionLabelStyle, justifyContent: 'space-between' }}>
                         <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                           <span>Labranza</span>
@@ -540,7 +542,7 @@ export default function Dashboard() {
                         ))}
                       </div>
                       )}
-                    </>
+                    </div>
                   )}
                 </>
               )
