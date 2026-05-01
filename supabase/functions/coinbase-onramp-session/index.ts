@@ -7,10 +7,13 @@
  *   1. CORS preflight (strict allowlist via cors-config).
  *   2. Verify Supabase JWT → user_id (memory feedback_supabase_jwt_no_jose).
  *   3. Enforce KYC tier ≥ 1 + wallet linked (CHARTER §I.10 web3 non-negotiables).
- *   4. Generate CDP-side JWT (ES256, kid=CDP_KEY_NAME) signed with CDP API
- *      private key (PEM). Native Web Crypto — no jose dep (memory
- *      feedback_supabase_jwt_no_jose). Format mirrors the official CDP SDK
- *      `cdp-sdk/typescript/src/auth/utils/jwt.ts`.
+ *   4. Generate CDP-side JWT signed with CDP API private key. Two key formats
+ *      are auto-detected:
+ *        a) Legacy ES256 — PEM-wrapped EC P-256 private key (PKCS8 or SEC1).
+ *           kid = `organizations/<org>/apiKeys/<id>`.
+ *        b) Current EdDSA — base64-encoded 64-byte (or 32-byte seed)
+ *           Ed25519 secret. kid = the UUID `id` field from the CDP JSON.
+ *      Native Web Crypto only — no jose dep (memory feedback_supabase_jwt_no_jose).
  *   5. POST https://api.developer.coinbase.com/onramp/v1/token with the
  *      user's wallet address as the destination — server-side, never in URL.
  *   6. Return { session_token, expires_at } to client; wallet address is
@@ -21,9 +24,12 @@
  * session token carries the addresses + assets in its signed payload, so
  * we never expose wallet addresses as URL params.
  *
- * Status: JWT signing implemented. Operational once CDP_API_KEY_NAME +
- * CDP_API_KEY_SECRET land as Supabase secrets (post-Onramp approval; see
- * docs/cdp-onramp-application-response.md).
+ * Env vars (set as Supabase Edge Function secrets):
+ *   CDP_API_KEY_NAME   — UUID id (new Ed25519 keys) OR `organizations/...`
+ *                        path (legacy ECDSA keys). Matches what the CDP
+ *                        portal puts in the JSON's `id` / `name` field.
+ *   CDP_API_KEY_SECRET — Either a PEM block (legacy) or base64 raw bytes
+ *                        (new). Auto-detected at sign time.
  */
 
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'
@@ -127,23 +133,60 @@ function pemToDer(pem: string): { format: 'pkcs8' | 'sec1', der: Uint8Array } {
   return { format: isPkcs8 ? 'pkcs8' : 'sec1', der }
 }
 
+/** Looks like a PEM-wrapped ECDSA P-256 key (legacy CDP format)? */
+function looksLikePem(secret: string): boolean {
+  return /-----BEGIN [A-Z ]+PRIVATE KEY-----/.test(secret)
+}
+
 /**
- * Generate the ES256-signed JWT that authenticates our backend to CDP's
- * Onramp token endpoint. Mirrors `cdp-sdk/typescript/src/auth/utils/jwt.ts`:
+ * Decode the new CDP base64 Ed25519 secret to its 32-byte seed.
  *
- *   header  = { alg: 'ES256', kid, typ: 'JWT', nonce: <hex16> }
+ * The CDP portal (post-2025) issues keys whose `privateKey` is base64 of
+ * either 32 raw seed bytes, or 64 bytes in libsodium "expanded" format
+ * (32-byte seed concatenated with 32-byte public key). We slice down to
+ * the 32-byte seed for Web Crypto's Ed25519 raw import.
+ */
+function decodeEd25519Seed(secret: string): Uint8Array {
+  const trimmed = secret.replace(/\s+/g, '')
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(trimmed)) {
+    throw new Error('cdp_key_format_unsupported')
+  }
+  const decoded = Uint8Array.from(atob(trimmed), c => c.charCodeAt(0))
+  if (decoded.length === 32) return decoded
+  if (decoded.length === 64) return decoded.slice(0, 32)
+  throw new Error('cdp_key_format_unsupported')
+}
+
+/**
+ * Build the canonical JWT body shared by both signing paths.
+ *
+ *   header  = { alg, kid, typ: 'JWT', nonce: <hex16> }
  *   payload = { sub: kid, iss: 'cdp', uris: ['<METHOD> <host><path>'], iat, nbf, exp }
  *
- * Required env vars (set after Onramp approval):
- *   CDP_API_KEY_NAME    — `organizations/<orgId>/apiKeys/<keyId>`
- *   CDP_API_KEY_SECRET  — PEM-encoded EC private key (P-256), PKCS8 or SEC1.
+ * Mirrors `cdp-sdk/typescript/src/auth/utils/jwt.ts`. Returns the
+ * signing-input string ("<b64header>.<b64payload>") so the algorithm-
+ * specific code only needs to do the signature step.
  */
-async function generateCdpJwt(method: string, host: string, path: string): Promise<string> {
-  const keyName   = Deno.env.get('CDP_API_KEY_NAME')
-  const keySecret = Deno.env.get('CDP_API_KEY_SECRET')
-  if (!keyName || !keySecret) throw new Error('cdp_api_key_not_configured')
+function buildJwtSigningInput(alg: 'ES256' | 'EdDSA', kid: string, method: string, host: string, path: string): string {
+  const nonce = bytesToHex(crypto.getRandomValues(new Uint8Array(16)))
+  const now   = Math.floor(Date.now() / 1000)
 
-  const { format, der } = pemToDer(keySecret)
+  const header = { alg, kid, typ: 'JWT', nonce }
+  const payload = {
+    sub:  kid,
+    iss:  'cdp',
+    uris: [`${method} ${host}${path}`],
+    iat:  now,
+    nbf:  now,
+    exp:  now + 120,
+  }
+  const enc = new TextEncoder()
+  return `${b64url(enc.encode(JSON.stringify(header)))}.${b64url(enc.encode(JSON.stringify(payload)))}`
+}
+
+/** Legacy ECDSA-P256 path. Used when the secret is PEM-wrapped. */
+async function signEs256(keyName: string, pemSecret: string, method: string, host: string, path: string): Promise<string> {
+  const { format, der } = pemToDer(pemSecret)
   const pkcs8 = format === 'pkcs8' ? der : wrapSec1IntoPkcs8P256(der)
 
   const cryptoKey = await crypto.subtle.importKey(
@@ -154,31 +197,58 @@ async function generateCdpJwt(method: string, host: string, path: string): Promi
     ['sign'],
   )
 
-  const nonce = bytesToHex(crypto.getRandomValues(new Uint8Array(16)))
-  const now   = Math.floor(Date.now() / 1000)
-
-  const header = { alg: 'ES256', kid: keyName, typ: 'JWT', nonce }
-  const payload = {
-    sub:  keyName,
-    iss:  'cdp',
-    uris: [`${method} ${host}${path}`],
-    iat:  now,
-    nbf:  now,
-    exp:  now + 120,
-  }
-
-  const enc = new TextEncoder()
-  const signingInput = `${b64url(enc.encode(JSON.stringify(header)))}.${b64url(enc.encode(JSON.stringify(payload)))}`
-
+  const signingInput = buildJwtSigningInput('ES256', keyName, method, host, path)
   // ECDSA via Web Crypto returns raw r||s (64 bytes for P-256) — exactly
   // what JWT ES256 expects, no DER unwrap needed.
   const sigBuf = await crypto.subtle.sign(
     { name: 'ECDSA', hash: 'SHA-256' },
     cryptoKey,
-    enc.encode(signingInput),
+    new TextEncoder().encode(signingInput),
+  )
+  return `${signingInput}.${b64url(new Uint8Array(sigBuf))}`
+}
+
+/**
+ * Current Ed25519 path. Used when the secret is base64-encoded raw bytes
+ * (the format the CDP portal hands out as of 2025+).
+ *
+ * Web Crypto Ed25519 (Deno ≥ 1.40, Supabase Edge Functions runtime) accepts
+ * the 32-byte seed via `importKey('raw', ...)`. We pass `kid = keyName`
+ * which for new keys is the UUID `id` field of the CDP JSON; the Onramp
+ * verifier resolves the org+key from that UUID.
+ */
+async function signEdDsa(keyName: string, base64Secret: string, method: string, host: string, path: string): Promise<string> {
+  const seed = decodeEd25519Seed(base64Secret)
+
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    seed,
+    { name: 'Ed25519' },
+    false,
+    ['sign'],
   )
 
+  const signingInput = buildJwtSigningInput('EdDSA', keyName, method, host, path)
+  const sigBuf = await crypto.subtle.sign(
+    'Ed25519',
+    cryptoKey,
+    new TextEncoder().encode(signingInput),
+  )
   return `${signingInput}.${b64url(new Uint8Array(sigBuf))}`
+}
+
+/**
+ * Auto-detect key format and dispatch to the right signing routine.
+ * PEM → ES256. Base64 raw bytes → EdDSA.
+ */
+async function generateCdpJwt(method: string, host: string, path: string): Promise<string> {
+  const keyName   = Deno.env.get('CDP_API_KEY_NAME')
+  const keySecret = Deno.env.get('CDP_API_KEY_SECRET')
+  if (!keyName || !keySecret) throw new Error('cdp_api_key_not_configured')
+
+  return looksLikePem(keySecret)
+    ? signEs256(keyName, keySecret, method, host, path)
+    : signEdDsa(keyName, keySecret, method, host, path)
 }
 
 serve(async (req) => {
