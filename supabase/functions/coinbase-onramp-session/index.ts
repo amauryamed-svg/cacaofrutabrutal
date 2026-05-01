@@ -144,7 +144,8 @@ function looksLikePem(secret: string): boolean {
  * The CDP portal (post-2025) issues keys whose `privateKey` is base64 of
  * either 32 raw seed bytes, or 64 bytes in libsodium "expanded" format
  * (32-byte seed concatenated with 32-byte public key). We slice down to
- * the 32-byte seed for Web Crypto's Ed25519 raw import.
+ * the 32-byte seed for Web Crypto's Ed25519 import (which then has to be
+ * wrapped into PKCS8 — see `wrapEd25519SeedToPkcs8`).
  */
 function decodeEd25519Seed(secret: string): Uint8Array {
   const trimmed = secret.replace(/\s+/g, '')
@@ -155,6 +156,39 @@ function decodeEd25519Seed(secret: string): Uint8Array {
   if (decoded.length === 32) return decoded
   if (decoded.length === 64) return decoded.slice(0, 32)
   throw new Error('cdp_key_format_unsupported')
+}
+
+/**
+ * Wrap a raw 32-byte Ed25519 seed into PKCS8 format (RFC 8410).
+ *
+ * Web Crypto's `importKey('raw', ..., { name: 'Ed25519' })` only accepts
+ * PUBLIC keys (32-byte point). For PRIVATE keys the format MUST be
+ * `pkcs8`, otherwise importKey throws "Invalid key usage" because the
+ * resulting key can't carry a `sign` permission.
+ *
+ * The PKCS8 envelope for Ed25519 is fixed-size (48 bytes) per RFC 8410 §7:
+ *
+ *   PrivateKeyInfo SEQUENCE (46 bytes inner):
+ *     INTEGER 0                              -- version
+ *     AlgorithmIdentifier SEQUENCE (5 bytes):
+ *       OID 1.3.101.112                     -- id-Ed25519
+ *     OCTET STRING (34 bytes):
+ *       OCTET STRING (32 bytes):            -- CurvePrivateKey
+ *         <seed>
+ */
+function wrapEd25519SeedToPkcs8(seed: Uint8Array): Uint8Array {
+  if (seed.length !== 32) throw new Error('cdp_key_format_unsupported')
+  const out = new Uint8Array(48)
+  out.set([
+    0x30, 0x2e,                              // SEQUENCE, len 46
+    0x02, 0x01, 0x00,                        // INTEGER 0
+    0x30, 0x05,                              // SEQUENCE, len 5 (algorithm)
+    0x06, 0x03, 0x2b, 0x65, 0x70,            // OID 1.3.101.112 (Ed25519)
+    0x04, 0x22,                              // OCTET STRING, len 34
+    0x04, 0x20,                              // inner OCTET STRING, len 32
+  ], 0)
+  out.set(seed, 16)
+  return out
 }
 
 /**
@@ -212,17 +246,22 @@ async function signEs256(keyName: string, pemSecret: string, method: string, hos
  * Current Ed25519 path. Used when the secret is base64-encoded raw bytes
  * (the format the CDP portal hands out as of 2025+).
  *
- * Web Crypto Ed25519 (Deno ≥ 1.40, Supabase Edge Functions runtime) accepts
- * the 32-byte seed via `importKey('raw', ...)`. We pass `kid = keyName`
- * which for new keys is the UUID `id` field of the CDP JSON; the Onramp
- * verifier resolves the org+key from that UUID.
+ * Web Crypto Ed25519 (Deno ≥ 1.40, Supabase Edge Functions runtime) requires
+ * the 32-byte seed wrapped in PKCS8 for private-key import — `'raw'` import
+ * only accepts public keys and would fail with "Invalid key usage" when
+ * asking for `sign` permission. See `wrapEd25519SeedToPkcs8` for the
+ * RFC 8410 envelope shape.
+ *
+ * `kid = keyName` for new keys is the UUID `id` field of the CDP JSON;
+ * the Onramp verifier resolves the org+key from that UUID.
  */
 async function signEdDsa(keyName: string, base64Secret: string, method: string, host: string, path: string): Promise<string> {
-  const seed = decodeEd25519Seed(base64Secret)
+  const seed  = decodeEd25519Seed(base64Secret)
+  const pkcs8 = wrapEd25519SeedToPkcs8(seed)
 
   const cryptoKey = await crypto.subtle.importKey(
-    'raw',
-    seed,
+    'pkcs8',
+    pkcs8,
     { name: 'Ed25519' },
     false,
     ['sign'],
