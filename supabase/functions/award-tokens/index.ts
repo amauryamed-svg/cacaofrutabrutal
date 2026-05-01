@@ -101,9 +101,47 @@ serve(async (req) => {
       beans *= amount
     }
 
+    // Phase 2.5 — Labranza machete: tree_compost_regen requires a tree that
+    // ACTUALLY died (server-decided). Insert a lineage_regenerations row
+    // alongside the token award. Idempotent on (source_tree_id).
+    if (event_type === 'tree_compost_regen' && ref_id) {
+      const { data: tree, error: treeErr } = await supabase
+        .from('cacao_trees')
+        .select('user_id, died_at, guardian_id')
+        .eq('id', ref_id)
+        .single<{ user_id: string; died_at: string | null; guardian_id: number }>()
+      if (treeErr || !tree) {
+        return jsonResponse({ error: 'tree_not_found' }, 404)
+      }
+      if (tree.user_id !== userId) {
+        return jsonResponse({ error: 'tree_not_owned' }, 403)
+      }
+      if (!tree.died_at) {
+        return jsonResponse({ error: 'tree_not_dead' }, 422)
+      }
+      // De-dupe: if a regen for this source tree already exists, skip insert.
+      const { data: existing } = await supabase
+        .from('lineage_regenerations')
+        .select('id')
+        .eq('source_tree_id', ref_id)
+        .limit(1)
+      if (!existing || existing.length === 0) {
+        const { error: regenErr } = await supabase
+          .from('lineage_regenerations')
+          .insert({
+            user_id:        userId,
+            guardian_id:    tree.guardian_id,
+            source_tree_id: ref_id,
+          })
+        if (regenErr) {
+          console.error('lineage_regenerations insert failed:', regenErr)
+          // Don't bail — the token award still proceeds. The badge may not
+          // appear in Adoptar but the +10 beans still credit.
+        }
+      }
+    }
+
     // Phase 1.5 — recurring harvest with server-side cooldown enforcement.
-    // Same tree can't be harvested more than once per HARVEST_INTERVAL_HOURS
-    // even if the client-side guard fails (double-click, stale tab, etc.).
     const HARVEST_INTERVAL_HOURS = 5
     if (event_type === 'tree_harvest_share' && ref_id) {
       const { data: tree, error: treeErr } = await supabase

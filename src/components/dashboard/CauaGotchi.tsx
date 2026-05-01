@@ -501,6 +501,10 @@ const treeFrameStyle: CSSProperties = {
   minHeight: 280,
   display: 'flex', alignItems: 'center', justifyContent: 'center',
   position: 'relative',
+  // LivingTree's SVG has `overflow: visible` (intentional, lets canopy +
+  // root flair paint past the viewBox). Clip on the frame so flair stays
+  // contained within the rounded card and doesn't bleed onto siblings.
+  overflow: 'hidden',
 }
 
 const problemBadgeStyle: CSSProperties = {

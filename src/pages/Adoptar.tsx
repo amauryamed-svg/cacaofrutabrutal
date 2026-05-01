@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCocoaTrees } from '../hooks/useCocoaTrees'
+import { useLineageRegenerations } from '../hooks/useLineageRegenerations'
 import SwipeableTreeCard from '../components/ui/SwipeableTreeCard'
 import TokenReward from '../components/ritual/TokenReward'
 import { BRAND, FONTS, GUARDIANS, TOKEN_RATES, TREE_ADOPTION_PRICE_USD } from '../utils/constants'
@@ -14,6 +15,7 @@ export default function Adoptar() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { trees, loading: treesLoading, adoptTree } = useCocoaTrees()
+  const { findByGuardian: findRegen } = useLineageRegenerations()
 
   // Deep-link from CauaBonga finca: /adoptar?guardian=2 lands directly on that guardian's card.
   // Resolved at mount via lazy initializer to avoid setState-in-effect cascades.
@@ -290,6 +292,10 @@ export default function Adoptar() {
                   0%, 100% { box-shadow: 0 0 12px #e74c3c66; opacity: 1; }
                   50%      { box-shadow: 0 0 22px #e74c3caa; opacity: 0.85; }
                 }
+                @keyframes caua-regen-pulse {
+                  0%, 100% { box-shadow: 0 0 16px ${BRAND.pod}44; }
+                  50%      { box-shadow: 0 0 28px ${BRAND.pod}88; }
+                }
               `}</style>
             </>
           )
@@ -389,6 +395,43 @@ export default function Adoptar() {
                     }}>
                       {guardian.region} · {guardian.varieties[0]}
                     </div>
+
+                    {/* Lineage regenerated badge — shown only when the user
+                        has an active regen for this guardian (Phase 2.5).
+                        Narrative-only for now; future PR will apply a
+                        discount at server-side adoption time. */}
+                    {(() => {
+                      const regen = findRegen(activeIdx)
+                      if (!regen) return null
+                      // Show the expiration as an absolute date — keeps the
+                      // render pure (Date.now() can't be called here under
+                      // react-hooks/purity). User gets "vence Mayo 8" rather
+                      // than a live countdown; close enough for a 7d window.
+                      const expDate = new Date(regen.expires_at).toLocaleDateString('es-CO', {
+                        day: 'numeric', month: 'short',
+                      })
+                      return (
+                        <div style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 6,
+                          background: `${BRAND.pod}22`,
+                          border: `1px solid ${BRAND.pod}aa`,
+                          borderRadius: 999,
+                          padding: '5px 12px',
+                          marginTop: 12,
+                          boxShadow: `0 0 16px ${BRAND.pod}33`,
+                          animation: 'caua-regen-pulse 2.4s ease-in-out infinite',
+                        }}>
+                          <span style={{ fontSize: 14 }}>🌱</span>
+                          <span style={{
+                            fontFamily: FONTS.display, fontWeight: 800, fontSize: 9,
+                            color: BRAND.pod, letterSpacing: '0.16em', textTransform: 'uppercase',
+                          }}>
+                            Lineage regenerado · vence {expDate}
+                          </span>
+                        </div>
+                      )
+                    })()}
+
                     <div style={{
                       marginTop: 18,
                       fontFamily: FONTS.display, fontWeight: 900,

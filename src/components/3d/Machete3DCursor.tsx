@@ -142,7 +142,7 @@ interface OverlayProps {
 export default function Machete3DCursor({ cursorRef, arenaWidth, arenaHeight }: OverlayProps) {
   return (
     <Canvas
-      shadows
+      shadows="percentage"
       gl={{ antialias: true, alpha: true }}
       dpr={[1, 2]}
       style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
