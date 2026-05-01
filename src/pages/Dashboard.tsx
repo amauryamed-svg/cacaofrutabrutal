@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BRAND, FONTS, GUARDIANS, MAZORCA_TO_CACAO_RATE } from '../utils/constants'
+import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { useCocoaTrees } from '../hooks/useCocoaTrees'
 import { useTokenBalance } from '../hooks/useTokenBalance'
@@ -450,7 +451,36 @@ export default function Dashboard() {
                       {labranzaMode === 'machete' ? (
                         <LabranzaMachete
                           trees={deadTrees.map(({ t, g }) => ({ id: t.id, guardianName: g?.name ?? 'Árbol' }))}
-                          onRecycle={async (id) => { await deleteTree(id) }}
+                          onRecycle={async (id) => {
+                            // Phase 2.5 — award tree_compost_regen FIRST so
+                            // the Edge Function can validate `died_at` while
+                            // the tree row still exists, mint a
+                            // lineage_regenerations record, and credit +10
+                            // beans. THEN delete the tree from the user's
+                            // visible list. Errors on the regen step are
+                            // tolerated — the slice anim still plays.
+                            try {
+                              const { data: { session } } = await supabase.auth.getSession()
+                              const token = session?.access_token
+                              if (token) {
+                                await fetch(
+                                  `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/award-tokens`,
+                                  {
+                                    method: 'POST',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                      Authorization: `Bearer ${token}`,
+                                    },
+                                    body: JSON.stringify({
+                                      event_type: 'tree_compost_regen',
+                                      ref_id:     id,
+                                    }),
+                                  },
+                                )
+                              }
+                            } catch { /* non-blocking */ }
+                            await deleteTree(id)
+                          }}
                           lang={lang}
                         />
                       ) : (
