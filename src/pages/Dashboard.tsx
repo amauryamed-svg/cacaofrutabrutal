@@ -26,7 +26,8 @@ export default function Dashboard() {
   const T = makeT(lang)
   const navigate = useNavigate()
   const { trees, loading: treesLoading, deleteTree } = useCocoaTrees()
-  const { mazorcas, beans } = useTokenBalance()
+  const { mazorcas, beans, mucilageG, cacaoMassG, chocolateBarsMade } = useTokenBalance()
+  const canForgeChocolate = mucilageG >= 300 && cacaoMassG >= 250
   const [redeemOpen, setRedeemOpen] = useState(false)
   const [deadBannerDismissed, setDeadBannerDismissed] = useState(false)
   const [labranzaMode, setLabranzaMode] = useState<'machete' | 'list'>('machete')
@@ -271,7 +272,37 @@ export default function Dashboard() {
                     }}>
                     {lang === 'es' ? '⛓ Burn → $CACAO' : '⛓ Burn → $CACAO'}
                   </button>
+                  {/* Phase 3 — Lab CTA. Only visible when the user has the
+                      mucilage + cacao_mass for at least one chocolate bar.
+                      Routes to /lab where the 3-stage forge runs. */}
+                  {canForgeChocolate && (
+                    <button
+                      onClick={() => navigate('/lab')}
+                      title={lang === 'es' ? 'Liofiliza · refina · conchea' : 'Lyophilize · refine · conch'}
+                      style={{
+                        flex: '1 1 180px', padding: '10px 16px', borderRadius: 999,
+                        background: `linear-gradient(135deg, ${BRAND.heroic}33, ${BRAND.mazorca}33)`,
+                        color: BRAND.heirloom,
+                        border: `1px solid ${BRAND.mazorca}aa`,
+                        cursor: 'pointer',
+                        fontFamily: FONTS.display, fontWeight: 700, fontSize: 11,
+                        letterSpacing: '0.1em', textTransform: 'uppercase',
+                        boxShadow: `0 0 16px ${BRAND.mazorca}33`,
+                      }}>
+                      {lang === 'es' ? '🍫 Forjar chocolate →' : '🍫 Forge chocolate →'}
+                    </button>
+                  )}
                 </div>
+                {chocolateBarsMade > 0 && (
+                  <div style={{
+                    width: '100%',
+                    fontFamily: FONTS.body, fontSize: 10,
+                    color: `${BRAND.mazorca}cc`, letterSpacing: '0.06em',
+                    marginTop: 4, textAlign: 'right',
+                  }}>
+                    🍫 {chocolateBarsMade} {lang === 'es' ? 'forjada' : 'forged'}{chocolateBarsMade !== 1 ? 's' : ''}
+                  </div>
+                )}
               </div>
             )}
 
