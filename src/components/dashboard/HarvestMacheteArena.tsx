@@ -1,45 +1,77 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
 import { BRAND, FONTS, TOKEN_RATES, HARVEST_COMBO_WINDOW_MS } from '../../utils/constants'
 import Machete3DCursor from '../3d/Machete3DCursor'
 import { type CursorRef, makeCursorRef } from '../3d/Machete3DCursor.helpers'
+import CacaoPod, { type PodColor } from '../3d/CacaoPod'
+import CacaoTreeBackdrop from '../3d/CacaoTreeBackdrop'
 
 /**
  * HarvestMacheteArena — Fruit-Ninja-style harvest minigame.
  *
- * The user's mature cocoa tree drops N mazorcas into the arena. The user
- * swipes the 3D machete across them; each slice splits the mazorca, drips
- * mucílago into a glass bottle (lower-left), and pours cacao mass into a
- * fermentation tank (lower-right). When all N are sliced within the combo
- * window, a +20% bonus fires.
+ * Behavior (Phase 2 — physics edition):
+ *   - A cacao tree silhouette sits in the background.
+ *   - N mazorcas (5–8 by tree id hash) drop from random branch positions on
+ *     the tree at staggered times (0–4s after open). Each pod has random
+ *     initial velocity + spin, falls under gravity. Just like Fruit Ninja —
+ *     unpredictable, you have to react.
+ *   - Pods come in 3 ripeness shades (green / yellow / orange). Color seeded
+ *     by tree id so the same tree always drops the same harvest set.
+ *   - User swipes the 3D machete; each slice splits the pod, drips mucílago
+ *     into a glass bottle (lower-left), pours cacao mass into a fermentation
+ *     tank (lower-right). Combo +20% if all sliced within window.
+ *   - Pods that fall past the bottom = missed (still get partial reward).
  *
- * Architecture mirrors LabranzaMachete:
- *   - 2D layer (DOM)            — backdrop, mazorca tiles, slice halves,
- *                                 SVG trail, bottle/tank fill animations,
- *                                 combo flash, terminal summary.
+ * Architecture:
+ *   - 2D layer (DOM)            — tree backdrop, animated pods, slice halves,
+ *                                 particle streams, SVG trail, vessels.
  *   - 3D layer (R3F Canvas)     — Machete3DCursor (shared).
  *   - Hit detection             — circle test on each pointer point vs each
- *                                 alive mazorca's bobbing center.
- *
- * The arena emits a single `onComplete` event when all mazorcas are sliced
- * (or the user clicks the skip link in the modal wrapper). The wrapper
- * decides when to fire `award-tokens` with the totals.
+ *                                 flying pod's current px center.
+ *   - Physics                   — raf-driven integration; gravity pulls pods
+ *                                 down, rotation accumulates from angular vel.
  */
 
-const ARENA_HEIGHT = 380           // px — taller than Labranza (360) to fit vessels
-const TILE_SIZE    = 88            // px per mazorca tile
-const HIT_RADIUS   = 52            // px circle test
+const ARENA_HEIGHT = 380           // px
+const POD_SIZE     = 64            // base width of CacaoPod SVG
+const HIT_RADIUS   = 56            // px circle test
 const TRAIL_TTL    = 350           // ms
 const SLICE_ANIM   = 750           // ms — half-tile fly-off
-const VESSEL_HEIGHT = 110          // px — height of bottle + tank zone
+const VESSEL_HEIGHT = 110          // px
 const VESSEL_WIDTH  = 64           // px
 
-// Per-mazorca rewards. Multiply by N pods sliced.
+// Physics — px per frame at 60fps
+const GRAVITY            = 0.16    // px/frame²
+const VX_RANGE           = 1.8     // ± horizontal initial velocity
+const VY_RANGE_UP        = 1.5     // initial upward push (max)
+const ANGULAR_VEL_RANGE  = 0.05    // ± rad/frame initial spin
+const SPAWN_STAGGER_MAX  = 4000    // ms — last pod can spawn up to 4s after open
+const OFFSCREEN_MARGIN   = 100     // px past arena bottom to mark as "missed"
+
+// Per-pod rewards — multiply by # of pods successfully sliced.
 const PER_POD_MUCILAGE = TOKEN_RATES.tree_harvest_share.per_pod_mucilage_g
 const PER_POD_CACAO    = TOKEN_RATES.tree_harvest_share.per_pod_cacao_mass_g
+
+// Branch positions on the tree backdrop (normalized 0..1). Pods spawn from
+// these — they're roughly aligned with the foliage clusters in
+// CacaoTreeBackdrop so the user gets a "tree just dropped a pod" feel.
+const BRANCH_POSITIONS: Array<{ x: number; y: number }> = [
+  { x: 0.30, y: 0.34 }, // upper left
+  { x: 0.50, y: 0.30 }, // top center
+  { x: 0.70, y: 0.34 }, // upper right
+  { x: 0.20, y: 0.55 }, // mid left
+  { x: 0.80, y: 0.55 }, // mid right
+  { x: 0.27, y: 0.78 }, // lower left
+  { x: 0.73, y: 0.78 }, // lower right
+  { x: 0.50, y: 0.55 }, // mid center
+]
+
+const POD_COLORS: PodColor[] = ['green', 'yellow', 'orange']
 
 export interface HarvestArenaResult {
   pods_sliced:    number
   pods_total:     number
+  pods_missed:    number
   mucilage_g:     number
   cacao_mass_g:   number
   beans_override: number
@@ -48,21 +80,30 @@ export interface HarvestArenaResult {
 }
 
 interface Props {
-  /** UUID of the cocoa tree being harvested. Used to seed pod layout (deterministic). */
   treeId: string
-  /** Display name of the tree's guardian (shown in the empty/done state). */
   guardianName: string
-  /** Fired once when ALL mazorcas have been sliced (auto-completion). */
   onComplete: (result: HarvestArenaResult) => void
   lang?: 'es' | 'en'
 }
 
 type PodRuntime = {
   id: string
-  xPct: number
-  y: number
-  bobPhase: number
-  state: 'alive' | 'sliced'
+  // Physics state — updated each frame while flying.
+  x: number          // px from arena left
+  y: number          // px from arena top
+  vx: number         // px/frame
+  vy: number         // px/frame
+  rotation: number   // radians
+  angularVelocity: number  // rad/frame
+  // Spawn schedule.
+  spawnAt: number    // ms timestamp
+  spawnX: number     // px — branch origin
+  spawnY: number     // px — branch origin
+  // Visual.
+  color: PodColor
+  tilt: number       // degrees, fixed visual offset
+  // State.
+  state: 'pending' | 'flying' | 'sliced' | 'missed'
   slicedAt: number
   sliceDx: number
   sliceDy: number
@@ -70,7 +111,7 @@ type PodRuntime = {
 
 type TrailPoint = { x: number; y: number; t: number }
 
-// FNV-1a-ish — cheap deterministic 32-bit hash on the tree UUID.
+// FNV-1a hash for deterministic per-tree layout.
 function hash32(s: string): number {
   let h = 2166136261
   for (let i = 0; i < s.length; i++) {
@@ -78,31 +119,39 @@ function hash32(s: string): number {
   }
   return h >>> 0
 }
+// Map a hash to [-1, 1] uniformly.
+function hashSigned(s: string): number {
+  return ((hash32(s) % 2000) / 1000) - 1
+}
 
 export default function HarvestMacheteArena({ treeId, guardianName, onComplete, lang = 'es' }: Props) {
   const arenaRef = useRef<HTMLDivElement | null>(null)
   const [arenaWidth, setArenaWidth] = useState(0)
 
-  // Deterministic pod layout — N = 5-8 based on tree id, positions seeded by id.
+  // mountTime — captured once via useState initializer (allowed impure call).
+  // Pod spawnAt becomes "ms offset from mount" so the arena's first frame
+  // computes who's pending vs flying.
+  const [mountTime] = useState(() => performance.now())
+
+  // Deterministic pod plan — color, branch, spawnDelay (offset), tilt.
   const initial = useMemo<PodRuntime[]>(() => {
     const seed = hash32(treeId)
     const N = 5 + (seed % 4)  // 5..8
-    const cols = N <= 6 ? 3 : 4
     return Array.from({ length: N }, (_, i) => {
-      const col = i % cols
-      const row = Math.floor(i / cols)
-      // Per-pod jitter from the seed.
-      const jX = ((hash32(`${treeId}-x-${i}`) % 19) - 9) * 0.3
-      const jY = ((hash32(`${treeId}-y-${i}`) % 17) - 8) * 0.5
+      const branch = BRANCH_POSITIONS[(seed + i * 7) % BRANCH_POSITIONS.length]
+      const colorIdx = hash32(`${treeId}-c-${i}`) % 3
       return {
         id: `pod-${i}`,
-        xPct: ((col + 0.5) / cols) * 100 + jX,
-        y: 50 + row * 70 + jY,
-        bobPhase: (i * 0.9) % (Math.PI * 2),
-        state: 'alive',
-        slicedAt: 0,
-        sliceDx: 0,
-        sliceDy: 0,
+        x: 0, y: 0, vx: 0, vy: 0,
+        rotation: 0, angularVelocity: 0,
+        // ms offset from arena open. raf loop compares against (t - mountTime).
+        spawnAt: hash32(`${treeId}-d-${i}`) % SPAWN_STAGGER_MAX,
+        spawnX: branch.x,    // normalized — converted to px when arenaWidth known
+        spawnY: branch.y * ARENA_HEIGHT,
+        color: POD_COLORS[colorIdx],
+        tilt: hashSigned(`${treeId}-t-${i}`) * 8,  // -8..+8 deg
+        state: 'pending',
+        slicedAt: 0, sliceDx: 0, sliceDy: 0,
       }
     })
   }, [treeId])
@@ -110,7 +159,7 @@ export default function HarvestMacheteArena({ treeId, guardianName, onComplete, 
   const [runtime, setRuntime] = useState<PodRuntime[]>(initial)
   useEffect(() => { setRuntime(initial) }, [initial])
 
-  // Arena resize tracking.
+  // Track arena width for px-based positioning.
   useEffect(() => {
     if (!arenaRef.current) return
     const el = arenaRef.current
@@ -120,26 +169,77 @@ export default function HarvestMacheteArena({ treeId, guardianName, onComplete, 
     return () => ro.disconnect()
   }, [])
 
-  // raf-driven `now` state for bobbing + slice progress + trail fade.
+  // raf-driven physics + now state. Single loop integrates pod positions
+  // (pending → flying transition with random initial velocity, gravity,
+  // angular velocity) AND publishes `now` for trail decay + slice progress.
   const [now, setNow] = useState<number>(() => performance.now())
+  // Ref mirror of arenaWidth so the raf loop reads the latest without
+  // re-subscribing on every resize. Sync via effect (refs cannot be written
+  // during render under react-hooks/refs lint).
+  const arenaWidthRef = useRef(arenaWidth)
+  useEffect(() => { arenaWidthRef.current = arenaWidth }, [arenaWidth])
   useEffect(() => {
     let raf = 0
-    const loop = () => { setNow(performance.now()); raf = requestAnimationFrame(loop) }
+    let lastT = performance.now()
+    const loop = (t: number) => {
+      const dt = Math.min(2.5, (t - lastT) / 16.67)  // frames; clamp huge dt (tab inactive)
+      lastT = t
+      setNow(t)
+      const aw = arenaWidthRef.current
+      if (aw > 0) {
+        setRuntime(curr => {
+          let mutated = false
+          const elapsedMs = t - mountTime
+          const next = curr.map(pod => {
+            // Pending → flying spawn.
+            if (pod.state === 'pending' && elapsedMs >= pod.spawnAt) {
+              mutated = true
+              const seed = hash32(`${pod.id}-init`)
+              const r1 = ((seed % 1000) / 500) - 1                // -1..+1
+              const r2 = (((seed >> 10) % 1000) / 500) - 1
+              const r3 = (((seed >> 20) % 1000) / 500) - 1
+              return {
+                ...pod,
+                state: 'flying',
+                x: pod.spawnX * aw,
+                y: pod.spawnY,
+                vx: r1 * VX_RANGE,
+                vy: -Math.abs(r2) * VY_RANGE_UP,   // always slight upward bounce
+                angularVelocity: r3 * ANGULAR_VEL_RANGE,
+                rotation: 0,
+              } as PodRuntime
+            }
+            // Flying physics integration.
+            if (pod.state === 'flying') {
+              mutated = true
+              const newY  = pod.y + pod.vy * dt
+              const newX  = pod.x + pod.vx * dt
+              const newVy = pod.vy + GRAVITY * dt
+              const newRot = pod.rotation + pod.angularVelocity * dt
+              if (newY > ARENA_HEIGHT + OFFSCREEN_MARGIN) {
+                return { ...pod, state: 'missed' } as PodRuntime
+              }
+              return { ...pod, x: newX, y: newY, vy: newVy, rotation: newRot }
+            }
+            return pod
+          })
+          return mutated ? next : curr
+        })
+      }
+      raf = requestAnimationFrame(loop)
+    }
     raf = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(raf)
-  }, [])
+  }, [mountTime])
 
-  // Trail state (re-renders on push/decay).
+  // Trail state.
   const [trail, setTrail] = useState<TrailPoint[]>([])
   const draggingRef = useRef(false)
   const lastSwipeDir = useRef<{ dx: number; dy: number }>({ dx: 1, dy: 0 })
   const cursorRef = useRef<CursorRef>(makeCursorRef())
 
-  // Combo timing — first slice timestamp. State so render can read it
-  // without violating the "refs are not readable during render" lint rule.
   const [firstSliceAt, setFirstSliceAt] = useState<number | null>(null)
-  // Whether onComplete was already fired (idempotency).
-  const [completed, setCompleted] = useState(false)
+  const [completed,    setCompleted]    = useState(false)
 
   function pushTrailPoint(x: number, y: number) {
     const time = performance.now()
@@ -159,19 +259,14 @@ export default function HarvestMacheteArena({ treeId, guardianName, onComplete, 
   }
 
   function checkHits(x: number, y: number) {
-    if (!arenaWidth) return
     setRuntime(curr => {
       let mutated = false
       const next = curr.map(pod => {
-        if (pod.state !== 'alive') return pod
-        const cx = (pod.xPct / 100) * arenaWidth
-        const cy = pod.y + 6 * Math.sin(now * 0.0036 + pod.bobPhase)
-        const dx = x - cx
-        const dy = y - cy
+        if (pod.state !== 'flying') return pod
+        const dx = x - pod.x
+        const dy = y - pod.y
         if (dx * dx + dy * dy < HIT_RADIUS * HIT_RADIUS) {
           mutated = true
-          // Lazily initialize the combo clock on the first hit. setFirstSliceAt
-          // is a no-op when already set (React bails on identical values).
           setFirstSliceAt(prev => prev ?? performance.now())
           return {
             ...pod,
@@ -222,7 +317,7 @@ export default function HarvestMacheteArena({ treeId, guardianName, onComplete, 
     draggingRef.current = false
   }
 
-  // Trail decay — re-prune every 50ms while there are trail points.
+  // Trail decay tick.
   useEffect(() => {
     if (trail.length === 0) return
     const id = setInterval(() => {
@@ -235,40 +330,44 @@ export default function HarvestMacheteArena({ treeId, guardianName, onComplete, 
     return () => clearInterval(id)
   }, [trail.length])
 
-  // Vessel fill — derived from sliced count.
-  const slicedCount = runtime.filter(p => p.state === 'sliced').length
-  const totalPods   = runtime.length
-  const fillRatio   = slicedCount / Math.max(1, totalPods)
-  const allSliced   = totalPods > 0 && slicedCount === totalPods
+  // Counts.
+  const totalPods    = runtime.length
+  const slicedCount  = runtime.filter(p => p.state === 'sliced').length
+  const missedCount  = runtime.filter(p => p.state === 'missed').length
+  const inAirCount   = runtime.filter(p => p.state === 'pending' || p.state === 'flying').length
+  const allDone      = totalPods > 0 && inAirCount === 0
+  const fillRatio    = slicedCount / Math.max(1, totalPods)
 
-  // Combo: all sliced AND time-from-first-slice ≤ window. Use the raf-driven
-  // `now` state instead of calling performance.now() during render (impure).
-  const comboActive = allSliced
+  // Combo: all done, no misses, within window.
+  const comboActive = allDone
+    && missedCount === 0
     && firstSliceAt !== null
     && (now - firstSliceAt) <= HARVEST_COMBO_WINDOW_MS
 
-  // Fire onComplete once when all are sliced (after the slice anim finishes
-  // so the user sees the splash).
+  // Fire onComplete once, after the slice anim settles.
   useEffect(() => {
-    if (!allSliced || completed) return
+    if (!allDone || completed) return
     const settleMs = SLICE_ANIM + 250
     const timer = setTimeout(() => {
       setCompleted(true)
       const baseBeans    = TOKEN_RATES.tree_harvest_share.beans
       const baseMazorcas = TOKEN_RATES.tree_harvest_share.mazorcas
+      // Reward scales with sliced fraction (so missing pods ≠ no harvest).
+      const captureRatio = slicedCount / Math.max(1, totalPods)
       const bonusMul = comboActive ? 1 + TOKEN_RATES.tree_harvest_share.combo_bonus_pct / 100 : 1
       onComplete({
         pods_sliced:       slicedCount,
         pods_total:        totalPods,
+        pods_missed:       missedCount,
         mucilage_g:        slicedCount * PER_POD_MUCILAGE,
         cacao_mass_g:      slicedCount * PER_POD_CACAO,
-        beans_override:    +(baseBeans * bonusMul).toFixed(2),
-        mazorcas_override: +(baseMazorcas * bonusMul).toFixed(2),
+        beans_override:    +(baseBeans    * captureRatio * bonusMul).toFixed(2),
+        mazorcas_override: +(baseMazorcas * captureRatio * bonusMul).toFixed(2),
         combo_bonus:       comboActive,
       })
     }, settleMs)
     return () => clearTimeout(timer)
-  }, [allSliced, completed, slicedCount, totalPods, comboActive, onComplete])
+  }, [allDone, completed, slicedCount, missedCount, totalPods, comboActive, onComplete])
 
   return (
     <div>
@@ -282,7 +381,7 @@ export default function HarvestMacheteArena({ treeId, guardianName, onComplete, 
           position: 'relative',
           width: '100%',
           height: ARENA_HEIGHT,
-          background: 'radial-gradient(ellipse at 50% 25%, #2A1A0B 0%, #150A04 70%, #050201 100%)',
+          background: 'radial-gradient(ellipse at 50% 25%, #1F1006 0%, #0E0703 70%, #050201 100%)',
           border: `1px solid ${BRAND.mazorca}55`,
           borderRadius: 16,
           overflow: 'hidden',
@@ -291,23 +390,26 @@ export default function HarvestMacheteArena({ treeId, guardianName, onComplete, 
           userSelect: 'none',
         }}
       >
-        {/* Warm grain backdrop */}
+        {/* Tree silhouette in the back — sets the stage */}
+        <CacaoTreeBackdrop opacity={0.22} />
+
+        {/* Subtle dot grain over tree for depth */}
         <div style={{
           position: 'absolute', inset: 0,
           backgroundImage: `radial-gradient(${BRAND.mazorca}11 1px, transparent 1px)`,
           backgroundSize: '14px 14px',
-          opacity: 0.45,
+          opacity: 0.35,
           pointerEvents: 'none',
         }} />
 
-        {/* Sun-rays diagonal — sets a "harvest morning" vibe distinct from Labranza */}
+        {/* Sun-rays diagonal — harvest morning vibe */}
         <div style={{
           position: 'absolute', inset: 0,
           background: `linear-gradient(135deg, transparent 40%, ${BRAND.mazorca}11 50%, transparent 60%)`,
           pointerEvents: 'none',
         }} />
 
-        {/* Combo flash — gold pulse on the whole arena when combo fires */}
+        {/* Combo flash */}
         {comboActive && (
           <div style={{
             position: 'absolute', inset: 0,
@@ -317,29 +419,29 @@ export default function HarvestMacheteArena({ treeId, guardianName, onComplete, 
           }} />
         )}
 
-        {/* Mazorca pods */}
+        {/* Pods — physics-based */}
         {runtime.map(pod => {
-          const bobY = pod.state === 'alive' ? 6 * Math.sin(now * 0.0036 + pod.bobPhase) : 0
-          if (pod.state === 'alive') {
+          if (pod.state === 'pending' || pod.state === 'missed') return null
+
+          if (pod.state === 'flying') {
             return (
-              <div key={pod.id} style={{
-                position: 'absolute',
-                left: `${pod.xPct}%`,
-                top:  pod.y + bobY,
-                transform: 'translate(-50%, -50%)',
-                width: TILE_SIZE, height: TILE_SIZE,
-                pointerEvents: 'none',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <div style={{
-                  fontSize: 60, lineHeight: 1,
-                  filter: `drop-shadow(0 8px 14px ${BRAND.mazorca}88)`,
-                }}>🫘</div>
+              <div
+                key={pod.id}
+                style={{
+                  position: 'absolute',
+                  left: pod.x,
+                  top:  pod.y,
+                  transform: `translate(-50%, -50%) rotate(${pod.rotation + pod.tilt * Math.PI / 180}rad)`,
+                  pointerEvents: 'none',
+                  willChange: 'transform',
+                }}
+              >
+                <CacaoPod color={pod.color} size={POD_SIZE} />
               </div>
             )
           }
-          // Sliced — split halves perpendicular to the slice, plus dual particle
-          // streams (mucilage → bottle, cacao → tank).
+
+          // Sliced — split halves perpendicular to the slice direction.
           const len = Math.max(1, Math.hypot(pod.sliceDx, pod.sliceDy))
           const nx = pod.sliceDx / len
           const ny = pod.sliceDy / len
@@ -348,49 +450,42 @@ export default function HarvestMacheteArena({ treeId, guardianName, onComplete, 
           const elapsed = Math.min(now - pod.slicedAt, SLICE_ANIM)
           const progress = elapsed / SLICE_ANIM
           if (progress >= 1) return null
-          const flingDist = 180 * progress
+          const flingDist = 200 * progress
           const rot = 540 * progress
           const opacity = 1 - progress
 
-          const halfStyle = (sign: number): React.CSSProperties => ({
+          const halfStyle = (sign: number): CSSProperties => ({
             position: 'absolute',
-            left: `${pod.xPct}%`,
+            left: pod.x,
             top:  pod.y,
-            width: TILE_SIZE, height: TILE_SIZE,
-            transform: `translate(calc(-50% + ${sign * flingDist * px}px), calc(-50% + ${sign * flingDist * py + progress * 220}px)) rotate(${sign * rot}deg)`,
+            transform: `translate(calc(-50% + ${sign * flingDist * px}px), calc(-50% + ${sign * flingDist * py + progress * 240}px)) rotate(${sign * rot + pod.tilt}deg)`,
             transition: 'none',
             pointerEvents: 'none',
             opacity,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 60, lineHeight: 1,
-            filter: `drop-shadow(0 8px 14px ${BRAND.mazorca}55)`,
           })
 
-          // Particle streams: half toward bottle (lower-left), half toward tank
-          // (lower-right). We use percentage-based targets so the math is
-          // resolution-independent. Each particle is offset from the slice
-          // origin along a quadratic Bezier curve.
+          // Bezier streams toward bottle (pulpa, mucílago) + tank (cacao mass).
           const streamDrops = (target: 'bottle' | 'tank', color: string) => {
-            const targetX = target === 'bottle' ? 14 : 86  // % from arena left
-            const targetY = ARENA_HEIGHT - VESSEL_HEIGHT * 0.55  // px from arena top
+            const aw = arenaWidth || 1
+            const targetX = target === 'bottle' ? 0.10 * aw + 32
+                                                : 0.90 * aw - 32
+            const targetY = ARENA_HEIGHT - VESSEL_HEIGHT * 0.55
+            const startX = pod.x
+            const startY = pod.y
+            const ctrlX  = (startX + targetX) / 2
+            const ctrlY  = Math.min(startY, targetY) - 70
             return [0, 1, 2, 3].map(i => {
-              // Each particle has its own progress phase (staggered).
               const stagger = i * 0.08
               const tNorm = Math.max(0, Math.min(1, progress * 1.2 - stagger))
               if (tNorm <= 0) return null
-              // Bezier control: arc upward then sweep into vessel.
-              const startX = pod.xPct
-              const startY = pod.y
-              const ctrlX = (startX + targetX) / 2
-              const ctrlY = Math.min(startY, targetY) - 70
               const u = 1 - tNorm
-              const xPct = u * u * startX + 2 * u * tNorm * ctrlX + tNorm * tNorm * targetX
-              const yPx  = u * u * startY + 2 * u * tNorm * ctrlY + tNorm * tNorm * targetY
+              const xPx = u * u * startX + 2 * u * tNorm * ctrlX  + tNorm * tNorm * targetX
+              const yPx = u * u * startY + 2 * u * tNorm * ctrlY  + tNorm * tNorm * targetY
               const op = 1 - tNorm * 0.7
               return (
                 <span key={`${target}-${i}`} style={{
                   position: 'absolute',
-                  left: `${xPct}%`, top: yPx,
+                  left: xPx, top: yPx,
                   transform: 'translate(-50%, -50%)',
                   width: 7, height: 7, borderRadius: 999,
                   background: color,
@@ -402,11 +497,21 @@ export default function HarvestMacheteArena({ treeId, guardianName, onComplete, 
             })
           }
 
+          // Pulp color matches the pod's color so the user sees their slice
+          // matter materialize as the right shade of juice. Tank stays brown.
+          const pulpColor = pod.color === 'green'  ? '#9BC76B'
+                          : pod.color === 'yellow' ? '#F1D469'
+                          :                          '#F0A78F'
+
           return (
             <div key={pod.id}>
-              <div style={{ ...halfStyle(+1), clipPath: 'inset(0 50% 0 0)' }}>🫘</div>
-              <div style={{ ...halfStyle(-1), clipPath: 'inset(0 0 0 50%)' }}>🫘</div>
-              {streamDrops('bottle', BRAND.pod)}
+              <div style={{ ...halfStyle(+1), clipPath: 'inset(0 50% 0 0)' }}>
+                <CacaoPod color={pod.color} size={POD_SIZE} />
+              </div>
+              <div style={{ ...halfStyle(-1), clipPath: 'inset(0 0 0 50%)' }}>
+                <CacaoPod color={pod.color} size={POD_SIZE} />
+              </div>
+              {streamDrops('bottle', pulpColor)}
               {streamDrops('tank',   BRAND.brown)}
             </div>
           )
@@ -450,7 +555,7 @@ export default function HarvestMacheteArena({ treeId, guardianName, onComplete, 
           arenaHeight={ARENA_HEIGHT}
         />
 
-        {/* BOTTLE — mucílago. Lower-left, thin glass cylinder with green liquid. */}
+        {/* Vessels */}
         <Vessel
           variant="bottle"
           fillRatio={fillRatio}
@@ -459,8 +564,6 @@ export default function HarvestMacheteArena({ treeId, guardianName, onComplete, 
           color={BRAND.pod}
           left={6}
         />
-
-        {/* TANK — masa de cacao. Lower-right, fermentation tank shape. */}
         <Vessel
           variant="tank"
           fillRatio={fillRatio}
@@ -470,8 +573,8 @@ export default function HarvestMacheteArena({ treeId, guardianName, onComplete, 
           right={6}
         />
 
-        {/* Hint — visible while no slices yet */}
-        {slicedCount === 0 && (
+        {/* Hint — visible while no pods have spawned + sliced yet */}
+        {slicedCount === 0 && missedCount === 0 && (
           <div style={{
             position: 'absolute', top: 14, left: 0, right: 0,
             textAlign: 'center', pointerEvents: 'none',
@@ -479,13 +582,13 @@ export default function HarvestMacheteArena({ treeId, guardianName, onComplete, 
             color: `${BRAND.heirloom}88`, fontSize: 12, letterSpacing: '0.05em',
           }}>
             {lang === 'es'
-              ? `⚔ Rebana las ${totalPods} mazorcas — mucílago a la botella · cacao al tanque`
-              : `⚔ Slice the ${totalPods} mazorcas — mucilage to bottle · cacao to tank`}
+              ? `⚔ El árbol suelta sus mazorcas — rebánalas al vuelo`
+              : `⚔ The tree drops its pods — slice them mid-air`}
           </div>
         )}
 
-        {/* Combo countdown — visible while pods remain and the timer's running */}
-        {firstSliceAt !== null && !allSliced && (
+        {/* Combo countdown */}
+        {firstSliceAt !== null && !allDone && (
           <ComboBar
             startedAt={firstSliceAt}
             now={now}
@@ -493,8 +596,8 @@ export default function HarvestMacheteArena({ treeId, guardianName, onComplete, 
           />
         )}
 
-        {/* Done overlay — quick splash before the modal wrapper takes over */}
-        {allSliced && (
+        {/* Done overlay */}
+        {allDone && (
           <div style={{
             position: 'absolute', inset: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -512,6 +615,8 @@ export default function HarvestMacheteArena({ treeId, guardianName, onComplete, 
             }}>
               {comboActive
                 ? (lang === 'es' ? '¡Cosecha perfecta!' : 'Perfect harvest!')
+                : missedCount > 0
+                ? (lang === 'es' ? `Cosecha · ${slicedCount}/${totalPods}` : `Harvest · ${slicedCount}/${totalPods}`)
                 : (lang === 'es' ? 'Cosecha lista' : 'Harvest done')}
             </div>
             {comboActive && (
@@ -520,6 +625,16 @@ export default function HarvestMacheteArena({ treeId, guardianName, onComplete, 
                 color: '#FFE9A8', letterSpacing: '0.1em',
               }}>
                 +{TOKEN_RATES.tree_harvest_share.combo_bonus_pct}% bonus
+              </div>
+            )}
+            {missedCount > 0 && !comboActive && (
+              <div style={{
+                fontFamily: FONTS.body, fontStyle: 'italic',
+                color: `${BRAND.heirloom}77`, fontSize: 11,
+              }}>
+                {lang === 'es'
+                  ? `${missedCount} ${missedCount === 1 ? 'mazorca cayó al suelo' : 'mazorcas cayeron al suelo'}`
+                  : `${missedCount} ${missedCount === 1 ? 'pod hit the ground' : 'pods hit the ground'}`}
               </div>
             )}
           </div>
@@ -535,22 +650,27 @@ export default function HarvestMacheteArena({ treeId, guardianName, onComplete, 
             from { opacity: 0; transform: scale(0.96); }
             to   { opacity: 1; transform: scale(1); }
           }
-          @keyframes caua-vessel-fill {
-            from { transform: scaleY(var(--from)); }
-            to   { transform: scaleY(var(--to)); }
-          }
         `}</style>
       </div>
 
-      {/* External progress (visible below the arena) — useful for the modal
-          footer that wraps this component. Optional. */}
+      {/* Footer counter */}
       <div style={{
         marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         fontFamily: FONTS.display, fontWeight: 700, fontSize: 11,
         color: `${BRAND.heirloom}aa`, letterSpacing: '0.12em', textTransform: 'uppercase',
       }}>
-        <span>{lang === 'es' ? 'Mazorcas' : 'Pods'} · {slicedCount} / {totalPods}</span>
-        <span style={{ fontStyle: 'italic', fontWeight: 400, textTransform: 'none', fontFamily: FONTS.serif, color: `${BRAND.heirloom}66` }}>
+        <span>
+          {lang === 'es' ? 'Mazorcas' : 'Pods'} · {slicedCount} / {totalPods}
+          {missedCount > 0 && (
+            <span style={{ color: '#e74c3caa', marginLeft: 8 }}>
+              · {missedCount} {lang === 'es' ? 'al suelo' : 'missed'}
+            </span>
+          )}
+        </span>
+        <span style={{
+          fontStyle: 'italic', fontWeight: 400, textTransform: 'none',
+          fontFamily: FONTS.serif, color: `${BRAND.heirloom}66`,
+        }}>
           {guardianName}
         </span>
       </div>
@@ -558,22 +678,20 @@ export default function HarvestMacheteArena({ treeId, guardianName, onComplete, 
   )
 }
 
-// ─── VESSEL — bottle / tank with rising liquid ────────────────────────────
+// ─── VESSEL ───────────────────────────────────────────────────────────────
 
 interface VesselProps {
   variant: 'bottle' | 'tank'
-  /** 0..1 — share of pods sliced so far. */
   fillRatio: number
   label: string
   subtotal: string
   color: string
-  /** Position from arena edge (%). Either left or right is set. */
   left?: number
   right?: number
 }
 
 function Vessel({ variant, fillRatio, label, subtotal, color, left, right }: VesselProps) {
-  const liquidH = Math.max(0, Math.min(1, fillRatio)) * 100  // %
+  const liquidH = Math.max(0, Math.min(1, fillRatio)) * 100
 
   return (
     <div style={{
@@ -595,7 +713,6 @@ function Vessel({ variant, fillRatio, label, subtotal, color, left, right }: Ves
         overflow: 'hidden',
         boxShadow: `inset 0 0 12px ${color}33, 0 4px 12px #0008`,
       }}>
-        {/* Bottle: neck reveal as a thin top band; Tank: pressure gauge dot. */}
         {variant === 'bottle' && (
           <div style={{
             position: 'absolute',
@@ -614,8 +731,6 @@ function Vessel({ variant, fillRatio, label, subtotal, color, left, right }: Ves
             boxShadow: fillRatio > 0 ? '0 0 6px #91A63Baa' : 'none',
           }} />
         )}
-
-        {/* Liquid fill — absolute bottom, height transitions */}
         <div style={{
           position: 'absolute',
           left: 0, right: 0, bottom: 0,
@@ -624,7 +739,6 @@ function Vessel({ variant, fillRatio, label, subtotal, color, left, right }: Ves
           transition: 'height 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
           boxShadow: `inset 0 4px 8px ${color}66`,
         }}>
-          {/* Surface ripple */}
           <div style={{
             position: 'absolute', top: 0, left: 0, right: 0, height: 4,
             background: `linear-gradient(180deg, ${color}ff, transparent)`,
@@ -632,8 +746,6 @@ function Vessel({ variant, fillRatio, label, subtotal, color, left, right }: Ves
           }} />
         </div>
       </div>
-
-      {/* Label */}
       <div style={{
         marginTop: 4,
         fontFamily: FONTS.display, fontWeight: 800, fontSize: 8,
@@ -652,7 +764,7 @@ function Vessel({ variant, fillRatio, label, subtotal, color, left, right }: Ves
   )
 }
 
-// ─── COMBO BAR — countdown to the bonus window ────────────────────────────
+// ─── COMBO BAR ────────────────────────────────────────────────────────────
 
 function ComboBar({ startedAt, now, window }: { startedAt: number; now: number; window: number }) {
   const elapsed = now - startedAt
