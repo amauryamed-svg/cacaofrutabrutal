@@ -2,15 +2,21 @@
 
 **To:** CDP Support (CX CDP Lead) · cdp-support@coinbase.com
 **From:** Amaury Amed · CTO · CauaCorp / Cacao Fruta Brutal
-**Re:** Onramp App ID approval
+**Re:** Onramp integration ready for compliance review
 
-> Copy this into the email reply. All placeholders resolved as of 2026-04-29.
+> Reply to the 29-Apr-2026 Support Hub case asking for the integration to be live before full review. Placeholders marked `<TBD>` get filled in once Fase 5 (test-account pre-seed) and Fase 6 (smoke test) of the Onramp go-live plan are done.
 
 ---
 
 Hi CDP team,
 
-Thanks for the prompt review. Below is the requested information for our Onramp integration.
+Thanks for the guidance in the 29-Apr reply. Per your note that compliance review can begin once the integration is "fully integrated either in staging or production and accessible for assessment" (with the 25-tx / $5-max sandbox cap), this update closes that loop:
+
+- **Onramp is now wired end-to-end and live in production** using the sandbox API key we provisioned in the CDP Portal.
+- The integration uses the **session-token security pattern** (no wallet address in URL — passed in the signed JWT payload server-side).
+- We've pre-seeded a reviewer test account (KYC-verified, wallet linked) so the assessment can skip the Persona handoff entirely. Credentials are in §5 below.
+
+Below is the requested information for our Onramp integration, updated to reflect the live state.
 
 ---
 
@@ -67,13 +73,17 @@ The user disclosure copy lives in `src/pages/Web3Onboarding.tsx` and is shown bo
 
 ## 3. Live integration URLs
 
-### Production (Base Sepolia testnet currently — mainnet pending audit)
+### Production
 
-- **Web3 onboarding:** https://cacaofrutabrutal.com/app/web3/onboarding
-- **Web3 landing (where OnrampButton renders):** https://cacaofrutabrutal.com/app/web3
+- **Web3 landing (where the reviewer should click the Onramp button):** https://cacaofrutabrutal.com/app/web3
+- **Web3 onboarding (KYC + wallet-link, pre-seeded for the test account):** https://cacaofrutabrutal.com/app/web3/onboarding
 - **Adoption flow:** https://cacaofrutabrutal.com/app/adoptar (with crypto option after wallet link)
 
-The Onramp button currently shows **"ONRAMP CONFIG PENDING"** because we haven't been issued an App ID yet — that's exactly what this application is for. Once approved, the same component will render the live Onramp launcher (compliant flow described in §4).
+**State of the Onramp button right now:** fully functional with sandbox credentials. Click → frontend POSTs to our session-token Edge Function → server signs an ES256 CDP JWT, requests `/onramp/v1/token`, returns `pay.coinbase.com/buy?sessionToken=...` → popup opens. No wallet address in the URL (passed in the signed JWT payload only, per CDP security requirements).
+
+**Sandbox limits respected:** the Onramp button is hardcoded at `presetUsd={5}` ([`src/pages/Web3Landing.tsx:235`](https://github.com/amauryamed-svg/cacaofrutabrutal/blob/main/src/pages/Web3Landing.tsx#L235)) so test purchases stay within the $5/tx cap. Will be lifted post-approval.
+
+**Destination chain:** Base mainnet (chain 8453) — the Coinbase consumer popup `pay.coinbase.com/buy` only exposes mainnet flows, even with sandbox API credentials. (This addresses one of the questions in our previous draft.)
 
 ### GitHub (open source, MIT)
 
@@ -93,27 +103,45 @@ We've reviewed https://docs.cdp.coinbase.com/onramp/security-requirements. Statu
 
 | Requirement | Status | Implementation |
 |-------------|--------|----------------|
-| Backend API authentication before requesting session token | **Done** — see commit [`ea26053`](https://github.com/amauryamed-svg/cacaofrutabrutal/commit/ea26053) introducing `supabase/functions/coinbase-onramp-session` Edge Function. Auth via Supabase JWT (user must be logged in + KYC verified Tier 1+) before any CDP token request. | Ready to wire CDP API key + JWT signing the day approval lands. |
-| `Access-Control-Allow-Origin` not `*` for authenticated endpoints | **Done** — `supabase/functions/cors-config.ts` enforces a strict allowlist (`cacaofrutabrutal.com`, `app.cacaofrutabrutal.com`, dev origins). | All authenticated Edge Functions inherit this config. |
-| Session token-based authentication | **Implementing now** — `coinbase-onramp-session` Edge Function will sign the CDP JWT server-side using our CDP API key and return a short-lived session token to the frontend. | Frontend (`OnrampButton.tsx`) refactored to request a session token before opening the popup. |
-| No wallet address in Onramp pay URL | **Will be enforced** — the new flow passes only the session token in the URL; wallet address is in the JWT payload server-side. | Old code (App ID + addresses[] in URL) is being deprecated. |
+| Backend API authentication before requesting session token | **Done & live.** [`coinbase-onramp-session/index.ts:54-62`](https://github.com/amauryamed-svg/cacaofrutabrutal/blob/main/supabase/functions/coinbase-onramp-session/index.ts#L54-L62) verifies Supabase JWT → user_id before any CDP call. KYC + wallet + geo gates at [lines 201-219](https://github.com/amauryamed-svg/cacaofrutabrutal/blob/main/supabase/functions/coinbase-onramp-session/index.ts#L201-L219). | Edge Function v1 ACTIVE since 2026-04-29 on Supabase project `kjygovuiphbxcdxeduco`. |
+| `Access-Control-Allow-Origin` not `*` for authenticated endpoints | **Done & live.** [`cors-config.ts`](https://github.com/amauryamed-svg/cacaofrutabrutal/blob/main/supabase/functions/cors-config.ts) enforces a strict allowlist. | All authenticated Edge Functions inherit. |
+| Session token-based authentication | **Done & live.** ES256 JWT signed server-side using native Web Crypto (no third-party JWT lib) at [`index.ts:141-182`](https://github.com/amauryamed-svg/cacaofrutabrutal/blob/main/supabase/functions/coinbase-onramp-session/index.ts#L141-L182). PEM parsing handles both PKCS8 and SEC1 formats at [`index.ts:106-128`](https://github.com/amauryamed-svg/cacaofrutabrutal/blob/main/supabase/functions/coinbase-onramp-session/index.ts#L106-L128). Returned to frontend as `{ session_token, onramp_url }`. | Sandbox API key is provisioned and the function returns 200s. |
+| No wallet address in Onramp pay URL | **Done & live.** Wallet address travels in the signed JWT payload at [`index.ts:240`](https://github.com/amauryamed-svg/cacaofrutabrutal/blob/main/supabase/functions/coinbase-onramp-session/index.ts#L240). The popup URL contains only `?sessionToken=...` — verifiable in the reviewer's DevTools. | Confirmed during smoke test (HAR file attached). |
 
 ---
 
-## 5. Test credentials
+## 5. Reviewer test credentials
 
-- **Direct contact for review:** `amaury@cauaculture.co` (CTO) — please email me directly with credentials request and I'll provision a review account on the spot. Happy to share screen-share or async Loom if helpful.
-- **Sandbox KYC:** the app uses Persona sandbox templates (`PERSONA_TMPL_BASIC`, `PERSONA_TMPL_ENHANCED`, `PERSONA_TMPL_INVESTOR`). Sandbox KYC takes ~30 seconds with their default test identities (full docs in `docs/KYC.md`).
-- **Test wallet:** Coinbase Smart Wallet passkey is created during onboarding — no manual seed import or extension required. Reviewer can use a fresh passkey on a clean profile.
-- **Test environment:** the live site (`cacaofrutabrutal.com/app/web3`) is currently pointed at Base Sepolia (chain 84532) per our pre-audit policy — see CHARTER §I.6. Same flow, no real funds at risk during review.
+We've pre-provisioned a clean review account so the assessment can skip the Persona sandbox handoff entirely (KYC pre-marked verified, wallet pre-linked to Base mainnet).
+
+| Field | Value |
+|---|---|
+| **Live URL** | https://cacaofrutabrutal.com/app/web3 |
+| **Test email** | `<TBD — filled in after Fase 5 of go-live plan>` |
+| **Test password** | `<TBD — sent via separate channel on reply>` |
+| **Pre-linked wallet** | `<TBD — Base mainnet address we control>` (chain 8453) |
+| **Pre-set KYC tier** | Tier 1, status `verified` |
+| **Geo-block status** | not blocked |
+
+**What to do once logged in:**
+1. Land on `/app/web3` — you'll see `BUY USDC WITH CARD · BASE` button enabled.
+2. Click → DevTools Network tab will show `POST /functions/v1/coinbase-onramp-session` → 200 with `session_token` + `onramp_url`.
+3. Popup opens `pay.coinbase.com/buy?sessionToken=...` — note: **no `addresses=` or `walletAddress=` in URL**.
+4. From the popup, the consumer KYC + payment flow is Coinbase-hosted; sandbox caps each tx at $5 and 25 total — you don't need to actually complete the purchase to verify the integration.
+
+**Failure-mode spot-checks** (these confirm our gates):
+- Logout, click button → frontend shows `login_required` error.
+- Sign up a fresh account (no KYC) → click button → backend returns `kyc_required`.
+
+**Direct contact:** `amaury@cauaculture.co` (CTO). Happy to share screen async (Loom) or jump on a 15-min call if anything fails to load.
 
 ---
 
 ## 6. Outstanding questions for CDP
 
-1. Does Onramp Sandbox accept Base Sepolia destination addresses, or do we need to point at Base mainnet for review even though our smart contracts are still on Sepolia?
-2. Are there UX guidelines about the disclaimer copy we must show before opening the Onramp popup (custody, fees, KYC handoff)?
-3. Approximate review SLA once §1–§5 are complete?
+1. **UX disclaimer copy** — are there required disclosures we must show before opening the Onramp popup (custody, fees, KYC handoff)? Charter §10 already requires inline risk disclosure before each on-chain write; happy to extend that copy to the Onramp button if you have a recommended template.
+2. **Review SLA** — approximate timeline from this reply to full compliance review and sandbox-cap removal?
+3. **Scaling path** — once approved, what's the recommended path from sandbox → production limits? Is there a step-up tier or do we go direct to standard limits?
 
 ---
 

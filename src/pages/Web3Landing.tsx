@@ -232,7 +232,7 @@ function Inner() {
         <Reveal delay={360}>
           <div style={ctaRowStyle}>
             <ConnectWalletButton />
-            <OnrampButton presetUsd={50} asset="USDC" />
+            <OnrampButton presetUsd={5} asset="USDC" />
           </div>
           <p style={fineStyle}>
             KYC required for mint and redemption · Charter:{' '}
