@@ -44,10 +44,10 @@ export default function Dashboard() {
   const atRiskCount = trees.filter(t => !t.died_at && isInDeathDanger(t)).length
   const deadCount   = trees.filter(t => isTreeDead(t)).length
 
-  // Unit Economics anchored al modelo de adopción $3 USD on-chain.
+  // Unit Economics anchored al modelo de adopción USD 5 (Coinbase CDP sandbox-aligned).
   // Datos verificables — no proyecciones aspiracionales.
   const METRICS = [
-    { label: lang === 'es' ? 'Precio adopción'       : 'Adoption price',         value: '$3',  unit: 'USD',     icon: '🌱', color: BRAND.pod     },
+    { label: lang === 'es' ? 'Precio adopción'       : 'Adoption price',         value: '$5',  unit: 'USD',     icon: '🌱', color: BRAND.pod     },
     { label: lang === 'es' ? 'Al guardián directo'   : 'To guardian direct',     value: '60',  unit: '%',       icon: '👨‍🌾', color: BRAND.mazorca },
     { label: lang === 'es' ? 'Ratio canje on-chain'  : 'On-chain redeem ratio',  value: '1000',unit: ': 1',     icon: '🍫', color: BRAND.heroic  },
     { label: lang === 'es' ? 'Cap $CACAO ERC-20'     : '$CACAO supply cap',      value: '21',  unit: 'M',       icon: '⬡', color: BRAND.criollo  },
@@ -63,7 +63,7 @@ export default function Dashboard() {
   ]
 
   // Distribución 60/30/10 — el split que enforce el contrato TreeAdoption
-  // on-chain en cada $3 USDC adoptado. Igual lo que dice la app, igual lo
+  // on-chain en cada USD 5 USDC adoptado. Igual lo que dice la app, igual lo
   // que ejecuta el escrow, igual lo que ve el usuario en /uploads.
   const DISTRIBUTION = [
     { label: lang === 'es' ? 'Guardián (finca)'         : 'Guardian (farm)',           pct: 60, color: BRAND.pod      },

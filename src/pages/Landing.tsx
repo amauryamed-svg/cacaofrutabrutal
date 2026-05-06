@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BRAND, FONTS, GUARDIANS } from '../utils/constants'
+import { BRAND, FONTS, GUARDIANS, TREE_ADOPTION_PRICE_USD } from '../utils/constants'
 import CauaButton from '../components/ui/CauaButton'
 import { useLang } from '../context/LangContext'
 import { makeT } from '../utils/i18n'
@@ -161,6 +161,19 @@ export default function Landing() {
             <span style={{ fontFamily: FONTS.serif, fontStyle: 'italic', color: BRAND.mazorca }}>
               {T('land_sub2')}
             </span>
+          </p>
+
+          {/* Adoption pitch — anchored to TREE_ADOPTION_PRICE_USD so price stays in sync */}
+          <p style={{
+            fontFamily: FONTS.body,
+            color: `${BRAND.heirloom}88`,
+            fontSize: 'clamp(13px, 2.1vw, 15px)',
+            lineHeight: 1.65,
+            maxWidth: 520,
+            margin: '0 auto 22px',
+            letterSpacing: '0.01em',
+          }}>
+            {T('land_adopt_pitch').replace('${PRICE}', `$${TREE_ADOPTION_PRICE_USD}`)}
           </p>
 
           {/* Primary CTAs */}

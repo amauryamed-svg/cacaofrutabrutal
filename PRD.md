@@ -1,5 +1,7 @@
 # Product Requirements Document (PRD)
-## CacaoFrutaBrutal — v1.0 | 2026-04-18
+## CacaoFrutaBrutal — v1.1 | 2026-05-06
+
+> **v1.1 changelog:** §7 rewritten — the Web3 layer pivot landed 2026-04-28 (5 contracts on Base Sepolia, Coinbase Onramp sandbox, Smart Wallet onboarding). §3 feature matrix and §6 roadmap extended with Web3 phases. v1.0 §7 ("Why Not Blockchain?") is obsolete and preserved only as Appendix A for historical reference.
 
 ---
 
@@ -181,6 +183,20 @@ The world sees cacao as an input to chocolate. CacaoFrutaBrutal reframes it:
 | Migration 011 (ml_predictions_log) | supabase-backend | ❌ Not created | supabase-backend |
 | ML function line-count compliance | ml-pipeline | ❌ ~30 lines | ml-pipeline |
 
+### P0.5 — Web3 Pivot (landed 2026-04-28, polish Q2 2026)
+
+| Feature | Domain | Current status | Owner tentacle |
+|---------|--------|---------------|---------------|
+| 5 contracts deployed to Base Sepolia (NFT/Token/Redemption/Adoption/IoT) | web3 | ✅ Done 2026-04-28 | web3 |
+| `/web3/onboarding` 4-step flow (connect → switch → SIWE → KYC) | web3 | ✅ Implemented | web3 |
+| Persona KYC webhook (3 tiers) | web3 | ✅ Edge Function ACTIVE | web3 |
+| Chainalysis + OFAC screening pre-write | web3 | ✅ Wired in `siwe-link-wallet` | web3 |
+| Coinbase CDP Onramp (sandbox, USD 5 preset) | web3 | ✅ Functional E2E, awaiting prod cap lift | web3 |
+| Mazorca burn → $CACAO mint flow | web3 | ✅ E2E on testnet (1000:1) | web3 |
+| Tree adoption with USDC/ETH/cbBTC + 60/30/10 split | web3 | ✅ Contract live; admin config pending | web3 |
+| IoT Ed25519-signed readings + weekly Merkle root | web3 | ⚠️ Contract live; firmware integration in progress | web3 |
+| Adoption price unified to USD 5 (CDP-aligned) | b2b-marketplace | ⚠️ Web3 path = USD 5; legacy `/adoptar` card still shows USD 3 | b2b-marketplace |
+
 ### P1 — Q2 2026: Meaningful Experience
 
 | Feature | Domain | Why it matters |
@@ -321,7 +337,7 @@ Deliverables:
 - Python ML function compliance (≤20 lines)
 
 ### Q2 2026 — Production + Engagement
-**Goal:** 600L Sunrise Shot first batch, CAUA Labs opens, 5 active Guardians, token flywheel
+**Goal:** 600L Sunrise Shot first batch, CAUA Labs opens, 5 active Guardians, token flywheel, Web3 polish
 
 Deliverables:
 - Care action buttons live in TreeDetail.tsx
@@ -332,9 +348,11 @@ Deliverables:
 - Blog Markdown renderer + token awards wired
 - Realtime enabled (migration 012)
 - Harvest prediction ML endpoint
+- **Web3:** unify adoption price to USD 5 across `/adoptar` + `/web3`, finish CDP production cap lift (Loom + Support Hub reply), wire ERC-4906 emit on every care action, complete admin config calls on `TreeAdoption` (`setGuardianWallet`, `setAssetEnabled`, `setPrice`)
+- **Audit prep:** provision read-only access for Universidad Distrital (GitHub Read + Vercel Viewer + Supabase Read-only + optional Postgres `auditor_unidistrital` role), with NDA
 
-### Q3 2026 — Scale + B2B
-**Goal:** Whole Foods Austin pitch, CAUA Inc registration, organic certification track
+### Q3 2026 — Scale + B2B + Mainnet
+**Goal:** Whole Foods Austin pitch, CAUA Inc registration, organic certification track, Base mainnet deploy
 
 Deliverables:
 - ML wired to real IoT sensor data (Guardian farms)
@@ -345,6 +363,7 @@ Deliverables:
 - OG meta tags for blog posts
 - Playwright E2E test suite
 - GitHub Actions CI workflow
+- **Web3 mainnet:** external audit closed (Spearbit / Trail of Bits), Safe 2-of-2 multisig live, fresh wallets generated offline, redeploy 5 contracts to Base mainnet (chain 8453), flip `ACTIVE_CHAIN_ID`, post-deploy smoke test
 
 ### Q4 2026 — Seed Round
 **Goal:** $750K–$1.5M raise, core team 3+, EU certifications
@@ -407,14 +426,44 @@ The contrast between the two tokens creates a layered engagement model: beans fo
 
 **Key principle: tokens are a loyalty bonus, not a paywall.** Every product must be purchasable at full price without tokens. Tokens reward loyal users — they don't exclude newcomers.
 
-### Why Not Blockchain?
+### Web3 Layer — live status (2026-05-06)
 
-Three clear reasons:
+The "Why Not Blockchain?" rationale of v1.0 was correct **until** the project found a Web3-native audience for the impact-investment side and a regulatory path that does not classify the utility token as a financial instrument. The pivot landed on 2026-04-28 with five contracts deployed to Base Sepolia. The off-chain `beans` + `mazorcas` ledger described above is unchanged — the on-chain layer **complements** it, it does not replace it.
 
-1. **Audience is not crypto-native.** Colombian Gen Z consumers and EU eco-investors want simplicity. Adding a wallet-connect step would lose 80% of sign-ups.
+**What lives off-chain (unchanged):**
+- `beans` — daily-engagement currency, Supabase `user_profiles.beans_balance` + `token_events` ledger
+- `mazorcas` — milestone currency, same ledger
+- All earning rules and redemption-for-product-discounts
 
-2. **Regulatory complexity.** On-chain tokens in Colombia (Decree 1048/2021) and the EU (MiCA Regulation) require legal analysis that may classify them as financial instruments. This adds compliance cost disproportionate to Phase 1 value.
+**What lives on-chain (Charter §I.3 — distribution 100 % earned, no presale, no ICO):**
 
-3. **Purpose doesn't require it.** Blockchain tokens are appropriate for decentralized governance, provenance attestation, or liquid secondary markets. CacaoFrutaBrutal's token economy serves engagement and loyalty — a database with `token_events` ledger is simpler, faster, and sufficient.
+| Contract | Base Sepolia address | Role |
+|---|---|---|
+| `CacaoTreeNFT` (ERC-721) | `0xf5f2dE2237334680fC74cFD1dbCFaF5E5285ad23` | Adopted tree as NFT, ERC-4906 metadata updates per care action |
+| `CacaoToken` ($CACAO, ERC-20, cap 21 M) | `0x8f5f9d696F8004b7d77c915c70569eec3234D7E1` | Utility token, mintable **only** by `MazorcaRedemption` |
+| `MazorcaRedemption` | `0x9Aa80f33067316De88757ff8c21660f5672644e6` | EIP-712 signed mazorca burn → mint $CACAO at 1000:1, 30-day cooldown |
+| `TreeAdoption` | `0x1c6724cdfe8906ae5a2042c431169b6987755711` | USDC/ETH/cbBTC escrow, 60/30/10 split (cooperative/treasury/protocol) |
+| `IoTAttestation` | `0x0077649ed45ce82225b3a3d5a364a4f804007e53` | Weekly Merkle root of Ed25519-signed sensor readings from Guardian farms |
 
-Revisit only if community governance or cross-platform token portability becomes a strategic requirement (not before Series A).
+**The bridge is the burn:** the only path from off-chain mazorcas to on-chain $CACAO is the `MazorcaRedemption` burn. There is no other minter — gameplay is the only emission curve.
+
+**Onboarding addition:** users now have a `/web3/onboarding` route — Connect Smart Wallet (passkey) → switch to Base → SIWE sign (triggers Chainalysis + OFAC screening) → KYC via Persona (Tier 1/2/3). All five gates fire **before** any on-chain write.
+
+**Onramp:** Coinbase CDP sandbox is live. Adoption price aligned to USD 5 USDC to fit the sandbox per-tx cap (USD 5 × 25 tx). Production cap lift pending CDP support reply.
+
+**Mainnet (chain 8453) is deliberately not deployed yet.** Gates: external audit (Spearbit / Trail of Bits), Safe 2-of-2 multisig migration of `DEFAULT_ADMIN_ROLE`, fresh wallets generated in HW/offline machines, 12-month timelock on any LP. See `docs/CHARTER.md` §I and `docs/WEB3.md` for the full spec.
+
+**Why this does not contradict the v1.0 rationale:**
+- Audience: the Web3 surface targets the **Cryptobro Austin TX / impact-investor** persona, not the Colombian Gen Z user. The Gen Z user keeps the off-chain beans/ritual flow as before.
+- Regulatory: $CACAO is a utility token redeemable for protocol services, **not for cash**. Colombian Decree 1048/2021 and EU MiCA compatibility are addressed in `docs/COMPLIANCE.md`. Gameplay-only emission + KYC-gated mint avoids financial-instrument classification.
+- Purpose: provenance attestation (IoT Merkle roots) and traceable adoption (NFT per tree) are now part of the value proposition for B2B buyers — see Persona 3 evolution in §2.
+
+---
+
+## Appendix A — v1.0 §7 historical rationale
+
+Preserved for context. **No longer authoritative — superseded by §7 above.**
+
+> Three reasons for not adding blockchain in v1.0: (1) audience not crypto-native, (2) regulatory complexity in Colombia/EU, (3) purpose served by a database ledger. Revisit only if community governance or cross-platform portability becomes strategic.
+
+The pivot revisited (1) and (3) once the Eco-Investor persona showed clear crypto-native preference for impact provenance, and (2) once Charter §I.3 (100% earned, no presale) enabled a utility-token classification.

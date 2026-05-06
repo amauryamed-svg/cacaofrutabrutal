@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   useAccount,
   useReadContract,
@@ -6,13 +6,17 @@ import {
   useWaitForTransactionReceipt,
 } from 'wagmi'
 import { useKYCStatus } from '../../hooks/useKYCStatus'
+import { supabase } from '../../lib/supabase'
 import {
   BRAND,
   FONTS,
   BASE_CHAIN_ID,
+  BASE_SEPOLIA_CHAIN_ID,
+  ACTIVE_CHAIN_ID,
   WEB3_CONTRACTS,
   BASE_ERC20,
   ADOPTION_SPLIT_BPS,
+  TREE_ADOPTION_PRICE_USD,
 } from '../../utils/constants'
 import {
   TREE_ADOPTION_ABI,
@@ -49,6 +53,10 @@ export default function AdoptWithCryptoButton({ treeId, guardianId, variety, gps
   const [phase, setPhase] = useState<'idle' | 'approving' | 'adopting' | 'mining' | 'done' | 'error'>('idle')
   const [errMsg, setErrMsg] = useState<string | null>(null)
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null)
+  // adoption_charges row id, created BEFORE signing so alchemy-nft-webhook
+  // has a row to flip to 'confirmed' when TreeAdopted lands on-chain.
+  const chargeIdRef = useRef<string | null>(null)
+  const mintTriggeredRef = useRef(false)
 
   const adoptionAddr = WEB3_CONTRACTS.treeAdoption as `0x${string}` | ''
   const assetAddr = ASSET_ADDRESSES[asset]
@@ -84,11 +92,35 @@ export default function AdoptWithCryptoButton({ treeId, guardianId, variety, gps
     else if (receipt.isSuccess) {
       setPhase('done')
       if (onAdopted) onAdopted(txHash, asset)
+      // Trigger NFT mint via relayer Edge Function — idempotent guard via ref
+      // because useEffect can re-fire. mint-tree-nft enforces its own KYC + 1-mint/24h.
+      if (!mintTriggeredRef.current) {
+        mintTriggeredRef.current = true
+        void (async () => {
+          try {
+            const { data: { session } } = await supabase.auth.getSession()
+            const accessToken = session?.access_token
+            if (!accessToken) return
+            await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mint-tree-nft`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${accessToken}`,
+                apikey: import.meta.env.VITE_SUPABASE_ANON_KEY as string,
+              },
+              body: JSON.stringify({ tree_id: treeId }),
+            })
+          } catch {
+            // Fire-and-forget — mint failures are surfaced via Supabase logs,
+            // not blocking the adoption UX which already succeeded on-chain.
+          }
+        })()
+      }
     } else if (receipt.isError) {
       setPhase('error')
       setErrMsg('Transaction reverted on-chain.')
     }
-  }, [receipt.isLoading, receipt.isSuccess, receipt.isError, txHash, onAdopted, asset])
+  }, [receipt.isLoading, receipt.isSuccess, receipt.isError, txHash, onAdopted, asset, treeId])
 
   const treeIdHash = useMemo(() => treeIdToBytes32(treeId), [treeId])
   const varietyHash = useMemo(() => varietyToBytes32(variety), [variety])
@@ -101,7 +133,53 @@ export default function AdoptWithCryptoButton({ treeId, guardianId, variety, gps
       setPhase('error')
       return
     }
+    if (!address) {
+      setErrMsg('Wallet not connected.')
+      setPhase('error')
+      return
+    }
     setErrMsg(null)
+    mintTriggeredRef.current = false
+
+    // ─── Pre-tx: insert pending adoption_charges row so alchemy-nft-webhook ─
+    // has something to flip to 'confirmed' when TreeAdopted lands on-chain.
+    // Filter .eq('user_id', userId) per CauaCore §8 — RLS is the security layer,
+    // not the filter.
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        setErrMsg('Not authenticated.')
+        setPhase('error')
+        return
+      }
+      const { data: chargeRow, error: chargeErr } = await supabase
+        .from('adoption_charges')
+        .insert({
+          user_id: user.id,
+          tree_id: treeId,
+          guardian_id: guardianId,
+          buyer_wallet: address.toLowerCase(),
+          asset: asset === 'ETH' ? 'ETH' : assetAddr.toLowerCase(),
+          amount_native: price.toString(),
+          amount_usd_cents: TREE_ADOPTION_PRICE_USD * 100,
+          source: asset === 'ETH' ? 'on_chain_eth' : 'on_chain_token',
+          status: 'pending',
+          network: Number(ACTIVE_CHAIN_ID) === Number(BASE_SEPOLIA_CHAIN_ID) ? 'base-sepolia' : 'base',
+        })
+        .select('id')
+        .single()
+      if (chargeErr || !chargeRow) {
+        setErrMsg(`record_pending_charge_failed: ${chargeErr?.message ?? 'no row'}`)
+        setPhase('error')
+        return
+      }
+      chargeIdRef.current = chargeRow.id as string
+    } catch (e) {
+      setErrMsg(e instanceof Error ? e.message : 'pending_charge_error')
+      setPhase('error')
+      return
+    }
+
     try {
       if (needsApproval) {
         setPhase('approving')
@@ -137,9 +215,33 @@ export default function AdoptWithCryptoButton({ treeId, guardianId, variety, gps
             chainId: BASE_CHAIN_ID,
           })
       setTxHash(hash)
+
+      // Stamp the pending row with tx_hash + status='submitted' so the webhook
+      // can match by tx_hash and final-flip to 'confirmed'.
+      if (chargeIdRef.current) {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          await supabase
+            .from('adoption_charges')
+            .update({ tx_hash: hash.toLowerCase(), status: 'submitted' })
+            .eq('id', chargeIdRef.current)
+            .eq('user_id', user.id)
+        }
+      }
     } catch (e) {
       setPhase('error')
       setErrMsg(e instanceof Error ? e.message : 'adopt_failed')
+      // Best-effort: mark the pending row as failed so it's not orphaned.
+      if (chargeIdRef.current) {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          await supabase
+            .from('adoption_charges')
+            .update({ status: 'failed' })
+            .eq('id', chargeIdRef.current)
+            .eq('user_id', user.id)
+        }
+      }
     }
   }
 

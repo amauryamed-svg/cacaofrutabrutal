@@ -56,8 +56,8 @@ interface AlchemyPayload {
   event?: { activity?: Activity[]; logs?: Activity['log'][] }
 }
 
-// keccak256("TreeAdopted(address,bytes32,uint8,address,uint256,bytes32,bytes32)")
-const TREE_ADOPTED_TOPIC = '0x' + 'tree_adopted_topic_placeholder'.padEnd(64, '0').slice(0, 64)
+// Alchemy provides decoded fields per ABI in our config, so we match on
+// `addr === adoptionAddress` instead of computing the topic hash here.
 const adoptionAddress = (Deno.env.get('TREE_ADOPTION_ADDRESS') ?? '').toLowerCase()
 
 function tokenIdFromHex(hex: string | undefined): number | null {
@@ -148,7 +148,3 @@ serve(async (req) => {
     headers: { 'Content-Type': 'application/json' },
   })
 })
-
-// Suppress unused-warning for the placeholder topic; alchemy provides decoded
-// fields rather than raw topics in our config, so we don't need the hash.
-void TREE_ADOPTED_TOPIC

@@ -21,6 +21,10 @@ const translations = {
   land_cta1:     { es: 'ADOPTA UN ÁRBOL', en: 'ADOPT A TREE'    },
   land_cta2:     { es: 'RITUAL DEL DÍA',   en: 'DAILY RITUAL'    },
   land_cta3:     { es: '↗ SIEMBRA',        en: '↗ SIEMBRA'       },
+  land_adopt_pitch: {
+    es: 'Elige un guardián entre las 5 fincas Caúa. ${PRICE} USD por árbol — pago se despliega 60/30/10 al instante.',
+    en: 'Pick a guardian from the 5 Caúa farms. ${PRICE} USD per tree — payment splits 60/30/10 instantly.'
+  },
   land_petals:   { es: 'Los 5 Guardianes del Cacao Criollo',
                    en: 'The 5 Guardians of Criollo Cacao' },
   land_guardians:{ es: 'CACAOCULTORES', en: 'CACAO GROWERS'  },
