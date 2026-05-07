@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BRAND, FONTS, GUARDIANS, TREE_ADOPTION_PRICE_USD } from '../utils/constants'
+import { BRAND, FONTS, GUARDIANS, TREE_ADOPTION_PRICE_USD, ACTIVE_CHAIN_ID, BASE_SEPOLIA_CHAIN_ID } from '../utils/constants'
 import CauaButton from '../components/ui/CauaButton'
 import { useLang } from '../context/LangContext'
 import { makeT } from '../utils/i18n'
@@ -134,26 +134,6 @@ export default function Landing() {
             <span style={{ color: BRAND.pod }}>FRUTA</span><br />
             BRUTAL
           </h1>
-
-          {/* Scientific descriptor */}
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            flexWrap: 'wrap', justifyContent: 'center',
-            margin: '20px 0 28px',
-            padding: '8px 20px', borderRadius: 999,
-            border: `1px solid ${BRAND.pod}30`,
-            background: `${BRAND.pod}08`,
-          }}>
-            {['Mucílago 20%', 'Epicatequina', 'Teobromina'].map((label, i) => (
-              <span key={label}>
-                <span style={{
-                  fontFamily: FONTS.body, fontSize: 11,
-                  color: `${BRAND.heirloom}88`, letterSpacing: '0.06em',
-                }}>{label}</span>
-                {i < 2 && <span style={{ color: `${BRAND.pod}55`, margin: '0 8px' }}>·</span>}
-              </span>
-            ))}
-          </div>
 
           <p style={{
             fontFamily: FONTS.body, color: `${BRAND.heirloom}70`,
@@ -352,28 +332,6 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* ── Tagline break ── */}
-      <div style={{
-        padding: 'clamp(40px,6vw,60px) var(--space-page)',
-        borderTop: `1px solid ${BRAND.amazon}33`,
-        borderBottom: `1px solid ${BRAND.amazon}33`,
-        textAlign: 'center',
-        background: `${BRAND.amazon}08`,
-        position: 'relative', zIndex: 1,
-      }}>
-        <p style={{
-          fontFamily: FONTS.serif, fontStyle: 'italic',
-          color: `${BRAND.heirloom}55`, fontSize: 'clamp(16px, 3vw, 26px)',
-          margin: 0, letterSpacing: '0.06em',
-          lineHeight: 1.6,
-        }}>
-          {lang === 'es'
-            ? '"Del genoma colombiano al mundo. Fruta. Brutal."'
-            : '"From the Colombian genome to the world. Fruit. Brutal."'
-          }
-        </p>
-      </div>
-
       {/* ── Únete / CTA final ── */}
       <div id="join" style={{
         padding: 'clamp(48px,8vw,80px) var(--space-page) clamp(64px,10vw,120px)',
@@ -392,14 +350,27 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* ── Legal footer ── */}
+      {/* ── Legal footer + disclaimer testnet ── */}
       <div style={{
-        padding: '20px var(--space-page) 32px',
+        padding: '24px var(--space-page) 36px',
         textAlign: 'center',
         borderTop: `1px solid ${BRAND.amazon}33`,
         position: 'relative',
         zIndex: 1,
       }}>
+        {ACTIVE_CHAIN_ID === BASE_SEPOLIA_CHAIN_ID && (
+          <p style={{
+            fontFamily: FONTS.body,
+            fontSize: 9.5,
+            color: `${BRAND.heirloom}44`,
+            letterSpacing: '0.06em',
+            margin: '0 auto 10px',
+            maxWidth: 520,
+            lineHeight: 1.55,
+          }}>
+            Hoy operamos en Base Sepolia (testnet). Mainnet (chain 8453) tras auditoría externa Q3 2026.
+          </p>
+        )}
         <p style={{
           fontFamily: FONTS.body,
           fontSize: 10,

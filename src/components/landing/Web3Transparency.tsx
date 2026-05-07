@@ -192,19 +192,6 @@ export default function Web3Transparency() {
         ))}
       </div>
 
-      {/* Disclosure: testnet status */}
-      {ACTIVE_CHAIN_ID === BASE_SEPOLIA_CHAIN_ID && (
-        <p style={{
-          marginTop: 18,
-          fontFamily: FONTS.body,
-          fontSize: 10,
-          color: `${BRAND.heirloom}55`,
-          letterSpacing: '0.04em',
-          textAlign: 'center',
-        }}>
-          Hoy operamos en Base Sepolia (testnet). Mainnet (chain 8453) tras auditoría externa Q3 2026.
-        </p>
-      )}
     </section>
   )
 }
