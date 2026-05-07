@@ -146,13 +146,33 @@ export default function Landing() {
             </span>
           </p>
 
+          {/* Free-adoption pill — visible offer during AtmosphereX / onboarding window */}
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '8px 16px',
+            margin: '0 auto 14px',
+            borderRadius: 999,
+            border: `1px solid ${BRAND.mazorca}66`,
+            background: `${BRAND.mazorca}11`,
+            fontFamily: FONTS.display,
+            fontSize: 11,
+            fontWeight: 800,
+            color: BRAND.mazorca,
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+          }}>
+            🎁 Adopción gratis · onboarding abierto
+          </div>
+
           {/* Adoption pitch — anchored to TREE_ADOPTION_PRICE_USD so price stays in sync */}
           <p style={{
             fontFamily: FONTS.body,
             color: `${BRAND.heirloom}88`,
             fontSize: 'clamp(13px, 2.1vw, 15px)',
             lineHeight: 1.65,
-            maxWidth: 520,
+            maxWidth: 540,
             margin: '0 auto 22px',
             letterSpacing: '0.01em',
           }}>
