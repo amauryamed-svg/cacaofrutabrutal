@@ -39,7 +39,7 @@ function AppShell() {
   // Public surfaces: solo PublicTabNav + footer mínimo. NavBar de la SPA
   // (con dropdowns INICIO/CONTENIDO/ÁRBOL/MERCADO/WEB3/FONDO) es ruido para
   // attendees del evento AtmosphereX que aún no se logean.
-  const hideChrome   = pathname === '/auth' || pathname === '/' || pathname === '/adoptar'
+  const hideChrome   = pathname === '/auth' || pathname === '/'
 
   useEffect(() => {
     try {
@@ -69,10 +69,9 @@ function AppShell() {
         <Route path="/caua-coti/andrea-rojas" element={<AuthGate><ProposalAndreaRojas /></AuthGate>} />
         <Route path="/marketplace"           element={<AuthGate><Marketplace /></AuthGate>} />
         <Route path="/ritual"                element={<AuthGate><Ritual /></AuthGate>} />
-        {/* Adoptar — público para que attendees del evento vean los 5 guardianes
-            antes de logear. El check `if (!user) navigate('/auth')` vive en
-            Adoptar.tsx:40 (handleSwipeRight) → solo se dispara al swipe-right. */}
-        <Route path="/adoptar"               element={<Adoptar />} />
+        {/* Adoptar — Google login obligatorio para capturar adoptantes en CRM.
+            AuthGate redirige a /auth?next=/adoptar antes de mostrar las cards. */}
+        <Route path="/adoptar"               element={<AuthGate><Adoptar /></AuthGate>} />
         <Route path="/caua-bonga"            element={<AuthGate><CauaBonga /></AuthGate>} />
         <Route path="/caua-bonga/finca/:id"  element={<AuthGate><CauaBongaFinca /></AuthGate>} />
         <Route path="/caua-bonga/finca/:id/plot" element={<AuthGate><CauaBongaPlot /></AuthGate>} />
