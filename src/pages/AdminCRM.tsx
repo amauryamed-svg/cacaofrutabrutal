@@ -297,25 +297,91 @@ function EmailsTable({ rows }: { rows: EmailRow[] }) {
 }
 
 function TreesTable({ rows }: { rows: TreeRow[] }) {
+  const [sending, setSending] = useState<string | null>(null)
+  const [feedback, setFeedback] = useState<{ id: string; ok: boolean; msg: string } | null>(null)
+
+  const sendUpdate = async (treeId: string) => {
+    setSending(treeId)
+    setFeedback(null)
+    try {
+      const { data: sess } = await supabase.auth.getSession()
+      const token = sess?.session?.access_token
+      if (!token) throw new Error('No hay sesión activa')
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-tree-status-email`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ tree_id: treeId }),
+        },
+      )
+      const json = await res.json().catch(() => null)
+      if (!res.ok || !json?.ok) {
+        throw new Error(json?.error ?? `HTTP ${res.status}`)
+      }
+      setFeedback({ id: treeId, ok: true, msg: 'Enviado ✓' })
+    } catch (err) {
+      setFeedback({
+        id: treeId,
+        ok: false,
+        msg: err instanceof Error ? err.message : 'Error desconocido',
+      })
+    } finally {
+      setSending(null)
+      setTimeout(() => setFeedback(null), 4000)
+    }
+  }
+
   return (
     <div style={{ overflowX: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: FONTS.body, fontSize: 12 }}>
         <thead>
           <TR header>
-            <TD>Email</TD><TD>Guardián</TD><TD>Variedad</TD><TD>Etapa</TD><TD>CO₂ kg</TD><TD>Adoptado</TD>
+            <TD>Email</TD><TD>Guardián</TD><TD>Variedad</TD><TD>Etapa</TD><TD>CO₂ kg</TD><TD>Adoptado</TD><TD>Notificar</TD>
           </TR>
         </thead>
         <tbody>
-          {rows.map(r => (
-            <TR key={r.id}>
-              <TD>{r.email}</TD>
-              <TD accent>{r.guardian_name}</TD>
-              <TD>{r.variety}</TD>
-              <TD>{r.stage}</TD>
-              <TD accent>{r.co2_kg}</TD>
-              <TD dim>{new Date(r.adopted_at).toLocaleDateString('es-CO')}</TD>
-            </TR>
-          ))}
+          {rows.map(r => {
+            const isSending = sending === r.id
+            const fb = feedback?.id === r.id ? feedback : null
+            return (
+              <TR key={r.id}>
+                <TD>{r.email}</TD>
+                <TD accent>{r.guardian_name}</TD>
+                <TD>{r.variety}</TD>
+                <TD>{r.stage}</TD>
+                <TD accent>{r.co2_kg}</TD>
+                <TD dim>{new Date(r.adopted_at).toLocaleDateString('es-CO')}</TD>
+                <TD>
+                  <button
+                    disabled={isSending}
+                    onClick={() => sendUpdate(r.id)}
+                    style={{
+                      fontFamily: FONTS.display,
+                      fontWeight: 800,
+                      fontSize: 10,
+                      letterSpacing: '0.12em',
+                      textTransform: 'uppercase',
+                      padding: '6px 10px',
+                      border: `1px solid ${BRAND.pod}`,
+                      borderRadius: 4,
+                      background: fb?.ok ? BRAND.pod : 'transparent',
+                      color: fb?.ok ? BRAND.bgDeep : BRAND.pod,
+                      cursor: isSending ? 'wait' : 'pointer',
+                      opacity: isSending ? 0.55 : 1,
+                      whiteSpace: 'nowrap',
+                    }}
+                    title={fb?.ok === false ? fb.msg : 'Enviar update por email'}
+                  >
+                    {isSending ? '… enviando' : fb?.ok ? '✓ enviado' : fb?.ok === false ? '✗ error' : '📩 update'}
+                  </button>
+                </TD>
+              </TR>
+            )
+          })}
         </tbody>
       </table>
     </div>
