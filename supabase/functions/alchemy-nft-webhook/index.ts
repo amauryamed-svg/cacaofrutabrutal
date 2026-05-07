@@ -50,11 +50,28 @@ interface Activity {
   log?: { transactionHash?: string; topics?: string[]; data?: string; address?: string }
 }
 
+// Alchemy "Custom Webhook" GraphQL payload shape — distinct from the NFT Activity
+// prefab (which uses `event.activity[]`). Both shapes are handled below so the same
+// Edge Function works regardless of which Alchemy webhook type is configured.
+interface GraphQLLog {
+  transaction?: { hash?: string; from?: { address?: string } }
+  account?: { address?: string }
+  topics?: string[]
+  data?: string
+}
+
 interface AlchemyPayload {
   webhookId?: string
   type?: string
-  event?: { activity?: Activity[]; logs?: Activity['log'][] }
+  event?: {
+    activity?: Activity[]
+    logs?: Activity['log'][]
+    data?: { block?: { logs?: GraphQLLog[] } }
+  }
 }
+
+// keccak256("Transfer(address,address,uint256)")
+const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
 
 // Alchemy provides decoded fields per ABI in our config, so we match on
 // `addr === adoptionAddress` instead of computing the topic hash here.
@@ -87,9 +104,62 @@ serve(async (req) => {
   }
 
   const activities = payload.event?.activity ?? []
+  const graphqlLogs = payload.event?.data?.block?.logs ?? []
   let processedTransfers = 0
   let processedAdoptions = 0
 
+  // ─── GraphQL Custom Webhook path ─────────────────────────────────
+  // For Custom Webhooks (configured with a GraphQL filter on Alchemy
+  // dashboard), each match arrives as a log under event.data.block.logs.
+  for (const log of graphqlLogs) {
+    const addr = (log.account?.address ?? '').toLowerCase()
+    const tx   = (log.transaction?.hash ?? '').toLowerCase()
+    if (!addr || !tx) continue
+
+    // TreeAdopted on TreeAdoption.sol → flip pending charge to confirmed
+    if (adoptionAddress && addr === adoptionAddress) {
+      const { data: charges, error } = await supabase
+        .from('adoption_charges')
+        .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
+        .eq('tx_hash', tx)
+        .select('id')
+      if (!error && charges && charges.length > 0) processedAdoptions += charges.length
+      continue
+    }
+
+    // Transfer on CacaoTreeNFT — topics[0]=sig, topics[1]=from, topics[2]=to, topics[3]=tokenId
+    if (addr === contractAddress && (log.topics?.[0]?.toLowerCase() ?? '') === TRANSFER_TOPIC) {
+      const fromTopic    = log.topics?.[1] ?? ''
+      const toTopic      = log.topics?.[2] ?? ''
+      const tokenIdTopic = log.topics?.[3] ?? ''
+      const from = ('0x' + fromTopic.slice(-40)).toLowerCase()
+      const to   = ('0x' + toTopic.slice(-40)).toLowerCase()
+      const tokenId = tokenIdFromHex(tokenIdTopic)
+      if (tokenId == null) continue
+
+      if (from === ZERO_ADDRESS) {
+        const { error } = await supabase
+          .from('cacao_trees')
+          .update({ nft_token_id: tokenId, owner_wallet: to })
+          .eq('nft_mint_tx', tx)
+        if (!error) {
+          await supabase.from('tree_mints')
+            .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
+            .eq('tx_hash', tx)
+        }
+      } else {
+        await supabase
+          .from('cacao_trees')
+          .update({ owner_wallet: to })
+          .eq('nft_token_id', tokenId)
+          .eq('nft_contract', contractAddress)
+      }
+      processedTransfers += 1
+      continue
+    }
+  }
+
+  // ─── NFT Activity prefab path (kept for backward-compat) ─────────
   for (const a of activities) {
     const addr = (a.rawContract?.address ?? a.log?.address ?? '').toLowerCase()
     const tx   = (a.hash ?? a.log?.transactionHash ?? '').toLowerCase()

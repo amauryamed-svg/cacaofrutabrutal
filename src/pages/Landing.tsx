@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BRAND, FONTS, GUARDIANS, TREE_ADOPTION_PRICE_USD } from '../utils/constants'
+import { BRAND, FONTS, GUARDIANS, TREE_ADOPTION_PRICE_USD, ACTIVE_CHAIN_ID, BASE_SEPOLIA_CHAIN_ID } from '../utils/constants'
 import CauaButton from '../components/ui/CauaButton'
 import { useLang } from '../context/LangContext'
 import { makeT } from '../utils/i18n'
@@ -8,6 +8,8 @@ import { useScrollProgress } from '../hooks/useScrollProgress'
 import ScrollDebugOverlay from '../components/landing/ScrollDebugOverlay'
 import CacaoGallery from '../components/landing/CacaoGallery'
 import CauaWordmark from '../components/landing/CauaWordmark'
+import PublicTabNav from '../components/landing/PublicTabNav'
+import Web3Transparency from '../components/landing/Web3Transparency'
 
 // Brand icons — thin stroke, ~1.5px, Pod Green — matching brand icon sheet (p.22)
 
@@ -83,6 +85,7 @@ export default function Landing() {
     // bgDeep is the page's solid base. The gallery covers it with photos
     // (with a built-in scrim for legibility). Sections sit at z-index ≥ 1.
     <div style={{ background: BRAND.bgDeep, minHeight: '100vh', position: 'relative' }}>
+        <PublicTabNav mode="adoptar" />
         <ScrollDebugOverlay />
         <CacaoGallery />
 
@@ -132,26 +135,6 @@ export default function Landing() {
             BRUTAL
           </h1>
 
-          {/* Scientific descriptor */}
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            flexWrap: 'wrap', justifyContent: 'center',
-            margin: '20px 0 28px',
-            padding: '8px 20px', borderRadius: 999,
-            border: `1px solid ${BRAND.pod}30`,
-            background: `${BRAND.pod}08`,
-          }}>
-            {['Mucílago 20%', 'Epicatequina', 'Teobromina'].map((label, i) => (
-              <span key={label}>
-                <span style={{
-                  fontFamily: FONTS.body, fontSize: 11,
-                  color: `${BRAND.heirloom}88`, letterSpacing: '0.06em',
-                }}>{label}</span>
-                {i < 2 && <span style={{ color: `${BRAND.pod}55`, margin: '0 8px' }}>·</span>}
-              </span>
-            ))}
-          </div>
-
           <p style={{
             fontFamily: FONTS.body, color: `${BRAND.heirloom}70`,
             fontSize: 'clamp(14px, 2.4vw, 16px)', maxWidth: 480,
@@ -163,13 +146,33 @@ export default function Landing() {
             </span>
           </p>
 
+          {/* Free-adoption pill — visible offer during AtmosphereX / onboarding window */}
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '8px 16px',
+            margin: '0 auto 14px',
+            borderRadius: 999,
+            border: `1px solid ${BRAND.mazorca}66`,
+            background: `${BRAND.mazorca}11`,
+            fontFamily: FONTS.display,
+            fontSize: 11,
+            fontWeight: 800,
+            color: BRAND.mazorca,
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+          }}>
+            🎁 Adopción gratis · onboarding abierto
+          </div>
+
           {/* Adoption pitch — anchored to TREE_ADOPTION_PRICE_USD so price stays in sync */}
           <p style={{
             fontFamily: FONTS.body,
             color: `${BRAND.heirloom}88`,
             fontSize: 'clamp(13px, 2.1vw, 15px)',
             lineHeight: 1.65,
-            maxWidth: 520,
+            maxWidth: 540,
             margin: '0 auto 22px',
             letterSpacing: '0.01em',
           }}>
@@ -186,7 +189,6 @@ export default function Landing() {
           {/* Secondary links */}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
             {[
-              { href: '/pitch_growth.html',label: 'GROWTH',  color: BRAND.mazorca },
               { href: '/siembra.html',     label: 'SIEMBRA', color: BRAND.pod     },
             ].map(({ href, label, color }) => (
               <a key={href} href={href} target="_blank" rel="noopener noreferrer"
@@ -295,6 +297,9 @@ export default function Landing() {
         </div>
       </div>
 
+      {/* ── Web3 Transparency · BaseScan verifier links ── */}
+      <Web3Transparency />
+
       {/* ── Value Props ── */}
       <div style={{
         padding: '0 var(--space-page) var(--space-section)', maxWidth: 960, margin: '0 auto',
@@ -346,28 +351,6 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* ── Tagline break ── */}
-      <div style={{
-        padding: 'clamp(40px,6vw,60px) var(--space-page)',
-        borderTop: `1px solid ${BRAND.amazon}33`,
-        borderBottom: `1px solid ${BRAND.amazon}33`,
-        textAlign: 'center',
-        background: `${BRAND.amazon}08`,
-        position: 'relative', zIndex: 1,
-      }}>
-        <p style={{
-          fontFamily: FONTS.serif, fontStyle: 'italic',
-          color: `${BRAND.heirloom}55`, fontSize: 'clamp(16px, 3vw, 26px)',
-          margin: 0, letterSpacing: '0.06em',
-          lineHeight: 1.6,
-        }}>
-          {lang === 'es'
-            ? '"Del genoma colombiano al mundo. Fruta. Brutal."'
-            : '"From the Colombian genome to the world. Fruit. Brutal."'
-          }
-        </p>
-      </div>
-
       {/* ── Únete / CTA final ── */}
       <div id="join" style={{
         padding: 'clamp(48px,8vw,80px) var(--space-page) clamp(64px,10vw,120px)',
@@ -384,6 +367,38 @@ export default function Landing() {
             {lang === 'es' ? 'Seleccionar Clase Genética' : 'Choose Genetic Class'}
           </CauaButton>
         </div>
+      </div>
+
+      {/* ── Legal footer + disclaimer testnet ── */}
+      <div style={{
+        padding: '24px var(--space-page) 36px',
+        textAlign: 'center',
+        borderTop: `1px solid ${BRAND.amazon}33`,
+        position: 'relative',
+        zIndex: 1,
+      }}>
+        {ACTIVE_CHAIN_ID === BASE_SEPOLIA_CHAIN_ID && (
+          <p style={{
+            fontFamily: FONTS.body,
+            fontSize: 9.5,
+            color: `${BRAND.heirloom}44`,
+            letterSpacing: '0.06em',
+            margin: '0 auto 10px',
+            maxWidth: 520,
+            lineHeight: 1.55,
+          }}>
+            Hoy operamos en Base Sepolia (testnet). Mainnet (chain 8453) tras auditoría externa Q3 2026.
+          </p>
+        )}
+        <p style={{
+          fontFamily: FONTS.body,
+          fontSize: 10,
+          color: `${BRAND.heirloom}55`,
+          letterSpacing: '0.08em',
+          margin: 0,
+        }}>
+          CAUA COLOMBIA SAS · NIT 901.213.846-7 · Bogotá D.C. · Colombia
+        </p>
       </div>
     </div>
   )

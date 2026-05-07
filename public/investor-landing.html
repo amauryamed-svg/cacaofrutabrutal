@@ -1044,6 +1044,12 @@ footer a:hover{color:var(--ink2);}
 </head>
 <body>
 
+<!-- Public tab nav: separa el flow Adoptar (estudiantes/consumer) del Inversores.
+     Cross-bundle navigation porque /app/ es SPA y aquí estamos en static HTML. -->
+<div style="position:sticky;top:0;z-index:100;width:100%;background:#040C06;border-bottom:1px solid #1C3B2688;display:flex;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);">
+  <a href="/app/" style="flex:1;height:52px;border:none;cursor:pointer;font-family:'Helvetica Neue',Arial,sans-serif;font-weight:800;font-size:clamp(11px,2.4vw,13px);letter-spacing:0.16em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;background:transparent;color:#F7F1EE88;border-right:1px solid #1C3B2655;transition:background-color 200ms,color 200ms;">🌱 Adoptar</a>
+  <a href="/investor-landing.html" aria-current="page" style="flex:1;height:52px;border:none;cursor:pointer;font-family:'Helvetica Neue',Arial,sans-serif;font-weight:800;font-size:clamp(11px,2.4vw,13px);letter-spacing:0.16em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;background:#1C3B26;color:#F7F1EE;transition:background-color 200ms,color 200ms;">📊 Inversores</a>
+</div>
 
 <nav>
   <a href="#" class="nav-logo" style="display:flex;align-items:center;text-decoration:none;" aria-label="caúa">
@@ -2310,6 +2316,27 @@ footer a:hover{color:var(--ink2);}
 
 </div><!-- /scroll-root -->
 
+<!-- Growth deck embedded — el deck completo /pitch_growth.html al final
+     de la landing de inversores. Se carga en iframe lazy para que la
+     primera vista no pague el costo. Mobile y desktop: full-width con
+     scroll independiente del documento principal. -->
+<section id="growth-embed" style="background:#040C06;padding:0;border-top:1px solid #1C3B2666;">
+  <div style="text-align:center;padding:48px 16px 24px;">
+    <div style="font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.28em;text-transform:uppercase;color:#91A63B;margin-bottom:12px;">◈ Growth deck completo ↓</div>
+    <h3 style="font-family:'Helvetica Neue',sans-serif;font-weight:900;font-size:clamp(20px,3.5vw,32px);color:#F7F1EE;margin:0;letter-spacing:-0.01em;">CAÚA Growth · Equipo · Mercado · Roadmap</h3>
+    <p style="font-family:'Helvetica Neue',sans-serif;font-size:13px;color:#F7F1EEaa;margin:10px auto 0;max-width:520px;line-height:1.55;">
+      Para más detalle abre el deck completo en una pestaña nueva:
+      <a href="/pitch_growth.html" target="_blank" rel="noopener" style="color:#F1A91E;text-decoration:underline;">pitch_growth.html ↗</a>
+    </p>
+  </div>
+  <iframe
+    src="/pitch_growth.html"
+    title="CAÚA Growth Deck"
+    loading="lazy"
+    style="display:block;width:100%;height:100vh;min-height:680px;border:0;background:#040C06;"
+  ></iframe>
+</section>
+
 <footer>
   <div class="f-logo" aria-label="caúa">
     <svg class="caua-logo" viewBox="0 0 234.67 78.01" xmlns="http://www.w3.org/2000/svg" aria-label="caúa">
@@ -2320,7 +2347,7 @@ footer a:hover{color:var(--ink2);}
       <path class="caua-letter caua-letter-4" fill="#F7F1EE" stroke="#F7F1EE" d="M231.11,18.71h-8.43s-.03.02-.05.02c-2.38,0-2.47,2.47-2.47,2.47v3.89c-2.58-2.62-5.4-4.59-8.44-5.9-3.05-1.31-6.3-1.97-9.77-1.97-7.54,0-13.94,2.85-19.21,8.56-5.27,5.7-7.91,13.02-7.91,21.95s2.73,15.81,8.18,21.6c5.44,5.79,11.9,8.68,19.37,8.68,3.32,0,6.41-.59,9.26-1.78s5.69-3.13,8.52-5.82v2.91s-.16,3.14,3.14,3.14c.14,0,.16.05.27.06h7.55c1.96,0,3.55-1.59,3.55-3.55V22.26c0-1.96-1.59-3.55-3.55-3.55h-.01ZM216.29,59.97c-3,3.17-6.78,4.75-11.34,4.75s-8.13-1.61-11.15-4.84c-3.02-3.22-4.53-7.33-4.53-12.33s1.48-9.02,4.45-12.19c2.96-3.17,6.69-4.76,11.17-4.76s8.39,1.56,11.39,4.68c3,3.12,4.5,7.19,4.5,12.22s-1.5,9.29-4.5,12.46h0Z"/>
     </svg>
   </div>
-  <div class="f-mono">Caúa Colombia SAS · 2026</div>
+  <div class="f-mono">CAUA COLOMBIA SAS · NIT 901.213.846-7 · Bogotá D.C. · Colombia · 2026</div>
   <div class="f-mono"><a href="/app">App</a> &nbsp;·&nbsp; <a href="#investment">Deck</a> &nbsp;·&nbsp; <a href="/pitch_growth.html">Growth</a></div>
 </footer>
 

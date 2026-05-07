@@ -36,7 +36,10 @@ const Web3Landing    = lazy(() => import('./pages/Web3Landing'))
 
 function AppShell() {
   const { pathname } = useLocation()
-  const hideChrome   = pathname === '/auth'
+  // Public surfaces: solo PublicTabNav + footer mínimo. NavBar de la SPA
+  // (con dropdowns INICIO/CONTENIDO/ÁRBOL/MERCADO/WEB3/FONDO) es ruido para
+  // attendees del evento AtmosphereX que aún no se logean.
+  const hideChrome   = pathname === '/auth' || pathname === '/' || pathname === '/adoptar'
 
   useEffect(() => {
     try {
@@ -54,8 +57,10 @@ function AppShell() {
         {/* Public — login form only */}
         <Route path="/auth"       element={<Auth />} />
 
-        {/* Protected — require registration (CRM tracking fires on every pageview) */}
-        <Route path="/"                      element={<AuthGate><Landing /></AuthGate>} />
+        {/* Public — landing visible without login. Login is deferred to swipe-right
+            in Adoptar.tsx so AtmosphereX event attendees can see what they're adopting
+            before authenticating. Other routes below stay protected. */}
+        <Route path="/"                      element={<Landing />} />
         <Route path="/blog"                  element={<AuthGate><Blog /></AuthGate>} />
         <Route path="/blog/:slug"            element={<AuthGate><BlogPost /></AuthGate>} />
         <Route path="/cinco-tiempos"         element={<AuthGate><CincoTiemposProposal /></AuthGate>} />
@@ -64,7 +69,10 @@ function AppShell() {
         <Route path="/caua-coti/andrea-rojas" element={<AuthGate><ProposalAndreaRojas /></AuthGate>} />
         <Route path="/marketplace"           element={<AuthGate><Marketplace /></AuthGate>} />
         <Route path="/ritual"                element={<AuthGate><Ritual /></AuthGate>} />
-        <Route path="/adoptar"               element={<AuthGate><Adoptar /></AuthGate>} />
+        {/* Adoptar — público para que attendees del evento vean los 5 guardianes
+            antes de logear. El check `if (!user) navigate('/auth')` vive en
+            Adoptar.tsx:40 (handleSwipeRight) → solo se dispara al swipe-right. */}
+        <Route path="/adoptar"               element={<Adoptar />} />
         <Route path="/caua-bonga"            element={<AuthGate><CauaBonga /></AuthGate>} />
         <Route path="/caua-bonga/finca/:id"  element={<AuthGate><CauaBongaFinca /></AuthGate>} />
         <Route path="/caua-bonga/finca/:id/plot" element={<AuthGate><CauaBongaPlot /></AuthGate>} />
