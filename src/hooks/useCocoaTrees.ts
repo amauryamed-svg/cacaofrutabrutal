@@ -76,25 +76,36 @@ export function useCocoaTrees() {
     // Update local state
     setTrees(prev => [data, ...prev])
 
-    // Award tokens via Edge Function (best-effort, silent fail)
+    // Award tokens + send adoption email via Edge Functions (best-effort, silent fail)
     try {
       const { data: sessionData } = await supabase.auth.getSession()
       const token = sessionData?.session?.access_token
       if (token) {
-        await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/award-tokens`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ event_type: 'tree_adoption', ref_id: data.id }),
-          }
-        )
+        // Both fire-and-forget — UX shouldn't wait. Both Edge Functions
+        // log to email_log/token_events independently and the user's
+        // CauaGotchi will reflect updates on next refresh.
+        const baseUrl = import.meta.env.VITE_SUPABASE_URL
+        const headers = {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        }
+
+        // Token award (+10 beans, +3 mazorcas)
+        fetch(`${baseUrl}/functions/v1/award-tokens`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ event_type: 'tree_adoption', ref_id: data.id }),
+        }).catch(() => { /* non-critical */ })
+
+        // Adoption confirmation email (Resend, brutalist luxury template)
+        fetch(`${baseUrl}/functions/v1/send-adoption-email`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ tree_id: data.id }),
+        }).catch(() => { /* non-critical */ })
       }
     } catch (_) {
-      // Token award is non-critical; tree adoption succeeds regardless
+      // Token award + email are non-critical; tree adoption succeeds regardless
     }
 
     return data
