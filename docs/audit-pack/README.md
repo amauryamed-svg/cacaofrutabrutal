@@ -16,7 +16,7 @@ Pack de onboarding para auditoría externa académica del Sistema CAUA COLOMBIA 
        │
 [2] Auditor recibe NDA, lo firma, lo regresa firmado
        │
-[3] Auditor envía email institucional (@udistrital.edu.co) + lista nominal del equipo
+[3] Auditor envía email de contacto + lista nominal del equipo
        │
 [4] CAUA COLOMBIA SAS valida (NDA firmado + email institucional) → provisiona accesos (24h SLA)
        │
@@ -33,7 +33,7 @@ Una vez el auditor regresa el NDA firmado + email institucional + lista nominal:
 
 ### Pre-condiciones
 - [ ] NDA escaneado/digital firmado por auditor recibido
-- [ ] Email institucional `@udistrital.edu.co` confirmado
+- [ ] Email de contacto del auditor confirmado (Andrés Gallardo: andresgalladofr@gmail.com)
 - [ ] Lista nominal del equipo UD (nombre + email + rol académico)
 - [ ] Fecha de inicio de ventana acordada
 - [ ] CTO + CEO han revisado y aprobado el alcance

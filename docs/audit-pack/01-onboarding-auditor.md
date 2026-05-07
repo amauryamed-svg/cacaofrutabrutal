@@ -55,7 +55,7 @@ Pasos en orden:
 - [ ] **Leer este documento completo** (incluye matriz de acceso + reglas de juego)
 - [ ] **Leer el NDA** (`02-nda-confidencialidad.md`) — preguntas a CTO antes de firmar
 - [ ] **Firmar el NDA digital o físico** y regresarlo a amauryamed@gmail.com
-- [ ] **Enviar email institucional** (`@udistrital.edu.co`) que se usará para las invitaciones
+- [ ] **Confirmar email de contacto** que se usará para las invitaciones (personal o institucional UD)
 - [ ] **Enviar lista nominal** del equipo Universidad Distrital con acceso al alcance (nombre, email, rol académico). Solo los miembros listados pueden acceder.
 - [ ] **Confirmar fecha de inicio** de la ventana de 60 días con CTO
 

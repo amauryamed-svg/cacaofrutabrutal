@@ -27,13 +27,13 @@ Owner: `amauryamed@gmail.com` (CauaCorp CTO)
 | `evidencias/` | Auditor sube en el camino | Capturas, logs, queries que respalden hallazgos |
 | `dudas-y-aclaraciones.gdoc` | Doc compartido vivo | Q&A continuo entre CTO + auditor |
 
-### Permisos del folder (configurar manualmente cuando Andrés mande email institucional)
+### Permisos del folder (configurar manualmente)
 
 1. Drive → click derecho en el folder → **Compartir**
 2. Agregar emails con permisos:
    - **`amauryamed@gmail.com`** — Owner (ya configurado)
-   - **`<andres@udistrital.edu.co>`** — Editor (cuando lo confirme)
-   - **Cada miembro del equipo UD listado en Anexo A** — Commenter
+   - **`andresgalladofr@gmail.com`** — Editor (Andrés Gallardo)
+   - **Cada miembro del equipo UD listado en Anexo A** — Commenter (cuando confirme la lista)
 3. Configuración general: **"Restringido"** (solo personas con acceso explícito)
    - **NO usar** "Cualquier persona con el enlace"
    - Razón: el folder contendrá NDAs firmados + posiblemente evidencias con datos sensibles bajo cláusula 4.6 del NDA (no exfiltración)
@@ -64,8 +64,8 @@ cp /Users/amauryamed/Documents/CacaoFrutaBrutal/docs/audit-pack/audit-pack-caua-
    │                                            │
    │◀─── recibe NDA firmado + email + lista ────│
    │                                            │
-   │── invita @udistrital.edu.co al folder ────▶│
-   │   Drive (Editor) + GH/Vercel/Supabase     │
+   │── invita andresgalladofr@gmail.com al ────▶│
+   │   folder Drive (Editor) + GH/Vercel/SB    │
    │                                            │
    │── sube PDF + cualquier doc inicial ────────▶│ (Drive)
    │                                            │
@@ -98,7 +98,7 @@ cp /Users/amauryamed/Documents/CacaoFrutaBrutal/docs/audit-pack/audit-pack-caua-
 | Rol | Nombre | Contacto |
 |---|---|---|
 | CTO CAUA COLOMBIA SAS | Amaury Amed | amauryamed@gmail.com |
-| Auditor responsable | Andrés Gallardo | _por confirmar al firmar NDA_ |
+| Auditor responsable | Andrés Gallardo | andresgalladofr@gmail.com |
 | Equipo auditor UD | _Anexo A del NDA_ | _por confirmar_ |
 
 ## Troubleshooting

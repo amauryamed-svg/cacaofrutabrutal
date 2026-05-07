@@ -20,7 +20,7 @@
 - **Responsable principal:** Andrés Gallardo
 - **Equipo asignado:** según lista nominal entregada en el onboarding (Anexo A)
 - **Domicilio:** Bogotá D.C., Colombia
-- **Email institucional:** _________________________ (`@udistrital.edu.co`)
+- **Email de contacto:** andresgalladofr@gmail.com
 - En adelante, "**el Auditor**" o, colectivamente con el equipo, "**los Auditores**"
 
 Las partes han acordado celebrar el presente Acuerdo de Confidencialidad (en adelante, el "**Acuerdo**" o el "**NDA**") sujeto a las siguientes cláusulas.
@@ -257,9 +257,9 @@ Fecha: ____ / ____ / ________
 
 A completar por el Auditor antes de la firma. Solo las personas listadas pueden acceder a la Información Confidencial.
 
-| # | Nombre completo | Email institucional UD | Rol académico | Firma o referencia a vinculación contractual UD |
+| # | Nombre completo | Email de contacto | Rol académico | Vinculación UD |
 |---|---|---|---|---|
-| 1 | Andrés Gallardo (responsable) | | | (vinculación UD principal) |
+| 1 | Andrés Gallardo (responsable) | andresgalladofr@gmail.com | _por completar_ | _por completar_ |
 | 2 | | | | |
 | 3 | | | | |
 | 4 | | | | |
