@@ -8,6 +8,8 @@ import { useScrollProgress } from '../hooks/useScrollProgress'
 import ScrollDebugOverlay from '../components/landing/ScrollDebugOverlay'
 import CacaoGallery from '../components/landing/CacaoGallery'
 import CauaWordmark from '../components/landing/CauaWordmark'
+import PublicTabNav from '../components/landing/PublicTabNav'
+import Web3Transparency from '../components/landing/Web3Transparency'
 
 // Brand icons — thin stroke, ~1.5px, Pod Green — matching brand icon sheet (p.22)
 
@@ -83,6 +85,7 @@ export default function Landing() {
     // bgDeep is the page's solid base. The gallery covers it with photos
     // (with a built-in scrim for legibility). Sections sit at z-index ≥ 1.
     <div style={{ background: BRAND.bgDeep, minHeight: '100vh', position: 'relative' }}>
+        <PublicTabNav mode="adoptar" />
         <ScrollDebugOverlay />
         <CacaoGallery />
 
@@ -295,6 +298,9 @@ export default function Landing() {
         </div>
       </div>
 
+      {/* ── Web3 Transparency · BaseScan verifier links ── */}
+      <Web3Transparency />
+
       {/* ── Value Props ── */}
       <div style={{
         padding: '0 var(--space-page) var(--space-section)', maxWidth: 960, margin: '0 auto',
@@ -384,6 +390,25 @@ export default function Landing() {
             {lang === 'es' ? 'Seleccionar Clase Genética' : 'Choose Genetic Class'}
           </CauaButton>
         </div>
+      </div>
+
+      {/* ── Legal footer ── */}
+      <div style={{
+        padding: '20px var(--space-page) 32px',
+        textAlign: 'center',
+        borderTop: `1px solid ${BRAND.amazon}33`,
+        position: 'relative',
+        zIndex: 1,
+      }}>
+        <p style={{
+          fontFamily: FONTS.body,
+          fontSize: 10,
+          color: `${BRAND.heirloom}55`,
+          letterSpacing: '0.08em',
+          margin: 0,
+        }}>
+          CAUA COLOMBIA SAS · NIT 901.213.846-7 · Bogotá D.C. · Colombia
+        </p>
       </div>
     </div>
   )
