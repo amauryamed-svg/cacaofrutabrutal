@@ -22,7 +22,7 @@ const translations = {
   land_cta2:     { es: 'RITUAL DEL DÍA',   en: 'DAILY RITUAL'    },
   land_cta3:     { es: '↗ SIEMBRA',        en: '↗ SIEMBRA'       },
   land_adopt_pitch: {
-    es: 'Adoptá un árbol GRATIS durante el onboarding mientras optimizamos el flow on-chain. Aprovechá la ventana — pronto: ${PRICE} USD con split 60/30/10 al guardián, cooperativa y protocolo.',
+    es: 'Adopta un árbol GRATIS durante el onboarding mientras optimizamos el flow on-chain. Aprovecha la ventana — pronto: ${PRICE} USD con split 60/30/10 al guardián, cooperativa y protocolo.',
     en: 'Adopt a tree FREE during onboarding while we optimize on-chain. Take advantage of the window — soon: ${PRICE} USD with 60/30/10 split to guardian, cooperative and protocol.'
   },
   land_petals:   { es: 'Los 5 Guardianes del Cacao Criollo',
