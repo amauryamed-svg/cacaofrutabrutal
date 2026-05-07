@@ -36,7 +36,10 @@ const Web3Landing    = lazy(() => import('./pages/Web3Landing'))
 
 function AppShell() {
   const { pathname } = useLocation()
-  const hideChrome   = pathname === '/auth'
+  // Public surfaces: solo PublicTabNav + footer mínimo. NavBar de la SPA
+  // (con dropdowns INICIO/CONTENIDO/ÁRBOL/MERCADO/WEB3/FONDO) es ruido para
+  // attendees del evento AtmosphereX que aún no se logean.
+  const hideChrome   = pathname === '/auth' || pathname === '/' || pathname === '/adoptar'
 
   useEffect(() => {
     try {

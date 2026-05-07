@@ -86,19 +86,13 @@ const PHOTOS: KBPhoto[] = [
   {
     src: '/uploads/lifecycle/06-mazorca-opened.jpg',
     alt: 'Mazorca opened revealing beans in mucilage',
-    range: [0.72, 0.88],
+    range: [0.72, 1.00],
     start: { x:  0, y:  0, scale: 1.07 },
     end:   { x:  0, y:  0, scale: 1.00 },
   },
-  // Existing archive photo — founder + drying beds. Use until a more
-  // specific harvest/hands shot is provided.
-  {
-    src: '/uploads/founder-secaderos.jpg',
-    alt: 'Founder at the drying beds',
-    range: [0.86, 1.00],
-    start: { x: -1, y:  0, scale: 1.00 },
-    end:   { x:  1, y: -1, scale: 1.06 },
-  },
+  // Founder photo deferred — landing público para AtmosphereX y futuros
+  // estudiantes/consumers no necesita el shot de fundador. Reactivar cuando
+  // tengamos un harvest/hands shot genérico que no parezca cuelgue personal.
 ]
 
 /** Crossfade window — the band on each side of a photo's range during which
