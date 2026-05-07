@@ -2316,6 +2316,27 @@ footer a:hover{color:var(--ink2);}
 
 </div><!-- /scroll-root -->
 
+<!-- Growth deck embedded — el deck completo /pitch_growth.html al final
+     de la landing de inversores. Se carga en iframe lazy para que la
+     primera vista no pague el costo. Mobile y desktop: full-width con
+     scroll independiente del documento principal. -->
+<section id="growth-embed" style="background:#040C06;padding:0;border-top:1px solid #1C3B2666;">
+  <div style="text-align:center;padding:48px 16px 24px;">
+    <div style="font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.28em;text-transform:uppercase;color:#91A63B;margin-bottom:12px;">◈ Growth deck completo ↓</div>
+    <h3 style="font-family:'Helvetica Neue',sans-serif;font-weight:900;font-size:clamp(20px,3.5vw,32px);color:#F7F1EE;margin:0;letter-spacing:-0.01em;">CAÚA Growth · Equipo · Mercado · Roadmap</h3>
+    <p style="font-family:'Helvetica Neue',sans-serif;font-size:13px;color:#F7F1EEaa;margin:10px auto 0;max-width:520px;line-height:1.55;">
+      Para más detalle abre el deck completo en una pestaña nueva:
+      <a href="/pitch_growth.html" target="_blank" rel="noopener" style="color:#F1A91E;text-decoration:underline;">pitch_growth.html ↗</a>
+    </p>
+  </div>
+  <iframe
+    src="/pitch_growth.html"
+    title="CAÚA Growth Deck"
+    loading="lazy"
+    style="display:block;width:100%;height:100vh;min-height:680px;border:0;background:#040C06;"
+  ></iframe>
+</section>
+
 <footer>
   <div class="f-logo" aria-label="caúa">
     <svg class="caua-logo" viewBox="0 0 234.67 78.01" xmlns="http://www.w3.org/2000/svg" aria-label="caúa">

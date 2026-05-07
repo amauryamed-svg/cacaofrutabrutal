@@ -189,7 +189,6 @@ export default function Landing() {
           {/* Secondary links */}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
             {[
-              { href: '/pitch_growth.html',label: 'GROWTH',  color: BRAND.mazorca },
               { href: '/siembra.html',     label: 'SIEMBRA', color: BRAND.pod     },
             ].map(({ href, label, color }) => (
               <a key={href} href={href} target="_blank" rel="noopener noreferrer"
