@@ -133,6 +133,7 @@
   "rewrites": [
     { "source": "/api/crm/:path*", "destination": "/api/crm" },
     { "source": "/app",            "destination": "/index.html" },
+    { "source": "/app/",           "destination": "/index.html" },
     { "source": "/app/:path*",     "destination": "/index.html" }
   ],
   "crons": [
