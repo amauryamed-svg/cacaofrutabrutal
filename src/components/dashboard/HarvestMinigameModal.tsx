@@ -27,8 +27,13 @@ export interface HarvestMinigamePayload {
   combo_bonus:       boolean
   /** Where the user wants to go AFTER the harvest fires server-side.
    *  Parent component handles the actual navigation. null/absent = stay
-   *  on the current page. */
-  next_route?:       'marketplace_redeem' | 'dashboard_impact' | null
+   *  on the current page.
+   *
+   *  CRM360 funnel (2026-05-07): `lab_refine` is the new primary path —
+   *  post-harvest the user has mucílago + masa fresh, the most engaging
+   *  next action is forging the chocolate in the Lab. `marketplace_redeem`
+   *  remains as the Camino A pull (RedimeCacao10K bonus). */
+  next_route?:       'lab_refine' | 'marketplace_redeem' | 'dashboard_impact' | null
 }
 
 interface Props {
@@ -82,6 +87,12 @@ function Inner({
     setSkipping(true)
     const baseBeans    = TOKEN_RATES.tree_harvest_share.beans
     const baseMazorcas = TOKEN_RATES.tree_harvest_share.mazorcas
+    // CRM360 funnel: skip → /lab para mantener el momentum del journey.
+    // Nota: el arena no expone progress mid-game (fires onComplete solo al
+    // final), así que un skip durante slicing pierde los pods cortados —
+    // mejora futura: prop `onSnapshot` en HarvestMacheteArena para capturar
+    // estado parcial. Por ahora el lab muestra "Insumos insuficientes" si
+    // mucilage/masa = 0, prompting a cosechar más árboles.
     onComplete({
       via:          'instant',
       beans:        baseBeans,
@@ -91,6 +102,7 @@ function Inner({
       pods_sliced:  0,
       pods_total:   0,
       combo_bonus:  false,
+      next_route:   'lab_refine',
     })
     onClose()
   }
@@ -213,26 +225,32 @@ function Inner({
                 onClick={handleSkip}
                 disabled={skipping}
                 style={{
-                  background: 'transparent', border: 'none', cursor: skipping ? 'wait' : 'pointer',
-                  color: `${BRAND.heirloom}99`,
-                  fontFamily: FONTS.display, fontWeight: 700, fontSize: 10,
-                  letterSpacing: '0.16em', textTransform: 'uppercase',
-                  textDecoration: 'underline', textUnderlineOffset: 4,
+                  background: 'transparent', border: `1px solid ${BRAND.mazorca}88`,
+                  cursor: skipping ? 'wait' : 'pointer',
+                  color: BRAND.mazorca,
+                  fontFamily: FONTS.display, fontWeight: 800, fontSize: 11,
+                  letterSpacing: '0.14em', textTransform: 'uppercase',
+                  padding: '8px 14px', borderRadius: 999,
                   opacity: skipping ? 0.6 : 1,
                   flexShrink: 0,
                 }}
+                title={lang === 'es' ? 'Saltar minigame y avanzar al Laboratorio. Si no rebanaste pods, no tendrás mucílago/masa — el Lab te pedirá cosechar más árboles.' : 'Skip minigame and advance to Lab. If no pods sliced, no mucilage/masa available — Lab will prompt to harvest more trees.'}
               >
-                {lang === 'es' ? 'Cosechar instantáneo →' : 'Instant harvest →'}
+                {lang === 'es' ? '🧪 Pasar al Laboratorio →' : '🧪 Skip to Lab →'}
               </button>
             </>
           ) : (
-            // Summary footer — three CTAs that all confirm the harvest server-side
-            // and then route the user to the most natural next step. The harvest
-            // payload (with next_route) goes to the parent which fires award-tokens
-            // and then navigate(). Stack vertically so each is full-width on mobile.
+            // Summary footer — CTA hierarchy reordered post-CRM360 (2026-05-07):
+            //   1. Primary   = lab_refine     (engaged funnel · machete → forja)
+            //   2. Secondary = marketplace_redeem (Camino A · RedimeCacao10K bonus)
+            //   3. Tertiary  = back to tree   (dashboard_impact removed; the
+            //                  user's mucílago+masa just dropped, the worst
+            //                  next step is "ver mi jardín" estático)
+            // Each CTA confirms harvest server-side via parent submitHarvest
+            // and then navigate()s. Stack vertically full-width on mobile.
             <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
               <button
-                onClick={() => handleClaim('marketplace_redeem')}
+                onClick={() => handleClaim('lab_refine')}
                 style={{
                   width: '100%',
                   background: `linear-gradient(135deg, ${BRAND.mazorca}, ${BRAND.brown})`,
@@ -245,16 +263,16 @@ function Inner({
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 }}
               >
-                <span style={{ fontSize: 18 }}>🍫</span>
-                {lang === 'es' ? 'Canjear mazorcas por chocolate →' : 'Redeem mazorcas for chocolate →'}
+                <span style={{ fontSize: 18 }}>🧪</span>
+                {lang === 'es' ? 'Refinar al Laboratorio →' : 'Refine in the Lab →'}
               </button>
               <button
-                onClick={() => handleClaim('dashboard_impact')}
+                onClick={() => handleClaim('marketplace_redeem')}
                 style={{
                   width: '100%',
                   background: 'transparent',
-                  color: BRAND.pod,
-                  border: `1px solid ${BRAND.pod}aa`,
+                  color: BRAND.mazorca,
+                  border: `1px solid ${BRAND.mazorca}aa`,
                   borderRadius: 999,
                   padding: '12px 18px', cursor: 'pointer',
                   fontFamily: FONTS.display, fontWeight: 700, fontSize: 12,
@@ -262,8 +280,8 @@ function Inner({
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 }}
               >
-                <span style={{ fontSize: 16 }}>📊</span>
-                {lang === 'es' ? 'Ver mi jardín + impacto →' : 'View my garden + impact →'}
+                <span style={{ fontSize: 16 }}>🎁</span>
+                {lang === 'es' ? 'Reclamar bono $10K →' : 'Claim $10K bonus →'}
               </button>
               <button
                 onClick={() => handleClaim(null)}

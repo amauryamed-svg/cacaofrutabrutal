@@ -72,22 +72,12 @@ export default function MintTreeButton({ treeId, alreadyMintedTokenId, alreadyMi
     )
   }
 
-  if (kyc.loading) {
-    return <div style={hintStyle}>Loading wallet status…</div>
-  }
-
-  if (!kyc.canPerform('mint')) {
-    return (
-      <div style={blockedBoxStyle}>
-        <div style={{ ...labelStyle, color: BRAND.mazorca }}>WALLET + KYC REQUIRED</div>
-        <p style={hintStyle}>
-          Mint your tree as an ERC-721 NFT on Base. Requires KYC tier ≥ 1 and a linked wallet.
-        </p>
-        <a href="/app/web3/onboarding" style={ctaLinkStyle}>
-          → Complete Web3 onboarding
-        </a>
-      </div>
-    )
+  // Phase 1: don't push Web3 onboarding from TreeDetail. Users who haven't
+  // completed KYC + wallet linking see nothing here — the mint CTA lives in
+  // /web3 only. Loading state is also hidden to avoid a flash of "Loading…"
+  // for the freemium majority who never reach the ready-to-mint state.
+  if (kyc.loading || !kyc.canPerform('mint')) {
+    return null
   }
 
   return (
@@ -135,13 +125,6 @@ export default function MintTreeButton({ treeId, alreadyMintedTokenId, alreadyMi
 const ctaBoxStyle: React.CSSProperties = {
   background: BRAND.bgCard,
   border: `1px solid ${BRAND.pod}`,
-  padding: 20,
-  fontFamily: FONTS.body,
-  color: BRAND.heirloom,
-}
-const blockedBoxStyle: React.CSSProperties = {
-  background: BRAND.bgDeep,
-  border: `1px dashed ${BRAND.mazorca}`,
   padding: 20,
   fontFamily: FONTS.body,
   color: BRAND.heirloom,

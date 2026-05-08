@@ -120,6 +120,7 @@ export const GUARDIANS: Guardian[] = [
     market_uses: ['Licor de Cacao 100%', 'Bebidas de Mucílago', 'Hidrosoles', 'Perfumería Artesanal', 'Chocolatería Funcional'],
     pods: '🟡 Vainas amarillas · interior cremoso',
     heritage: 'Agroforestería regenerativa en la línea del Ecuador — Fine-Flavor garantizado.',
+    blogSlug: 'fermentaciones-huila-lucho',
   },
   {
     name: 'Marta',
@@ -134,6 +135,7 @@ export const GUARDIANS: Guardian[] = [
     market_uses: ['Barras de Autor 100%', 'Liofilizados Premium', 'Chocolatería Funcional', 'Fine-Flavor Export'],
     pods: '🟢 Saravena 12 (verde) · 🟠 FEAR5 (naranja) · 🟡 Tame 2 (amarillo)',
     heritage: 'Modelo Araucano 2011 · FEAR5 · Saravena 12 · Tame 2 — variedades únicas en Colombia.',
+    blogSlug: 'guardiana-marta-arauca',
   },
   {
     name: 'Rafael',
@@ -148,6 +150,7 @@ export const GUARDIANS: Guardian[] = [
     market_uses: ['Barras de Autor 100%', 'Chocolatería Premium', 'Polifenoles Funcionales', 'Fine-Flavor Altitudinal'],
     pods: '🟣 San Vicente 41 (morado-rojo) · 🟠 FEAR5 · 🟢 Saravena 12 · 🟡 Bolívar 1 · Gigante 4',
     heritage: 'Cacao altitudinal del Sumapaz — polifenoles diméricos premium para salud cardiovascular.',
+    blogSlug: 'guardian-rafael-sumapaz',
   },
   {
     name: 'Fernando',
@@ -162,6 +165,7 @@ export const GUARDIANS: Guardian[] = [
     market_uses: ['Barras de Autor Premiadas', 'Liofilizados Gourmet', 'Fine-Flavor Export', 'Cacao de Excelencia'],
     pods: '🟠 FEAR5 (naranja) · 🟣 San Vicente 41 (morado) — variedades galardonadas',
     heritage: '🥇 Medalla de Oro · Cacao de Excelencia 2024 — el cacao criollo élite más premiado de Colombia.',
+    blogSlug: 'guardian-fernando-meta-oro',
   },
   {
     name: 'Ricardo',
@@ -176,6 +180,7 @@ export const GUARDIANS: Guardian[] = [
     market_uses: ['Bombones y Chocolatinas', 'Tabletas 70%', 'Chocolate Comercial Premium', 'Coberturas Gourmet'],
     pods: '🟤 Vainas trinitarias robustas — perfil chocolatoso profundo',
     heritage: 'Tradición cacaotera santandereana — el Trinitario de Landázuri, unión de fincas de montaña.',
+    blogSlug: 'guardian-ricardo-santander',
   },
 ]
 

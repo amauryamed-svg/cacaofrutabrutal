@@ -261,11 +261,13 @@ export default function TreeDetail() {
   const submitHarvest = async (payload: HarvestMinigamePayload) => {
     if (!tree || harvesting) return
     setHarvesting(true)
+    let awardOk = false
+    let awardError: string | null = null
     try {
       const { data: sessionData } = await supabase.auth.getSession()
       const accessToken = sessionData?.session?.access_token
       if (accessToken) {
-        await fetch(
+        const response = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/award-tokens`,
           {
             method: 'POST',
@@ -280,6 +282,25 @@ export default function TreeDetail() {
             }),
           },
         )
+        if (!response.ok) {
+          const txt = await response.text().catch(() => '')
+          awardError = `award-tokens ${response.status}: ${txt.slice(0, 200)}`
+          console.warn('[CRM360] Harvest award failed:', awardError)
+        } else {
+          awardOk = true
+          // Diagnostic: parse the response to confirm credit
+          const json = await response.json().catch(() => null)
+          if (json) {
+            console.info('[CRM360] Harvest awarded:', {
+              mucilage: json.mucilage_awarded,
+              cacao_mass: json.cacao_mass_awarded,
+              new_balance: json.new_balance,
+            })
+          }
+        }
+      } else {
+        awardError = 'no-access-token'
+        console.warn('[CRM360] Harvest skipped: no Supabase session')
       }
       setHarvested(true)
       const subtitleBits = [
@@ -289,21 +310,37 @@ export default function TreeDetail() {
       if (payload.mucilage_g > 0)   subtitleBits.push(`+${payload.mucilage_g.toFixed(0)}g mucílago`)
       if (payload.cacao_mass_g > 0) subtitleBits.push(`+${payload.cacao_mass_g.toFixed(0)}g masa`)
       showAchievement({
-        title: payload.combo_bonus ? '¡COSECHA PERFECTA!' : 'HARVEST CLAIMED',
-        subtitle: subtitleBits.join(' · '),
-        icon: '🍫',
+        title: awardError
+          ? '⚠ CRÉDITO PENDIENTE'
+          : payload.combo_bonus ? '¡COSECHA PERFECTA!' : 'HARVEST CLAIMED',
+        subtitle: awardError ? `Error: ${awardError.slice(0, 60)}` : subtitleBits.join(' · '),
+        icon: awardError ? '⚠️' : '🍫',
       })
-      // Post-harvest navigation — the modal asked the user where to go next.
-      // We wait until after the server call so the user lands on a page that
-      // already reflects the new balance (mazorcas in dashboard, redeem in
-      // marketplace).
-      if (payload.next_route === 'marketplace_redeem') {
-        navigate('/marketplace#cacao-ceremony')
-      } else if (payload.next_route === 'dashboard_impact') {
-        navigate('/dashboard')
+      // Post-harvest navigation. Pass the deltas via location state so the
+      // destination page can show fresh-credit feedback (and detect if
+      // useTokenBalance polling hasn't caught up yet).
+      const navState = {
+        freshHarvest: {
+          mucilage_g:   payload.mucilage_g,
+          cacao_mass_g: payload.cacao_mass_g,
+          beans:        payload.beans,
+          mazorcas:     payload.mazorcas,
+          via:          payload.via,
+          tree_id:      tree.id,
+          award_ok:     awardOk,
+          error:        awardError,
+        },
       }
-    } catch {
-      // best-effort; user can retry
+      // CRM360: `lab_refine` is the primary funnel.
+      if (payload.next_route === 'lab_refine') {
+        navigate('/lab', { state: navState })
+      } else if (payload.next_route === 'marketplace_redeem') {
+        navigate('/marketplace#cacao-ceremony', { state: navState })
+      } else if (payload.next_route === 'dashboard_impact') {
+        navigate('/dashboard', { state: navState })
+      }
+    } catch (e) {
+      console.warn('[CRM360] submitHarvest threw:', e)
     } finally {
       setHarvesting(false)
     }
@@ -447,6 +484,14 @@ export default function TreeDetail() {
           </div>
         )}
 
+        {/* Mientras crece — visible solo cuando el árbol está vivo, no en
+            peligro, no listo a cosechar y no cosechado. Empuja exploración
+            del proyecto + opt-in a notificaciones del navegador. Email es
+            automático vía cron `notify-tree-care` para todos los árboles. */}
+        {!dead && !inDanger && !harvestReady && !harvested && (
+          <WhileGrowingPanel cycleRemaining={cycleRemaining} navigate={navigate} />
+        )}
+
         {/* NFT mint row */}
         <div style={{ marginTop: 16 }}>
           <MintTreeButton
@@ -492,6 +537,160 @@ export default function TreeDetail() {
   )
 }
 
+
+// ── While-growing panel ─────────────────────────────────────────────
+// Eyebrow "mientras crece" + 3 explore CTAs (Phase 1 surfaces only) +
+// browser-notification activator. Email notifications are auto-sent by
+// the `notify-tree-care` cron — this is purely opt-in for browser push.
+
+type NotificationPermissionState = 'default' | 'granted' | 'denied' | 'unsupported'
+
+function WhileGrowingPanel({
+  cycleRemaining,
+  navigate,
+}: {
+  cycleRemaining: string
+  navigate: ReturnType<typeof useNavigate>
+}) {
+  const [permission, setPermission] = useState<NotificationPermissionState>(() => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return 'unsupported'
+    return Notification.permission as NotificationPermissionState
+  })
+
+  const activate = async () => {
+    if (permission === 'unsupported' || permission === 'granted' || permission === 'denied') return
+    try {
+      const result = await Notification.requestPermission()
+      setPermission(result as NotificationPermissionState)
+      if (result === 'granted') {
+        new Notification('CAUA · avisos activados', {
+          body: 'Te avisaremos cuando tu árbol necesite cuidado o esté listo para cosechar.',
+          icon: '/favicon-192.png',
+        })
+      }
+    } catch {
+      // Some browsers (Safari) reject without a user gesture chain — silently noop.
+    }
+  }
+
+  return (
+    <div style={whilePanelStyle}>
+      <div style={whileEyebrowStyle}>🌱 Mientras crece · ~{cycleRemaining}</div>
+      <h3 style={whileTitleStyle}>Conoce el proyecto</h3>
+      <p style={whileBodyStyle}>
+        Tu cacao madura a su ritmo. Te avisaremos por correo cuando esté listo para
+        cosechar, necesite cuidado o esté en peligro — un email por evento, sin spam.
+      </p>
+
+      {/* Browser notification activator */}
+      <button
+        onClick={activate}
+        disabled={permission === 'granted' || permission === 'denied' || permission === 'unsupported'}
+        style={{
+          ...whileActivatorStyle,
+          background: permission === 'granted' ? `${BRAND.pod}22` : `${BRAND.mazorca}1a`,
+          border: `1.5px solid ${permission === 'granted' ? BRAND.pod : BRAND.mazorca}`,
+          color: permission === 'granted' ? BRAND.pod : BRAND.mazorca,
+          cursor: permission === 'default' ? 'pointer' : 'default',
+          opacity: permission === 'denied' || permission === 'unsupported' ? 0.6 : 1,
+        }}
+      >
+        {permission === 'granted'  && '✓ Avisos del navegador activados'}
+        {permission === 'denied'   && '⚠ Avisos del navegador bloqueados'}
+        {permission === 'default'  && '🔔 Activar avisos del navegador'}
+        {permission === 'unsupported' && '⚠ Tu navegador no soporta avisos'}
+      </button>
+      {permission === 'denied' && (
+        <p style={whileHintStyle}>
+          Habilítalos desde la configuración del navegador para este sitio. Mientras
+          tanto, los avisos por correo siguen activos.
+        </p>
+      )}
+
+      {/* Explore CTAs — Phase 1 surfaces only (no Marketplace/Fund/Impacto) */}
+      <div style={whileCtasStyle}>
+        <button onClick={() => navigate('/blog')} style={whileCtaStyle}>
+          <span style={{ fontSize: 18 }}>📰</span>
+          <span style={whileCtaLabelStyle}>Lee el blog</span>
+          <span style={whileCtaHintStyle}>Historias de los Guardianes</span>
+        </button>
+        <button onClick={() => navigate('/catacion')} style={whileCtaStyle}>
+          <span style={{ fontSize: 18 }}>🍫</span>
+          <span style={whileCtaLabelStyle}>Reserva una catación</span>
+          <span style={whileCtaHintStyle}>Ceremonia presencial · 5 tiempos</span>
+        </button>
+        <button onClick={() => navigate('/adoptar')} style={whileCtaStyle}>
+          <span style={{ fontSize: 18 }}>🌱</span>
+          <span style={whileCtaLabelStyle}>Adopta otro Guardián</span>
+          <span style={whileCtaHintStyle}>5 fincas · 5 historias distintas</span>
+        </button>
+      </div>
+    </div>
+  )
+}
+
+const whilePanelStyle: CSSProperties = {
+  marginTop: 16,
+  background: `linear-gradient(160deg, ${BRAND.amazon}33 0%, ${BRAND.bgDeep} 100%)`,
+  border: `1px solid ${BRAND.pod}55`,
+  borderRadius: 14,
+  padding: 'clamp(16px, 3.5vw, 22px)',
+  boxShadow: `inset 0 1px 0 ${BRAND.heirloom}11`,
+}
+const whileEyebrowStyle: CSSProperties = {
+  fontFamily: FONTS.display, fontWeight: 700, fontSize: 10,
+  color: BRAND.pod, letterSpacing: '0.22em', textTransform: 'uppercase',
+  marginBottom: 8,
+}
+const whileTitleStyle: CSSProperties = {
+  fontFamily: FONTS.display, fontWeight: 900,
+  fontSize: 'clamp(20px, 4vw, 26px)',
+  color: BRAND.heirloom, letterSpacing: '0.02em',
+  textTransform: 'uppercase', margin: '0 0 8px', lineHeight: 1,
+}
+const whileBodyStyle: CSSProperties = {
+  fontFamily: FONTS.body, fontSize: 13,
+  color: `${BRAND.heirloom}aa`, lineHeight: 1.55,
+  margin: '0 0 14px',
+}
+const whileActivatorStyle: CSSProperties = {
+  width: '100%',
+  padding: '12px 16px',
+  borderRadius: 999,
+  fontFamily: FONTS.display, fontWeight: 800, fontSize: 11,
+  letterSpacing: '0.14em', textTransform: 'uppercase',
+  marginBottom: 16,
+  transition: 'background 0.2s, border-color 0.2s',
+}
+const whileHintStyle: CSSProperties = {
+  fontFamily: FONTS.body, fontSize: 11,
+  color: `${BRAND.heirloom}77`, lineHeight: 1.5,
+  margin: '-8px 0 16px',
+}
+const whileCtasStyle: CSSProperties = {
+  display: 'flex', flexDirection: 'column', gap: 8,
+}
+const whileCtaStyle: CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: 12,
+  background: 'transparent',
+  border: `1px solid ${BRAND.heirloom}22`,
+  borderRadius: 10,
+  padding: '12px 14px',
+  cursor: 'pointer',
+  textAlign: 'left',
+  color: BRAND.heirloom,
+  transition: 'background 0.2s, border-color 0.2s',
+}
+const whileCtaLabelStyle: CSSProperties = {
+  flex: 1,
+  fontFamily: FONTS.display, fontWeight: 800, fontSize: 12,
+  letterSpacing: '0.06em', textTransform: 'uppercase',
+  color: BRAND.heirloom,
+}
+const whileCtaHintStyle: CSSProperties = {
+  fontFamily: FONTS.body, fontSize: 10,
+  color: `${BRAND.heirloom}66`, letterSpacing: '0.04em',
+}
 
 // ── Styles ──────────────────────────────────────────────────────────
 

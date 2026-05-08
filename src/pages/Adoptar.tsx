@@ -10,6 +10,21 @@ import { isTreeDead, isDying, needsAttention, isHarvestReady, getStageByHours, h
 
 type Phase = 'idle' | 'confirming' | 'adopting' | 'done'
 
+// Golden Ticket Freemium flag — toggled via VITE_GOLDEN_TICKET_FREEMIUM env var
+// (Vercel env vars). When true, adoption is the 1st of 4 hitos del Camino del
+// Creyente: gratis · ancla de valor $5 USD se muestra tachada, CTA "Adopta
+// gratis", payment-surface bypass. Cuando termine la campaña, flip a false en
+// Vercel y redeploy — sin tocar código. Hitos: 1 adoptar · 2 cuidar · 3 cosechar
+// · 4 forjar (ver MiLaboratorio.tsx:402).
+const IS_GOLDEN_TICKET_FREEMIUM = import.meta.env.VITE_GOLDEN_TICKET_FREEMIUM === 'true'
+
+const GOLDEN_TICKET_HITOS = [
+  { n: 1, label: 'Adopta tu árbol',       hint: 'Conoce a uno de los 5 Guardianes y siembra tu cacao' },
+  { n: 2, label: 'Cuida cada 30 min',     hint: 'Agua, sol, nutrientes — 5 horas hasta cosecha' },
+  { n: 3, label: 'Cosecha la mazorca',    hint: 'Fruit-Ninja arena — corta las mazorcas maduras' },
+  { n: 4, label: 'Forja tu chocolate',    hint: 'Liofilizado · refinado · conchado en el Lab' },
+] as const
+
 export default function Adoptar() {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -28,6 +43,7 @@ export default function Adoptar() {
   const [activeIdx,   setActiveIdx]   = useState(initialGuardian)
   const [cardKey,     setCardKey]     = useState(0)
   const [tokenReward, setTokenReward] = useState<{ beans: number; mazorcas: number } | null>(null)
+  const [showGTModal, setShowGTModal] = useState(false)
 
   const guardian = GUARDIANS[activeIdx]
 
@@ -58,7 +74,10 @@ export default function Adoptar() {
       await adoptTree(activeIdx, dbEnum, guardian.region)
       setTokenReward(TOKEN_RATES.tree_adoption)
       setPhase('done')
-      setTimeout(() => { setTokenReward(null); setPhase('idle') }, 3000)
+      // Token reward toast hides at 3s; the gift card reveal in `done` state
+      // requires explicit dismiss (CRM360 Camino A · the user shouldn't lose
+      // their RedimeCacao10K code in a 3-second flash).
+      setTimeout(() => { setTokenReward(null) }, 3000)
     } catch (err) {
       alert(`No se pudo adoptar: ${err instanceof Error ? err.message : 'Error desconocido'}`)
       setPhase('idle')
@@ -89,6 +108,40 @@ export default function Adoptar() {
           Desliza <span style={{ color: '#2ecc71' }}>→ derecha</span> para adoptar ·{' '}
           <span style={{ color: '#e74c3c' }}>← izquierda</span> para pasar
         </p>
+
+        {/* Golden Ticket Freemium · ribbon de campaña — visible siempre que el
+            flag está activo. Click → abre modal con los 4 hitos del Camino del
+            Creyente. Apagar campaña: VITE_GOLDEN_TICKET_FREEMIUM=false en Vercel. */}
+        {IS_GOLDEN_TICKET_FREEMIUM && (
+          <button
+            onClick={() => setShowGTModal(true)}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              background: `linear-gradient(135deg, ${BRAND.mazorca}22, ${BRAND.mazorca}11)`,
+              border: `1.5px solid ${BRAND.mazorca}`,
+              borderRadius: 999,
+              padding: '8px 16px',
+              cursor: 'pointer',
+              marginBottom: 18,
+              boxShadow: `0 0 18px ${BRAND.mazorca}55`,
+              animation: 'caua-gt-ribbon-pulse 2.4s ease-in-out infinite',
+            }}
+          >
+            <span style={{ fontSize: 14 }}>🎟️</span>
+            <span style={{
+              fontFamily: FONTS.display, fontWeight: 800, fontSize: 11,
+              color: BRAND.mazorca, letterSpacing: '0.18em', textTransform: 'uppercase',
+            }}>
+              Adopta gratis · Golden Ticket activo
+            </span>
+            <span style={{
+              fontFamily: FONTS.display, fontWeight: 700, fontSize: 9,
+              color: `${BRAND.mazorca}99`, letterSpacing: '0.08em',
+            }}>
+              ¿qué es?
+            </span>
+          </button>
+        )}
 
         {/* Adopted trees — split en dos jardines:
               · Jardín       → vivos / en peligro / listos a cosechar / cosechados
@@ -309,7 +362,7 @@ export default function Adoptar() {
 
         {/* Done */}
         {phase === 'done' && (
-          <div style={{ textAlign: 'center', padding: '48px 0' }}>
+          <div style={{ textAlign: 'center', padding: '32px 0 16px' }}>
             <div style={{ fontSize: 56, marginBottom: 12 }}>🌱</div>
             <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 28, color: BRAND.pod, letterSpacing: '0.05em' }}>
               ¡ÁRBOL ADOPTADO!
@@ -317,6 +370,106 @@ export default function Adoptar() {
             <p style={{ fontFamily: FONTS.body, color: `${BRAND.heirloom}66`, fontSize: 13, marginTop: 8 }}>
               Cuídalo cada 30 min durante 5 horas para cosechar 🍫
             </p>
+
+            {/* Golden Ticket · hito 1/4 completado · solo cuando freemium activo */}
+            {IS_GOLDEN_TICKET_FREEMIUM && (
+              <div style={{
+                marginTop: 18,
+                display: 'inline-flex', alignItems: 'center', gap: 10,
+                background: `${BRAND.mazorca}1a`,
+                border: `1.5px solid ${BRAND.mazorca}`,
+                borderRadius: 999,
+                padding: '8px 18px',
+                boxShadow: `0 0 18px ${BRAND.mazorca}44`,
+              }}>
+                <span style={{ fontSize: 15 }}>🎟️</span>
+                <span style={{
+                  fontFamily: FONTS.display, fontWeight: 800, fontSize: 11,
+                  color: BRAND.mazorca, letterSpacing: '0.16em', textTransform: 'uppercase',
+                }}>
+                  Hito 1 de 4 completado · siguen 3 más
+                </span>
+              </div>
+            )}
+
+            {/* ─── CRM360 · Camino A · Gift Card RedimeCacao10K (Phase 0 MVP) ───
+                Reward inmediato post-adopt para el "asistente sin fricción".
+                Phase 1: este bloque consume el código retornado por la Edge
+                Function `create-shopify-giftcard` (único per user).
+                Camino B (Golden Ticket) vive en MiLaboratorio.tsx post-forge. */}
+            <div style={{
+              marginTop: 28,
+              background: `linear-gradient(160deg, #2A0F26 0%, #150616 100%)`,
+              border: `1.5px solid ${BRAND.mazorca}`,
+              borderRadius: 14,
+              padding: 'clamp(18px, 3.5vw, 24px)',
+              maxWidth: 420,
+              marginLeft: 'auto', marginRight: 'auto',
+              boxShadow: `0 0 24px rgba(238, 161, 16, 0.25)`,
+              textAlign: 'center',
+            }}>
+              <div style={{
+                fontFamily: FONTS.display, fontWeight: 700, fontSize: 10,
+                color: BRAND.mazorca, letterSpacing: '0.22em',
+                textTransform: 'uppercase', marginBottom: 6,
+              }}>
+                🎁 Tu reward inmediato CAÚA
+              </div>
+              <div style={{
+                fontFamily: 'ui-monospace, monospace', fontWeight: 800,
+                fontSize: 'clamp(20px, 3.5vw, 28px)',
+                color: BRAND.heirloom, letterSpacing: '0.08em',
+                marginBottom: 10, wordBreak: 'break-all',
+              }}>
+                RedimeCacao10K
+              </div>
+              <div style={{
+                fontFamily: FONTS.body, fontSize: 13,
+                color: `${BRAND.heirloom}cc`, lineHeight: 1.5,
+                marginBottom: 14,
+              }}>
+                $10.000 COP de Gift Card · canjeable en cauacolombia.co. Tipea el código en el campo "Gift card or discount code" al pagar.
+              </div>
+              <a
+                href="https://cauacolombia.co/discount/RedimeCacao10K?redirect=/products/cacao-ceremonial-250gr-origen-hobo-huila"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-cta-name="cfb-camino-a-redime"
+                data-cta-surface="adoptar-done"
+                data-cta-destination="cauacolombia-pdp-discount"
+                style={{
+                  display: 'block',
+                  background: BRAND.mazorca,
+                  color: BRAND.bgDeep,
+                  padding: '12px 18px',
+                  borderRadius: 999,
+                  textDecoration: 'none',
+                  fontFamily: FONTS.display, fontWeight: 800, fontSize: 12,
+                  letterSpacing: '0.16em', textTransform: 'uppercase',
+                  textAlign: 'center',
+                }}
+              >
+                Canjear en CAÚA Colombia →
+              </a>
+            </div>
+
+            {/* Continuar — dismiss explícito (no auto-reset) */}
+            <button
+              onClick={() => { setTokenReward(null); setPhase('idle') }}
+              style={{
+                marginTop: 20,
+                background: 'transparent',
+                color: `${BRAND.heirloom}88`,
+                border: `1px solid ${BRAND.heirloom}33`,
+                borderRadius: 999,
+                padding: '10px 22px',
+                cursor: 'pointer',
+                fontFamily: FONTS.display, fontWeight: 700, fontSize: 11,
+                letterSpacing: '0.16em', textTransform: 'uppercase',
+              }}
+            >
+              Continuar →
+            </button>
           </div>
         )}
 
@@ -370,9 +523,10 @@ export default function Adoptar() {
                   {/* Top: eyebrow */}
                   <div style={{
                     fontFamily: FONTS.display, fontWeight: 700, fontSize: 10,
-                    color: BRAND.pod, letterSpacing: '0.25em', textTransform: 'uppercase',
+                    color: IS_GOLDEN_TICKET_FREEMIUM ? BRAND.mazorca : BRAND.pod,
+                    letterSpacing: '0.25em', textTransform: 'uppercase',
                   }}>
-                    Confirma tu adopción
+                    {IS_GOLDEN_TICKET_FREEMIUM ? '🎟️ Hito 1 de 4 · Camino del Creyente' : 'Confirma tu adopción'}
                   </div>
 
                   {/* Center: emoji + name + region + price */}
@@ -432,33 +586,71 @@ export default function Adoptar() {
                       )
                     })()}
 
-                    <div style={{
-                      marginTop: 18,
-                      fontFamily: FONTS.display, fontWeight: 900,
-                      fontSize: 'clamp(36px, 9vw, 56px)',
-                      color: BRAND.mazorca, letterSpacing: '-0.01em',
-                      textShadow: `0 4px 24px ${BRAND.mazorca}66`,
-                    }}>
-                      ${TREE_ADOPTION_PRICE_USD}<span style={{ fontSize: 14, color: `${BRAND.heirloom}66`, marginLeft: 6, fontWeight: 700, letterSpacing: '0.16em' }}>USD</span>
-                    </div>
-                    <div style={{
-                      fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}88`,
-                      marginTop: 4, letterSpacing: '0.04em',
-                    }}>🫘 +10 granos · 🌽 +3 mazorcas al adoptar</div>
+                    {IS_GOLDEN_TICKET_FREEMIUM ? (
+                      <>
+                        <div style={{ marginTop: 18, display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 10 }}>
+                          <span style={{
+                            fontFamily: FONTS.display, fontWeight: 800,
+                            fontSize: 'clamp(20px, 4.5vw, 28px)',
+                            color: `${BRAND.heirloom}55`,
+                            textDecoration: 'line-through',
+                            letterSpacing: '-0.01em',
+                          }}>
+                            ${TREE_ADOPTION_PRICE_USD} USD
+                          </span>
+                          <span style={{
+                            fontFamily: FONTS.display, fontWeight: 900,
+                            fontSize: 'clamp(36px, 9vw, 56px)',
+                            color: BRAND.mazorca, letterSpacing: '-0.01em',
+                            textShadow: `0 4px 24px ${BRAND.mazorca}66`,
+                          }}>
+                            GRATIS
+                          </span>
+                        </div>
+                        <div style={{
+                          fontFamily: FONTS.body, fontSize: 11, color: BRAND.mazorca,
+                          marginTop: 4, letterSpacing: '0.08em', fontWeight: 700,
+                        }}>🎟️ 1 de 30 cupos para Cacao Ceremony gratis</div>
+                        <div style={{
+                          fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}88`,
+                          marginTop: 4, letterSpacing: '0.04em',
+                        }}>🫘 +10 granos · 🌽 +3 mazorcas al adoptar</div>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{
+                          marginTop: 18,
+                          fontFamily: FONTS.display, fontWeight: 900,
+                          fontSize: 'clamp(36px, 9vw, 56px)',
+                          color: BRAND.mazorca, letterSpacing: '-0.01em',
+                          textShadow: `0 4px 24px ${BRAND.mazorca}66`,
+                        }}>
+                          ${TREE_ADOPTION_PRICE_USD}<span style={{ fontSize: 14, color: `${BRAND.heirloom}66`, marginLeft: 6, fontWeight: 700, letterSpacing: '0.16em' }}>USD</span>
+                        </div>
+                        <div style={{
+                          fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}88`,
+                          marginTop: 4, letterSpacing: '0.04em',
+                        }}>🫘 +10 granos · 🌽 +3 mazorcas al adoptar</div>
+                      </>
+                    )}
                   </div>
 
                   {/* Bottom: confirm + cancel + tiny disclaimer */}
                   <div style={{ width: '100%' }}>
                     <button onClick={confirmAdoption} style={{
                       width: '100%', padding: '14px',
-                      background: `linear-gradient(135deg, ${BRAND.pod}, ${BRAND.amazon})`,
+                      background: IS_GOLDEN_TICKET_FREEMIUM
+                        ? `linear-gradient(135deg, ${BRAND.mazorca}, ${BRAND.pod})`
+                        : `linear-gradient(135deg, ${BRAND.pod}, ${BRAND.amazon})`,
                       border: 'none', borderRadius: 999, cursor: 'pointer',
-                      color: BRAND.heirloom,
+                      color: IS_GOLDEN_TICKET_FREEMIUM ? BRAND.bgDeep : BRAND.heirloom,
                       fontFamily: FONTS.display, fontWeight: 800,
                       fontSize: 13, letterSpacing: '0.16em', textTransform: 'uppercase',
-                      boxShadow: `0 12px 28px ${BRAND.pod}55`,
+                      boxShadow: IS_GOLDEN_TICKET_FREEMIUM
+                        ? `0 12px 28px ${BRAND.mazorca}66`
+                        : `0 12px 28px ${BRAND.pod}55`,
                     }}>
-                      ✓ Adoptar por ${TREE_ADOPTION_PRICE_USD}
+                      {IS_GOLDEN_TICKET_FREEMIUM ? '✓ Adoptar gratis' : `✓ Adoptar por $${TREE_ADOPTION_PRICE_USD}`}
                     </button>
                     <button onClick={cancelConfirm} style={{
                       width: '100%', padding: 10, marginTop: 8,
@@ -473,7 +665,9 @@ export default function Adoptar() {
                       textAlign: 'center', fontSize: 9, color: `${BRAND.heirloom}55`,
                       lineHeight: 1.5, marginTop: 6,
                     }}>
-                      Pago se despliega 60/30/10 vía Coinbase Onramp.
+                      {IS_GOLDEN_TICKET_FREEMIUM
+                        ? 'Tu adopción cuenta como hito 1 de 4 del Camino del Creyente.'
+                        : 'Pago se despliega 60/30/10 vía Coinbase Onramp.'}
                     </div>
                   </div>
                 </div>
@@ -514,7 +708,7 @@ export default function Adoptar() {
               ))}
             </div>
 
-            {/* Idle: swipe hints */}
+            {/* Idle: swipe hints + historia territorial */}
             {phase === 'idle' && (
               <div style={{ textAlign: 'center' }}>
                 <div style={{ display: 'flex', justifyContent: 'center', gap: 48, marginBottom: 14 }}>
@@ -527,9 +721,38 @@ export default function Adoptar() {
                     <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 9, letterSpacing: '0.15em', color: '#2ecc7188' }}>ADOPTAR</div>
                   </div>
                 </div>
-                <div style={{ fontSize: 11, color: `${BRAND.heirloom}33` }}>
+                <div style={{ fontSize: 11, color: `${BRAND.heirloom}33`, marginBottom: 16 }}>
                   🫘 +10 granos · 🌽 +3 mazorcas al adoptar
                 </div>
+
+                {/* Lee la historia · contexto territorial del Guardián. Le da al
+                    usuario el "a quién le llega el impacto" antes de adoptar. */}
+                {guardian.blogSlug && (
+                  <button
+                    onClick={() => navigate(`/blog/${guardian.blogSlug}`)}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 8,
+                      background: 'transparent',
+                      border: `1px solid ${BRAND.pod}66`,
+                      borderRadius: 999,
+                      padding: '9px 18px',
+                      cursor: 'pointer',
+                      color: BRAND.pod,
+                      fontFamily: FONTS.display, fontWeight: 700, fontSize: 11,
+                      letterSpacing: '0.12em', textTransform: 'uppercase',
+                      transition: 'border-color 0.2s, background 0.2s',
+                    }}
+                  >
+                    <span style={{ fontSize: 13 }}>📰</span>
+                    <span>
+                      La historia de {guardian.name}
+                      <span style={{ color: `${BRAND.heirloom}66`, fontWeight: 400, marginLeft: 6, letterSpacing: '0.04em', textTransform: 'none' }}>
+                        · {guardian.town}, {guardian.region}
+                      </span>
+                    </span>
+                    <span style={{ fontSize: 12, color: BRAND.pod }}>→</span>
+                  </button>
+                )}
               </div>
             )}
 
@@ -538,6 +761,137 @@ export default function Adoptar() {
           </>
         )}
       </div>
+
+      {/* Golden Ticket explainer modal — 4 hitos del Camino del Creyente */}
+      {showGTModal && (
+        <div
+          onClick={() => setShowGTModal(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 200,
+            background: 'rgba(4, 12, 6, 0.86)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 'clamp(16px, 4vw, 32px)',
+            animation: 'caua-gt-modal-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 520, width: '100%',
+              background: `linear-gradient(160deg, #2A0F26 0%, ${BRAND.bgDeep} 100%)`,
+              border: `1.5px solid ${BRAND.mazorca}`,
+              borderRadius: 18,
+              padding: 'clamp(20px, 4vw, 32px)',
+              boxShadow: `0 24px 64px rgba(0, 0, 0, 0.6), 0 0 32px ${BRAND.mazorca}33`,
+              maxHeight: '90vh', overflowY: 'auto',
+            }}
+          >
+            <div style={{
+              fontFamily: FONTS.display, fontWeight: 700, fontSize: 10,
+              color: BRAND.mazorca, letterSpacing: '0.25em', textTransform: 'uppercase',
+              marginBottom: 8, textAlign: 'center',
+            }}>
+              🎟️ Golden Ticket
+            </div>
+            <h2 style={{
+              fontFamily: FONTS.display, fontWeight: 900,
+              fontSize: 'clamp(24px, 5vw, 32px)',
+              color: BRAND.heirloom, letterSpacing: '0.02em',
+              textTransform: 'uppercase', textAlign: 'center',
+              margin: '0 0 6px', lineHeight: 1,
+            }}>
+              Camino del Creyente
+            </h2>
+            <p style={{
+              fontFamily: FONTS.serif, fontStyle: 'italic',
+              color: `${BRAND.heirloom}99`, fontSize: 13,
+              textAlign: 'center', margin: '0 0 22px', lineHeight: 1.4,
+            }}>
+              Cumple los 4 hitos y compite por <strong style={{ color: BRAND.mazorca }}>1 de 30 cupos</strong> a la Cacao Ceremony 100% gratis.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 22 }}>
+              {GOLDEN_TICKET_HITOS.map((h) => {
+                const isFirst = h.n === 1
+                return (
+                  <div key={h.n} style={{
+                    display: 'flex', alignItems: 'flex-start', gap: 14,
+                    background: isFirst ? `${BRAND.mazorca}14` : `${BRAND.heirloom}08`,
+                    border: `1px solid ${isFirst ? BRAND.mazorca : `${BRAND.heirloom}22`}`,
+                    borderRadius: 12,
+                    padding: '12px 14px',
+                  }}>
+                    <div style={{
+                      flexShrink: 0,
+                      width: 32, height: 32, borderRadius: '50%',
+                      background: isFirst ? BRAND.mazorca : `${BRAND.heirloom}11`,
+                      color: isFirst ? BRAND.bgDeep : `${BRAND.heirloom}88`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontFamily: FONTS.display, fontWeight: 900, fontSize: 14,
+                    }}>
+                      {h.n}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{
+                        fontFamily: FONTS.display, fontWeight: 800, fontSize: 13,
+                        color: isFirst ? BRAND.mazorca : BRAND.heirloom,
+                        letterSpacing: '0.06em', textTransform: 'uppercase',
+                        marginBottom: 2,
+                      }}>
+                        {h.label}
+                      </div>
+                      <div style={{
+                        fontFamily: FONTS.body, fontSize: 12,
+                        color: `${BRAND.heirloom}99`, lineHeight: 1.4,
+                      }}>
+                        {h.hint}
+                      </div>
+                    </div>
+                    {isFirst && (
+                      <div style={{
+                        flexShrink: 0,
+                        fontFamily: FONTS.display, fontWeight: 800, fontSize: 9,
+                        color: BRAND.mazorca, letterSpacing: '0.14em',
+                        textTransform: 'uppercase',
+                        alignSelf: 'center',
+                      }}>
+                        Aquí ↓
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            <button
+              onClick={() => setShowGTModal(false)}
+              style={{
+                width: '100%', padding: '14px',
+                background: `linear-gradient(135deg, ${BRAND.mazorca}, ${BRAND.pod})`,
+                border: 'none', borderRadius: 999, cursor: 'pointer',
+                color: BRAND.bgDeep,
+                fontFamily: FONTS.display, fontWeight: 800,
+                fontSize: 12, letterSpacing: '0.18em', textTransform: 'uppercase',
+                boxShadow: `0 12px 28px ${BRAND.mazorca}55`,
+              }}
+            >
+              Continuar adopción →
+            </button>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes caua-gt-ribbon-pulse {
+          0%, 100% { box-shadow: 0 0 14px ${BRAND.mazorca}55; }
+          50%      { box-shadow: 0 0 24px ${BRAND.mazorca}aa; }
+        }
+        @keyframes caua-gt-modal-in {
+          0%   { opacity: 0; transform: scale(0.96); }
+          100% { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
     </div>
   )
 }

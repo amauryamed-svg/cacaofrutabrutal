@@ -31,6 +31,7 @@ export interface Guardian {
   market_uses: string[]     // End-product use cases
   pods: string              // Pod color/description
   heritage: string          // Heritage note (awards, recognition, legacy)
+  blogSlug?: string         // Slug del post en /blog/{slug} con la historia territorial
 }
 
 export interface UserProfile {
