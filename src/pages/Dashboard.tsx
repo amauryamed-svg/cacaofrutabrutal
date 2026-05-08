@@ -53,23 +53,8 @@ export default function Dashboard() {
     { label: lang === 'es' ? 'Cap $CACAO ERC-20'     : '$CACAO supply cap',      value: '21',  unit: 'M',       icon: '⬡', color: BRAND.criollo  },
   ]
 
-  const TIMELINE = [
-    { q: 'Q1 2026', title: lang === 'es' ? 'MVP + Validación' : 'MVP + Validation', status: 'active',   items: ['Landing + Marketplace', '100 pre-orders', 'BFFood Candidatura'] },
-    { q: 'Q2 2026', title: lang === 'es' ? 'Producción'       : 'Production',        status: 'upcoming', items: ['600L Sunrise Shot', 'CAUA Labs apertura', lang === 'es' ? '5 guardianes activos' : '5 active guardians'] },
-    { q: 'Q3 2026', title: lang === 'es' ? 'Escala'           : 'Scale',             status: 'upcoming', items: [lang === 'es' ? 'Whole Foods Austin' : 'Whole Foods Austin', 'CAUA Inc Registration', lang === 'es' ? 'Certificación orgánica' : 'Organic Certification'] },
-    { q: 'Q4 2026', title: lang === 'es' ? 'Ronda Semilla'    : 'Seed Round',        status: 'upcoming', items: ['$750K - $1.5M raise', lang === 'es' ? 'Equipo clave 3+' : 'Core team 3+', lang === 'es' ? 'Certificaciones EU' : 'EU Certifications'] },
-    { q: '2027',    title: lang === 'es' ? 'Crecimiento'      : 'Growth',            status: 'future',   items: ['$500K revenue', lang === 'es' ? '8-10 guardianes' : '8-10 guardians', lang === 'es' ? 'Distribución EU' : 'EU Distribution'] },
-    { q: '2028-29', title: lang === 'es' ? 'Consolidación'    : 'Consolidation',     status: 'future',   items: ['$1M+ revenue', lang === 'es' ? 'Licencias IP' : 'IP Licenses', lang === 'es' ? '5 países' : '5 countries'] },
-  ]
-
-  // Distribución 60/30/10 — el split que enforce el contrato TreeAdoption
-  // on-chain en cada USD 5 USDC adoptado. Igual lo que dice la app, igual lo
-  // que ejecuta el escrow, igual lo que ve el usuario en /uploads.
-  const DISTRIBUTION = [
-    { label: lang === 'es' ? 'Guardián (finca)'         : 'Guardian (farm)',           pct: 60, color: BRAND.pod      },
-    { label: lang === 'es' ? 'R&D + Producción'         : 'R&D + Production',          pct: 30, color: BRAND.muisca   },
-    { label: lang === 'es' ? 'Comunidad + Reinversión'  : 'Community + Reinvestment',  pct: 10, color: BRAND.criollo  },
-  ]
+  // HOJA DE RUTA + DISTRIBUCIÓN movidos a /fund (FONDO hub) — esta página es
+  // Phase 1 user wallet only. Ver Fund.tsx para la fuente actual.
 
   return (
     <div style={{ background: '#040C06', minHeight: '100vh', paddingTop: 'calc(var(--nav-h, 60px) + 12px)' }}>
@@ -635,68 +620,6 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Roadmap */}
-        <h3 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, color: BRAND.heirloom, fontSize: 16, letterSpacing: '0.1em', marginBottom: 24 }}>
-          {T('dash_roadmap')}
-        </h3>
-        <div style={{ position: 'relative', marginBottom: 48 }}>
-          <div style={{ position: 'absolute', left: 16, top: 0, bottom: 0, width: 2, background: `linear-gradient(${BRAND.pod}, ${BRAND.amazon}44)` }} />
-          {TIMELINE.map((t, i) => (
-            <div key={i} style={{ display: 'flex', gap: 'clamp(12px, 3vw, 20px)', marginBottom: 24 }}>
-              <div style={{
-                width: 34, minWidth: 34, height: 34, borderRadius: '50%', zIndex: 2,
-                background: t.status === 'active' ? BRAND.pod : '#132B1C',
-                border: `2px solid ${t.status === 'active' ? BRAND.pod : BRAND.amazon}66`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                {t.status === 'active' && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#040C06' }} />}
-              </div>
-              <div style={{
-                background: t.status === 'active' ? `${BRAND.pod}11` : 'transparent',
-                border: `1px solid ${t.status === 'active' ? BRAND.pod : BRAND.amazon}33`,
-                borderRadius: 12, padding: 16, flex: 1,
-              }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
-                  <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, color: t.status === 'active' ? BRAND.pod : BRAND.mazorca, fontSize: 11, letterSpacing: '0.12em' }}>
-                    {t.q}
-                  </span>
-                  <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, color: BRAND.heirloom, fontSize: 16 }}>
-                    {t.title}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {t.items.map((item, j) => (
-                    <span key={j} style={{
-                      background: `${BRAND.amazon}44`, padding: '3px 10px', borderRadius: 999,
-                      fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}88`,
-                    }}>{item}</span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Value distribution */}
-        <div style={{ background: '#132B1C', border: `1px solid ${BRAND.amazon}66`, borderRadius: 12, padding: 24, marginBottom: 40 }}>
-          <h3 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, color: BRAND.heirloom, fontSize: 14, letterSpacing: '0.1em', marginBottom: 16 }}>
-            {T('dash_distrib')}
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {DISTRIBUTION.map((row, i) => (
-              <div key={i}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}cc` }}>{row.label}</span>
-                  <span style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: 12, color: row.color }}>{row.pct}%</span>
-                </div>
-                <div style={{ height: 4, background: `${BRAND.amazon}44`, borderRadius: 999, overflow: 'hidden' }}>
-                  <div style={{ width: `${row.pct}%`, height: '100%', borderRadius: 999, background: row.color }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* ── Lead capture ── */}
         <div style={{ padding: '0 0 32px', maxWidth: 480, margin: '0 auto' }}>
           <HubspotLeadForm
@@ -717,19 +640,7 @@ export default function Dashboard() {
           mazorcasBalance={mazorcas}
         />
 
-        {/* WhatsApp CTA */}
-        <div style={{ textAlign: 'center', paddingBottom: 40 }}>
-          <a href="https://chat.whatsapp.com/Kkcf4lk6Fas5VYfTI4VBhG"
-            target="_blank" rel="noopener noreferrer" style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              background: '#25D366', color: '#fff', padding: '12px 24px',
-              borderRadius: 999, textDecoration: 'none',
-              fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700,
-              fontSize: 13, letterSpacing: '0.08em',
-            }}>
-            {T('dash_whatsapp')}
-          </a>
-        </div>
+        {/* Comunidad WhatsApp + roadmap + distribución viven en /fund (FONDO hub). */}
       </div>
     </div>
   )

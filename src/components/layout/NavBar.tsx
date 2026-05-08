@@ -254,43 +254,21 @@ export default function NavBar() {
   const { isMobile, isTablet } = useBreakpoint()
   const es = lang === 'es'
 
-  // Tabs with sub-tabs. Single-link entries stay flat; groups collapse on mobile,
-  // open on hover/click on desktop. Order = priority for the user journey.
+  // Phase 1 — videojuego del cacao journey. Solo 4 superficies de usabilidad:
+  // ADOPTAR · LAB · TAROT · FONDO. Camino vive como dock sticky abajo.
+  // Todo lo demás (Mercado, Impacto, Web3, Blog, CauaBonga) se accede desde
+  // FONDO como hub Phase 2 / business-side.
   const TABS: NavItem[] = [
-    { path: '/', label: T('nav_home') },
-    {
-      label: es ? 'CONTENIDO' : 'CONTENT',
-      children: [
-        { path: '/blog',     label: T('nav_blog') },
-        { path: '/catacion', label: 'CATACIÓN', hint: es ? 'Cotiza una experiencia' : 'Book a tasting' },
-      ],
-    },
-    {
-      label: es ? 'ÁRBOL' : 'TREE',
-      children: [
-        { path: '/adoptar',   label: T('nav_adoptar'), hint: es ? 'Adopta un cacao' : 'Adopt a cacao tree' },
-        { path: '/dashboard', label: T('nav_impact'),  hint: es ? 'Tu portafolio + cosecha' : 'Your portfolio + harvest' },
-      ],
-    },
-    {
-      label: es ? 'MERCADO' : 'MARKET',
-      children: [
-        { path: '/marketplace', label: T('nav_market') },
-        { path: '/ritual',      label: T('nav_ritual') },
-      ],
-    },
-    {
-      label: 'WEB3',
-      children: [
-        { path: '/web3',            label: es ? 'DESCUBRE' : 'DISCOVER',     hint: es ? 'On-chain cacao economy' : 'On-chain cacao economy' },
-        { path: '/web3/onboarding', label: es ? 'KYC + WALLET' : 'KYC + WALLET', hint: es ? 'Verifica y conecta' : 'Verify & link wallet' },
-      ],
-    },
-    { path: '/fund', label: T('nav_fund') },
+    { path: '/adoptar', label: T('nav_adoptar'), hint: es ? 'Hito 1 · adopta tu cacao'    : 'Hito 1 · adopt your cacao' },
+    { path: '/lab',     label: es ? 'LAB' : 'LAB',                hint: es ? 'Hito 4 · forja tu chocolate' : 'Hito 4 · forge your chocolate' },
+    { path: '/ritual',  label: es ? 'TAROT' : 'TAROT',            hint: es ? 'Tarot diario · streak' : 'Daily tarot · streak' },
+    { path: '/fund',    label: es ? 'FONDO' : 'FUND',             hint: es ? 'Tecnologías · Mercado · Hoja de ruta' : 'Technologies · Market · Roadmap' },
   ]
 
+  // GROWTH pitch ya vive embebido en la investor landing (/) — el link
+  // externo en la SPA era redundante y se quitó. SIEMBRA queda como
+  // único external link (deck público de la finca regenerativa).
   const EXTERNAL = [
-    { href: '/pitch_growth.html', label: 'GROWTH',  color: BRAND.mazorca },
     { href: '/siembra.html',      label: 'SIEMBRA', color: BRAND.pod     },
   ]
 

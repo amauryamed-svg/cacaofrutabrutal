@@ -3,6 +3,7 @@ import { useEffect, lazy, Suspense } from 'react'
 import { AuthProvider }  from './context/AuthContext'
 import { LangProvider }  from './context/LangContext'
 import NavBar            from './components/layout/NavBar'
+import CaminoDock        from './components/layout/CaminoDock'
 import Footer            from './components/layout/Footer'
 import GrainOverlay      from './components/ui/GrainOverlay'
 import CookieBanner      from './components/ui/CookieBanner'
@@ -40,6 +41,13 @@ function AppShell() {
   // (con dropdowns INICIO/CONTENIDO/ÁRBOL/MERCADO/WEB3/FONDO) es ruido para
   // attendees del evento AtmosphereX que aún no se logean.
   const hideChrome   = pathname === '/auth' || pathname === '/'
+  // CaminoDock visible solo en superficies Phase 1 — videojuego del cacao journey.
+  // Hidden en Fondo/Marketplace/Web3/Blog/Dashboard donde el dock no aporta.
+  const showCaminoDock =
+    pathname.startsWith('/adoptar') ||
+    pathname.startsWith('/tree/')   ||
+    pathname.startsWith('/lab')     ||
+    pathname.startsWith('/ritual')
 
   useEffect(() => {
     try {
@@ -107,6 +115,7 @@ function AppShell() {
         <Route path="/admin/crm"   element={<AdminCRM />} />
       </Routes>
       {!hideChrome && <Footer />}
+      {showCaminoDock && <CaminoDock />}
       <CookieBanner />
       <DevErrorMonitor />
     </>

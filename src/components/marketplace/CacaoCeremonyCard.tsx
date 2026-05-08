@@ -1,94 +1,52 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { BRAND, FONTS } from '../../utils/constants'
 import { useAuth } from '../../context/AuthContext'
-import { useTokenBalance } from '../../hooks/useTokenBalance'
-import { supabase } from '../../lib/supabase'
 
-const TREE_TIER_PCT: Record<number, number> = { 0: 0, 1: 5, 2: 10, 3: 15 }
-const TREE_TIER_CAP_PCT = 20
-const MAZORCA_TO_PCT = 1
-const MAZORCA_REDEEM_CAP_PCT = 10
-const TOTAL_DISCOUNT_CAP = 30
-const PRICE_USD = 33
+/**
+ * CacaoCeremonyCard · CRM360 Camino A · Bono RedimeCacao10K
+ *
+ * Versión simplificada (2026-05-07): sin multiplicadores de árboles ni
+ * mazorcas, sin Edge Function `create-shopify-discount`. El bono es fijo
+ * en $10.000 COP de Gift Card (`RedimeCacao10K`) por adoptar — flow del
+ * Camino A del CRM360 (sin fricción, audiencia casual adopter).
+ *
+ * Para el Camino B (4 hitos · GoldenTicket · Cacao Ceremony 100% gratis),
+ * ver `MiLaboratorio.tsx` post-forge state que apunta a
+ * https://cauacolombia.co/pages/goldenticket
+ *
+ * Phase 1: el código se vuelve único per user via Edge Function
+ * `create-shopify-giftcard` (en lugar de hardcoded `RedimeCacao10K`).
+ */
 
-function calcTreeDiscount(n: number): number {
-  if (n <= 0) return 0
-  if (n >= 4) return TREE_TIER_CAP_PCT
-  return TREE_TIER_PCT[n] ?? 0
-}
+const REDEEM_CODE = 'RedimeCacao10K'
+const REDEEM_AMOUNT_COP = 10000
+// Shopify auto-discount URL: redirige al producto y aplica el bono al checkout sin
+// que el usuario tenga que copiar el código. Pattern oficial: /discount/CODE?redirect=...
+const REDEEM_URL = 'https://cauacolombia.co/discount/RedimeCacao10K?redirect=/products/cacao-ceremonial-250gr-origen-hobo-huila'
 
 export default function CacaoCeremonyCard() {
-  const { user, userId } = useAuth()
-  const { mazorcas } = useTokenBalance()
-  const [treeCount, setTreeCount] = useState(0)
-  const [mazorcasToRedeem, setMazorcasToRedeem] = useState(0)
-  const [loading, setLoading] = useState(false)
-  const [err, setErr] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!userId) { setTreeCount(0); return }
-    supabase
-      .from('cacao_trees')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .then(({ count }) => setTreeCount(count ?? 0))
-  }, [userId])
-
-  const treeDiscountPct = calcTreeDiscount(treeCount)
-  const maxRedeemable = Math.min(MAZORCA_REDEEM_CAP_PCT, Math.floor(mazorcas))
-  const mazorcaDiscountPct = Math.min(mazorcasToRedeem * MAZORCA_TO_PCT, MAZORCA_REDEEM_CAP_PCT)
-  const totalPct = Math.min(treeDiscountPct + mazorcaDiscountPct, TOTAL_DISCOUNT_CAP)
-  const finalPrice = (PRICE_USD * (1 - totalPct / 100)).toFixed(2)
-
-  const eligible = totalPct > 0
-
-  async function handleRedeem() {
-    if (!user) return
-    setLoading(true)
-    setErr(null)
-    try {
-      const { data, error } = await supabase.functions.invoke('create-shopify-discount', {
-        body: { mazorcas_to_redeem: mazorcasToRedeem },
-      })
-      if (error) {
-        // supabase-js wraps non-2xx into FunctionsHttpError with the original Response on .context.
-        // Extract the server's `error`/`detail` so the user sees a real reason.
-        let serverMsg: string | null = null
-        let status = 0
-        try {
-          const ctx = (error as unknown as { context?: { response?: Response } }).context
-          status = ctx?.response?.status ?? 0
-          const body = await ctx?.response?.clone().json().catch(() => null)
-          serverMsg = body?.error ?? body?.detail ?? null
-        } catch { /* fall through */ }
-
-        // Friendlier message for the most common failure: Shopify token not yet configured.
-        if (status === 503 || /SHOPIFY_ADMIN_TOKEN/.test(serverMsg ?? '')) {
-          throw new Error('Cacao Ceremony todavía no está conectado a Shopify. Tu descuento queda registrado y se activará cuando la tienda esté lista. (config: SHOPIFY_ADMIN_TOKEN)')
-        }
-        throw new Error(serverMsg ?? error.message ?? 'Edge function error')
-      }
-      if (!data?.checkout_url) throw new Error('No checkout URL returned')
-      if (typeof window !== 'undefined' && (window as unknown as { hsq?: unknown[] }).hsq) {
-        ((window as unknown as { hsq: unknown[] }).hsq).push(['trackEvent', { id: 'cacao_ceremony_traffic_sent', value: data.discount_pct }])
-      }
-      window.open(data.checkout_url, '_blank', 'noopener,noreferrer')
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Error desconocido')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { user } = useAuth()
+  const [copied, setCopied] = useState(false)
 
   if (!user) {
     return (
       <div id="cacao-ceremony" style={cardStyle}>
         <Eyebrow />
         <Title />
-        <p style={subtitleStyle}>Inicia sesión y adopta tu primer árbol para desbloquear descuentos en Cacao Ceremony de Cauaculture.</p>
+        <p style={subtitleStyle}>
+          Inicia sesión y adopta tu primer árbol para desbloquear tu bono de $10.000 COP en CAÚA Colombia.
+        </p>
         <a href="/app/adoptar" style={ctaSecondaryStyle}>Adoptar árbol →</a>
       </div>
     )
+  }
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(REDEEM_CODE)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1800)
+    } catch { /* clipboard denied */ }
   }
 
   return (
@@ -96,78 +54,65 @@ export default function CacaoCeremonyCard() {
       <Eyebrow />
       <Title />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16, margin: '20px 0 16px' }}>
-        <Stat label="Árboles adoptados" value={String(treeCount)} accent={BRAND.amazon} />
-        <Stat label="Mazorcas disponibles" value={String(Math.floor(mazorcas))} accent={BRAND.mazorca} />
-        <Stat label="Descuento por árboles" value={`${treeDiscountPct}%`} accent={treeDiscountPct ? BRAND.pod : `${BRAND.heirloom}55`} />
-      </div>
-
-      {maxRedeemable > 0 && (
-        <div style={{ marginBottom: 16 }}>
-          <label style={labelStyle}>
-            Canjear mazorcas (1 = 1% off, máx {MAZORCA_REDEEM_CAP_PCT})
-          </label>
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 8 }}>
-            <input
-              type="range"
-              min={0}
-              max={maxRedeemable}
-              value={mazorcasToRedeem}
-              onChange={(e) => setMazorcasToRedeem(parseInt(e.target.value, 10))}
-              style={{ flex: 1, accentColor: BRAND.mazorca }}
-            />
-            <div style={{ minWidth: 70, textAlign: 'right', fontFamily: FONTS.display, fontWeight: 700, color: BRAND.mazorca }}>
-              {mazorcasToRedeem} → +{mazorcaDiscountPct}%
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div style={priceBoxStyle}>
-        <div>
-          <div style={{ fontFamily: FONTS.body, color: `${BRAND.heirloom}66`, fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-            Precio final
-          </div>
-          <div style={{ fontFamily: FONTS.display, fontWeight: 900, color: BRAND.heirloom, fontSize: 36, lineHeight: 1 }}>
-            ${finalPrice}
-          </div>
-          {totalPct > 0 && (
-            <div style={{ fontFamily: FONTS.body, color: `${BRAND.heirloom}55`, fontSize: 12, textDecoration: 'line-through', marginTop: 4 }}>
-              ${PRICE_USD.toFixed(2)} USD
-            </div>
-          )}
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontFamily: FONTS.body, color: `${BRAND.heirloom}66`, fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-            Tu descuento
-          </div>
-          <div style={{ fontFamily: FONTS.display, fontWeight: 900, color: totalPct > 0 ? BRAND.pod : `${BRAND.heirloom}33`, fontSize: 36, lineHeight: 1 }}>
-            {totalPct}%
-          </div>
-        </div>
-      </div>
-
-      {err && (
-        <div style={{ background: '#FF5A5A11', border: '1px solid #FF5A5A55', borderRadius: 8, padding: 12, marginTop: 12, color: '#FF8A8A', fontFamily: FONTS.body, fontSize: 12 }}>
-          {err}
-        </div>
-      )}
+      <p style={subtitleStyle}>
+        Tu bono por adoptar: <strong style={{ color: BRAND.mazorca }}>${REDEEM_AMOUNT_COP.toLocaleString('es-CO')} COP</strong> de Gift Card. Tipea el código en el checkout de CAÚA Colombia.
+      </p>
 
       <button
-        onClick={handleRedeem}
-        disabled={!eligible || loading}
-        style={eligible && !loading ? ctaPrimaryStyle : ctaDisabledStyle}
+        type="button"
+        onClick={handleCopy}
+        style={codeBoxStyle}
+        aria-label={`Copiar código ${REDEEM_CODE}`}
       >
-        {loading
-          ? 'Generando código…'
-          : eligible
-            ? `Reclamar ${totalPct}% → Cacao Ceremony`
-            : 'Adopta un árbol para desbloquear'}
+        <span style={codeLabelStyle}>Código de Gift Card</span>
+        <span style={codeValueStyle}>{REDEEM_CODE}</span>
+        <span style={copyHintStyle}>{copied ? '✓ COPIADO' : '⧉ COPIAR'}</span>
       </button>
 
-      <p style={{ fontFamily: FONTS.body, color: `${BRAND.heirloom}44`, fontSize: 10, marginTop: 12, textAlign: 'center' }}>
-        Cauaculture.co · 250g cacao ceremonial Criollo · envío incluido
+      <a
+        href={REDEEM_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        data-cta-name="cfb-marketplace-redime"
+        data-cta-surface="marketplace-cacao-ceremony"
+        data-cta-destination="cauacolombia-pdp"
+        style={ctaPrimaryStyle}
+      >
+        Reclamar en CAÚA Colombia →
+      </a>
+
+      <p style={fineprintStyle}>
+        cauacolombia.co · 250 g cacao ceremonial Híbrido Acriollado · 1 uso por cliente · vence en 30 días
       </p>
+
+      {/* ─── Funnel hacia forja · CRM360 cross-link ───
+          Después del bono Camino A, el siguiente paso lógico es el Lab
+          (forja del chocolate) — primer hito del Camino B. Sin este link
+          el user no encuentra el path al Workshop / Golden Ticket. */}
+      <div style={funnelBoxStyle}>
+        <span style={funnelEyebrowStyle}>↓ Siguiente paso</span>
+        <p style={funnelLedeStyle}>
+          ¿Tu árbol ya cosechó? <strong style={{ color: BRAND.pod }}>Forja tu chocolate</strong> en el Laboratorio. El Hito 4 del Camino del Creyente desbloquea un Cacao Ceremony 100% gratis (1 de 30 cupos).
+        </p>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <a href="/app/lab"
+             data-cta-name="cfb-marketplace-funnel-lab"
+             data-cta-surface="marketplace-cacao-ceremony"
+             data-cta-destination="cfb-lab"
+             style={funnelCtaPrimaryStyle}>
+            🍫 Ir al Laboratorio
+          </a>
+          <a href="https://cauacolombia.co/pages/goldenticket"
+             target="_blank"
+             rel="noopener noreferrer"
+             data-cta-name="cfb-marketplace-funnel-goldenticket"
+             data-cta-surface="marketplace-cacao-ceremony"
+             data-cta-destination="cauacolombia-goldenticket"
+             style={funnelCtaSecondaryStyle}>
+            Ver el Camino →
+          </a>
+        </div>
+      </div>
     </div>
   )
 }
@@ -177,7 +122,7 @@ function Eyebrow() {
     <p style={{
       fontFamily: FONTS.serif, fontStyle: 'italic',
       color: BRAND.mazorca, fontSize: 11, letterSpacing: '0.25em', margin: 0,
-    }}>BENEFICIO ADOPTANTE</p>
+    }}>BONO ADOPTANTE · CAMINO A</p>
   )
 }
 
@@ -187,20 +132,7 @@ function Title() {
       fontFamily: "'Barlow Condensed', Impact, sans-serif", fontWeight: 900,
       fontSize: 'clamp(24px, 4vw, 32px)', color: BRAND.heirloom,
       textTransform: 'uppercase', margin: '4px 0 0', lineHeight: 1,
-    }}>Cacao Ceremony · Cauaculture</h3>
-  )
-}
-
-function Stat({ label, value, accent }: { label: string; value: string; accent: string }) {
-  return (
-    <div style={{ background: '#0E1A12', border: `1px solid ${BRAND.amazon}44`, borderRadius: 10, padding: 12 }}>
-      <div style={{ fontFamily: FONTS.body, color: `${BRAND.heirloom}66`, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-        {label}
-      </div>
-      <div style={{ fontFamily: FONTS.display, fontWeight: 900, color: accent, fontSize: 22, marginTop: 4 }}>
-        {value}
-      </div>
-    </div>
+    }}>Gift Card $10.000 · Cauacolombia</h3>
   )
 }
 
@@ -213,33 +145,44 @@ const cardStyle: React.CSSProperties = {
 }
 
 const subtitleStyle: React.CSSProperties = {
-  fontFamily: FONTS.body, color: `${BRAND.heirloom}88`,
-  fontSize: 13, lineHeight: 1.6, margin: '12px 0 16px', maxWidth: 540,
+  fontFamily: FONTS.body, color: `${BRAND.heirloom}cc`,
+  fontSize: 13, lineHeight: 1.6, margin: '12px 0 18px', maxWidth: 540,
 }
 
-const labelStyle: React.CSSProperties = {
-  fontFamily: FONTS.body, color: `${BRAND.heirloom}88`,
-  fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
+const codeBoxStyle: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+  gap: 14, width: '100%',
+  background: '#040C06', border: `2px dashed ${BRAND.mazorca}aa`,
+  borderRadius: 10, padding: '14px 18px', margin: '8px 0 16px',
+  cursor: 'pointer', appearance: 'none',
+  transition: 'border-color 160ms ease, background 160ms ease',
 }
 
-const priceBoxStyle: React.CSSProperties = {
-  display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
-  background: '#040C06', border: `1px solid ${BRAND.amazon}66`,
-  borderRadius: 10, padding: 16, margin: '8px 0 16px',
+const codeLabelStyle: React.CSSProperties = {
+  fontFamily: FONTS.body, color: `${BRAND.heirloom}66`,
+  fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase',
+}
+
+const codeValueStyle: React.CSSProperties = {
+  fontFamily: 'ui-monospace, monospace', fontWeight: 800,
+  color: BRAND.heirloom, fontSize: 'clamp(18px, 2.5vw, 22px)',
+  letterSpacing: '0.12em', flex: 1, textAlign: 'left',
+}
+
+const copyHintStyle: React.CSSProperties = {
+  fontFamily: FONTS.body, color: BRAND.mazorca,
+  fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase',
+  border: `1px solid ${BRAND.mazorca}66`, padding: '4px 10px', borderRadius: 4,
 }
 
 const ctaPrimaryStyle: React.CSSProperties = {
-  width: '100%', padding: '14px 20px',
+  display: 'block', width: '100%', padding: '14px 20px',
   background: BRAND.mazorca, color: '#040C06',
   border: 'none', borderRadius: 8, cursor: 'pointer',
   fontFamily: FONTS.display, fontWeight: 900, fontSize: 13,
   letterSpacing: '0.12em', textTransform: 'uppercase',
-}
-
-const ctaDisabledStyle: React.CSSProperties = {
-  ...ctaPrimaryStyle,
-  background: `${BRAND.amazon}44`, color: `${BRAND.heirloom}66`,
-  cursor: 'not-allowed',
+  textDecoration: 'none', textAlign: 'center',
+  boxSizing: 'border-box',
 }
 
 const ctaSecondaryStyle: React.CSSProperties = {
@@ -248,4 +191,45 @@ const ctaSecondaryStyle: React.CSSProperties = {
   border: `1px solid ${BRAND.mazorca}88`, borderRadius: 8,
   fontFamily: FONTS.display, fontWeight: 700, fontSize: 12,
   letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none',
+}
+
+const fineprintStyle: React.CSSProperties = {
+  fontFamily: FONTS.body, color: `${BRAND.heirloom}55`,
+  fontSize: 10, marginTop: 14, textAlign: 'center', letterSpacing: '0.04em',
+}
+
+const funnelBoxStyle: React.CSSProperties = {
+  marginTop: 20, paddingTop: 18,
+  borderTop: `1px dashed ${BRAND.mazorca}55`,
+  display: 'flex', flexDirection: 'column', gap: 10,
+}
+
+const funnelEyebrowStyle: React.CSSProperties = {
+  fontFamily: FONTS.body, color: BRAND.mazorca,
+  fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase',
+  fontWeight: 700,
+}
+
+const funnelLedeStyle: React.CSSProperties = {
+  fontFamily: FONTS.body, color: `${BRAND.heirloom}cc`,
+  fontSize: 12, lineHeight: 1.5, margin: 0,
+}
+
+const funnelCtaPrimaryStyle: React.CSSProperties = {
+  display: 'inline-flex', alignItems: 'center', gap: 6,
+  padding: '10px 16px',
+  background: BRAND.pod, color: BRAND.bgDeep,
+  fontFamily: FONTS.display, fontWeight: 800, fontSize: 11,
+  letterSpacing: '0.14em', textTransform: 'uppercase',
+  borderRadius: 999, textDecoration: 'none',
+}
+
+const funnelCtaSecondaryStyle: React.CSSProperties = {
+  display: 'inline-flex', alignItems: 'center', gap: 6,
+  padding: '10px 16px',
+  background: 'transparent', color: BRAND.mazorca,
+  border: `1px solid ${BRAND.mazorca}88`,
+  fontFamily: FONTS.display, fontWeight: 700, fontSize: 11,
+  letterSpacing: '0.14em', textTransform: 'uppercase',
+  borderRadius: 999, textDecoration: 'none',
 }

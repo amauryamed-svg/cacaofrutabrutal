@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { BRAND, FONTS, TOKEN_RATES } from '../utils/constants'
 import { useAuth } from '../context/AuthContext'
 import { useTokenBalance } from '../hooks/useTokenBalance'
@@ -42,15 +42,38 @@ interface StageStamps {
   conchado_at?:    string
 }
 
+interface FreshHarvestState {
+  mucilage_g:   number
+  cacao_mass_g: number
+  beans:        number
+  mazorcas:     number
+  via:          'instant' | 'minigame'
+  tree_id:      string
+  award_ok:     boolean
+  error:        string | null
+}
+
 export default function MiLaboratorio() {
   const { user } = useAuth()
   const { lang } = useLang()
   const navigate = useNavigate()
+  const location = useLocation()
   const { mucilageG, cacaoMassG, chocolateBarsMade, loading } = useTokenBalance()
 
   const [phase, setPhase] = useState<Phase>('idle')
   const [stamps, setStamps] = useState<StageStamps>({})
   const [error, setError] = useState<string | null>(null)
+
+  // CRM360 · post-harvest feedback. Read deltas from location state passed
+  // by TreeDetail.submitHarvest and show as a transient toast so the user
+  // confirms what was credited (vs the polled balance below).
+  const freshHarvest = (location.state as { freshHarvest?: FreshHarvestState } | null)?.freshHarvest
+  const [showFreshToast, setShowFreshToast] = useState<boolean>(Boolean(freshHarvest))
+  useEffect(() => {
+    if (!showFreshToast) return
+    const t = setTimeout(() => setShowFreshToast(false), 6000)
+    return () => clearTimeout(t)
+  }, [showFreshToast])
 
   const canForge = mucilageG >= RECIPE.mucilage_g && cacaoMassG >= RECIPE.cacao_mass_g
   const mucilageDeficit  = Math.max(0, RECIPE.mucilage_g - mucilageG)
@@ -119,6 +142,53 @@ export default function MiLaboratorio() {
     <div style={{ background: BRAND.bgDeep, minHeight: '100vh', paddingTop: 'calc(var(--nav-h, 60px) + 24px)', paddingBottom: '5rem' }}>
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '0 var(--space-page)' }}>
 
+        {/* CRM360 · Post-harvest feedback toast (6s · auto-dismiss) ─────
+            Confirma al user qué se acaba de creditar. Si award_ok=false,
+            muestra el error para diagnosticar. Si via='instant' (skip),
+            informa que no hay mucílago/masa porque no rebanó pods. */}
+        {showFreshToast && freshHarvest && (
+          <div style={{
+            marginBottom: 16,
+            background: freshHarvest.error
+              ? `linear-gradient(135deg, #2A0F0F, #150606)`
+              : `linear-gradient(135deg, ${BRAND.amazon}aa, #0E1E15)`,
+            border: `1px solid ${freshHarvest.error ? '#e74c3c' : BRAND.pod}`,
+            borderRadius: 12,
+            padding: '14px 18px',
+            display: 'flex', alignItems: 'center', gap: 12,
+          }}>
+            <div style={{ fontSize: 28 }}>{freshHarvest.error ? '⚠️' : freshHarvest.via === 'instant' ? '⏭️' : '🍫'}</div>
+            <div style={{ flex: 1 }}>
+              <div style={{
+                fontFamily: FONTS.display, fontWeight: 800, fontSize: 11,
+                color: freshHarvest.error ? '#e74c3c' : BRAND.pod,
+                letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 4,
+              }}>
+                {freshHarvest.error
+                  ? 'Crédito pendiente · revisa consola'
+                  : freshHarvest.via === 'instant'
+                    ? 'Skip al laboratorio'
+                    : 'Cosecha acreditada'}
+              </div>
+              <div style={{ fontFamily: FONTS.body, fontSize: 13, color: `${BRAND.heirloom}cc`, lineHeight: 1.4 }}>
+                {freshHarvest.error
+                  ? freshHarvest.error
+                  : freshHarvest.via === 'instant'
+                    ? `+${freshHarvest.beans.toFixed(0)} granos · +${freshHarvest.mazorcas.toFixed(0)} mazorcas. Para forjar necesitas rebanar pods (no skip) y obtener mucílago + masa.`
+                    : `+${freshHarvest.mucilage_g.toFixed(0)}g mucílago · +${freshHarvest.cacao_mass_g.toFixed(0)}g masa · +${freshHarvest.beans.toFixed(0)} granos · +${freshHarvest.mazorcas.toFixed(0)} mazorcas`}
+              </div>
+            </div>
+            <button
+              onClick={() => setShowFreshToast(false)}
+              aria-label="Cerrar aviso"
+              style={{
+                background: 'transparent', border: 'none', cursor: 'pointer',
+                color: `${BRAND.heirloom}66`, fontSize: 18, padding: 4,
+              }}
+            >✕</button>
+          </div>
+        )}
+
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <p style={{ fontFamily: FONTS.serif, fontStyle: 'italic', color: BRAND.mazorca, fontSize: 13, letterSpacing: '0.25em', marginBottom: 8 }}>
@@ -169,9 +239,20 @@ export default function MiLaboratorio() {
             </div>
             <div style={{
               fontFamily: FONTS.display, fontWeight: 900, fontSize: 22,
-              color: BRAND.heirloom, marginBottom: 14, lineHeight: 1.1,
+              color: BRAND.heirloom, marginBottom: 6, lineHeight: 1.1,
             }}>
-              1 barra · {RECIPE.mucilage_g}g mucílago + {RECIPE.cacao_mass_g}g masa
+              {lang === 'es'
+                ? <>1 barra ← <span style={{ color: BRAND.mazorca }}>{RECIPE.cacao_mass_g}g masa de cacao</span></>
+                : <>1 bar ← <span style={{ color: BRAND.mazorca }}>{RECIPE.cacao_mass_g}g cacao mass</span></>}
+            </div>
+            <div style={{
+              fontFamily: FONTS.body, fontSize: 12,
+              color: `${BRAND.heirloom}77`, lineHeight: 1.55, marginBottom: 14,
+              fontStyle: 'italic',
+            }}>
+              {lang === 'es'
+                ? <>+ <span style={{ color: BRAND.pod }}>{RECIPE.mucilage_g}g mucílago</span> drenan como subproducto · tradicionalmente desperdicio</>
+                : <>+ <span style={{ color: BRAND.pod }}>{RECIPE.mucilage_g}g mucilage</span> drains as byproduct · traditionally waste</>}
             </div>
             <div style={{
               fontFamily: FONTS.body, fontSize: 12, color: `${BRAND.heirloom}aa`,
@@ -182,25 +263,50 @@ export default function MiLaboratorio() {
                 : 'Three stages in order — lyophilization at -50°C, refining by circular grinding, conching by rocking. Each stage unlocks the next.'}
             </div>
 
-            {!canForge && (
-              <div style={{
-                background: `${BRAND.heroic}11`,
-                border: `1px solid ${BRAND.heroic}55`,
-                borderRadius: 10, padding: 12, marginBottom: 14,
-                fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}cc`,
-                lineHeight: 1.6,
-              }}>
-                {lang === 'es' ? 'Te faltan: ' : 'You need: '}
-                {mucilageDeficit > 0 && <strong>{mucilageDeficit.toFixed(0)}g mucílago</strong>}
-                {mucilageDeficit > 0 && cacaoMassDeficit > 0 && ' · '}
-                {cacaoMassDeficit > 0 && <strong>{cacaoMassDeficit.toFixed(0)}g masa de cacao</strong>}
-                <div style={{ marginTop: 6, fontStyle: 'italic', color: `${BRAND.heirloom}77` }}>
-                  {lang === 'es'
-                    ? 'Cosecha más árboles para acumular más insumos.'
-                    : 'Harvest more trees to gather more inputs.'}
+            {!canForge && (() => {
+              // Cada pod cosechado en el Fruit-Ninja arena rinde 60g mucílago + 50g masa.
+              // Calculamos cuántos pods adicionales necesita el usuario para cubrir el déficit.
+              const podsNeededMucilage = Math.ceil(mucilageDeficit / 60)
+              const podsNeededMass     = Math.ceil(cacaoMassDeficit / 50)
+              const podsNeeded         = Math.max(podsNeededMucilage, podsNeededMass)
+
+              return (
+                <div style={{
+                  background: `${BRAND.heroic}11`,
+                  border: `1px solid ${BRAND.heroic}55`,
+                  borderRadius: 10, padding: 14, marginBottom: 14,
+                  fontFamily: FONTS.body, fontSize: 12, color: `${BRAND.heirloom}cc`,
+                  lineHeight: 1.6,
+                }}>
+                  <div>
+                    {lang === 'es' ? 'Te faltan: ' : 'You need: '}
+                    {mucilageDeficit > 0 && <strong>{mucilageDeficit.toFixed(0)}g mucílago</strong>}
+                    {mucilageDeficit > 0 && cacaoMassDeficit > 0 && ' · '}
+                    {cacaoMassDeficit > 0 && <strong>{cacaoMassDeficit.toFixed(0)}g masa de cacao</strong>}
+                  </div>
+                  <div style={{ marginTop: 6, fontStyle: 'italic', color: `${BRAND.heirloom}88` }}>
+                    {lang === 'es'
+                      ? `≈ ${podsNeeded} mazorca${podsNeeded === 1 ? '' : 's'} más en el Fruit-Ninja arena (60g mucílago + 50g masa por pod).`
+                      : `≈ ${podsNeeded} more pod${podsNeeded === 1 ? '' : 's'} in the Fruit-Ninja arena (60g mucilage + 50g mass per pod).`}
+                  </div>
+                  <button
+                    onClick={() => navigate('/adoptar')}
+                    style={{
+                      width: '100%', marginTop: 12,
+                      padding: '10px 14px',
+                      background: `linear-gradient(135deg, ${BRAND.pod}, ${BRAND.amazon})`,
+                      color: BRAND.heirloom,
+                      border: 'none', borderRadius: 999, cursor: 'pointer',
+                      fontFamily: FONTS.display, fontWeight: 800, fontSize: 11,
+                      letterSpacing: '0.16em', textTransform: 'uppercase',
+                      boxShadow: `0 8px 18px ${BRAND.pod}44`,
+                    }}
+                  >
+                    {lang === 'es' ? '🌱 Ir al Jardín · cosechar más' : '🌱 Go to Garden · harvest more'}
+                  </button>
                 </div>
-              </div>
-            )}
+              )
+            })()}
 
             <button
               onClick={startForge}
@@ -327,6 +433,133 @@ export default function MiLaboratorio() {
                 ? 'Phase 4 transformará cada barra en un NFT ERC-721 mintleable a tu wallet. Por ahora se acumula como contador off-chain.'
                 : 'Phase 4 will turn each bar into an ERC-721 NFT mintable to your wallet. For now it accumulates off-chain.'}
             </div>
+
+            {/* Conciencia · subproducto mucílago.
+                El forge tradicionalmente sólo aprovecha la masa para el chocolate.
+                300g de mucílago dulce, fragante y rico en epicatequina + teobromina
+                drenan como subproducto y suelen tirarse. Educamos al usuario sobre
+                este desperdicio y mostramos que CAUA lo rescata como MucilageExtract™
+                + HydroSol™ — la respuesta vive en /fund (Tecnologías). */}
+            <div style={{
+              background: `linear-gradient(160deg, ${BRAND.pod}1a 0%, #040C06 100%)`,
+              border: `1.5px dashed ${BRAND.pod}aa`,
+              borderRadius: 14,
+              padding: 'clamp(18px, 3.5vw, 24px)',
+              marginBottom: 24,
+              maxWidth: 460,
+              marginLeft: 'auto', marginRight: 'auto',
+              textAlign: 'left',
+            }}>
+              <div style={{
+                fontFamily: FONTS.display, fontWeight: 700, fontSize: 10,
+                color: BRAND.pod, letterSpacing: '0.22em',
+                textTransform: 'uppercase', marginBottom: 8,
+              }}>
+                {lang === 'es' ? '💧 Subproducto · mucílago drenado' : '💧 Byproduct · mucilage drained'}
+              </div>
+              <div style={{
+                fontFamily: FONTS.body, fontSize: 13,
+                color: `${BRAND.heirloom}cc`, lineHeight: 1.55,
+                marginBottom: 12,
+              }}>
+                {lang === 'es'
+                  ? <>Tu barra usó <strong style={{ color: BRAND.mazorca }}>{RECIPE.cacao_mass_g}g de masa</strong>. Otros <strong style={{ color: BRAND.pod }}>{RECIPE.mucilage_g}g de mucílago</strong> drenaron — la pulpa dulce que rodea la semilla. <em>En cacao tradicional este mucílago se tira al suelo o al río.</em></>
+                  : <>Your bar used <strong style={{ color: BRAND.mazorca }}>{RECIPE.cacao_mass_g}g of mass</strong>. Another <strong style={{ color: BRAND.pod }}>{RECIPE.mucilage_g}g of mucilage</strong> drained — the sweet pulp around the seed. <em>In traditional cacao, this mucilage gets dumped on the ground or in the river.</em></>}
+              </div>
+              <div style={{
+                fontFamily: FONTS.display, fontWeight: 800,
+                fontSize: 'clamp(14px, 3vw, 18px)',
+                color: BRAND.heirloom, letterSpacing: '0.02em',
+                lineHeight: 1.3, marginBottom: 14, textTransform: 'uppercase',
+              }}>
+                {lang === 'es' ? '¿Qué hacemos con ese desperdicio?' : 'What do we do with that waste?'}
+              </div>
+              <button
+                onClick={() => navigate('/fund')}
+                data-cta-name="cfb-mucilage-waste-awareness"
+                data-cta-surface="lab-forge-done"
+                data-cta-destination="fund-tecnologias"
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  color: BRAND.pod,
+                  border: `1.5px solid ${BRAND.pod}`,
+                  padding: '11px 16px',
+                  borderRadius: 999, cursor: 'pointer',
+                  fontFamily: FONTS.display, fontWeight: 800,
+                  fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase',
+                  transition: 'background 0.2s',
+                }}
+              >
+                {lang === 'es' ? 'Conoce las tecnologías que lo rescatan →' : 'See the technologies that rescue it →'}
+              </button>
+            </div>
+
+            {/* ─── CRM360 · Camino B · Golden Ticket progress (Phase 0 MVP) ───
+                User forjó → cumplió hito 4 de 4 del Camino del Creyente.
+                Lo manda a /pages/goldenticket donde verifica/completa los otros
+                hitos (adoptar ya está, falta share + workshop signup). El reward
+                final = GoldenTicket = Cacao Ceremony 100% gratis (1 de 30).
+                Camino A (RedimeCacao10K $10K post-adopt) vive en Adoptar.tsx. */}
+            <div style={{
+              background: `linear-gradient(160deg, #2A0F26 0%, #150616 100%)`,
+              border: `1.5px solid ${BRAND.mazorca}`,
+              borderRadius: 14,
+              padding: 'clamp(18px, 3.5vw, 24px)',
+              marginBottom: 24,
+              maxWidth: 460,
+              marginLeft: 'auto', marginRight: 'auto',
+              boxShadow: `0 0 24px rgba(238, 161, 16, 0.25)`,
+              textAlign: 'center',
+            }}>
+              <div style={{
+                fontFamily: FONTS.display, fontWeight: 700, fontSize: 10,
+                color: BRAND.mazorca, letterSpacing: '0.22em',
+                textTransform: 'uppercase', marginBottom: 6,
+              }}>
+                {lang === 'es' ? '🏆 Hito 4 / 4 · Eres Creyente' : '🏆 Hito 4 / 4 · You are a Creyente'}
+              </div>
+              <div style={{
+                fontFamily: FONTS.display, fontWeight: 900,
+                fontSize: 'clamp(18px, 2.4vw, 22px)',
+                color: BRAND.heirloom, letterSpacing: '0.02em',
+                lineHeight: 1.2, marginBottom: 10,
+                textTransform: 'uppercase',
+              }}>
+                {lang === 'es' ? 'Sigue el Camino del Creyente' : 'Follow the Creyente Path'}
+              </div>
+              <div style={{
+                fontFamily: FONTS.body, fontSize: 13,
+                color: `${BRAND.heirloom}cc`, lineHeight: 1.5,
+                marginBottom: 14,
+              }}>
+                {lang === 'es'
+                  ? 'Forjar fue el hito 4. Te falta compartir tu árbol en redes y firmar el Workshop Cacao 2.0 para reclamar tu Cacao Ceremony 100% gratis (1 de 30 cupos).'
+                  : 'Forging was hito 4. You still need to share your tree on social and sign up for Workshop Cacao 2.0 to claim your free Cacao Ceremony (1 of 30 slots).'}
+              </div>
+              <a
+                href="https://cauacolombia.co/pages/goldenticket"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-cta-name="cfb-camino-b-goldenticket"
+                data-cta-surface="lab-forge-done"
+                data-cta-destination="cauacolombia-goldenticket"
+                style={{
+                  display: 'block',
+                  background: BRAND.mazorca,
+                  color: BRAND.bgDeep,
+                  padding: '12px 18px',
+                  borderRadius: 999,
+                  textDecoration: 'none',
+                  fontFamily: FONTS.display, fontWeight: 800, fontSize: 12,
+                  letterSpacing: '0.16em', textTransform: 'uppercase',
+                  textAlign: 'center',
+                }}
+              >
+                {lang === 'es' ? 'Verificar mi Camino →' : 'Verify my Path →'}
+              </a>
+            </div>
+
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
               <button
                 onClick={reset}
@@ -422,6 +655,9 @@ function BalancePill({ icon, label, value, color, loading, need, have }: {
   have?: number
 }) {
   const insufficient = need !== undefined && have !== undefined && have < need
+  const progressPct = need !== undefined && have !== undefined && need > 0
+    ? Math.min(100, (have / need) * 100)
+    : null
   return (
     <div style={{
       background: `${color}11`,
@@ -446,12 +682,33 @@ function BalancePill({ icon, label, value, color, loading, need, have }: {
           {loading ? '…' : value}
         </div>
         {need !== undefined && (
-          <div style={{
-            fontFamily: FONTS.body, fontSize: 9,
-            color: `${BRAND.heirloom}55`, marginTop: 2,
-          }}>
-            {insufficient ? `Necesitas ${need.toFixed(0)}g` : `≥ ${need.toFixed(0)}g ✓`}
-          </div>
+          <>
+            <div style={{
+              fontFamily: FONTS.body, fontSize: 9,
+              color: insufficient ? '#e74c3ccc' : `${BRAND.heirloom}55`, marginTop: 2,
+              fontWeight: insufficient ? 700 : 400,
+            }}>
+              {insufficient
+                ? `${have!.toFixed(0)} / ${need.toFixed(0)}g · faltan ${(need - have!).toFixed(0)}g`
+                : `≥ ${need.toFixed(0)}g ✓`}
+            </div>
+            {progressPct !== null && (
+              <div style={{
+                marginTop: 6, height: 4,
+                background: `${BRAND.heirloom}11`, borderRadius: 999, overflow: 'hidden',
+              }}>
+                <div style={{
+                  width: `${progressPct}%`, height: '100%',
+                  background: insufficient
+                    ? `linear-gradient(90deg, #e74c3c, ${color})`
+                    : color,
+                  borderRadius: 999,
+                  transition: 'width 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+                  boxShadow: !insufficient ? `0 0 8px ${color}88` : 'none',
+                }} />
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
