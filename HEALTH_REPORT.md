@@ -1,6 +1,6 @@
 # CAUA Health Report
-Timestamp: 2026-05-04T14:16:00Z
-Previous run: 2026-04-27T14:12:30Z
+Timestamp: 2026-05-11T14:04:20Z
+Previous run: 2026-05-04T14:16:00Z
 
 ## Summary: ⚠️ INCONCLUSIVE — Sandbox Egress Block
 
@@ -30,13 +30,50 @@ Previous run: 2026-04-27T14:12:30Z
 - **Root cause:** The Anthropic sandbox intercepts all HTTPS and blocks non-allowlisted hosts. `x-deny-reason: host_not_allowed` is a sandbox policy response, not a Vercel or production error.
 - **This is NOT a production site failure.** No evidence of a real outage across any of the prior runs.
 - **Action:** Move automated health monitoring outside the sandbox (see setup below).
-- Run count: **50th consecutive blocked run** (first blocked: 2026-04-20T22:08:41Z).
+- Run count: **51st consecutive blocked run** (first blocked: 2026-04-20T22:08:41Z).
 
 ---
 
 ## Raw curl Evidence
 
-### 2026-05-04T14:16:00Z run (current)
+### 2026-05-11T14:04:20Z run (current)
+```
+# Site availability
+403 0.338306s
+
+# Full headers (HTTPS)
+HTTP/2 403
+x-deny-reason: host_not_allowed
+content-length: 21
+content-type: text/plain
+date: Mon, 11 May 2026 14:04:02 GMT
+
+# Full headers (HTTP)
+HTTP/1.1 403 Forbidden
+x-deny-reason: host_not_allowed
+content-length: 21
+content-type: text/plain
+date: Mon, 11 May 2026 14:04:11 GMT
+
+# Body: "Host not in allowlist"
+
+# TLS/SSL verbose (Supabase endpoint)
+TLSv1.3 / TLS_AES_256_GCM_SHA384 / X25519 — handshake succeeds
+cert subject:  CN=*.supabase.co
+cert issuer:   O=Anthropic; CN=sandbox-egress-production TLS Inspection CA
+cert start:    May 11 14:03:51 2026 GMT
+cert expiry:   Jun 10 14:03:50 2026 GMT  ← proxy cert, ~30 days; not real Supabase cert
+IPs resolved:  172.64.149.246, 104.18.38.10 (Cloudflare)
+
+# Security headers: none (blocked at proxy)
+# Supabase auth: 403 — x-deny-reason: host_not_allowed
+# Supabase REST: 403 — host_not_allowed
+# HTTP→HTTPS redirect: 403 (blocked before redirect)
+# SSL check: SSL OK (TLS 1.3 handshake succeeds, no curl SSL errors)
+# /fund route: 403 host_not_allowed
+```
+
+### 2026-05-04T14:16:00Z run (previous)
 ```
 # Site availability
 403 0.350169s
