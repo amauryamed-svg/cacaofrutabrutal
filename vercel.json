@@ -124,6 +124,8 @@
     { "source": "/marketplace",           "destination": "/app/marketplace",           "permanent": true },
     { "source": "/ritual",                "destination": "/app/ritual",                "permanent": true },
     { "source": "/adoptar",               "destination": "/app/adoptar",               "permanent": true },
+    { "source": "/adopta",                "destination": "/app/adoptar",               "permanent": true },
+    { "source": "/Adopta",                "destination": "/app/adoptar",               "permanent": true },
     { "source": "/tree/:path*",           "destination": "/app/tree/:path*",           "permanent": true },
     { "source": "/dashboard",             "destination": "/app/dashboard",             "permanent": true },
     { "source": "/fund",                  "destination": "/app/fund",                  "permanent": true },
