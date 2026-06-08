@@ -1,6 +1,6 @@
 # CAUA Health Report
-Timestamp: 2026-05-18T14:07:26Z
-Previous run: 2026-05-11T14:04:20Z
+Timestamp: 2026-06-08T14:02:15Z
+Previous run: 2026-05-18T14:07:26Z
 
 ## Summary: ⚠️ INCONCLUSIVE — Sandbox Egress Block
 
@@ -30,13 +30,41 @@ Previous run: 2026-05-11T14:04:20Z
 - **Root cause:** The Anthropic sandbox intercepts all HTTPS and blocks non-allowlisted hosts. `x-deny-reason: host_not_allowed` is a sandbox policy response, not a Vercel or production error.
 - **This is NOT a production site failure.** No evidence of a real outage across any of the prior runs.
 - **Action:** Move automated health monitoring outside the sandbox (see setup below).
-- Run count: **52nd consecutive blocked run** (first blocked: 2026-04-20T22:08:41Z).
+- Run count: **53rd consecutive blocked run** (first blocked: 2026-04-20T22:08:41Z).
 
 ---
 
 ## Raw curl Evidence
 
-### 2026-05-18T14:07:26Z run (current)
+### 2026-06-08T14:02:15Z run (current)
+```
+# Site availability
+403 0.449918s
+
+# Full headers (HTTPS)
+HTTP/2 403
+x-deny-reason: host_not_allowed
+content-length: 21
+content-type: text/plain
+date: Mon, 08 Jun 2026 14:01:57 GMT
+
+# Full headers (HTTP)
+HTTP/1.1 403 Forbidden
+x-deny-reason: host_not_allowed
+content-length: 21
+content-type: text/plain
+date: Mon, 08 Jun 2026 14:01:58 GMT
+
+# Body: "Host not in allowlist"
+# Security headers: none (blocked at proxy)
+# Supabase auth: 403 — body: "Host not in allowlist"
+# Supabase REST: 403 — body: "Host not in allowlist"
+# HTTP→HTTPS redirect: 403 (blocked before redirect)
+# SSL check: SSL OK (TLS handshake succeeds, no curl SSL errors)
+# /fund route: 403 host_not_allowed
+```
+
+### 2026-05-18T14:07:26Z run (previous)
 ```
 # Site availability
 403 1.006328s
