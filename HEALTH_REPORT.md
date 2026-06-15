@@ -1,6 +1,6 @@
 # CAUA Health Report
-Timestamp: 2026-06-08T14:02:15Z
-Previous run: 2026-05-18T14:07:26Z
+Timestamp: 2026-06-15T14:02:32Z
+Previous run: 2026-06-08T14:02:15Z
 
 ## Summary: ⚠️ INCONCLUSIVE — Sandbox Egress Block
 
@@ -10,12 +10,12 @@ Previous run: 2026-05-18T14:07:26Z
 
 | Check | Status | Detail |
 |-------|--------|--------|
-| Site availability | ⚠️ INCONCLUSIVE | 403 `host_not_allowed` — sandbox egress proxy, **1.0s** response time |
+| Site availability | ⚠️ INCONCLUSIVE | 403 `host_not_allowed` — sandbox egress proxy, **0.26s** response time |
 | Security headers | ⚠️ INCONCLUSIVE | No app-layer headers returned; blocked at proxy |
 | Supabase auth endpoint | ⚠️ INCONCLUSIVE | 403 — body: "Host not in allowlist" |
 | Supabase REST endpoint | ⚠️ INCONCLUSIVE | 403 — body: "Host not in allowlist" |
 | HTTPS redirect (HTTP→HTTPS) | ⚠️ INCONCLUSIVE | HTTP also returned 403; redirect behavior unverifiable from sandbox |
-| SSL certificate | ✅ PASS | TLS 1.3 handshake succeeds; proxy cert via `O=Anthropic; CN=sandbox-egress-production TLS Inspection CA` (not real site cert) |
+| SSL certificate | ✅ PASS | TLS 1.3 handshake succeeds; proxy cert via `O=Anthropic; CN=Egress Gateway SDS Issuing CA (production)` (not real site cert) |
 | /fund route | ⚠️ INCONCLUSIVE | 403 `host_not_allowed` — sandbox egress proxy |
 
 ---
@@ -24,19 +24,62 @@ Previous run: 2026-05-18T14:07:26Z
 
 ### 1. ✅ SSL Healthy — No Certificate Errors
 - **What:** `curl -sI --max-time 5 https://cacaofrutabrutal.com` returned no SSL/certificate error strings. TLS 1.3 handshake succeeded.
-- **Note:** The cert shown is issued by `O=Anthropic; CN=sandbox-egress-production TLS Inspection CA` — that is the proxy's interception cert, not the real origin cert. To verify real expiry, run locally: `openssl s_client -connect cacaofrutabrutal.com:443 2>/dev/null | openssl x509 -noout -dates`
+- **Note:** The cert shown is issued by `O=Anthropic; CN=Egress Gateway SDS Issuing CA (production)` — that is the proxy's interception cert, not the real origin cert. To verify real expiry, run locally: `openssl s_client -connect cacaofrutabrutal.com:443 2>/dev/null | openssl x509 -noout -dates`
 
 ### 2. ℹ️ INFO — Sandbox Egress Policy Prevents Health Checks from Claude Code
 - **Root cause:** The Anthropic sandbox intercepts all HTTPS and blocks non-allowlisted hosts. `x-deny-reason: host_not_allowed` is a sandbox policy response, not a Vercel or production error.
 - **This is NOT a production site failure.** No evidence of a real outage across any of the prior runs.
 - **Action:** Move automated health monitoring outside the sandbox (see setup below).
-- Run count: **53rd consecutive blocked run** (first blocked: 2026-04-20T22:08:41Z).
+- Run count: **54th consecutive blocked run** (first blocked: 2026-04-20T22:08:41Z).
 
 ---
 
 ## Raw curl Evidence
 
-### 2026-06-08T14:02:15Z run (current)
+### 2026-06-15T14:02:32Z run (current)
+```
+# Site availability
+403 0.263672s
+
+# Full headers (HTTPS)
+HTTP/2 403
+x-deny-reason: host_not_allowed
+content-length: 107
+content-type: text/plain
+date: Mon, 15 Jun 2026 14:02:07 GMT
+
+# Full headers (HTTP — port 80)
+HTTP/1.1 403 Forbidden
+x-deny-reason: host_not_allowed
+content-length: 107
+content-type: text/plain
+Body: "Host not in allowlist: cacaofrutabrutal.com. Add this host to your network egress settings to allow access."
+
+# TLS/SSL verbose (HTTPS)
+* Connected to cacaofrutabrutal.com (216.198.79.1) port 443
+* TLSv1.3 / TLS_AES_256_GCM_SHA384 / X25519 — handshake succeeds
+* cert subject:  CN=cacaofrutabrutal.com
+* cert issuer:   O=Anthropic; CN=Egress Gateway SDS Issuing CA (production)
+* cert start:    Jun 15 14:00:51 2026 GMT
+* cert expiry:   Jul 15 14:01:51 2026 GMT  ← proxy cert, not real site cert
+* HTTP/2 accepted (ALPN: h2)
+* IPs resolved: 216.198.79.1, 76.76.21.21 (Vercel edge)
+
+# TLS/SSL verbose (Supabase)
+* Connected to kjygovuiphbxcdxeduco.supabase.co (104.18.38.10) port 443
+* TLSv1.3 / TLS_AES_256_GCM_SHA384 / X25519 — handshake succeeds
+* cert subject:  CN=*.supabase.co
+* IPs resolved: 104.18.38.10, 172.64.149.246 (Cloudflare)
+
+# Security headers: none (blocked at proxy)
+# Supabase auth: 403 — "Host not in allowlist"
+# Supabase REST: 403 — "Host not in allowlist"
+# HTTP→HTTPS redirect: 403 (blocked before redirect)
+# SSL check: SSL OK (TLS 1.3 handshake succeeds, no curl SSL errors)
+# /fund route: 403 host_not_allowed
+```
+
+### 2026-06-08T14:02:15Z run (previous)
 ```
 # Site availability
 403 0.449918s
