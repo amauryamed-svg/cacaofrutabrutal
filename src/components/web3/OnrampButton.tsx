@@ -75,7 +75,7 @@ export default function OnrampButton({ presetUsd, asset = 'USDC', label }: Props
     }
   }
 
-  const chainLabel = ACTIVE_CHAIN_ID === BASE_CHAIN_ID ? 'BASE' : 'BASE SEPOLIA'
+  const chainLabel = (ACTIVE_CHAIN_ID as number) === BASE_CHAIN_ID ? 'BASE' : 'BASE SEPOLIA'
   const btnLabel = pending
     ? 'PREPARING…'
     : !isConnected

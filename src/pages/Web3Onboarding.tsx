@@ -183,7 +183,7 @@ function Inner() {
             {err && <ErrBox msg={err} />}
           </>
         )}
-      </Shell>
+      </Screen>
 
       <CompliancePills />
     </Shell>
