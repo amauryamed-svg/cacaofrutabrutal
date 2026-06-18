@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { BRAND, FONTS, PRODUCTS, ROLE_CONFIG } from '../utils/constants'
 import { useAuth } from '../context/AuthContext'
 import ProductCard from '../components/auction/ProductCard'
@@ -18,6 +18,7 @@ function getMultiplier(referrals: number, prevLots: number): number {
 
 export default function Marketplace() {
   const { user, profile }   = useAuth()
+  const navigate             = useNavigate()
   const [filter, setFilter] = useState<Filter>('all')
   const { lang } = useLang()
   const T = makeT(lang)
@@ -48,21 +49,31 @@ export default function Marketplace() {
     <div style={{ background: '#040C06', minHeight: '100vh', paddingTop: 'calc(var(--nav-h, 60px) + 12px)' }}>
       <div style={{ maxWidth: 1000, margin: '0 auto', padding: 'clamp(20px,5vw,40px) var(--space-page) clamp(40px,8vw,80px)' }}>
 
-        <p style={{
-          fontFamily: FONTS.serif, fontStyle: 'italic',
-          color: BRAND.mazorca, fontSize: 12, letterSpacing: '0.25em', marginBottom: 10,
-        }}>{T('mkt_eyebrow')}</p>
-        <h2 style={{
-          fontFamily: "'Barlow Condensed', Impact, sans-serif", fontWeight: 900,
-          fontSize: 'clamp(36px, 8vw, 64px)', color: BRAND.heirloom,
-          textTransform: 'uppercase', margin: '0 0 8px', lineHeight: 0.9,
-        }}>{T('mkt_title')}</h2>
-        <p style={{
-          fontFamily: FONTS.body, color: `${BRAND.heirloom}60`,
-          fontSize: 14, margin: '0 0 28px', lineHeight: 1.6, maxWidth: 540,
-        }}>
-          {T('mkt_desc')}
-        </p>
+        {/* Hero header — game-style */}
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <div style={{
+            fontFamily: "'Press Start 2P', monospace",
+            fontSize: 8, color: BRAND.heroic,
+            letterSpacing: '0.2em', marginBottom: 12,
+          }}>
+            ◈ MERCADO CAÚA · POWERED BY $CACAO
+          </div>
+          <h2 style={{
+            fontFamily: "'Barlow Condensed', Impact, sans-serif", fontWeight: 900,
+            fontSize: 'clamp(52px, 12vw, 80px)', color: BRAND.heirloom,
+            textTransform: 'uppercase', margin: '0 0 6px', lineHeight: 0.9,
+          }}>
+            MERCADO <span style={{ color: BRAND.mazorca }}>CAÚA</span>
+          </h2>
+          <p style={{
+            fontFamily: FONTS.body, color: `${BRAND.heirloom}66`,
+            fontSize: 13, margin: '8px auto 0', lineHeight: 1.6, maxWidth: 480,
+          }}>
+            {lang === 'es'
+              ? 'Quema $CACAO. Obtén productos reales. El ciclo completo on-chain.'
+              : 'Burn $CACAO. Get real products. The complete on-chain cycle.'}
+          </p>
+        </div>
 
         {/* Cacao Ceremony — Cauaculture cross-sell with adopter discount (TOP placement so users find it) */}
         <CacaoCeremonyCard />
@@ -89,16 +100,73 @@ export default function Marketplace() {
           </div>
         )}
 
-        {/* Filters */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 24, overflowX: 'auto', scrollbarWidth: 'none', flexWrap: 'nowrap', paddingBottom: 4 }}>
+        {/* EARN $CACAO pipeline */}
+        <div style={{
+          background: BRAND.bgCard, border: `1px solid ${BRAND.amazon}44`,
+          borderRadius: 8, padding: 'clamp(14px, 3vw, 20px)',
+          marginBottom: 24,
+        }}>
+          <div style={{
+            fontFamily: "'Press Start 2P', monospace", fontSize: 6,
+            color: `${BRAND.heirloom}44`, letterSpacing: '0.16em',
+            textTransform: 'uppercase', textAlign: 'center', marginBottom: 14,
+          }}>
+            — CÓMO OBTENER $CACAO —
+          </div>
+          <div style={{
+            display: 'flex', alignItems: 'stretch', gap: 4,
+            justifyContent: 'center',
+          }}>
+            {[
+              { icon: '🌱', label: 'ADOPTAR', sub: 'árbol', color: BRAND.pod },
+              { icon: '→', label: '', sub: '', color: `${BRAND.heirloom}22` },
+              { icon: '🌽', label: 'MAZORCAS', sub: 'ganar', color: BRAND.mazorca },
+              { icon: '→', label: '', sub: '', color: `${BRAND.heirloom}22` },
+              { icon: '◈', label: '$CACAO', sub: 'quemar', color: BRAND.heroic, cta: true },
+              { icon: '→', label: '', sub: '', color: `${BRAND.heirloom}22` },
+              { icon: '🛒', label: 'COMPRAR', sub: 'aquí', color: BRAND.criollo },
+            ].map((n, i) => n.label === '' ? (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', color: `${BRAND.heirloom}22`, fontFamily: "'Press Start 2P', monospace", fontSize: 8 }}>→</div>
+            ) : (
+              <div key={i} style={{
+                flex: 1, textAlign: 'center', padding: '10px 4px',
+                background: `${n.color}11`, border: `1px solid ${n.color}44`,
+                borderRadius: 4,
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+              }}>
+                <div style={{ fontSize: 18 }}>{n.icon}</div>
+                <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 5, color: n.color, letterSpacing: '0.08em', lineHeight: 1.4 }}>
+                  {n.label}
+                </div>
+                {n.cta && (
+                  <button
+                    onClick={() => navigate('/burn')}
+                    style={{
+                      background: BRAND.heroic, border: 'none', borderRadius: 2,
+                      padding: '3px 6px', cursor: 'pointer',
+                      fontFamily: "'Press Start 2P', monospace", fontSize: 4,
+                      color: BRAND.bgDeep, letterSpacing: '0.06em', marginTop: 2,
+                    }}
+                  >
+                    BURN →
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Filters — pixel style */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 24, overflowX: 'auto', scrollbarWidth: 'none', flexWrap: 'nowrap', paddingBottom: 4 }}>
           {FILTERS.map(f => (
             <button key={f.id} onClick={() => setFilter(f.id)} style={{
               background: filter === f.id ? `${BRAND.pod}22` : 'transparent',
-              border: `1px solid ${filter === f.id ? BRAND.pod : BRAND.amazon}44`,
-              color: filter === f.id ? BRAND.pod : `${BRAND.heirloom}66`,
-              padding: '6px 14px', borderRadius: 999, cursor: 'pointer',
-              fontFamily: FONTS.display, fontWeight: 700,
-              fontSize: 10, letterSpacing: '0.12em',
+              border: `2px solid ${filter === f.id ? BRAND.pod : BRAND.amazon + '44'}`,
+              color: filter === f.id ? BRAND.pod : `${BRAND.heirloom}55`,
+              padding: '7px 12px', borderRadius: 0, cursor: 'pointer',
+              fontFamily: "'Press Start 2P', monospace",
+              fontSize: 7, letterSpacing: '0.08em',
+              boxShadow: filter === f.id ? `0 0 8px ${BRAND.pod}33` : 'none',
             }}>{f.label}</button>
           ))}
         </div>
@@ -110,36 +178,59 @@ export default function Marketplace() {
           ))}
         </div>
 
-        {/* Crowdfunding bar */}
+        {/* Crowdfunding bar — pixel style */}
         <div style={{
-          marginTop: 40, background: '#132B1C', border: `1px solid ${BRAND.amazon}66`,
-          borderRadius: 12, padding: 'clamp(16px, 3vw, 24px)',
+          marginTop: 40, background: '#132B1C', border: `2px solid ${BRAND.amazon}66`,
+          borderRadius: 0, padding: 'clamp(16px, 3vw, 24px)',
+          boxShadow: `inset 0 0 20px ${BRAND.bgDeep}88`,
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
-            <div style={{ flex: '1 1 220px', minWidth: 0 }}>
-              <div style={{ fontFamily: FONTS.display, fontWeight: 700, color: BRAND.heirloom, fontSize: 14, letterSpacing: '0.08em' }}>
-                CROWDFUNDING · RONDA SEMILLA
-              </div>
-              <div style={{ fontFamily: FONTS.body, color: `${BRAND.heirloom}66`, fontSize: 11, marginTop: 2 }}>
-                Transparencia total — cada compra impulsa el desarrollo rural
-              </div>
-            </div>
-            <div style={{ fontFamily: FONTS.display, fontWeight: 900, color: BRAND.pod, fontSize: 'clamp(20px, 4vw, 24px)' }}>
-              23%
-            </div>
-          </div>
-          <div style={{ height: 6, background: `${BRAND.amazon}66`, borderRadius: 999, overflow: 'hidden' }}>
+          <div style={{ marginBottom: 12 }}>
             <div style={{
-              width: '23%', height: '100%', borderRadius: 999,
-              background: `linear-gradient(90deg, ${BRAND.pod}, ${BRAND.mazorca})`,
-              transition: 'width 1s ease',
-            }} />
+              fontFamily: "'Press Start 2P', monospace",
+              fontSize: 8, color: BRAND.pod, letterSpacing: '0.12em', marginBottom: 4,
+            }}>
+              CROWDFUNDING · RONDA SEMILLA
+            </div>
+            <div style={{ fontFamily: FONTS.body, color: `${BRAND.heirloom}55`, fontSize: 10, marginTop: 2 }}>
+              Transparencia total — cada compra impulsa el desarrollo rural
+            </div>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}55` }}>
-            <span>$17,250 USD recaudado</span>
-            <span>Meta: $75,000 USD</span>
+          {/* Block progress bar */}
+          <div style={{
+            fontFamily: "'Press Start 2P', monospace",
+            fontSize: 9, color: BRAND.pod, letterSpacing: '0.02em', marginBottom: 6,
+          }}>
+            {'■'.repeat(2)}{'□'.repeat(8)}
           </div>
+          <div style={{
+            display: 'flex', justifyContent: 'space-between',
+            fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: `${BRAND.heirloom}55`,
+            marginBottom: 14,
+          }}>
+            <span>$17,250 USD</span>
+            <span style={{ color: BRAND.pod }}>23%</span>
+            <span>META: $75,000</span>
+          </div>
+          <button
+            onClick={() => {}} // TODO: open InvestModal
+            style={{
+              width: '100%', padding: '14px',
+              background: `linear-gradient(135deg, ${BRAND.heroic}, ${BRAND.amazon})`,
+              border: 'none', borderRadius: 0, cursor: 'pointer',
+              fontFamily: "'Press Start 2P', monospace", fontSize: 8,
+              color: BRAND.heirloom, letterSpacing: '0.1em',
+              boxShadow: `0 0 20px ${BRAND.heroic}33`,
+            }}
+          >
+            ◈ INVERTIR CON $CACAO →
+          </button>
         </div>
+        <style>{`
+          @keyframes hud-pulse-mkt {
+            0%, 100% { box-shadow: 0 0 8px ${BRAND.heroic}33; }
+            50%       { box-shadow: 0 0 20px ${BRAND.heroic}66; }
+          }
+        `}</style>
       </div>
     </div>
   )

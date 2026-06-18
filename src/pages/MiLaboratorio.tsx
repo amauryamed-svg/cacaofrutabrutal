@@ -313,24 +313,30 @@ export default function MiLaboratorio() {
               disabled={!canForge || !user}
               style={{
                 width: '100%',
-                padding: '14px 18px',
+                padding: canForge ? '20px 18px' : '14px 18px',
+                height: canForge ? 64 : 'auto',
                 background: canForge
-                  ? `linear-gradient(135deg, ${BRAND.mazorca}, ${BRAND.brown})`
+                  ? `linear-gradient(135deg, ${BRAND.criollo}, ${BRAND.theobroma})`
                   : `${BRAND.amazon}66`,
-                color: canForge ? BRAND.bgDeep : `${BRAND.heirloom}66`,
-                border: 'none', borderRadius: 999,
+                color: canForge ? BRAND.heirloom : `${BRAND.heirloom}66`,
+                border: canForge ? `2px solid ${BRAND.criollo}88` : 'none',
+                borderRadius: canForge ? 8 : 999,
                 cursor: canForge ? 'pointer' : 'not-allowed',
-                fontFamily: FONTS.display, fontWeight: 800, fontSize: 13,
-                letterSpacing: '0.16em', textTransform: 'uppercase',
-                boxShadow: canForge ? `0 12px 28px ${BRAND.mazorca}55` : 'none',
-                transition: 'all 0.2s',
+                fontFamily: "'Press Start 2P', monospace",
+                fontSize: canForge ? 10 : 9,
+                letterSpacing: '0.12em', textTransform: 'uppercase',
+                boxShadow: canForge ? `0 0 32px ${BRAND.criollo}44, 0 12px 28px ${BRAND.criollo}33` : 'none',
+                animation: canForge ? 'forge-glow 2s ease-in-out infinite' : 'none',
+                transition: 'all 0.3s',
               }}
+              onMouseDown={e => { if (canForge) (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.97)' }}
+              onMouseUp={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)' }}
             >
               {!user
-                ? (lang === 'es' ? 'Iniciar sesión para fabricar' : 'Sign in to forge')
+                ? (lang === 'es' ? 'INICIAR SESIÓN' : 'SIGN IN')
                 : canForge
-                  ? (lang === 'es' ? '🍫 Iniciar fabricación' : '🍫 Begin forging')
-                  : (lang === 'es' ? 'Insumos insuficientes' : 'Insufficient inputs')}
+                  ? '⚗ FORJAR ◈ $CACAO'
+                  : (lang === 'es' ? 'INSUMOS INSUFICIENTES' : 'INSUFFICIENT INPUTS')}
             </button>
           </div>
         )}
@@ -342,9 +348,9 @@ export default function MiLaboratorio() {
             gap: 8, marginBottom: 20,
           }}>
             {[
-              { key: 'liofilizado' as const, label: '1 · Liofilización',  icon: '❄' },
-              { key: 'refinado'    as const, label: '2 · Refinado',       icon: '🌾' },
-              { key: 'conchado'    as const, label: '3 · Conchado',       icon: '🍫' },
+              { key: 'liofilizado' as const, label: '1 · LIOFILIZACIÓN', icon: '❄' },
+              { key: 'refinado'    as const, label: '2 · REFINADO',      icon: '🌾' },
+              { key: 'conchado'    as const, label: '3 · CONCHADO',      icon: '🍫' },
             ].map((s, i) => {
               const active = phase === s.key
               const past = (phase === 'refinado' && i === 0)
@@ -353,17 +359,23 @@ export default function MiLaboratorio() {
               const accent = active ? BRAND.mazorca : past ? BRAND.pod : `${BRAND.heirloom}33`
               return (
                 <div key={s.key} style={{
-                  padding: '10px 8px',
-                  background: active ? `${BRAND.mazorca}22` : 'transparent',
-                  border: `1px solid ${accent}`,
-                  borderRadius: 10,
+                  padding: '12px 8px',
+                  background: active ? `${BRAND.mazorca}22` : past ? `${BRAND.pod}11` : 'transparent',
+                  border: `2px solid ${accent}`,
+                  borderRadius: 0,
                   textAlign: 'center',
-                  transition: 'all 0.3s',
+                  transform: active ? 'scale(1.08)' : 'scale(1)',
+                  transition: 'all 0.3s cubic-bezier(0.34, 1.4, 0.64, 1)',
+                  boxShadow: active ? `0 0 16px ${BRAND.mazorca}44` : past ? `0 0 8px ${BRAND.pod}22` : 'none',
+                  opacity: !active && !past ? 0.4 : 1,
                 }}>
-                  <div style={{ fontSize: 18, marginBottom: 4 }}>{past ? '✓' : s.icon}</div>
+                  <div style={{ fontSize: past ? 14 : 20, marginBottom: 4 }}>
+                    {past ? '✓' : s.icon}
+                  </div>
                   <div style={{
-                    fontFamily: FONTS.display, fontWeight: 700, fontSize: 9,
-                    color: accent, letterSpacing: '0.12em', textTransform: 'uppercase',
+                    fontFamily: "'Press Start 2P', monospace", fontSize: 6,
+                    color: accent, letterSpacing: '0.08em',
+                    lineHeight: 1.4,
                   }}>
                     {s.label}
                   </div>
@@ -407,17 +419,20 @@ export default function MiLaboratorio() {
             boxShadow: `0 0 40px ${BRAND.mazorca}55`,
           }}>
             <div style={{
-              fontSize: 72, marginBottom: 12,
-              fontFamily: FONTS.display, fontWeight: 900,
+              fontSize: 80, marginBottom: 16,
+              fontFamily: "'Press Start 2P', monospace",
               color: BRAND.criollo,
-              filter: `drop-shadow(0 0 24px ${BRAND.criollo}cc)`,
+              filter: `drop-shadow(0 0 28px ${BRAND.criollo}cc)`,
+              lineHeight: 1,
+              animation: 'caua-forge-spin 4s linear infinite',
             }}>◈</div>
             <div style={{
-              fontFamily: FONTS.display, fontWeight: 900, fontSize: 28,
-              color: BRAND.criollo, letterSpacing: '0.04em', textTransform: 'uppercase',
-              textShadow: `0 0 24px ${BRAND.criollo}cc`, marginBottom: 8,
+              fontFamily: "'Press Start 2P', monospace", fontSize: 12,
+              color: BRAND.criollo, letterSpacing: '0.04em',
+              textShadow: `0 0 24px ${BRAND.criollo}cc`, marginBottom: 12,
+              lineHeight: 1.5,
             }}>
-              {lang === 'es' ? '$CACAO FORJADO' : '$CACAO FORGED'}
+              {lang === 'es' ? '$CACAO\nFORJADO' : '$CACAO\nFORGED'}
             </div>
             <div style={{
               fontFamily: FONTS.serif, fontStyle: 'italic',
@@ -497,69 +512,48 @@ export default function MiLaboratorio() {
               </button>
             </div>
 
-            {/* ─── CRM360 · Camino B · Golden Ticket progress (Phase 0 MVP) ───
-                User forjó → cumplió hito 4 de 4 del Camino del Creyente.
-                Lo manda a /pages/goldenticket donde verifica/completa los otros
-                hitos (adoptar ya está, falta share + workshop signup). El reward
-                final = GoldenTicket = Cacao Ceremony 100% gratis (1 de 30).
-                Camino A (RedimeCacao10K $10K post-adopt) vive en Adoptar.tsx. */}
+            {/* CTA → Mercado Caúa: usa tu $CACAO */}
             <div style={{
-              background: `linear-gradient(160deg, #2A0F26 0%, #150616 100%)`,
-              border: `1.5px solid ${BRAND.mazorca}`,
-              borderRadius: 14,
-              padding: 'clamp(18px, 3.5vw, 24px)',
+              background: `linear-gradient(160deg, ${BRAND.heroic}18 0%, ${BRAND.bgDeep} 100%)`,
+              border: `1.5px solid ${BRAND.heroic}66`,
+              borderRadius: 8,
+              padding: 'clamp(16px, 3vw, 22px)',
               marginBottom: 24,
               maxWidth: 460,
               marginLeft: 'auto', marginRight: 'auto',
-              boxShadow: `0 0 24px rgba(238, 161, 16, 0.25)`,
               textAlign: 'center',
+              boxShadow: `0 0 20px ${BRAND.heroic}22`,
             }}>
               <div style={{
-                fontFamily: FONTS.display, fontWeight: 700, fontSize: 10,
-                color: BRAND.mazorca, letterSpacing: '0.22em',
-                textTransform: 'uppercase', marginBottom: 6,
+                fontFamily: "'Press Start 2P', monospace", fontSize: 8,
+                color: BRAND.heroic, letterSpacing: '0.1em',
+                marginBottom: 10,
               }}>
-                {lang === 'es' ? '🏆 Hito 4 / 4 · Eres Creyente' : '🏆 Hito 4 / 4 · You are a Creyente'}
+                ◈ USA TU $CACAO
               </div>
               <div style={{
-                fontFamily: FONTS.display, fontWeight: 900,
-                fontSize: 'clamp(18px, 2.4vw, 22px)',
-                color: BRAND.heirloom, letterSpacing: '0.02em',
-                lineHeight: 1.2, marginBottom: 10,
-                textTransform: 'uppercase',
-              }}>
-                {lang === 'es' ? 'Sigue el Camino del Creyente' : 'Follow the Creyente Path'}
-              </div>
-              <div style={{
-                fontFamily: FONTS.body, fontSize: 13,
-                color: `${BRAND.heirloom}cc`, lineHeight: 1.5,
-                marginBottom: 14,
+                fontFamily: FONTS.body, fontSize: 12,
+                color: `${BRAND.heirloom}aa`, lineHeight: 1.55, marginBottom: 14,
               }}>
                 {lang === 'es'
-                  ? 'Forjar fue el hito 4. Te falta compartir tu árbol en redes y firmar el Workshop Cacao 2.0 para reclamar tu Cacao Ceremony 100% gratis (1 de 30 cupos).'
-                  : 'Forging was hito 4. You still need to share your tree on social and sign up for Workshop Cacao 2.0 to claim your free Cacao Ceremony (1 of 30 slots).'}
+                  ? 'Tu $CACAO forjado se puede quemar on-chain para adquirir productos reales en el Mercado Caúa.'
+                  : 'Your forged $CACAO can be burned on-chain to acquire real products in the Caúa Market.'}
               </div>
-              <a
-                href="https://cauacolombia.co/pages/goldenticket"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-cta-name="cfb-camino-b-goldenticket"
-                data-cta-surface="lab-forge-done"
-                data-cta-destination="cauacolombia-goldenticket"
+              <button
+                onClick={() => navigate('/marketplace')}
                 style={{
-                  display: 'block',
-                  background: BRAND.mazorca,
-                  color: BRAND.bgDeep,
-                  padding: '12px 18px',
-                  borderRadius: 999,
-                  textDecoration: 'none',
-                  fontFamily: FONTS.display, fontWeight: 800, fontSize: 12,
-                  letterSpacing: '0.16em', textTransform: 'uppercase',
-                  textAlign: 'center',
+                  display: 'block', width: '100%',
+                  background: `linear-gradient(135deg, ${BRAND.heroic}, ${BRAND.amazon})`,
+                  color: BRAND.heirloom, border: 'none',
+                  padding: '12px 18px', borderRadius: 999,
+                  cursor: 'pointer',
+                  fontFamily: "'Press Start 2P', monospace", fontSize: 8,
+                  letterSpacing: '0.1em',
+                  boxShadow: `0 8px 20px ${BRAND.heroic}33`,
                 }}
               >
-                {lang === 'es' ? 'Verificar mi Camino →' : 'Verify my Path →'}
-              </a>
+                {lang === 'es' ? '◈ MERCADO CAÚA →' : '◈ CAÚA MARKET →'}
+              </button>
             </div>
 
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -638,6 +632,10 @@ export default function MiLaboratorio() {
             0%   { transform: rotate(0deg)    scale(1);   }
             50%  { transform: rotate(180deg)  scale(1.1); }
             100% { transform: rotate(360deg)  scale(1);   }
+          }
+          @keyframes forge-glow {
+            0%, 100% { box-shadow: 0 0 32px ${BRAND.criollo}44, 0 12px 28px ${BRAND.criollo}33; }
+            50%       { box-shadow: 0 0 52px ${BRAND.criollo}88, 0 16px 36px ${BRAND.criollo}55; }
           }
         `}</style>
       </div>

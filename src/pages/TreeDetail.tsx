@@ -478,6 +478,15 @@ export default function TreeDetail() {
           nextHarvestLabel={nextHarvestLabel}
         />
 
+        {/* NFT mint row — justo bajo el gotchi, antes del panel "mientras crece" */}
+        <div style={{ marginTop: 8 }}>
+          <MintTreeButton
+            treeId={tree.id}
+            alreadyMintedTokenId={tree.nft_token_id}
+            alreadyMintedContract={tree.nft_contract}
+          />
+        </div>
+
         {secretFound && (
           <div style={secretFoundStyle}>
             🍯✨ <strong style={{ color: BRAND.mazorca }}>Melaza Orgánica</strong> añadida — úsala desde el item secreto.
@@ -491,15 +500,6 @@ export default function TreeDetail() {
         {!dead && !inDanger && !harvestReady && !harvested && (
           <WhileGrowingPanel cycleRemaining={cycleRemaining} navigate={navigate} />
         )}
-
-        {/* NFT mint row */}
-        <div style={{ marginTop: 16 }}>
-          <MintTreeButton
-            treeId={tree.id}
-            alreadyMintedTokenId={tree.nft_token_id}
-            alreadyMintedContract={tree.nft_contract}
-          />
-        </div>
       </div>
 
       {/* Fruit-Ninja harvest minigame — opened by COSECHA LISTA in CauaGotchi.

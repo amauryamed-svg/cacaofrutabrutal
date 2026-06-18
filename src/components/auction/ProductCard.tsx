@@ -1,8 +1,12 @@
-import { BRAND, FONTS } from '../../utils/constants'
+import { lazy, Suspense } from 'react'
+import { BRAND, FONTS, CACAO_PER_USD } from '../../utils/constants'
 import { useCountdown } from '../../hooks/useCountdown'
 import ProductIllustration from '../ui/ProductIllustration'
 import type { Product } from '../../types'
 import { useNavigate } from 'react-router-dom'
+import { useLang } from '../../context/LangContext'
+
+const CacaoPayButton = lazy(() => import('../fund/CacaoPayButton'))
 
 interface Props {
   product: Product
@@ -43,6 +47,7 @@ const PRODUCT_BENEFITS: Record<number, string[]> = {
 
 export default function ProductCard({ product: p, multiplier, user, roleDiscount = 1 }: Props) {
   const navigate        = useNavigate()
+  const { lang }        = useLang()
   const countdown       = useCountdown(p.timer ?? 0)
   const tc              = TYPE_CONFIG[p.type]
   let discountedPrice   = p.type === 'auction' ? Math.round(p.price / multiplier) : p.price
@@ -141,45 +146,70 @@ export default function ProductCard({ product: p, multiplier, user, roleDiscount
           }}>{p.desc}</p>
         </div>
 
-        {/* Price */}
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-          <span style={{
-            fontFamily: FONTS.display, fontWeight: 900,
-            fontSize: 26, color: BRAND.heirloom, lineHeight: 1,
-          }}>${(discountedPrice / 100).toFixed(0)}</span>
-          {hasDiscount && (
-            <span style={{ fontFamily: FONTS.body, fontSize: 13, color: `${BRAND.heirloom}40`, textDecoration: 'line-through' }}>
-              ${(p.price / 100).toFixed(0)}
+        {/* Price — $CACAO primary, USD secondary */}
+        <div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 2 }}>
+            <span style={{
+              fontFamily: "'Press Start 2P', monospace",
+              fontSize: 13, color: BRAND.heroic, lineHeight: 1,
+            }}>◈ {Math.round((discountedPrice / 100) * CACAO_PER_USD)}</span>
+            <span style={{ fontFamily: FONTS.body, fontSize: 10, color: BRAND.heroic }}>
+              $CACAO{p.type === 'subscription' ? '/mes' : ''}
             </span>
-          )}
-          <span style={{ fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}50` }}>
-            USD{p.type === 'subscription' ? '/mes' : ''}
-          </span>
+          </div>
+          <div style={{ fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}44` }}>
+            ≈ ${(discountedPrice / 100).toFixed(0)} USD{p.type === 'subscription' ? '/mes' : ''}
+            {hasDiscount && (
+              <span style={{ marginLeft: 6, textDecoration: 'line-through', opacity: 0.5 }}>
+                ${(p.price / 100).toFixed(0)}
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* CTA */}
+        {/* CTA — CacaoPayButton */}
         <div style={{ marginTop: 'auto' }}>
-          <button onClick={() => {
-            if (!user) { navigate('/auth'); return }
-            alert(`✓ ${p.name} — Checkout con Stripe próximamente`)
-          }} style={{
-            width: '100%', padding: '13px 16px',
-            borderRadius: 10, border: 'none',
-            background: `linear-gradient(135deg, ${BRAND.pod}, ${BRAND.amazon})`,
-            color: BRAND.heirloom, cursor: 'pointer',
-            fontFamily: FONTS.display, fontWeight: 700,
-            fontSize: 13, letterSpacing: '0.1em',
-            transition: 'opacity 0.2s',
-          }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = '0.88')}
-            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-          >
-            {tc.cta}
-          </button>
+          {!user ? (
+            <button
+              onClick={() => navigate('/auth')}
+              style={{
+                width: '100%', padding: '13px 16px',
+                borderRadius: 0, border: `2px solid ${BRAND.heroic}88`,
+                background: `${BRAND.heroic}22`,
+                color: BRAND.heroic, cursor: 'pointer',
+                fontFamily: "'Press Start 2P', monospace",
+                fontSize: 9, letterSpacing: '0.1em',
+              }}
+            >
+              CONECTAR →
+            </button>
+          ) : (
+            <Suspense fallback={
+              <div style={{
+                width: '100%', padding: '13px 16px',
+                background: `${BRAND.heroic}22`, border: `2px solid ${BRAND.heroic}44`,
+                borderRadius: 0, textAlign: 'center',
+                fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: `${BRAND.heroic}88`,
+              }}>
+                CARGANDO…
+              </div>
+            }>
+              <CacaoPayButton
+                amountUsd={discountedPrice / 100}
+                label={lang === 'es' ? `Comprar con $CACAO` : 'Buy with $CACAO'}
+                lang={lang as 'es' | 'en'}
+                mvpId={`product-${p.id}`}
+                onSuccess={() => { /* handled inside button */ }}
+              />
+            </Suspense>
+          )}
           <p style={{
-            textAlign: 'center', margin: '7px 0 0',
-            fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}44`,
-          }}>{tc.sub}</p>
+            textAlign: 'center', margin: '6px 0 0',
+            fontFamily: "'Press Start 2P', monospace", fontSize: 6,
+            color: BRAND.pod, letterSpacing: '0.1em',
+          }}>
+            🔥 QUEMA MAZORCAS → $CACAO → COMPRA
+          </p>
         </div>
 
         {/* Trust signal */}
