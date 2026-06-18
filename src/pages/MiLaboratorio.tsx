@@ -477,10 +477,10 @@ export default function MiLaboratorio() {
                 {lang === 'es' ? '¿Qué hacemos con ese desperdicio?' : 'What do we do with that waste?'}
               </div>
               <button
-                onClick={() => navigate('/fund')}
+                onClick={() => navigate('/marketplace')}
                 data-cta-name="cfb-mucilage-waste-awareness"
                 data-cta-surface="lab-forge-done"
-                data-cta-destination="fund-tecnologias"
+                data-cta-destination="marketplace"
                 style={{
                   width: '100%',
                   background: 'transparent',

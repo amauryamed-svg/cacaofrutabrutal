@@ -23,7 +23,6 @@ import CauaBongaPlot     from './pages/CauaBongaPlot'
 import TreeDetail        from './pages/TreeDetail'
 import Dashboard         from './pages/Dashboard'
 import MiLaboratorio     from './pages/MiLaboratorio'
-import Fund              from './pages/Fund'
 import Impacto           from './pages/Impacto'
 import AdminCRM          from './pages/AdminCRM'
 import CincoTiemposProposal from './pages/CincoTiemposProposal'
@@ -89,7 +88,6 @@ function AppShell() {
         <Route path="/tree/:id"              element={<AuthGate><TreeDetail /></AuthGate>} />
         <Route path="/dashboard"             element={<AuthGate><Dashboard /></AuthGate>} />
         <Route path="/lab"                   element={<AuthGate><MiLaboratorio /></AuthGate>} />
-        <Route path="/fund"                  element={<AuthGate><Fund /></AuthGate>} />
         <Route path="/impacto"               element={<AuthGate><Impacto /></AuthGate>} />
 
         {/* Web3 onboarding — KYC + SIWE wallet linking. AuthGate required, KYC happens inside. */}

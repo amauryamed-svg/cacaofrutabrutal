@@ -266,7 +266,6 @@ export default function NavBar() {
         { path: '/web3/dashboard',  label: 'MIS ACTIVOS', hint: es ? 'NFTs · $CACAO · Beans' : 'NFTs · $CACAO · Beans' },
       ],
     },
-    { path: '/fund',           label: es ? 'FONDO' : 'FUND', hint: es ? 'Tecnologías · Mercado · Hoja de ruta' : 'Technologies · Market · Roadmap' },
   ]
 
   // GROWTH pitch ya vive embebido en la investor landing (/) — el link

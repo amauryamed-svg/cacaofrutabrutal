@@ -13,7 +13,6 @@ const ALLOWED_NEXT_PATHS = new Set<string>([
   '/dashboard',
   '/marketplace',
   '/ritual',
-  '/fund',
   '/impacto',
   '/web3',
   '/web3/onboarding',
