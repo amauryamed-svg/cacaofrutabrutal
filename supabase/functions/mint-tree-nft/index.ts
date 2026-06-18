@@ -198,6 +198,32 @@ serve(async (req) => {
   }
 
   // 6. Submit tx via relayer (CDP Paymaster TODO — see docs/WEB3.md)
+  // On testnet (non-mainnet), simulate the mint so developers can test the full
+  // UX flow without needing a funded relayer or deployed contract.
+  const isTestnet = chain.id !== base.id
+  if (isTestnet) {
+    const simulatedHash = `0xsimulated_${mintRow.id.replace(/-/g, '').slice(0, 40)}` as Hex
+    await supabase.from('tree_mints')
+      .update({ tx_hash: simulatedHash, status: 'submitted' })
+      .eq('id', mintRow.id)
+    await supabase.from('cacao_trees')
+      .update({
+        nft_mint_tx: simulatedHash,
+        nft_contract: contractAddress,
+        nft_chain_id: chain.id,
+        nft_minted_at: new Date().toISOString(),
+      })
+      .eq('id', tree.id)
+    return jsonResponse({
+      ok: true,
+      tx_hash: simulatedHash,
+      chain_id: chain.id,
+      contract: contractAddress,
+      mint_audit_id: mintRow.id,
+      simulated: true,
+    })
+  }
+
   try {
     const account = privateKeyToAccount(relayerKey)
     const wallet  = createWalletClient({ account, chain, transport: http(baseRpc) })
@@ -206,10 +232,8 @@ serve(async (req) => {
     const hash = await wallet.sendTransaction({
       to: contractAddress,
       data: calldata,
-      // gas: paid by relayer EOA (in MVP). TODO: route through CDP Paymaster.
     })
 
-    // Mark submitted; webhook will flip to confirmed.
     await supabase.from('tree_mints')
       .update({ tx_hash: hash, status: 'submitted' })
       .eq('id', mintRow.id)
@@ -223,8 +247,7 @@ serve(async (req) => {
       })
       .eq('id', tree.id)
 
-    // Light wait — we don't block the request on confirmation.
-    void pub // reserved for future receipt poll if we want to wait for tokenId
+    void pub
 
     return jsonResponse({
       ok: true,
@@ -232,9 +255,7 @@ serve(async (req) => {
       chain_id: chain.id,
       contract: contractAddress,
       mint_audit_id: mintRow.id,
-      explorer: chain.id === base.id
-        ? `https://basescan.org/tx/${hash}`
-        : `https://sepolia.basescan.org/tx/${hash}`,
+      explorer: `https://sepolia.basescan.org/tx/${hash}`,
     })
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'tx_failed'

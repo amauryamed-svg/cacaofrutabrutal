@@ -5,7 +5,8 @@
 
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
-import { verifyMessage, getAddress, isAddress } from 'https://esm.sh/viem@2.21.0'
+import { createPublicClient, http, getAddress, isAddress } from 'https://esm.sh/viem@2.21.0'
+import { base, baseSepolia } from 'https://esm.sh/viem@2.21.0/chains'
 
 const supabaseUrl        = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -14,6 +15,18 @@ const expectedDomain     = Deno.env.get('SIWE_EXPECTED_DOMAIN') ?? 'cacaofrutabr
 const expectedChainId    = Number(Deno.env.get('SIWE_CHAIN_ID') ?? '8453')
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+// publicClient for verifyMessage — supports both EOA (ECDSA) and ERC-1271 (Smart Wallet).
+// Must match the chain the client signed on.
+const chainDef  = expectedChainId === 8453 ? base : baseSepolia
+const rpcUrl    = expectedChainId === 8453
+  ? (Deno.env.get('BASE_RPC_URL') ?? 'https://mainnet.base.org')
+  : (Deno.env.get('BASE_SEPOLIA_RPC_URL') ?? 'https://sepolia.base.org')
+
+const publicClient = createPublicClient({
+  chain: chainDef,
+  transport: http(rpcUrl),
+})
 
 async function verifyAuth(authHeader: string): Promise<string> {
   if (!authHeader.startsWith('Bearer ')) throw new Error('missing_bearer')
@@ -169,12 +182,18 @@ serve(async (req) => {
     return jsonResponse({ error: 'nonce_expired' }, 400)
   }
 
-  // Verify signature
-  const valid = await verifyMessage({
-    address: siwe.address as `0x${string}`,
-    message,
-    signature: signature as `0x${string}`,
-  })
+  // Verify signature — publicClient handles both EOA (ECDSA) and ERC-1271 (Smart Wallet).
+  // Wrapping in try-catch prevents an unhandled throw from becoming a 500.
+  let valid = false
+  try {
+    valid = await publicClient.verifyMessage({
+      address: siwe.address as `0x${string}`,
+      message,
+      signature: signature as `0x${string}`,
+    })
+  } catch (e) {
+    return jsonResponse({ error: 'signature_verify_failed', detail: String(e) }, 401)
+  }
   if (!valid) return jsonResponse({ error: 'signature_invalid' }, 401)
 
   // Pre-write screening
@@ -206,6 +225,9 @@ serve(async (req) => {
     .eq('user_id', userId)
 
   if (error) {
+    if (error.code === '23505') {
+      return jsonResponse({ error: 'wallet_already_claimed' }, 409)
+    }
     return jsonResponse({ error: 'update_failed', detail: error.message }, 500)
   }
 
