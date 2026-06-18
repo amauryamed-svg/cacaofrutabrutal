@@ -417,7 +417,7 @@ function TD({ children, accent, dim, onClick, style }: { children: React.ReactNo
 function RoleBadge({ role }: { role: string }) {
   const colors: Record<string, string> = {
     investor: '#00A3CD', founder: BRAND.heirloom, colono: BRAND.mazorca,
-    creyente: BRAND.pod, nativo: BRAND.criollo, farmer: BRAND.theobroma,
+    nativo: BRAND.criollo, farmer: BRAND.theobroma,
   }
   const c = colors[role] ?? BRAND.pod
   return (
@@ -526,7 +526,6 @@ function EditUserPanel({ user, onClose, onSave }: { user: UserProfile; onClose: 
               onChange={(e) => setFormData({ ...formData, caua_role: e.target.value as any })}
               style={{ width: '100%', padding: '8px 12px', borderRadius: 8, background: BRAND.bgCard, border: `1px solid ${BRAND.amazon}44`, color: BRAND.heirloom, fontFamily: FONTS.body, fontSize: 12 }}
             >
-              <option value="creyente">Creyente</option>
               <option value="nativo">Nativo</option>
               <option value="investor">Inversor</option>
               <option value="farmer">Agricultor</option>

@@ -1,6 +1,5 @@
-// Web3 Onboarding — 2-step flow: Connect → Sign.
-// KYC (Persona) deferred to mint/redeem. ON-CHAIN + ON-RAMP both visible from step 1.
-// Trust signals (Chainalysis, OFAC, Persona) surface at the exact step they matter.
+// Web3 Onboarding — App Store-style discovery (5 slides) → functional flow (Connect → Sign → Done).
+// Discovery mode: educate first, connect second. Functional mode: SIWE wallet linking.
 // Brutalist-luxury, hex-only per CauaCore §8.
 
 import { useEffect, useState } from 'react'
@@ -14,12 +13,261 @@ import { BRAND, FONTS, ACTIVE_CHAIN_ID } from '../utils/constants'
 import { buildSiweMessage, linkWallet, requestNonce } from '../lib/web3/siwe'
 
 type Step = 'connect' | 'sign' | 'done'
+type Mode = 'discovery' | 'functional'
 
 function useMounted() {
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
   return mounted
 }
+
+// ─── Discovery slide definitions ────────────────────────────────────────────
+
+const SLIDES = [
+  {
+    illustration: <MazorcaIllustration />,
+    title: 'CACAO FRUTA BRUTAL',
+    copy: 'Esto no es solo chocolate. Es cacao fruta, vivo, en blockchain. Un árbol real en Colombia, tuyo en Base.',
+    accent: BRAND.pod,
+  },
+  {
+    illustration: <TreeIllustration />,
+    title: 'MINT TU ÁRBOL',
+    copy: 'Adopta un árbol real = NFT ERC-721 en Base. Coordenadas GPS. Guardian verificado. Transferible en OpenSea.',
+    accent: BRAND.mazorca,
+  },
+  {
+    illustration: <CareIllustration />,
+    title: 'CUIDA. GANA MAZORCAS.',
+    copy: 'Cada acción de cuidado es on-chain. Genera mazorcas. La rareza de tu árbol evoluciona con tu stewardship.',
+    accent: BRAND.mazorca,
+  },
+  {
+    illustration: <BurnIllustration />,
+    title: 'BURN → $CACAO',
+    copy: 'Quema mazorcas → reclama $CACAO. Supply cap fijo. Earn-only. Sin presale. Sin ICO.',
+    accent: BRAND.heroic,
+  },
+  {
+    illustration: <NibsIllustration />,
+    title: 'NIBS CONTRACT',
+    copy: '$CACAO → NIBS: cacao bioactivo liofilizado, cubierto en chocolate funcional. Mucilago → bebida, perfumes, destilados. Cacao beyond chocolate.',
+    accent: BRAND.criollo,
+  },
+] as const
+
+// ─── Illustration components ─────────────────────────────────────────────────
+
+function MazorcaIllustration() {
+  return (
+    <div style={illustrationWrap}>
+      <div style={{ fontSize: 80, lineHeight: 1 }}>🌿</div>
+      <div style={{ fontSize: 48, lineHeight: 1, marginTop: -12 }}>🍫</div>
+    </div>
+  )
+}
+
+function TreeIllustration() {
+  return (
+    <div style={illustrationWrap}>
+      <div style={{ fontSize: 88, lineHeight: 1, filter: 'saturate(1.3)' }}>🌱</div>
+      <div style={{
+        marginTop: 12, fontFamily: "'Press Start 2P', monospace",
+        fontSize: 8, color: BRAND.pod, letterSpacing: '0.1em',
+      }}>
+        ERC-721 · BASE
+      </div>
+    </div>
+  )
+}
+
+function CareIllustration() {
+  return (
+    <div style={illustrationWrap}>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ fontSize: 60 }}>🎮</div>
+        <div style={{ fontSize: 44 }}>🫘</div>
+      </div>
+      <div style={{
+        marginTop: 10, display: 'flex', gap: 6,
+        fontFamily: "'Press Start 2P', monospace", fontSize: 9,
+        color: BRAND.mazorca,
+      }}>
+        <span>COMBO</span><span style={{ color: BRAND.heirloom }}>×3</span>
+      </div>
+    </div>
+  )
+}
+
+function BurnIllustration() {
+  return (
+    <div style={illustrationWrap}>
+      <div style={{ fontSize: 72, lineHeight: 1 }}>🔥</div>
+      <div style={{
+        marginTop: 8,
+        fontFamily: FONTS.display, fontSize: 24, fontWeight: 900,
+        letterSpacing: '0.04em',
+        color: BRAND.heroic,
+      }}>◈ $CACAO</div>
+    </div>
+  )
+}
+
+function NibsIllustration() {
+  // CSS cross-section evocando la imagen: exterior amarillo, interior morado
+  return (
+    <div style={illustrationWrap}>
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        {[0, 1].map(i => (
+          <div key={i} style={{
+            width: 44, height: 68,
+            borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
+            background: '#C8A828',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: `0 0 18px ${BRAND.criollo}55`,
+          }}>
+            <div style={{
+              width: 28, height: 52,
+              borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
+              background: `linear-gradient(160deg, #7B2D8B, #4A1560, #8D2679)`,
+            }} />
+          </div>
+        ))}
+      </div>
+      <div style={{
+        marginTop: 12, fontFamily: FONTS.display, fontSize: 10,
+        letterSpacing: '0.14em', color: BRAND.criollo,
+      }}>CACAO BIOACTIVO</div>
+    </div>
+  )
+}
+
+const illustrationWrap: React.CSSProperties = {
+  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+  height: '42vh', minHeight: 200, maxHeight: 280,
+}
+
+// ─── Discovery mode ───────────────────────────────────────────────────────────
+
+function Discovery({ onComplete }: { onComplete: () => void }) {
+  const [slide, setSlide] = useState(0)
+  const mounted = useMounted()
+  const s = SLIDES[slide]
+  const isLast = slide === SLIDES.length - 1
+
+  // Inject Press Start 2P once for game-style labels
+  useEffect(() => {
+    const id = 'press-start-2p-font'
+    if (document.getElementById(id)) return
+    const link = document.createElement('link')
+    link.id = id
+    link.rel = 'stylesheet'
+    link.href = 'https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap'
+    document.head.appendChild(link)
+  }, [])
+
+  return (
+    <main style={{
+      minHeight: '100vh', background: BRAND.bgDeep, color: BRAND.heirloom,
+      fontFamily: FONTS.body, paddingTop: 72,
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+    }}>
+      <div style={{
+        width: '100%', maxWidth: 400, padding: '0 24px',
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        flex: 1,
+        opacity: mounted ? 1 : 0,
+        transition: 'opacity 0.5s ease',
+      }}>
+
+        {/* Illustration */}
+        {s.illustration}
+
+        {/* Title */}
+        <h1 style={{
+          fontFamily: FONTS.display,
+          fontSize: 'clamp(26px, 6vw, 34px)',
+          fontWeight: 900, lineHeight: 1.05,
+          letterSpacing: '0.02em', textTransform: 'uppercase',
+          textAlign: 'center', margin: '0 0 16px 0',
+          color: BRAND.heirloom,
+        }}>
+          {s.title}
+        </h1>
+
+        {/* Copy */}
+        <p style={{
+          fontSize: 15, lineHeight: 1.65,
+          color: `${BRAND.heirloom}cc`,
+          textAlign: 'center', margin: '0 0 28px 0',
+        }}>
+          {s.copy}
+        </p>
+
+        {/* Accent line */}
+        <div style={{
+          width: 40, height: 2, background: s.accent,
+          marginBottom: 28, borderRadius: 1,
+        }} />
+
+        {/* Dots */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 36 }}>
+          {SLIDES.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setSlide(i)}
+              style={{
+                width: i === slide ? 20 : 8, height: 8, borderRadius: 4,
+                background: i === slide ? s.accent : `${BRAND.heirloom}33`,
+                border: 'none', cursor: 'pointer', padding: 0,
+                transition: 'all 0.3s',
+              }}
+            />
+          ))}
+        </div>
+
+        {/* CTAs */}
+        <div style={{ display: 'flex', width: '100%', gap: 10, alignItems: 'center' }}>
+          <button
+            onClick={onComplete}
+            style={{
+              flex: 1, background: 'none',
+              border: `1px solid ${BRAND.amazon}88`,
+              color: `${BRAND.heirloom}55`,
+              padding: '12px 0',
+              fontFamily: FONTS.display, fontSize: 11, letterSpacing: '0.14em',
+              textTransform: 'uppercase', cursor: 'pointer',
+            }}
+          >
+            SALTAR
+          </button>
+          <button
+            onClick={() => isLast ? onComplete() : setSlide(s => s + 1)}
+            style={{
+              flex: 2, background: s.accent, color: BRAND.bgDeep, border: 'none',
+              padding: '14px 0',
+              fontFamily: FONTS.display, fontSize: 13, fontWeight: 900,
+              letterSpacing: '0.14em', textTransform: 'uppercase', cursor: 'pointer',
+              transition: 'opacity 0.2s',
+            }}
+          >
+            {isLast ? 'CONECTAR WALLET →' : 'SIGUIENTE →'}
+          </button>
+        </div>
+
+        {/* Step counter */}
+        <div style={{
+          marginTop: 16, fontFamily: FONTS.display, fontSize: 9,
+          letterSpacing: '0.2em', color: `${BRAND.heirloom}33`,
+        }}>
+          {slide + 1} / {SLIDES.length}
+        </div>
+      </div>
+    </main>
+  )
+}
+
+// ─── Functional flow (Inner) ─────────────────────────────────────────────────
 
 function Inner() {
   const { userId } = useAuth()
@@ -29,10 +277,19 @@ function Inner() {
   const { signMessageAsync, isPending: signing } = useSignMessage()
   const kyc = useKYCStatus()
 
+  const [mode, setMode] = useState<Mode>('discovery')
   const [step, setStep] = useState<Step>('connect')
   const [linking, setLinking] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+
+  // If wallet already linked, skip discovery entirely
+  useEffect(() => {
+    if (kyc.walletAddress && isConnected &&
+        kyc.walletAddress.toLowerCase() === address?.toLowerCase()) {
+      setMode('functional')
+    }
+  }, [kyc.walletAddress, isConnected, address])
 
   useEffect(() => {
     if (!isConnected) { setStep('connect'); return }
@@ -69,6 +326,11 @@ function Inner() {
       setCopied(true)
       setTimeout(() => setCopied(false), 1600)
     }).catch(() => {})
+  }
+
+  // Discovery mode
+  if (mode === 'discovery') {
+    return <Discovery onComplete={() => setMode('functional')} />
   }
 
   // ── Not signed in ──────────────────────────────────────────────────────
@@ -112,7 +374,16 @@ function Inner() {
           </div>
 
           <PersonaNotice />
-          <a href="/dashboard" style={dashLink}>→ Tu Dashboard</a>
+
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginTop: 4 }}>
+            <a href="/dashboard" style={dashLink}>→ Tu Dashboard</a>
+            <button
+              onClick={() => setMode('discovery')}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', ...dashLink }}
+            >
+              ← Ver intro
+            </button>
+          </div>
         </Screen>
       </Shell>
     )
@@ -158,6 +429,13 @@ function Inner() {
                 <OnrampButton presetUsd={5} asset="USDC" label="BUY USDC WITH CARD" />
               </DualCard>
             </div>
+
+            <button
+              onClick={() => setMode('discovery')}
+              style={{ marginTop: 24, background: 'none', border: 'none', cursor: 'pointer', ...dashLink }}
+            >
+              ← Ver intro
+            </button>
           </>
         ) : (
           <>
@@ -199,7 +477,7 @@ function Inner() {
   )
 }
 
-// ─── New sub-components ───────────────────────────────────────────────────
+// ─── Sub-components ────────────────────────────────────────────────────────
 
 function JourneyStrip() {
   return (
@@ -281,8 +559,6 @@ function PersonaNotice() {
     </div>
   )
 }
-
-// ─── Existing sub-components ─────────────────────────────────────────────
 
 const JOURNEY_STEPS = [
   { num: '01', title: 'CONNECT',       body: 'Coinbase Smart Wallet, MetaMask, o cualquier wallet WalletConnect.' },
@@ -376,7 +652,7 @@ function ErrBox({ msg }: { msg: string }) {
   )
 }
 
-// ─── Styles (hex-only per CauaCore §8) ─────────────────────────────────
+// ─── Styles (hex-only per CauaCore §8) ─────────────────────────────────────
 
 const shellStyle: React.CSSProperties = {
   minHeight: '100vh',
@@ -393,7 +669,6 @@ const shellInner: React.CSSProperties = {
 }
 const screenStyle: React.CSSProperties = { marginBottom: 48 }
 
-// Journey rail (5-step, matches Web3Landing)
 const railWrap: React.CSSProperties = {
   display: 'flex',
   alignItems: 'flex-start',
@@ -442,7 +717,6 @@ const railBody: React.CSSProperties = {
   color: `${BRAND.heirloom}66`, lineHeight: 1.4,
 }
 
-// Chip
 const chip: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center', gap: 6,
   border: '1px solid', padding: '5px 14px',
@@ -450,7 +724,6 @@ const chip: React.CSSProperties = {
   textTransform: 'uppercase', fontWeight: 700, borderRadius: 999, marginBottom: 24,
 }
 
-// Typography
 const h1Style: React.CSSProperties = {
   fontFamily: FONTS.display,
   fontSize: 'clamp(40px, 7vw, 72px)',
@@ -464,7 +737,6 @@ const leadStyle: React.CSSProperties = {
   marginBottom: 28, maxWidth: 560,
 }
 
-// Journey strip
 const journeyWrap: React.CSSProperties = {
   display: 'flex', alignItems: 'center', gap: 8,
   padding: '14px 20px',
@@ -488,7 +760,6 @@ const journeyConnectorLabel: React.CSSProperties = {
   padding: '2px 6px', borderRadius: 3, border: '1px solid',
 }
 
-// Dual card grid (connect step)
 const dualGrid: React.CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
@@ -531,7 +802,6 @@ function dualCardPill(color: string): React.CSSProperties {
   }
 }
 
-// Wallet preview (sign step)
 const walletPreview: React.CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
   marginTop: 28, marginBottom: 16,
@@ -558,7 +828,6 @@ const copyBtn: React.CSSProperties = {
   letterSpacing: '0.16em', textTransform: 'uppercase', borderRadius: 999, cursor: 'pointer',
 }
 
-// Screening notice (sign step)
 const screeningBox: React.CSSProperties = {
   marginBottom: 20,
   padding: '14px 16px',
@@ -580,7 +849,6 @@ const screeningDesc: React.CSSProperties = {
   fontFamily: FONTS.body, fontSize: 12, color: `${BRAND.heirloom}66`,
 }
 
-// Done state sections
 const doneGrid: React.CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
@@ -612,7 +880,6 @@ const sectionSub: React.CSSProperties = {
   fontFamily: FONTS.body, fontSize: 12, color: `${BRAND.heirloom}55`, marginTop: 8, lineHeight: 1.4,
 }
 
-// Persona notice (done state)
 const personaBox: React.CSSProperties = {
   display: 'flex', alignItems: 'flex-start', gap: 10,
   padding: '12px 16px',
@@ -627,14 +894,12 @@ const personaText: React.CSSProperties = {
   fontFamily: FONTS.body, fontSize: 12, color: `${BRAND.heirloom}77`, lineHeight: 1.5,
 }
 
-// Dashboard text link
 const dashLink: React.CSSProperties = {
   display: 'inline-block',
   fontFamily: FONTS.display, fontSize: 11, letterSpacing: '0.14em',
   color: `${BRAND.heirloom}55`, textDecoration: 'none', textTransform: 'uppercase',
 }
 
-// Primary button
 function btnPrimary(color: string): React.CSSProperties {
   return {
     background: color, color: BRAND.bgDeep, border: 'none',
@@ -647,7 +912,6 @@ function btnPrimary(color: string): React.CSSProperties {
   }
 }
 
-// Error
 const errBox: React.CSSProperties = {
   marginTop: 14, padding: '12px 16px',
   background: `${BRAND.theobroma}15`, border: `1px solid ${BRAND.theobroma}55`,

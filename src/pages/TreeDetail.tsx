@@ -449,7 +449,7 @@ export default function TreeDetail() {
             ← Volver
           </button>
           <div style={comboPillStyle(combo, comboFlash)}>
-            COMBO ×{combo}
+            {combo >= 3 ? `CACAO COMBO ×${combo}!!` : combo > 0 ? `COMBO ×${combo}` : ''}
           </div>
         </div>
 
@@ -710,12 +710,14 @@ const backBtnStyle: CSSProperties = {
   cursor: 'pointer',
 }
 const comboPillStyle = (combo: number, flash: boolean): CSSProperties => ({
-  fontFamily: PRESS_START_FONT, fontSize: 11,
-  color: combo > 0 ? BRAND.mazorca : `${BRAND.heirloom}33`,
-  textShadow: combo >= 3 ? `0 0 10px ${BRAND.mazorca}aa` : 'none',
-  transform: flash ? 'scale(1.25)' : 'scale(1)',
-  transition: 'transform 0.18s cubic-bezier(.16,1,.3,1)',
-  letterSpacing: '0.1em',
+  fontFamily: PRESS_START_FONT,
+  fontSize: combo >= 3 ? 12 : 10,
+  color: combo >= 3 ? BRAND.mazorca : combo > 0 ? `${BRAND.mazorca}bb` : `${BRAND.heirloom}22`,
+  textShadow: combo >= 3 ? `0 0 14px ${BRAND.mazorca}cc, 0 0 28px ${BRAND.mazorca}66` : 'none',
+  transform: flash ? 'scale(1.3)' : 'scale(1)',
+  transition: 'transform 0.18s cubic-bezier(.16,1,.3,1), color 0.2s, font-size 0.2s',
+  letterSpacing: '0.06em',
+  minWidth: 80, textAlign: 'right',
 })
 const secretFoundStyle: CSSProperties = {
   marginTop: 8,

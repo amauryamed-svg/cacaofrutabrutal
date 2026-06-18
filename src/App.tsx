@@ -16,7 +16,6 @@ import BlogPost          from './pages/BlogPost'
 import Marketplace       from './pages/Marketplace'
 import Ritual            from './pages/Ritual'
 import Adoptar           from './pages/Adoptar'
-import Drop              from './pages/Drop'
 import CauaBonga         from './pages/CauaBonga'
 import CauaBongaFinca    from './pages/CauaBongaFinca'
 import CauaBongaPlot     from './pages/CauaBongaPlot'
@@ -33,12 +32,9 @@ import { hsTrackPage }   from './lib/hubspot'
 
 // Web3 routes are lazy-loaded — wagmi/viem/RainbowKit (~80kb gz) only ship
 // when a user navigates to /app/web3/*. See docs/WEB3.md and CLAUDE.md §10.
-// Workshop20 también es lazy: usa Web3Provider para verificar ownership del
-// NFT Caua Creyente Cohorte 01 (Golden Ticket).
 const Web3Onboarding  = lazy(() => import('./pages/Web3Onboarding'))
 const Web3Landing     = lazy(() => import('./pages/Web3Landing'))
 const Web3Dashboard   = lazy(() => import('./pages/Web3Dashboard'))
-const Workshop20      = lazy(() => import('./pages/Workshop20'))
 
 function AppShell() {
   const { pathname } = useLocation()
@@ -85,10 +81,6 @@ function AppShell() {
         {/* Adoptar — Google login obligatorio para capturar adoptantes en CRM.
             AuthGate redirige a /auth?next=/adoptar antes de mostrar las cards. */}
         <Route path="/adoptar"               element={<AuthGate><Adoptar /></AuthGate>} />
-        {/* Drop · Cohorte 01 · Lote 2025 — cierra 2026-05-26 23:59 COT.
-            AuthGate ON: el flow de reserva necesita user_id para insertar en
-            drop_purchases y disparar mint-cohort-nft post-pago. */}
-        <Route path="/drop"                  element={<AuthGate><Drop /></AuthGate>} />
         <Route path="/caua-bonga"            element={<AuthGate><CauaBonga /></AuthGate>} />
         <Route path="/caua-bonga/finca/:id"  element={<AuthGate><CauaBongaFinca /></AuthGate>} />
         <Route path="/caua-bonga/finca/:id/plot" element={<AuthGate><CauaBongaPlot /></AuthGate>} />
@@ -128,18 +120,6 @@ function AppShell() {
           element={
             <Suspense fallback={<div style={{ padding: 64, color: '#F7F1EE', background: '#040C06', minHeight: '100vh' }}>Loading Web3…</div>}>
               <Web3Landing />
-            </Suspense>
-          }
-        />
-
-        {/* Workshop Cacao 2.0 · 2026-06-15 · gating by NFT ownership.
-            Sin AuthGate — la wallet (Caua Creyente Cohorte 01) ES la identidad.
-            La página maneja su propio Estado A (sin NFT) / Estado B (con NFT). */}
-        <Route
-          path="/workshop-2-0"
-          element={
-            <Suspense fallback={<div style={{ padding: 64, color: '#F7F1EE', background: '#040C06', minHeight: '100vh' }}>Loading Workshop…</div>}>
-              <Workshop20 />
             </Suspense>
           }
         />

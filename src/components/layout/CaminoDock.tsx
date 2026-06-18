@@ -4,7 +4,7 @@
  * Mounted on Phase 1 surfaces (Adoptar / TreeDetail / MiLaboratorio / Ritual).
  * Hidden on Phase 2 surfaces (Fondo / Marketplace / Web3 / Blog / Dashboard).
  *
- * Hitos del Camino del Creyente (canónicos · ver MiLaboratorio.tsx:402):
+ * Hitos del Journey Caúa (canónicos · ver MiLaboratorio.tsx:402):
  *   1 ADOPTAR  → /adoptar
  *   2 CUIDAR   → /tree/{first-tree-id} (fallback /adoptar)
  *   3 COSECHAR → /tree/{ready-tree-id} (fallback /adoptar)

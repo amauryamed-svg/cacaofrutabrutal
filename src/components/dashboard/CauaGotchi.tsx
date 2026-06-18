@@ -81,11 +81,21 @@ export default function CauaGotchi({
   return (
     <div style={panelStyle(prob, isDead)}>
 
-      {/* Top bar — stage label + tree name + cycle countdown */}
+      {/* Top bar — stage label + LVL badge + tree name */}
       <div style={topBarStyle}>
-        <div>
-          <div style={eyebrowStyle}>STAGE {stageId + 1}/8</div>
-          <div style={stageNameStyle}>{stageName}</div>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+          <div style={{
+            padding: '3px 7px',
+            background: `${BRAND.pod}22`, border: `1px solid ${BRAND.pod}66`,
+            fontFamily: "'Press Start 2P', monospace", fontSize: 8,
+            color: BRAND.pod, letterSpacing: '0.05em',
+          }}>
+            LVL {stageId + 1}
+          </div>
+          <div>
+            <div style={eyebrowStyle}>STAGE {stageId + 1}/8</div>
+            <div style={stageNameStyle}>{stageName}</div>
+          </div>
         </div>
         <div style={treeNameStyle}>{treeName}</div>
       </div>
@@ -150,11 +160,11 @@ export default function CauaGotchi({
           )}
         </div>
 
-        {/* Stat orbs — 3 at right side, vertical */}
+        {/* Pixel HP bars — right side vertical */}
         <div style={orbsColStyle}>
-          <StatOrb icon="❤" value={health}   color="#e74c3c" label="VIDA" />
-          <StatOrb icon="💧" value={moisture} color="#3498db" label="AGUA" />
-          <StatOrb icon="☀" value={sunlight}  color="#f1c84a" label="SOL"  />
+          <PixelBar icon="❤" value={health}   color="#e74c3c" label="HP" />
+          <PixelBar icon="💧" value={moisture} color="#3498db" label="H2O" />
+          <PixelBar icon="☀" value={sunlight}  color="#f1c84a" label="SOL" />
         </div>
       </div>
 
@@ -318,36 +328,19 @@ function CycleRing({ progress, remaining, ready }: { progress: number; remaining
   )
 }
 
-function StatOrb({ icon, value, color, label }: { icon: string; value: number; color: string; label: string }) {
+function PixelBar({ icon, value, color, label }: { icon: string; value: number; color: string; label: string }) {
   const v = Math.max(0, Math.min(100, value))
   const isLow = v < 30
-  const r = 18
-  const c = 2 * Math.PI * r
-  const dashOff = c * (1 - v / 100)
+  const filled = Math.round(v / 10)
+  const bar = '■'.repeat(filled) + '□'.repeat(10 - filled)
+  const c = isLow ? '#e74c3c' : color
   return (
-    <div style={statOrbStyle}>
-      <svg width="44" height="44" viewBox="0 0 44 44">
-        <circle cx="22" cy="22" r={r} fill="none" stroke={`${BRAND.amazon}`} strokeWidth="3" />
-        <circle
-          cx="22" cy="22" r={r} fill="none"
-          stroke={isLow ? '#e74c3c' : color}
-          strokeWidth="3" strokeLinecap="round"
-          strokeDasharray={c}
-          strokeDashoffset={dashOff}
-          transform="rotate(-90 22 22)"
-          style={{ transition: 'stroke-dashoffset 0.6s ease-out, stroke 0.3s' }}
-        />
-        <text x="22" y="27" textAnchor="middle" fontSize="14" style={{ pointerEvents: 'none' }}>
-          {icon}
-        </text>
-      </svg>
-      <div style={statOrbLabelStyle}>
-        <div style={{ fontFamily: FONTS.display, fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', color: isLow ? '#e74c3c' : `${BRAND.heirloom}99` }}>
-          {label}
-        </div>
-        <div style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 13, color: isLow ? '#e74c3c' : BRAND.heirloom }}>
-          {Math.round(v)}{isLow ? ' ⚠' : ''}
-        </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'flex-end' }}>
+      <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: c, letterSpacing: '0.02em' }}>
+        {icon} {label}
+      </div>
+      <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 6, color: c, letterSpacing: '0.01em' }}>
+        {bar}
       </div>
     </div>
   )
@@ -494,8 +487,15 @@ const cycleRingLabelStyle: CSSProperties = {
 
 const treeFrameStyle: CSSProperties = {
   background: 'radial-gradient(ellipse at 50% 100%, #1f3a26 0%, #040C06 70%)',
-  border: `1px solid ${BRAND.amazon}66`,
-  borderRadius: 14,
+  // Pixel grid overlay simulating LCD screen texture
+  backgroundImage: `
+    radial-gradient(ellipse at 50% 100%, #1f3a26 0%, #040C06 70%),
+    repeating-linear-gradient(0deg, transparent, transparent 3px, #00000011 3px, #00000011 4px),
+    repeating-linear-gradient(90deg, transparent, transparent 3px, #00000011 3px, #00000011 4px)
+  `,
+  border: `3px solid ${BRAND.amazon}`,
+  boxShadow: `inset 0 0 24px ${BRAND.bgDeep}cc, 0 0 0 1px ${BRAND.pod}22`,
+  borderRadius: 4,
   padding: 'clamp(8px, 2vw, 14px)',
   cursor: 'pointer',
   minHeight: 280,
@@ -505,6 +505,7 @@ const treeFrameStyle: CSSProperties = {
   // root flair paint past the viewBox). Clip on the frame so flair stays
   // contained within the rounded card and doesn't bleed onto siblings.
   overflow: 'hidden',
+  imageRendering: 'pixelated',
 }
 
 const problemBadgeStyle: CSSProperties = {
@@ -519,25 +520,22 @@ const orbsColStyle: CSSProperties = {
   display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-start',
   flexShrink: 0,
 }
-const statOrbStyle: CSSProperties = {
-  display: 'flex', alignItems: 'center', gap: 8,
-}
-const statOrbLabelStyle: CSSProperties = {
-  display: 'flex', flexDirection: 'column', lineHeight: 1.1,
-}
+
 
 const actionsWrapStyle: CSSProperties = {
   display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8,
 }
 const actionBtnStyle = (disabled: boolean, active: boolean, color: string): CSSProperties => ({
   background: active ? `${color}22` : `${BRAND.amazon}66`,
-  border: `1px solid ${disabled ? `${BRAND.amazon}44` : active ? color : `${color}55`}`,
-  borderRadius: 14, padding: '12px 8px',
+  border: `2px solid ${disabled ? `${BRAND.amazon}44` : active ? color : `${color}88`}`,
+  borderRadius: 0,
+  padding: '12px 8px',
   cursor: disabled ? 'not-allowed' : 'pointer',
   opacity: disabled ? 0.55 : 1,
   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
   color: disabled ? `${BRAND.heirloom}66` : BRAND.heirloom,
   transition: 'transform 0.08s, background 0.2s, border-color 0.2s',
+  boxShadow: active ? `0 0 8px ${color}55` : 'none',
 })
 
 const itemsRowStyle: CSSProperties = {

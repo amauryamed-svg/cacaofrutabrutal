@@ -116,11 +116,22 @@ function IconScale({ color }: { color: string }) {
     </svg>
   )
 }
+function IconNibs({ color }: { color: string }) {
+  return (
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <ellipse cx="11" cy="16" rx="5" ry="8" />
+      <ellipse cx="21" cy="16" rx="5" ry="8" />
+      <ellipse cx="11" cy="16" rx="3" ry="5.5" fill={`${color}33`} />
+      <ellipse cx="21" cy="16" rx="3" ry="5.5" fill={`${color}33`} />
+    </svg>
+  )
+}
 const PILLAR_ICONS: Record<string, React.ComponentType<{ color: string }>> = {
   '01': IconTree,
   '02': IconBolt,
   '03': IconSensor,
   '04': IconScale,
+  '05': IconNibs,
 }
 
 // ─── Content data ────────────────────────────────────────────────────
@@ -148,6 +159,11 @@ const PILLARS: Pillar[] = [
     title: 'GUARDIAN-FIRST SPLITS',
     body: `${ADOPTION_SPLIT_BPS.guardian / 100}% of every adoption goes to the Guardian wallet atomically. ${ADOPTION_SPLIT_BPS.treasury / 100}% treasury · ${ADOPTION_SPLIT_BPS.protocol / 100}% protocol.`,
   },
+  {
+    num: '05', accent: BRAND.criollo,
+    title: 'NIBS CONTRACT',
+    body: 'El $CACAO ganado en gameplay se canjea por NIBS — cacao bioactivo liofilizado, cubierto en chocolate funcional. Mucilago liofilizado incluido como by-product on-chain.',
+  },
 ]
 
 interface Step { num: string; title: string; body: string }
@@ -158,6 +174,7 @@ const STEPS: Step[] = [
   { num: '03', title: 'ADOPT',       body: 'Adopt a tree on Base in USDC, ETH, or cbBTC. Splits settle atomically.' },
   { num: '04', title: 'CARE',        body: 'Daily on-chain care actions earn beans + mazorcas. Rarity moves with stewardship.' },
   { num: '05', title: 'BURN → $CACAO', body: `Burn ${MAZORCA_TO_CACAO_RATE} mazorcas → claim 1 $CACAO. EIP-712 signed. 30-day cooldown.` },
+  { num: '06', title: 'NIBS',         body: 'Burn $CACAO → contrato NIBS. Cacao bioactivo liofilizado + cobertura de chocolate funcional. Mucilago → bebida, perfumes, destilados.' },
 ]
 
 interface Pill { label: string; tone: string }
@@ -218,15 +235,14 @@ function Inner() {
         </Reveal>
         <Reveal delay={120}>
           <h1 style={h1Style}>
-            OWN A CACAO TREE.<br/>
-            <span style={{ color: BRAND.mazorca }}>EARN $CACAO.</span> ON BASE.
+            CACAO BEYOND CHOCOLATE.<br/>
+            <span style={{ color: BRAND.mazorca }}>ON BASE.</span>
           </h1>
         </Reveal>
         <Reveal delay={240}>
           <p style={leadStyle}>
-            Caúa is a regenerative-finance protocol where every adopted tree is a real ERC-721 on Base,
-            every care action moves rarity, and every redeem mints a utility token earned exclusively
-            through gameplay.
+            Cada árbol adoptado es ERC-721 en Base. Cada mazorca ganada es un paso hacia el NIBS —
+            cacao bioactivo liofilizado, cubierto en chocolate funcional. Mucilago en cada proceso.
           </p>
         </Reveal>
         <Reveal delay={360}>
@@ -264,7 +280,7 @@ function Inner() {
       <section style={sectionStyle}>
         <Reveal>
           <div style={sectionEyebrowStyle}>01 · WHAT YOU OWN</div>
-          <h2 style={h2Style}>FOUR THINGS, ALL ON-CHAIN.</h2>
+          <h2 style={h2Style}>FIVE THINGS, ALL ON-CHAIN.</h2>
         </Reveal>
         <div style={pillarsGridStyle}>
           {PILLARS.map((p, i) => (
@@ -279,7 +295,7 @@ function Inner() {
       <section style={{ ...sectionStyle, paddingTop: 32 }}>
         <Reveal>
           <div style={sectionEyebrowStyle}>02 · HOW IT WORKS</div>
-          <h2 style={h2Style}>FIVE STEPS. NO MIDDLEMEN.</h2>
+          <h2 style={h2Style}>SIX STEPS. NO MIDDLEMEN.</h2>
         </Reveal>
         <div style={stepsRailStyle}>
           {STEPS.map((s, i) => (
@@ -297,12 +313,27 @@ function Inner() {
         </div>
       </section>
 
+      {/* ── NIBS Pipeline ───────────────────────────────────── */}
+      <section style={{ ...sectionStyle, paddingTop: 32 }}>
+        <Reveal>
+          <div style={sectionEyebrowStyle}>03 · NIBS PIPELINE</div>
+          <h2 style={h2Style}>CACAO BEYOND CHOCOLATE.</h2>
+          <p style={leadStyle}>
+            El árbol que adoptas produce cacao bioactivo. Cada paso del proceso vive on-chain.
+            Cero desperdicio: el mucilago se convierte en bebida, perfumes, destilados y endulzante inteligente.
+          </p>
+        </Reveal>
+        <Reveal delay={120}>
+          <NibsPipeline />
+        </Reveal>
+      </section>
+
       {/* ── Charter ribbon ──────────────────────────────────── */}
       <section style={charterStyle}>
         <div style={charterAccentStyle} aria-hidden="true" />
         <Reveal>
           <div style={charterContentStyle}>
-            <div style={sectionEyebrowStyle}>03 · THE CACAO COVENANT</div>
+            <div style={sectionEyebrowStyle}>04 · THE CACAO COVENANT</div>
             <p style={pullQuoteStyle}>
               "No founder mint outside gameplay. No presale. No ICO.
               Liquidity seeds Uniswap v3 only after audit, with LP timelocked 12 months on-chain."
@@ -318,7 +349,7 @@ function Inner() {
       {/* ── Compliance / Austin ─────────────────────────────── */}
       <section style={sectionStyle}>
         <Reveal>
-          <div style={sectionEyebrowStyle}>04 · BUILT FOR AUSTIN ReFi</div>
+          <div style={sectionEyebrowStyle}>05 · BUILT FOR AUSTIN ReFi</div>
           <h2 style={h2Style}>COMPLIANT BY DESIGN.</h2>
           <p style={leadStyle}>
             We launch publicly with the Austin ReFi community. Every linked address is screened
@@ -354,6 +385,79 @@ function Inner() {
         </div>
       </footer>
     </main>
+  )
+}
+
+function NibsPipeline() {
+  const mainNodes = [
+    { icon: '🌱', label: 'ÁRBOL NFT',  color: BRAND.pod,     sub: 'ERC-721 on Base' },
+    { icon: '🫘', label: 'MAZORCAS',   color: BRAND.mazorca, sub: 'Care actions on-chain' },
+    { icon: '◈',  label: '$CACAO',     color: BRAND.heroic,  sub: `Burn ${MAZORCA_TO_CACAO_RATE}:1` },
+    { icon: '⬡',  label: 'NIBS',       color: BRAND.criollo, sub: 'Bioactivo liofilizado' },
+  ]
+  return (
+    <div style={{
+      background: BRAND.bgCard,
+      border: `1px solid ${BRAND.amazon}`,
+      borderRadius: 14, padding: '28px 24px',
+    }}>
+      {/* Main pipeline */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
+        {mainNodes.map((n, i) => (
+          <div key={n.label} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'nowrap' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+              <div style={{
+                width: 52, height: 52, borderRadius: '50%',
+                background: `${n.color}18`,
+                border: `2px solid ${n.color}66`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: n.icon === '◈' || n.icon === '⬡' ? 22 : 26,
+                color: n.color,
+              }}>
+                {n.icon}
+              </div>
+              <div style={{ fontFamily: FONTS.display, fontSize: 9, letterSpacing: '0.16em', color: n.color, textTransform: 'uppercase' }}>{n.label}</div>
+              <div style={{ fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}55`, textAlign: 'center', maxWidth: 72 }}>{n.sub}</div>
+            </div>
+            {i < mainNodes.length - 1 && (
+              <div style={{ color: `${BRAND.heirloom}33`, fontSize: 18, fontFamily: FONTS.display, marginBottom: 28 }}>→</div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Mucilago branch */}
+      <div style={{
+        paddingTop: 20, borderTop: `1px solid ${BRAND.amazon}55`,
+        display: 'flex', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{
+            width: 40, height: 40, borderRadius: '50%',
+            background: `${BRAND.theobroma}18`,
+            border: `2px solid ${BRAND.theobroma}55`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 20,
+          }}>
+            💧
+          </div>
+          <div>
+            <div style={{ fontFamily: FONTS.display, fontSize: 9, letterSpacing: '0.16em', color: BRAND.theobroma, textTransform: 'uppercase', marginBottom: 2 }}>MUCILAGO</div>
+            <div style={{ fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}66` }}>Aguas recuperadas del proceso</div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          {['Bebida funcional', 'Perfumes · Destilados', 'Mucilago liofilizado', 'Endulzante inteligente'].map(p => (
+            <span key={p} style={{
+              padding: '4px 10px', borderRadius: 999,
+              background: `${BRAND.theobroma}12`,
+              border: `1px solid ${BRAND.theobroma}33`,
+              fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.theobroma}cc`,
+            }}>{p}</span>
+          ))}
+        </div>
+      </div>
+    </div>
   )
 }
 

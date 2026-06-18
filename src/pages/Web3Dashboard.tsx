@@ -166,11 +166,12 @@ export default function Web3Dashboard() {
               {/* Token balances */}
               <div style={{ ...card, marginTop: 12 }}>
                 <div style={sectionLabel}>TOKENS</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
                   {[
-                    { icon: '🌱', label: 'BEANS', value: profile?.beans_balance?.toFixed(1) ?? '0', color: BRAND.pod },
-                    { icon: '🎯', label: 'MAZORCAS', value: profile?.mazorcas_balance?.toFixed(0) ?? '0', color: BRAND.mazorca },
-                    { icon: '◈', label: '$CACAO', value: '—', color: `${BRAND.heirloom}44`, note: 'Phase 5' },
+                    { icon: '🌱', label: 'BEANS',    value: profile?.beans_balance?.toFixed(1) ?? '0', color: BRAND.pod },
+                    { icon: '🫘', label: 'MAZORCAS', value: profile?.mazorcas_balance?.toFixed(0) ?? '0', color: BRAND.mazorca },
+                    { icon: '◈',  label: '$CACAO',   value: '—', color: `${BRAND.heroic}88`, note: 'Phase 5' },
+                    { icon: '⬡',  label: 'NIBS',     value: '—', color: `${BRAND.criollo}88`, note: 'Phase 6' },
                   ].map(({ icon, label, value, color, note }) => (
                     <div key={label} style={{
                       background: `${BRAND.amazon}55`,
@@ -193,6 +194,16 @@ export default function Web3Dashboard() {
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* Value chain progress */}
+              <div style={{ ...card, marginTop: 12 }}>
+                <div style={sectionLabel}>CADENA DE VALOR</div>
+                <ValueChain
+                  hasTree={trees.length > 0}
+                  hasMazorcas={(profile?.mazorcas_balance ?? 0) > 0}
+                  onNavigate={navigate}
+                />
               </div>
 
               {/* Minted NFTs */}
@@ -292,17 +303,14 @@ export default function Web3Dashboard() {
 
               {/* Quick actions */}
               <div style={{ marginTop: 20, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                <button
-                  onClick={() => navigate('/adoptar')}
-                  style={quickBtn(BRAND.pod)}
-                >
+                <button onClick={() => navigate('/adoptar')} style={quickBtn(BRAND.pod)}>
                   🌱 ADOPTAR ÁRBOL
                 </button>
-                <button
-                  onClick={() => navigate('/web3/onboarding')}
-                  style={quickBtn(BRAND.heroic)}
-                >
+                <button onClick={() => navigate('/web3/onboarding')} style={quickBtn(BRAND.heroic)}>
                   ⛓️ ONBOARDING WEB3
+                </button>
+                <button onClick={() => navigate('/web3')} style={quickBtn(BRAND.criollo)}>
+                  ⬡ NIBS PIPELINE
                 </button>
               </div>
             </>
@@ -310,6 +318,83 @@ export default function Web3Dashboard() {
         </div>
       </div>
     </>
+  )
+}
+
+function ValueChain({
+  hasTree, hasMazorcas, onNavigate,
+}: { hasTree: boolean; hasMazorcas: boolean; onNavigate: (path: string) => void }) {
+  const steps = [
+    { label: 'ADOPT',    color: BRAND.pod,     done: hasTree,      cta: 'ADOPTAR →',  path: '/adoptar' },
+    { label: 'CARE',     color: BRAND.pod,     done: false,        cta: 'CUIDAR →',   path: '/adoptar' },
+    { label: 'MAZORCAS', color: BRAND.mazorca, done: hasMazorcas,  cta: null,         path: '' },
+    { label: '$CACAO',   color: BRAND.heroic,  done: false,        cta: null,         path: '' },
+    { label: 'NIBS',     color: BRAND.criollo, done: false,        cta: null,         path: '' },
+  ]
+  const firstActiveIdx = steps.findIndex((s, i) => {
+    if (i === 0) return !s.done
+    return !s.done && steps[i - 1].done
+  })
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {steps.map((s, i) => {
+        const done   = s.done
+        const active = i === firstActiveIdx
+        const locked = !done && !active
+        return (
+          <div key={s.label} style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            padding: '8px 12px', borderRadius: 8,
+            background: active ? `${s.color}12` : done ? `${s.color}0A` : 'transparent',
+            border: `1px solid ${active ? s.color + '55' : done ? s.color + '33' : BRAND.amazon + '44'}`,
+            opacity: locked ? 0.45 : 1,
+            transition: 'all 0.3s',
+          }}>
+            <div style={{
+              width: 20, height: 20, borderRadius: '50%',
+              background: done ? s.color : active ? `${s.color}33` : `${BRAND.amazon}55`,
+              border: `1px solid ${done ? s.color : s.color + '44'}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 10, color: done ? BRAND.bgDeep : s.color, flexShrink: 0,
+            }}>
+              {done ? '✓' : i + 1}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{
+                fontFamily: FONTS.display, fontSize: 10, fontWeight: 700,
+                letterSpacing: '0.14em', textTransform: 'uppercase',
+                color: done ? s.color : active ? s.color : `${BRAND.heirloom}44`,
+              }}>
+                {s.label}
+              </div>
+            </div>
+            {active && s.cta && s.path && (
+              <button
+                onClick={() => onNavigate(s.path)}
+                style={{
+                  background: `${s.color}22`, border: `1px solid ${s.color}55`,
+                  color: s.color, padding: '4px 10px',
+                  fontFamily: FONTS.display, fontSize: 9,
+                  letterSpacing: '0.12em', cursor: 'pointer',
+                  textTransform: 'uppercase', borderRadius: 4,
+                }}
+              >
+                {s.cta}
+              </button>
+            )}
+            {!active && !done && i > 1 && (
+              <div style={{
+                fontSize: 9, fontFamily: FONTS.display, letterSpacing: '0.1em',
+                color: `${BRAND.heirloom}33`, textTransform: 'uppercase',
+              }}>
+                {i === 3 ? 'PHASE 5' : i === 4 ? 'PHASE 6' : ''}
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
   )
 }
 

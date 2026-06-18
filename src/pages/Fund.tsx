@@ -31,7 +31,7 @@ export default function Fund() {
     { label: lang === 'es' ? 'R&D + Producción'         : 'R&D + Production',          pct: 30, color: BRAND.muisca   },
     { label: lang === 'es' ? 'Comunidad + Reinversión'  : 'Community + Reinvestment',  pct: 10, color: BRAND.criollo  },
   ]
-  const [role, setRole] = useState<CauaRole>('creyente')
+  const [role, setRole] = useState<CauaRole>('investor')
   const [investorOpen, setInvestorOpen] = useState(false)
   const [searchParams] = useSearchParams()
   const status = searchParams.get('status')
