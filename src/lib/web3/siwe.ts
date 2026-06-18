@@ -2,6 +2,7 @@
 // sign it via wagmi, then submit to siwe-link-wallet.
 
 import { SiweMessage } from 'siwe'
+import { getAddress } from 'viem'
 import { supabase } from '../supabase'
 import { SIWE_DOMAIN } from '../../utils/constants'
 
@@ -36,8 +37,8 @@ export function buildSiweMessage(opts: {
 
   const message = new SiweMessage({
     domain: SIWE_DOMAIN,
-    address,
-    statement: 'Sign in to CauaCorp · Caúa Web3 onboarding · No transaction will be submitted.',
+    address: getAddress(address),
+    statement: 'Sign in to CauaCorp to link your wallet. No transaction will be submitted.',
     uri: `https://${SIWE_DOMAIN}`,
     version: '1',
     chainId,
