@@ -8,6 +8,7 @@ import { useTokenBalance } from '../hooks/useTokenBalance'
 import HubspotLeadForm from '../components/ui/HubspotLeadForm'
 import RedeemMazorcasModal from '../components/web3/RedeemMazorcasModal'
 import LabranzaMachete from '../components/dashboard/LabranzaMachete'
+import HarvestMinigameModal, { type HarvestMinigamePayload } from '../components/dashboard/HarvestMinigameModal'
 import { useLang } from '../context/LangContext'
 import { makeT } from '../utils/i18n'
 import {
@@ -31,6 +32,35 @@ export default function Dashboard() {
   const [redeemOpen, setRedeemOpen] = useState(false)
   const [deadBannerDismissed, setDeadBannerDismissed] = useState(false)
   const [labranzaMode, setLabranzaMode] = useState<'machete' | 'list'>('machete')
+  const [harvestTree, setHarvestTree] = useState<{ id: string; guardianName: string; variety: string; region: string } | null>(null)
+  const [harvestingId, setHarvestingId] = useState<string | null>(null)
+
+  const submitHarvestFromDashboard = async (payload: HarvestMinigamePayload) => {
+    if (!harvestTree) return
+    const treeId = harvestTree.id
+    setHarvestingId(treeId)
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData?.session?.access_token
+      if (token) {
+        await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/award-tokens`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            event_type:        'tree_harvest_share',
+            ref_id:            treeId,
+            mucilage_g:        payload.mucilage_g,
+            cacao_mass_g:      payload.cacao_mass_g,
+            beans_override:    payload.beans,
+            mazorcas_override: payload.mazorcas,
+          }),
+        })
+      }
+      if (payload.next_route === 'lab_refine') navigate('/lab')
+      else if (payload.next_route === 'marketplace_redeem') navigate('/marketplace#cacao-ceremony')
+    } catch { /* harvest recorded anyway */ }
+    finally { setHarvestingId(null); setHarvestTree(null) }
+  }
   const canRedeemOnChain = mazorcas >= MAZORCA_TO_CACAO_RATE
 
   // Per-portfolio rollups anchored to investor-landing Unit Economics
@@ -274,7 +304,7 @@ export default function Dashboard() {
                         letterSpacing: '0.1em', textTransform: 'uppercase',
                         boxShadow: `0 0 16px ${BRAND.mazorca}33`,
                       }}>
-                      {lang === 'es' ? '🍫 Forjar chocolate →' : '🍫 Forge chocolate →'}
+                      {lang === 'es' ? '◈ Forjar $CACAO →' : '◈ Forge $CACAO →'}
                     </button>
                   )}
                 </div>
@@ -360,6 +390,31 @@ export default function Dashboard() {
                               display: 'flex', flexDirection: 'column', gap: 12,
                               minHeight: 220, position: 'relative',
                             }}>
+                              {ready && (
+                                <button
+                                  onClick={e => {
+                                    e.stopPropagation()
+                                    setHarvestTree({
+                                      id: t.id,
+                                      guardianName: g?.name ?? 'Árbol',
+                                      variety: t.variety ?? '—',
+                                      region: t.region ?? g?.region ?? '—',
+                                    })
+                                  }}
+                                  disabled={harvestingId === t.id}
+                                  style={{
+                                    position: 'absolute', top: 12, right: 12, zIndex: 2,
+                                    padding: '6px 12px', borderRadius: 999,
+                                    background: BRAND.mazorca, color: BRAND.bgDeep,
+                                    border: 'none', cursor: 'pointer',
+                                    fontFamily: FONTS.display, fontWeight: 800, fontSize: 9,
+                                    letterSpacing: '0.14em', textTransform: 'uppercase',
+                                    opacity: harvestingId === t.id ? 0.6 : 1,
+                                  }}
+                                >
+                                  {harvestingId === t.id ? '…' : lang === 'es' ? 'COSECHAR' : 'HARVEST'}
+                                </button>
+                              )}
                               <button onClick={() => navigate(`/tree/${t.id}`)} style={{
                                 background: 'transparent', border: 'none', cursor: 'pointer',
                                 color: 'inherit', padding: 0, textAlign: 'left',
@@ -639,6 +694,18 @@ export default function Dashboard() {
           onClose={() => setRedeemOpen(false)}
           mazorcasBalance={mazorcas}
         />
+
+        {harvestTree && (
+          <HarvestMinigameModal
+            isOpen={!!harvestTree}
+            onClose={() => setHarvestTree(null)}
+            onComplete={(payload) => { void submitHarvestFromDashboard(payload) }}
+            treeId={harvestTree.id}
+            guardianName={harvestTree.guardianName}
+            variety={harvestTree.variety}
+            region={harvestTree.region}
+          />
+        )}
 
         {/* Comunidad WhatsApp + roadmap + distribución viven en /fund (FONDO hub). */}
       </div>

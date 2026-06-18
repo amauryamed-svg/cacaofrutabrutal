@@ -371,6 +371,14 @@ function Inner() {
               <OnrampButton presetUsd={5} asset="USDC" label="BUY USDC WITH CARD" />
               <p style={sectionSub}>USDC via Coinbase · usa tu tarjeta · sin Persona</p>
             </div>
+
+            <div style={burnSection}>
+              <div style={sectionEyebrow(BRAND.criollo)}>◈ MAZORCAS → $CACAO</div>
+              <a href="/burn" style={{ ...btnPrimary(BRAND.criollo), display: 'block', textAlign: 'center' }}>
+                QUEMAR MAZORCAS →
+              </a>
+              <p style={sectionSub}>Burn 1,000 mazorcas → 1 $CACAO · EIP-712 · cooldown 30d</p>
+            </div>
           </div>
 
           <PersonaNotice />
@@ -878,6 +886,16 @@ function sectionEyebrow(color: string): React.CSSProperties {
 }
 const sectionSub: React.CSSProperties = {
   fontFamily: FONTS.body, fontSize: 12, color: `${BRAND.heirloom}55`, marginTop: 8, lineHeight: 1.4,
+}
+
+const burnSection: React.CSSProperties = {
+  padding: '20px 18px', background: BRAND.bgCard,
+  borderTop: `1px solid ${BRAND.amazon}`,
+  borderRight: `1px solid ${BRAND.amazon}`,
+  borderBottom: `1px solid ${BRAND.amazon}`,
+  borderLeft: `3px solid ${BRAND.criollo}`,
+  borderRadius: 8,
+  gridColumn: '1 / -1',
 }
 
 const personaBox: React.CSSProperties = {

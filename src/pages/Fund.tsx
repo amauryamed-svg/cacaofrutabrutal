@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { BRAND, FONTS } from '../utils/constants'
 import { useAuth } from '../context/AuthContext'
@@ -10,6 +10,8 @@ import TechnologyCard from '../components/fund/TechnologyCard'
 import InvestorPath from '../components/fund/InvestorPath'
 import CacaoCeremonyCTA from '../components/marketplace/CacaoCeremonyCTA'
 import type { CauaRole } from '../types/fund.types'
+
+const FondoCauaOnChain = lazy(() => import('../components/fund/FondoCauaOnChain'))
 
 export default function Fund() {
   const { user, profile } = useAuth()
@@ -113,6 +115,25 @@ export default function Fund() {
             {error}
           </div>
         )}
+
+        {/* ── ON-CHAIN FONDO SECTION ── */}
+        <div style={{ marginBottom: 40 }}>
+          <Suspense fallback={
+            <div style={{
+              padding: '32px 24px', borderRadius: 16,
+              background: BRAND.bgCard, border: `1px solid ${BRAND.amazon}33`,
+              fontFamily: FONTS.body, fontSize: 12, color: `${BRAND.heirloom}44`,
+              textAlign: 'center',
+            }}>
+              {lang === 'es' ? 'Cargando módulo on-chain…' : 'Loading on-chain module…'}
+            </div>
+          }>
+            <FondoCauaOnChain lang={lang} />
+          </Suspense>
+        </div>
+
+        {/* Divider */}
+        <div style={{ borderTop: `1px solid ${BRAND.amazon}33`, marginBottom: 32 }} />
 
         {/* "Soy Investor" card — opens InvestorPath modal (equity $5K vs B2B sponsorship) */}
         {user && (

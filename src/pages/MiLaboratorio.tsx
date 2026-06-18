@@ -203,8 +203,8 @@ export default function MiLaboratorio() {
           </h1>
           <p style={{ fontFamily: FONTS.body, color: `${BRAND.heirloom}88`, fontSize: 13, lineHeight: 1.6, maxWidth: 480, margin: '0 auto' }}>
             {lang === 'es'
-              ? 'Liofiliza · Refina · Conchea. Tu mucílago y masa de cacao se vuelven una barra de chocolate ritual.'
-              : 'Lyophilize · Refine · Conch. Your mucilage and cacao mass become a ritual chocolate bar.'}
+              ? 'Liofiliza · Refina · Conchea. Tu mucílago y masa de cacao se convierten en ◈ $CACAO — misma moneda, mismo contrato en Base.'
+              : 'Lyophilize · Refine · Conch. Your mucilage and cacao mass convert to ◈ $CACAO — same token, same contract on Base.'}
           </p>
         </div>
 
@@ -216,7 +216,7 @@ export default function MiLaboratorio() {
           }}>
             <BalancePill icon="🟢" label={lang === 'es' ? 'Mucílago' : 'Mucilage'} value={`${mucilageG.toFixed(0)}g`} color={BRAND.pod} loading={loading} need={RECIPE.mucilage_g} have={mucilageG} />
             <BalancePill icon="🟤" label={lang === 'es' ? 'Masa cacao' : 'Cacao mass'} value={`${cacaoMassG.toFixed(0)}g`} color={BRAND.brown} loading={loading} need={RECIPE.cacao_mass_g} have={cacaoMassG} />
-            <BalancePill icon="🍫" label={lang === 'es' ? 'Chocolate forjado' : 'Chocolate forged'} value={`${chocolateBarsMade}`} color={BRAND.mazorca} loading={loading} />
+            <BalancePill icon="◈" label={lang === 'es' ? '$CACAO forjado' : '$CACAO forged'} value={`${chocolateBarsMade}`} color={BRAND.criollo} loading={loading} />
           </div>
         )}
 
@@ -232,18 +232,18 @@ export default function MiLaboratorio() {
           }}>
             <div style={{
               fontFamily: FONTS.display, fontWeight: 700, fontSize: 10,
-              color: BRAND.mazorca, letterSpacing: '0.22em',
+              color: BRAND.criollo, letterSpacing: '0.22em',
               textTransform: 'uppercase', marginBottom: 6,
             }}>
-              Receta · Chocolate Ritual
+              Receta · ◈ $CACAO
             </div>
             <div style={{
               fontFamily: FONTS.display, fontWeight: 900, fontSize: 22,
               color: BRAND.heirloom, marginBottom: 6, lineHeight: 1.1,
             }}>
               {lang === 'es'
-                ? <>1 barra ← <span style={{ color: BRAND.mazorca }}>{RECIPE.cacao_mass_g}g masa de cacao</span></>
-                : <>1 bar ← <span style={{ color: BRAND.mazorca }}>{RECIPE.cacao_mass_g}g cacao mass</span></>}
+                ? <>◈ 1 $CACAO ← <span style={{ color: BRAND.mazorca }}>{RECIPE.cacao_mass_g}g masa</span></>
+                : <>◈ 1 $CACAO ← <span style={{ color: BRAND.mazorca }}>{RECIPE.cacao_mass_g}g cacao mass</span></>}
             </div>
             <div style={{
               fontFamily: FONTS.body, fontSize: 12,
@@ -251,8 +251,8 @@ export default function MiLaboratorio() {
               fontStyle: 'italic',
             }}>
               {lang === 'es'
-                ? <>+ <span style={{ color: BRAND.pod }}>{RECIPE.mucilage_g}g mucílago</span> drenan como subproducto · tradicionalmente desperdicio</>
-                : <>+ <span style={{ color: BRAND.pod }}>{RECIPE.mucilage_g}g mucilage</span> drains as byproduct · traditionally waste</>}
+                ? <>+ <span style={{ color: BRAND.pod }}>{RECIPE.mucilage_g}g mucílago</span> como subproducto · MucilageExtract™ rescata el desperdicio</>
+                : <>+ <span style={{ color: BRAND.pod }}>{RECIPE.mucilage_g}g mucilage</span> as byproduct · MucilageExtract™ rescues the waste</>}
             </div>
             <div style={{
               fontFamily: FONTS.body, fontSize: 12, color: `${BRAND.heirloom}aa`,
@@ -407,31 +407,33 @@ export default function MiLaboratorio() {
             boxShadow: `0 0 40px ${BRAND.mazorca}55`,
           }}>
             <div style={{
-              fontSize: 80, marginBottom: 12,
-              filter: `drop-shadow(0 0 24px ${BRAND.mazorca}cc)`,
-            }}>🍫</div>
+              fontSize: 72, marginBottom: 12,
+              fontFamily: FONTS.display, fontWeight: 900,
+              color: BRAND.criollo,
+              filter: `drop-shadow(0 0 24px ${BRAND.criollo}cc)`,
+            }}>◈</div>
             <div style={{
               fontFamily: FONTS.display, fontWeight: 900, fontSize: 28,
-              color: '#FFE9A8', letterSpacing: '0.04em', textTransform: 'uppercase',
-              textShadow: `0 0 24px ${BRAND.mazorca}cc`, marginBottom: 8,
+              color: BRAND.criollo, letterSpacing: '0.04em', textTransform: 'uppercase',
+              textShadow: `0 0 24px ${BRAND.criollo}cc`, marginBottom: 8,
             }}>
-              {lang === 'es' ? 'Chocolate forjado' : 'Chocolate forged'}
+              {lang === 'es' ? '$CACAO FORJADO' : '$CACAO FORGED'}
             </div>
             <div style={{
               fontFamily: FONTS.serif, fontStyle: 'italic',
               color: `${BRAND.heirloom}aa`, fontSize: 14, marginBottom: 18,
             }}>
               {lang === 'es'
-                ? `Barra ritual #${chocolateBarsMade} en tu colección · +${FORGE_BEANS_REWARD} granos`
-                : `Ritual bar #${chocolateBarsMade} in your collection · +${FORGE_BEANS_REWARD} beans`}
+                ? `◈ ${chocolateBarsMade} $CACAO en tu balance · +${FORGE_BEANS_REWARD} granos`
+                : `◈ ${chocolateBarsMade} $CACAO in your balance · +${FORGE_BEANS_REWARD} beans`}
             </div>
             <div style={{
               fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}66`,
               lineHeight: 1.6, marginBottom: 24, maxWidth: 360, margin: '0 auto 24px',
             }}>
               {lang === 'es'
-                ? 'Phase 4 transformará cada barra en un NFT ERC-721 mintleable a tu wallet. Por ahora se acumula como contador off-chain.'
-                : 'Phase 4 will turn each bar into an ERC-721 NFT mintable to your wallet. For now it accumulates off-chain.'}
+                ? 'Phase 5 minteará cada $CACAO como token ERC-20 en Base. Por ahora se acumula off-chain y se sincroniza al quemar mazorcas en /burn.'
+                : 'Phase 5 will mint each $CACAO as an ERC-20 token on Base. For now it accumulates off-chain and syncs when burning mazorcas at /burn.'}
             </div>
 
             {/* Conciencia · subproducto mucílago.

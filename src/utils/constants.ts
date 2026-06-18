@@ -343,6 +343,8 @@ export const WEB3_CONTRACTS = {
   mazorcaRedemption:  '0x9Aa80f33067316De88757ff8c21660f5672644e6' as `0x${string}`,
   treeAdoption:       '0x1c6724cdfe8906ae5a2042c431169b6987755711' as `0x${string}`,
   iotAttestation:     '0x0077649ed45ce82225b3a3d5a364a4f804007e53' as `0x${string}`,
+  /** FondoCaua treasury — replace after: forge script script/DeployFondoCaua.s.sol --broadcast */
+  fondoCaua:          '0x0000000000000000000000000000000000000000' as `0x${string}`,
 } as const
 
 /** Active chain for Web3 user actions (mint, burn, adopt). Switch to BASE_CHAIN_ID post-audit. */
@@ -356,6 +358,9 @@ export const SIWE_DOMAIN = 'cacaofrutabrutal.com'
  * (`MazorcaRedemption.mazorcasPerToken`). Update both when re-tuning game economy.
  */
 export const MAZORCA_TO_CACAO_RATE = 1000
+
+/** 8 $CACAO per $1 USD — $125 lot = 1,000 $CACAO. Tune together with MAZORCA_TO_CACAO_RATE. */
+export const CACAO_PER_USD = 8
 
 /** Server signs EIP-712 payloads with this 7-day deadline by default. */
 export const REDEMPTION_DEADLINE_SECONDS = 7 * 24 * 60 * 60

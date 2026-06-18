@@ -7,6 +7,7 @@ import CaminoDock        from './components/layout/CaminoDock'
 import Footer            from './components/layout/Footer'
 import GrainOverlay      from './components/ui/GrainOverlay'
 import CookieBanner      from './components/ui/CookieBanner'
+import AppIntro          from './components/ui/AppIntro'
 import AuthGate          from './components/ui/AuthGate'
 import DevErrorMonitor   from './components/ui/DevErrorMonitor'
 import Landing           from './pages/Landing'
@@ -35,6 +36,7 @@ import { hsTrackPage }   from './lib/hubspot'
 const Web3Onboarding  = lazy(() => import('./pages/Web3Onboarding'))
 const Web3Landing     = lazy(() => import('./pages/Web3Landing'))
 const Web3Dashboard   = lazy(() => import('./pages/Web3Dashboard'))
+const BurnMazorcas    = lazy(() => import('./pages/BurnMazorcas'))
 
 function AppShell() {
   const { pathname } = useLocation()
@@ -124,6 +126,18 @@ function AppShell() {
           }
         />
 
+        {/* Burn mazorcas → claim $CACAO on Base */}
+        <Route
+          path="/burn"
+          element={
+            <AuthGate>
+              <Suspense fallback={<div style={{ padding: 64, color: '#F7F1EE', background: '#040C06', minHeight: '100vh' }}>Cargando…</div>}>
+                <BurnMazorcas />
+              </Suspense>
+            </AuthGate>
+          }
+        />
+
         {/* Super admin only — guarded inside AdminCRM */}
         <Route path="/admin/crm"   element={<AdminCRM />} />
       </Routes>
@@ -139,6 +153,7 @@ export default function App() {
   return (
     <LangProvider>
       <AuthProvider>
+        <AppIntro />
         <BrowserRouter basename="/app">
           <AppShell />
         </BrowserRouter>

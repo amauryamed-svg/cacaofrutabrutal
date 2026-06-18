@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BRAND, FONTS } from '../../utils/constants'
 import { supabase } from '../../lib/supabase'
-import PaymentSelector from './PaymentSelector'
-import WalletCheckout from './WalletCheckout'
-import type { Technology, Mvp, PaymentMethod, Currency, InvestMode } from '../../types/fund.types'
+import type { Technology, Mvp, InvestMode } from '../../types/fund.types'
 import type { UserProfile } from '../../lib/database.types'
+
+const CryptoPayButton  = lazy(() => import('./CryptoPayButton'))
+const CacaoPayButton   = lazy(() => import('./CacaoPayButton'))
 
 interface Props {
   technology: Technology
@@ -17,42 +18,35 @@ interface Props {
   lang: 'es' | 'en'
 }
 
-const EUR_COP_APPROX = 4500   // 1 EUR ≈ 4 500 COP (display only — server prices from DB)
-const EUR_USD_APPROX = 1.10   // 1 EUR ≈ 1.10 USD (display only)
+const EUR_USD_APPROX = 1.10
 
 export default function InvestModal({ technology, mvp, mode, onClose, user, profile, lang }: Props) {
-  const [lots,        setLots]        = useState(1)
-  const [payment,     setPayment]     = useState<PaymentMethod>('mercadopago')
-  const [currency,    setCurrency]    = useState<Currency>('COP')
-  const [loading,     setLoading]     = useState(false)
-  const [err,         setErr]         = useState<string | null>(null)
-  // When user picks 'wallet_eth_direct' and clicks Pay, swap the modal content
-  // to the WalletCheckout flow (transfer → verify → Allocación Asegurada · 24h).
-  const [walletOpen,  setWalletOpen]  = useState(false)
+  const [qty,     setQty]     = useState(1)
+  const [loading, setLoading] = useState<'mp' | 'stripe' | null>(null)
+  const [err,     setErr]     = useState<string | null>(null)
+  const [done,    setDone]    = useState(false)
   const navigate = useNavigate()
 
   const T = (es: string, en: string) => lang === 'es' ? es : en
 
-  // Apply investor 50% discount on lots only
   const isInvestor = profile?.caua_role === 'investor' && mode === 'lot'
-  const discountMultiplier = isInvestor ? 0.5 : 1
+  const discount   = isInvestor ? 0.5 : 1
 
-  const unitUsd = (mode === 'mvp' && mvp ? mvp.price_usd_cents : technology.lot_price_usd_cents) * discountMultiplier
-  const unitCop = (mode === 'mvp' && mvp ? (mvp.price_cop ?? 0) : technology.lot_price_cop) * discountMultiplier
+  const unitUsdCents = (mode === 'mvp' && mvp ? mvp.price_usd_cents : technology.lot_price_usd_cents) * discount
+  const unitCop      = (mode === 'mvp' && mvp ? (mvp.price_cop ?? 0) : technology.lot_price_cop) * discount
 
-  // Display totals per currency (server always re-prices — these are for display only)
-  const totalCop = unitCop * lots
-  const totalUsd = unitUsd * lots
-  const totalEur = Math.round(totalUsd / EUR_USD_APPROX)
+  const totalUsdCents = unitUsdCents * qty
+  const totalCop      = unitCop * qty
+  const totalEurCents = Math.round(totalUsdCents / EUR_USD_APPROX)
 
   const fmtUsd = (c: number) => '$' + (c / 100).toLocaleString('en-US', { maximumFractionDigits: 0 })
   const fmtCop = (v: number) => '$' + v.toLocaleString('es-CO') + ' COP'
   const fmtEur = (c: number) => '€' + (c / 100).toLocaleString('de-DE', { maximumFractionDigits: 0 })
 
-  const displayTotal = currency === 'COP' ? fmtCop(totalCop)
-    : currency === 'USD' ? fmtUsd(totalUsd)
-    : fmtEur(totalEur)
+  const itemName = mode === 'mvp' && mvp ? mvp.name : technology.name
+  const itemSub  = mode === 'mvp' && mvp ? mvp.size_label : technology.tagline
 
+  // ── Not logged in ─────────────────────────────────────────────────────────
   if (!user) {
     return (
       <Overlay onClose={onClose}>
@@ -62,12 +56,12 @@ export default function InvestModal({ technology, mvp, mode, onClose, user, prof
             {T('ÚNETE PARA INVERTIR', 'JOIN TO INVEST')}
           </p>
           <p style={{ fontFamily: FONTS.body, color: `${BRAND.heirloom}77`, fontSize: 13, marginBottom: 24, lineHeight: 1.6 }}>
-            {T('Regístrate para acceder al crowdfunding, seguimiento de lotes y el ecosistema CAUA.', 'Register to access crowdfunding, lot tracking and the CAUA ecosystem.')}
+            {T('Regístrate para acceder al crowdfunding y al ecosistema CAÚA.', 'Register to access crowdfunding and the CAÚA ecosystem.')}
           </p>
-          <button onClick={() => { onClose(); navigate('/auth') }} style={ctaStyle(BRAND.pod)}>
+          <button onClick={() => { onClose(); navigate('/auth') }} style={ctaBtn(BRAND.pod)}>
             {T('CREAR CUENTA GRATIS', 'CREATE FREE ACCOUNT')}
           </button>
-          <button onClick={() => { onClose(); navigate('/auth?mode=login') }} style={{ ...ctaStyle(`${BRAND.heirloom}22`), marginTop: 8, color: `${BRAND.heirloom}99` }}>
+          <button onClick={() => { onClose(); navigate('/auth?mode=login') }} style={{ ...ctaBtn(`${BRAND.heirloom}22`), marginTop: 8, color: `${BRAND.heirloom}99` }}>
             {T('YA TENGO CUENTA', 'I HAVE AN ACCOUNT')}
           </button>
         </div>
@@ -75,170 +69,179 @@ export default function InvestModal({ technology, mvp, mode, onClose, user, prof
     )
   }
 
-  const handlePay = async () => {
-    // Crypto via wallet directo → swap a WalletCheckout (no llama a ningún Edge Fn de checkout externo)
-    if (payment === 'wallet_eth_direct') {
-      setWalletOpen(true)
-      return
-    }
-    // Otras opciones crypto disabled (coming soon)
-    if (payment === 'coinbase_usdc' || payment === 'coinbase_cop_digital' || payment === 'coinbase_eur_digital') return
-    setLoading(true); setErr(null)
-    try {
-      const fn = payment === 'mercadopago' ? 'create-mp-preference' : 'create-stripe-checkout'
+  // ── Success after crypto ───────────────────────────────────────────────────
+  if (done) {
+    return (
+      <Overlay onClose={onClose}>
+        <div style={{ padding: '48px 28px', textAlign: 'center' }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>🌱</div>
+          <p style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 18, color: BRAND.pod, marginBottom: 8, letterSpacing: '0.04em' }}>
+            {T('INVERSIÓN REGISTRADA', 'INVESTMENT REGISTERED')}
+          </p>
+          <p style={{ fontFamily: FONTS.body, color: `${BRAND.heirloom}77`, fontSize: 13, lineHeight: 1.6 }}>
+            {T('Confirmamos tu pago en 24h y te escribimos con los próximos pasos.', 'We\'ll confirm your payment in 24h and reach out with next steps.')}
+          </p>
+          <button onClick={onClose} style={{ ...ctaBtn(BRAND.pod), marginTop: 24 }}>
+            {T('CERRAR', 'CLOSE')}
+          </button>
+        </div>
+      </Overlay>
+    )
+  }
 
-      const body = {
-        technology_id: technology.id,
-        mvp_id: mode === 'mvp' ? mvp?.id : null,
-        lots_count: lots,
-        currency,
-        success_url: `${window.location.origin}/fund?status=success`,
-        cancel_url:  `${window.location.origin}/fund?status=cancelled`,
+  // ── Checkout fiat via Edge Function ───────────────────────────────────────
+  const payFiat = async (provider: 'mp' | 'stripe', currency: 'COP' | 'USD' | 'EUR') => {
+    setLoading(provider); setErr(null)
+    try {
+      const fn = provider === 'mp' ? 'create-mp-preference' : 'create-stripe-checkout'
+      const { data, error } = await supabase.functions.invoke(fn, {
+        body: {
+          technology_id: technology.id,
+          mvp_id:   mode === 'mvp' ? mvp?.id : null,
+          lots_count: qty,
+          currency,
+          success_url: `${window.location.origin}/fund?status=success`,
+          cancel_url:  `${window.location.origin}/fund?status=cancelled`,
+        },
+      })
+      if (error) {
+        // Supabase wraps the actual body in error.message when status is 4xx/5xx
+        const msg = error?.message ?? 'Error al conectar con el servidor de pago.'
+        throw new Error(msg)
       }
-      const { data, error } = await supabase.functions.invoke(fn, { body })
-      if (error || !data?.url) throw new Error(error?.message ?? 'No checkout URL received')
+      if (!data?.url) throw new Error('No se recibió URL de pago. Intenta de nuevo.')
       window.location.href = data.url
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : 'Error desconocido')
-      setLoading(false)
+      setLoading(null)
     }
-  }
-
-  const ctaLabel = () => {
-    if (loading) return T('PROCESANDO...', 'PROCESSING...')
-    if (payment === 'mercadopago') return `${T('PAGAR CON MERCADOPAGO', 'PAY WITH MERCADOPAGO')} · ${displayTotal}`
-    if (payment === 'stripe_usd' || payment === 'stripe_eur') return `${T('PAGAR CON TARJETA', 'PAY BY CARD')} · ${displayTotal}`
-    if (payment === 'wallet_eth_direct') return `${T('TRANSFERIR ETH DIRECTO', 'TRANSFER ETH DIRECT')} · ${fmtUsd(totalUsd)}`
-    return T('PAGAR', 'PAY')
   }
 
   return (
     <Overlay onClose={onClose}>
-      {/* Header */}
-      <div style={{ padding: '20px 24px 16px', borderBottom: `1px solid ${BRAND.amazon}33` }}>
-        <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 9, letterSpacing: '0.2em', color: `${BRAND.heirloom}55`, marginBottom: 4 }}>
-          {mode === 'lot' ? T('INVERSIÓN POR LOTES', 'LOT INVESTMENT') : T('PRE-COMPRA MVP', 'MVP PRE-BUY')}
-        </div>
-        <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 20, color: BRAND.heirloom }}>
-          {mode === 'mvp' && mvp ? mvp.name : technology.name}
-        </div>
-        {(mode === 'mvp' ? mvp?.size_label : technology.tagline) && (
-          <div style={{ fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}44`, marginTop: 2 }}>
-            {mode === 'mvp' && mvp ? mvp.size_label : technology.tagline}
+      {/* ── Header ── */}
+      <div style={{ padding: '18px 22px 14px', borderBottom: `1px solid ${BRAND.amazon}33`, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <div style={{ fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}44`, letterSpacing: '0.2em', marginBottom: 3 }}>
+            {mode === 'lot' ? T('INVERSIÓN POR LOTES', 'LOT INVESTMENT') : T('PRE-COMPRA MVP', 'MVP PRE-BUY')}
           </div>
-        )}
+          <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 18, color: BRAND.heirloom }}>{itemName}</div>
+          {itemSub && <div style={{ fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}44`, marginTop: 2 }}>{itemSub}</div>}
+        </div>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: `${BRAND.heirloom}55`, fontSize: 20, lineHeight: 1, padding: 4 }}>✕</button>
       </div>
 
-      <div style={{ padding: '20px 24px 24px', display: 'flex', flexDirection: 'column', gap: 20, maxHeight: '70vh', overflowY: 'auto' }}>
+      <div style={{ padding: '18px 22px 22px', display: 'flex', flexDirection: 'column', gap: 18, maxHeight: '78vh', overflowY: 'auto' }}>
 
-        {/* Crypto wallet checkout — swap content cuando user picks wallet_eth_direct + clicks Pay */}
-        {walletOpen ? (
-          <>
-            <button onClick={() => setWalletOpen(false)} style={{
-              alignSelf: 'flex-start', background: 'transparent', border: `1px solid ${BRAND.amazon}aa`,
-              borderRadius: 999, padding: '6px 14px', cursor: 'pointer',
-              fontFamily: FONTS.display, fontWeight: 700, fontSize: 10, letterSpacing: '0.15em',
-              color: `${BRAND.heirloom}88`, textTransform: 'uppercase',
-            }}>
-              ← {T('Cambiar método', 'Change method')}
-            </button>
-            <WalletCheckout
-              key={`wc-${technology.id}-${mvp?.id ?? 'lot'}-${lots}`}
-              amount_usd={Math.round(totalUsd / 100)}
-              kind="b2b_sponsorship"
-              context={{
-                tech_id:    technology.id,
-                mvp_id:     mode === 'mvp' ? (mvp?.id ?? null) : null,
-                lots_count: lots,
-                currency,
-              }}
-              lang={lang}
-              onClose={onClose}
-            />
-          </>
-        ) : (
-          <>
-        {/* Qty stepper */}
-        <div>
-          <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 9, letterSpacing: '0.2em', color: `${BRAND.heirloom}55`, marginBottom: 8 }}>
-            {mode === 'lot' ? T('NÚMERO DE LOTES', 'NUMBER OF LOTS') : T('CANTIDAD', 'QUANTITY')}
+        {/* ── Qty + price ── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button onClick={() => setQty(q => Math.max(1, q - 1))} style={stepBtn}>−</button>
+            <span style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 28, color: BRAND.heirloom, minWidth: 28, textAlign: 'center' }}>{qty}</span>
+            <button onClick={() => setQty(q => Math.min(20, q + 1))} style={stepBtn}>+</button>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button onClick={() => setLots(l => Math.max(1, l - 1))} style={stepBtn}>−</button>
-            <span style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 28, color: BRAND.heirloom, minWidth: 32, textAlign: 'center' }}>{lots}</span>
-            <button onClick={() => setLots(l => Math.min(20, l + 1))} style={stepBtn}>+</button>
-            <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
-              <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 22, color: BRAND.pod }}>{displayTotal}</div>
-              {currency !== 'COP' && totalCop > 0 && (
-                <div style={{ fontFamily: FONTS.body, fontSize: 9, color: `${BRAND.heirloom}33` }}>≈ {fmtCop(totalCop)}</div>
-              )}
+          <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+            <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 22, color: BRAND.pod }}>{fmtCop(totalCop)}</div>
+            <div style={{ fontFamily: FONTS.body, fontSize: 9, color: `${BRAND.heirloom}44` }}>
+              {fmtUsd(totalUsdCents)} · {fmtEur(totalEurCents)}
             </div>
           </div>
-          {mode === 'lot' && (
-            <div style={{ fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}44`, marginTop: 6 }}>
-              {fmtUsd(unitUsd)} {T('por lote · 40 kg input · 22 kg output', 'per lot · 40 kg input · 22 kg output')}
-              {isInvestor && (
-                <div style={{ color: BRAND.pod, marginTop: 4 }}>
-                  ✓ {T('Descuento inversor 50%', 'Investor 50% discount')}
-                </div>
-              )}
-            </div>
-          )}
         </div>
 
-        {/* Payment selector */}
-        <PaymentSelector
-          selected={payment}
-          currency={currency}
-          onSelect={setPayment}
-          onCurrency={c => { setCurrency(c) }}
-          lang={lang}
-        />
-
-        {err && (
-          <div style={{ padding: '8px 12px', borderRadius: 8, background: `${BRAND.radioRed}18`, border: `1px solid ${BRAND.radioRed}44`, fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.radioRed}cc` }}>
-            {err}
-          </div>
+        {isInvestor && (
+          <div style={{ fontFamily: FONTS.body, fontSize: 10, color: BRAND.pod }}>✓ {T('Descuento inversor 50%', '50% investor discount')}</div>
         )}
 
-        <button
-          onClick={handlePay}
-          disabled={loading || payment === 'coinbase_cop_digital' || payment === 'coinbase_eur_digital'}
-          style={{
-            ...ctaStyle(BRAND.pod),
-            opacity: (loading || payment === 'coinbase_cop_digital' || payment === 'coinbase_eur_digital') ? 0.5 : 1,
-            cursor: (loading || payment === 'coinbase_cop_digital' || payment === 'coinbase_eur_digital') ? 'not-allowed' : 'pointer',
-          }}
-        >
-          {ctaLabel()}
-        </button>
+        {/* ── Payment buttons ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
 
-        <p style={{ fontFamily: FONTS.body, fontSize: 9, color: `${BRAND.heirloom}33`, textAlign: 'center', margin: 0 }}>
-          {T('Pago seguro · Redireccionamiento externo · Sin almacenar datos de tarjeta', 'Secure payment · External redirect · No card data stored')}
+          {/* Stripe USD */}
+          <button
+            onClick={() => payFiat('stripe', 'USD')}
+            disabled={loading !== null}
+            style={payBtn(BRAND.mazorca, loading === 'stripe')}
+          >
+            <span style={{ fontSize: 18 }}>💳</span>
+            <span style={{ flex: 1, textAlign: 'left' }}>
+              <span style={{ display: 'block', fontFamily: FONTS.display, fontWeight: 800, fontSize: 12, letterSpacing: '0.08em' }}>
+                {loading === 'stripe' ? T('ABRIENDO…', 'OPENING…') : `TARJETA · ${fmtUsd(totalUsdCents)}`}
+              </span>
+              <span style={{ display: 'block', fontFamily: FONTS.body, fontSize: 9, opacity: 0.6, marginTop: 2 }}>Visa · Mastercard · Amex · Apple Pay</span>
+            </span>
+            {loading !== 'stripe' && <span style={{ fontFamily: FONTS.display, fontSize: 12 }}>→</span>}
+          </button>
+
+          {/* Error from stripe */}
+          {err && (
+            <div style={{
+              padding: '10px 12px', borderRadius: 10,
+              background: `${BRAND.radioRed}14`, border: `1px solid ${BRAND.radioRed}33`,
+              fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.radioRed}cc`, lineHeight: 1.5,
+            }}>
+              {err}
+              <div style={{ marginTop: 6, fontSize: 9, opacity: 0.7 }}>
+                {T('Si el problema persiste, usa pago ETH o $CACAO.', 'If the issue persists, use ETH or $CACAO payment.')}
+              </div>
+            </div>
+          )}
+
+          {/* ETH on-chain */}
+          <Suspense fallback={<PayBtnSkeleton color={BRAND.heroic} label="ETH on Base" />}>
+            <CryptoPayButton
+              amountUsd={Math.round(totalUsdCents / 100)}
+              label={`${itemName} × ${qty}`}
+              techId={technology.id}
+              mvpId={mode === 'mvp' ? (mvp?.id ?? null) : null}
+              lotsCount={qty}
+              lang={lang}
+              onSuccess={() => setDone(true)}
+            />
+          </Suspense>
+
+          {/* $CACAO burn */}
+          <Suspense fallback={<PayBtnSkeleton color={BRAND.criollo} label="$CACAO" />}>
+            <CacaoPayButton
+              amountUsd={Math.round(totalUsdCents / 100)}
+              label={`${itemName} × ${qty}`}
+              techId={technology.id}
+              mvpId={mode === 'mvp' ? (mvp?.id ?? null) : null}
+              lotsCount={qty}
+              lang={lang}
+              onSuccess={() => setDone(true)}
+            />
+          </Suspense>
+        </div>
+
+        <p style={{ fontFamily: FONTS.body, fontSize: 9, color: `${BRAND.heirloom}28`, textAlign: 'center', margin: 0, lineHeight: 1.6 }}>
+          {T('Pago seguro · sin datos de tarjeta guardados · pagos on-chain irrevocables en Base.', 'Secure · no card data stored · on-chain payments irreversible on Base.')}
         </p>
-
-        {/* EU conversion note */}
-        {currency === 'EUR' && (
-          <p style={{ fontFamily: FONTS.body, fontSize: 9, color: `${BRAND.heirloom}22`, textAlign: 'center', margin: '-12px 0 0' }}>
-            {T(`Tasa indicativa 1 EUR ≈ $${EUR_COP_APPROX.toLocaleString('es-CO')} COP. El servidor calcula el precio final.`,
-               `Indicative rate 1 EUR ≈ $${EUR_COP_APPROX.toLocaleString('en-US')} COP. Server calculates final price.`)}
-          </p>
-        )}
-          </>
-        )}
       </div>
     </Overlay>
   )
 }
 
-// ── helpers ───────────────────────────────────────────────────────────────────
+function PayBtnSkeleton({ color, label }: { color: string; label: string }) {
+  return (
+    <div style={{
+      width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+      padding: '14px 16px', borderRadius: 12,
+      background: `${color}12`, border: `1.5px solid ${color}22`,
+      color: `${BRAND.heirloom}33`,
+    }}>
+      <span style={{ fontFamily: FONTS.body, fontSize: 10 }}>{label}…</span>
+    </div>
+  )
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
 function Overlay({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(4,12,6,0.88)', backdropFilter: 'blur(8px)', zIndex: 500 }} />
       <div style={{
         position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-        zIndex: 501, width: 'min(500px, 95vw)',
+        zIndex: 501, width: 'min(440px, 95vw)',
         background: BRAND.bgDark,
         border: `1px solid ${BRAND.amazon}55`,
         borderRadius: 20, overflow: 'hidden',
@@ -258,11 +261,22 @@ const stepBtn: React.CSSProperties = {
   fontFamily: FONTS.display, fontWeight: 700,
 }
 
-function ctaStyle(color: string): React.CSSProperties {
+function payBtn(color: string, active: boolean): React.CSSProperties {
+  return {
+    width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+    padding: '14px 16px', borderRadius: 12, cursor: active ? 'not-allowed' : 'pointer',
+    background: active ? `${color}22` : `${color}14`,
+    border: `1.5px solid ${active ? color + '55' : color + '44'}`,
+    color: BRAND.heirloom, transition: 'all 0.18s',
+    opacity: active ? 0.75 : 1,
+  }
+}
+
+function ctaBtn(color: string): React.CSSProperties {
   return {
     width: '100%', padding: '14px', borderRadius: 999,
-    background: `linear-gradient(135deg, ${color}, ${color}cc)`,
-    color: '#040C06', border: 'none', cursor: 'pointer',
+    background: color, color: color === BRAND.pod ? '#040C06' : `${BRAND.heirloom}99`,
+    border: 'none', cursor: 'pointer',
     fontFamily: FONTS.display, fontWeight: 700,
     fontSize: 10, letterSpacing: '0.1em',
   }
