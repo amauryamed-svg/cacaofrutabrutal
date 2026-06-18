@@ -9,7 +9,7 @@
  *   2 CUIDAR   → /tree/{first-tree-id} (fallback /adoptar)
  *   3 COSECHAR → /tree/{ready-tree-id} (fallback /adoptar)
  *   4 FORJAR   → /lab
- * + Output  REDIME → cauacolombia.co (Shopify gift card)
+ * + Output  REDIME → /marketplace (in-app $CACAO redemption)
  *
  * Estado por hito:
  *   - done   : cumplido (chip con check ✓ + verde mazorca)
@@ -116,7 +116,7 @@ export default function CaminoDock() {
           fontSize: 8, letterSpacing: '0.22em',
           color: `${BRAND.mazorca}99`, textTransform: 'uppercase',
         }}>
-          🎮 Camino del Cacao · {doneCount}/4 hitos · Destino: RedimeCacao10K
+          🎮 CAMINO DEL CACAO · {doneCount}/4 HITOS · DESTINO: $CACAO
         </div>
 
         <div style={{
@@ -183,40 +183,38 @@ export default function CaminoDock() {
             )
           })}
 
-          {/* Output: RedimeCacao10K · canjeable en cauacolombia.co */}
-          <a
-            href="https://cauacolombia.co/discount/RedimeCacao10K?redirect=/products/cacao-ceremonial-250gr-origen-hobo-huila"
-            target="_blank"
-            rel="noopener noreferrer"
+          {/* Output: $CACAO in-app redemption → /marketplace */}
+          <button
+            onClick={() => navigate('/marketplace')}
             data-cta-name="cfb-camino-dock-redime"
             data-cta-surface="camino-dock"
-            aria-label="Redime tu RedimeCacao10K en Cauacolombia.co"
+            aria-label="Quema $CACAO en el Mercado Caúa"
             style={{
               display: 'flex', flexDirection: 'column',
               alignItems: 'center', justifyContent: 'center',
               gap: 2,
               background: hasForged
-                ? `linear-gradient(135deg, ${BRAND.mazorca}, ${BRAND.pod})`
-                : `${BRAND.mazorca}14`,
-              border: `1px solid ${BRAND.mazorca}${hasForged ? 'ff' : '66'}`,
+                ? `linear-gradient(135deg, #8D2679, #D05527)`
+                : '#8D267914',
+              border: `1px solid #8D2679${hasForged ? 'ff' : '66'}`,
               borderRadius: 10,
               padding: '6px 10px',
               minHeight: 48,
-              textDecoration: 'none',
-              boxShadow: hasForged ? `0 0 18px ${BRAND.mazorca}aa` : 'none',
+              cursor: 'pointer',
+              boxShadow: hasForged ? `0 0 18px #8D267988` : 'none',
             }}
           >
-            <span style={{ fontSize: 'clamp(13px, 2.5vw, 16px)' }}>🎁</span>
+            <span style={{ fontSize: 'clamp(13px, 2.5vw, 16px)' }}>◈</span>
             <span style={{
               fontFamily: FONTS.display, fontWeight: 900,
               fontSize: 'clamp(8px, 1.6vw, 10px)',
-              color: hasForged ? BRAND.bgDeep : BRAND.mazorca,
+              color: hasForged ? '#F7F1EE' : '#8D2679',
               letterSpacing: '0.08em', textTransform: 'uppercase',
               whiteSpace: 'nowrap',
             }}>
-              Redime
+              REDIME
             </span>
-          </a>
+          </button>
         </div>
       </nav>
       <style>{`

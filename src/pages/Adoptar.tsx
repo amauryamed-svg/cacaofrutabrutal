@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useCocoaTrees } from '../hooks/useCocoaTrees'
 import { useLineageRegenerations } from '../hooks/useLineageRegenerations'
 import { useTokenBalance } from '../hooks/useTokenBalance'
+import { useLang } from '../context/LangContext'
 import TokenReward from '../components/ritual/TokenReward'
 import {
   BRAND, FONTS, GUARDIANS, TOKEN_RATES,
@@ -34,6 +35,8 @@ export default function Adoptar() {
   const { trees, loading: treesLoading, adoptTree } = useCocoaTrees()
   const { findByGuardian: findRegen } = useLineageRegenerations()
   const { beans, mazorcas } = useTokenBalance()
+  const { lang } = useLang()
+  const es = lang === 'es'
 
   const initialGuardian = (() => {
     const g = Number(searchParams.get('guardian'))
@@ -232,7 +235,8 @@ export default function Adoptar() {
               fontSize: 'clamp(36px, 9vw, 60px)', color: BRAND.heirloom,
               textTransform: 'uppercase', margin: '0 0 6px', lineHeight: 0.92,
             }}>
-              Adopta un<br /><span style={{ color: BRAND.pod }}>árbol de cacao</span>
+              {es ? 'Adopta un' : 'Adopt a'}<br />
+              <span style={{ color: BRAND.pod }}>{es ? 'árbol de cacao' : 'cacao tree'}</span>
             </h1>
 
             {IS_GOLDEN_TICKET_FREEMIUM && (
@@ -258,7 +262,7 @@ export default function Adoptar() {
               letterSpacing: '0.16em', textTransform: 'uppercase',
               textAlign: 'center', marginBottom: 12,
             }}>
-              — SELECT YOUR GUARDIAN —
+              {es ? '— ELIGE TU GUARDIÁN —' : '— SELECT YOUR GUARDIAN —'}
             </div>
 
             {/* Guardian cards row */}
