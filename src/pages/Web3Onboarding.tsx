@@ -89,6 +89,7 @@ function Inner() {
   if (step === 'done') {
     return (
       <Shell>
+        <JourneyRail activeNum="03" doneNums={['01', '02']} />
         <Screen>
           <Chip color={BRAND.pod}><PulseDot color={BRAND.pod} /> WALLET LINKED · READY</Chip>
           <H1>WELCOME TO<br /><span style={{ color: BRAND.pod }}>CAÚA WEB3.</span></H1>
@@ -123,7 +124,7 @@ function Inner() {
 
   return (
     <Shell>
-      <ProgressBar step={step} />
+      <JourneyRail activeNum={isSign ? '02' : '01'} />
       <Screen>
         {!isSign ? (
           <>
@@ -283,34 +284,38 @@ function PersonaNotice() {
 
 // ─── Existing sub-components ─────────────────────────────────────────────
 
-function ProgressBar({ step }: { step: Step }) {
-  const pct = step === 'connect' ? 0 : step === 'sign' ? 50 : 100
+const JOURNEY_STEPS = [
+  { num: '01', title: 'CONNECT',       body: 'Coinbase Smart Wallet, MetaMask, o cualquier wallet WalletConnect.' },
+  { num: '02', title: 'KYC + LINK',    body: 'Firma SIWE para vincular tu wallet. Chainalysis + OFAC pre-write.' },
+  { num: '03', title: 'ADOPT',         body: 'Adopta un árbol en Base con USDC, ETH o cbBTC. Splits atómicos.' },
+  { num: '04', title: 'CARE',          body: 'Acciones diarias on-chain generan beans + mazorcas.' },
+  { num: '05', title: 'BURN → $CACAO', body: 'Quema mazorcas → reclama $CACAO. EIP-712. Cooldown 30 días.' },
+]
+
+function JourneyRail({ activeNum, doneNums = [] }: { activeNum: string; doneNums?: string[] }) {
   return (
-    <div style={progressWrap}>
-      <div style={progressTrack}>
-        <div style={{ ...progressFill, width: `${pct}%` }} />
-      </div>
-      <div style={progressDots}>
-        {(['connect', 'sign'] as const).map((s, i) => {
-          const done = (step === 'sign' && i === 0) || step === 'done'
-          const active = step === s
-          return (
-            <div key={s} style={dotCol}>
-              <div style={{
-                ...dotCircle,
-                background: done ? BRAND.pod : active ? BRAND.mazorca : BRAND.bgDark,
-                borderColor: done ? BRAND.pod : active ? BRAND.mazorca : `${BRAND.heirloom}22`,
-                boxShadow: active ? `0 0 18px ${BRAND.mazorca}66` : done ? `0 0 12px ${BRAND.pod}44` : 'none',
-              }}>
-                {done ? '✓' : i + 1}
+    <div style={railWrap}>
+      {JOURNEY_STEPS.map((s, i) => {
+        const isDone   = doneNums.includes(s.num)
+        const isActive = s.num === activeNum
+        const isFuture = !isDone && !isActive
+        return (
+          <div key={s.num} style={{ display: 'flex', alignItems: 'flex-start', gap: 0 }}>
+            <div style={railCard(isActive, isDone, isFuture)}>
+              <div style={railNum(isActive, isDone, isFuture)}>
+                {isDone ? '✓' : s.num}
               </div>
-              <div style={{ ...dotLabel, color: done || active ? BRAND.heirloom : `${BRAND.heirloom}44` }}>
-                {s === 'connect' ? 'CONNECT' : 'LINK'}
-              </div>
+              <div style={railTitle(isActive, isDone, isFuture)}>{s.title}</div>
+              {(isActive || isDone) && (
+                <div style={railBody}>{s.body}</div>
+              )}
             </div>
-          )
-        })}
-      </div>
+            {i < JOURNEY_STEPS.length - 1 && (
+              <div style={{ ...railArrow, color: isDone ? BRAND.pod : `${BRAND.heirloom}22` }}>→</div>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -388,39 +393,53 @@ const shellInner: React.CSSProperties = {
 }
 const screenStyle: React.CSSProperties = { marginBottom: 48 }
 
-// Progress bar
-const progressWrap: React.CSSProperties = {
-  position: 'relative',
-  maxWidth: 240,
-  margin: '0 auto 52px',
+// Journey rail (5-step, matches Web3Landing)
+const railWrap: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'flex-start',
+  overflowX: 'auto',
+  gap: 0,
+  marginBottom: 36,
+  paddingBottom: 4,
 }
-const progressTrack: React.CSSProperties = {
-  position: 'absolute',
-  top: 21, left: '20%', right: '20%',
-  height: 2, background: `${BRAND.heirloom}15`, zIndex: 0,
+const railArrow: React.CSSProperties = {
+  fontFamily: FONTS.display, fontSize: 16,
+  padding: '18px 4px 0',
+  flexShrink: 0,
+  lineHeight: 1,
 }
-const progressFill: React.CSSProperties = {
-  height: '100%',
-  background: `linear-gradient(90deg, ${BRAND.pod}, ${BRAND.mazorca})`,
-  transition: 'width 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
-  boxShadow: `0 0 10px ${BRAND.mazorca}66`,
+function railCard(active: boolean, done: boolean, future: boolean): React.CSSProperties {
+  return {
+    padding: '12px 14px',
+    background: active ? `${BRAND.mazorca}12` : done ? `${BRAND.pod}0A` : 'transparent',
+    border: `1px solid ${active ? BRAND.mazorca : done ? BRAND.pod : `${BRAND.heirloom}15`}`,
+    borderRadius: 8,
+    minWidth: future ? 60 : 110,
+    maxWidth: 160,
+    opacity: future ? 0.4 : 1,
+    transition: 'all 0.3s',
+    flexShrink: 0,
+  }
 }
-const progressDots: React.CSSProperties = {
-  display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8,
-  position: 'relative', zIndex: 1,
+function railNum(active: boolean, done: boolean, _future: boolean): React.CSSProperties {
+  return {
+    fontFamily: FONTS.display, fontSize: 10, fontWeight: 900,
+    letterSpacing: '0.18em',
+    color: done ? BRAND.pod : active ? BRAND.mazorca : `${BRAND.heirloom}55`,
+    marginBottom: 4,
+  }
 }
-const dotCol: React.CSSProperties = {
-  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
+function railTitle(active: boolean, done: boolean, _future: boolean): React.CSSProperties {
+  return {
+    fontFamily: FONTS.display, fontSize: 11, fontWeight: 900,
+    letterSpacing: '0.1em', textTransform: 'uppercase',
+    color: done ? BRAND.pod : active ? BRAND.mazorca : `${BRAND.heirloom}44`,
+    marginBottom: 4,
+  }
 }
-const dotCircle: React.CSSProperties = {
-  width: 42, height: 42, borderRadius: '50%', border: '2px solid',
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
-  fontFamily: FONTS.display, fontWeight: 900, fontSize: 15,
-  transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-}
-const dotLabel: React.CSSProperties = {
-  fontFamily: FONTS.display, fontSize: 9, letterSpacing: '0.18em',
-  textTransform: 'uppercase', transition: 'color 0.3s',
+const railBody: React.CSSProperties = {
+  fontFamily: FONTS.body, fontSize: 11,
+  color: `${BRAND.heirloom}66`, lineHeight: 1.4,
 }
 
 // Chip

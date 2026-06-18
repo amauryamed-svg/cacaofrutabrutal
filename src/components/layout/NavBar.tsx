@@ -255,14 +255,12 @@ export default function NavBar() {
   const es = lang === 'es'
 
   // Phase 1 — videojuego del cacao journey. Solo 4 superficies de usabilidad:
-  // ADOPTAR · LAB · TAROT · FONDO. Camino vive como dock sticky abajo.
-  // Todo lo demás (Mercado, Impacto, Web3, Blog, CauaBonga) se accede desde
-  // FONDO como hub Phase 2 / business-side.
   const TABS: NavItem[] = [
-    { path: '/adoptar', label: T('nav_adoptar'), hint: es ? 'Hito 1 · adopta tu cacao'    : 'Hito 1 · adopt your cacao' },
-    { path: '/lab',     label: es ? 'LAB' : 'LAB',                hint: es ? 'Hito 4 · forja tu chocolate' : 'Hito 4 · forge your chocolate' },
-    { path: '/ritual',  label: es ? 'TAROT' : 'TAROT',            hint: es ? 'Tarot diario · streak' : 'Daily tarot · streak' },
-    { path: '/fund',    label: es ? 'FONDO' : 'FUND',             hint: es ? 'Tecnologías · Mercado · Hoja de ruta' : 'Technologies · Market · Roadmap' },
+    { path: '/adoptar',        label: T('nav_adoptar'), hint: es ? 'Hito 1 · adopta tu cacao'    : 'Hito 1 · adopt your cacao' },
+    { path: '/lab',            label: 'LAB',            hint: es ? 'Hito 4 · forja tu chocolate' : 'Hito 4 · forge your chocolate' },
+    { path: '/ritual',         label: 'TAROT',          hint: es ? 'Tarot diario · streak'       : 'Daily tarot · streak' },
+    { path: '/web3/onboarding',label: 'WEB3',           hint: es ? 'On-chain · NFT · $CACAO'     : 'On-chain · NFT · $CACAO' },
+    { path: '/fund',           label: es ? 'FONDO' : 'FUND', hint: es ? 'Tecnologías · Mercado · Hoja de ruta' : 'Technologies · Market · Roadmap' },
   ]
 
   // GROWTH pitch ya vive embebido en la investor landing (/) — el link
