@@ -259,7 +259,13 @@ export default function NavBar() {
     { path: '/adoptar',        label: T('nav_adoptar'), hint: es ? 'Hito 1 · adopta tu cacao'    : 'Hito 1 · adopt your cacao' },
     { path: '/lab',            label: 'LAB',            hint: es ? 'Hito 4 · forja tu chocolate' : 'Hito 4 · forge your chocolate' },
     { path: '/ritual',         label: 'TAROT',          hint: es ? 'Tarot diario · streak'       : 'Daily tarot · streak' },
-    { path: '/web3/onboarding',label: 'WEB3',           hint: es ? 'On-chain · NFT · $CACAO'     : 'On-chain · NFT · $CACAO' },
+    {
+      label: 'WEB3',
+      children: [
+        { path: '/web3/onboarding', label: 'ONBOARDING',  hint: es ? 'Vincula wallet · KYC' : 'Link wallet · KYC' },
+        { path: '/web3/dashboard',  label: 'MIS ACTIVOS', hint: es ? 'NFTs · $CACAO · Beans' : 'NFTs · $CACAO · Beans' },
+      ],
+    },
     { path: '/fund',           label: es ? 'FONDO' : 'FUND', hint: es ? 'Tecnologías · Mercado · Hoja de ruta' : 'Technologies · Market · Roadmap' },
   ]
 

@@ -217,27 +217,35 @@ export default function Adoptar() {
                       const s = tierStyle(row)
                       const t = row.t
                       const tier = tierOf(row)
+                      const isOnChain = t.nft_mint_tx != null
                       return (
                         <button
                           key={t.id}
                           onClick={() => navigate(`/tree/${t.id}`)}
                           data-tier={tier}
                           style={{
-                            background: `${s.color}1a`,
-                            border: `1px solid ${s.color}${s.pulse ? 'cc' : '66'}`,
+                            background: isOnChain
+                              ? `linear-gradient(135deg, ${BRAND.heroic}18, ${s.color}18)`
+                              : `${s.color}1a`,
+                            border: isOnChain
+                              ? `1px solid ${BRAND.heroic}88`
+                              : `1px solid ${s.color}${s.pulse ? 'cc' : '66'}`,
                             borderRadius: 999,
                             padding: '7px 14px',
                             cursor: 'pointer',
                             fontFamily: FONTS.display, fontWeight: 700, fontSize: 12,
-                            color: s.color, letterSpacing: '0.08em',
-                            boxShadow: s.pulse ? `0 0 18px ${s.color}66` : 'none',
+                            color: isOnChain ? BRAND.heroic : s.color,
+                            letterSpacing: '0.08em',
+                            boxShadow: isOnChain
+                              ? `0 0 14px ${BRAND.heroic}44`
+                              : s.pulse ? `0 0 18px ${s.color}66` : 'none',
                             animation: tier === 'ready' ? 'caua-chip-pulse 1.6s ease-in-out infinite'
                                      : tier === 'dying' ? 'caua-chip-dying 1s ease-in-out infinite'
                                      : 'none',
                             transition: 'border-color 0.2s, background 0.2s, box-shadow 0.2s',
                           }}
                         >
-                          {s.icon} {GUARDIANS[t.guardian_id]?.name ?? 'Árbol'} · {s.label}
+                          {isOnChain ? '⛓️' : s.icon} {GUARDIANS[t.guardian_id]?.name ?? 'Árbol'} · {isOnChain ? 'ON-CHAIN' : s.label}
                         </button>
                       )
                     })}
