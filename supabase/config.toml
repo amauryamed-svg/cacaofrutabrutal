@@ -33,3 +33,11 @@ verify_jwt = false
 # IoT weekly Merkle-root poster — cron-triggered, ADMIN_BEARER_TOKEN auth (see docs/WEB3.md).
 [functions.post-iot-root]
 verify_jwt = false
+
+# Coinbase Onramp session-token issuer — handles its own JWT verification
+# (supabase.auth.getUser) to enforce KYC + wallet-link gates before calling
+# api.developer.coinbase.com/onramp/v1/token. verify_jwt=false lets the
+# function return structured error JSON (kyc_required, geo_blocked, etc.)
+# instead of a generic 401 from the runtime pre-check.
+[functions.coinbase-onramp-session]
+verify_jwt = false

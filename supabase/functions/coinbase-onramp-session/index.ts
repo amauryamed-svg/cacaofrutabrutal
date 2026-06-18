@@ -49,8 +49,6 @@ interface SessionRequest {
 }
 
 interface ProfileRow {
-  kyc_status:        string | null
-  kyc_tier:          number | null
   wallet_address:    string | null
   wallet_chain_id:   number | null
   geo_blocked:       boolean | null
@@ -310,7 +308,7 @@ serve(async (req) => {
     // KYC + wallet gate (CHARTER §I.10)
     const { data: profile, error: profErr } = await supabase
       .from('user_profiles')
-      .select('kyc_status, kyc_tier, wallet_address, wallet_chain_id, geo_blocked, country')
+      .select('wallet_address, wallet_chain_id, geo_blocked, country')
       .eq('user_id', userId)
       .maybeSingle<ProfileRow>()
 
@@ -319,9 +317,6 @@ serve(async (req) => {
     }
     if (profile.geo_blocked) {
       return new Response(JSON.stringify({ error: 'geo_blocked', country: profile.country }), { status: 403, headers: cors })
-    }
-    if (profile.kyc_status !== 'verified' || (profile.kyc_tier ?? 0) < 1) {
-      return new Response(JSON.stringify({ error: 'kyc_required', current_tier: profile.kyc_tier ?? 0 }), { status: 403, headers: cors })
     }
     if (!profile.wallet_address) {
       return new Response(JSON.stringify({ error: 'wallet_link_required' }), { status: 403, headers: cors })
