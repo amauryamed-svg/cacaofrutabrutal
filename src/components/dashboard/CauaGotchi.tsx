@@ -1,7 +1,13 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { BRAND, FONTS } from '../../utils/constants'
 import { PLANT_PROBLEMS, SPECIAL_ITEMS } from '../../utils/growthSystem'
 import CacaoPixelTree from './CacaoPixelTree'
+import SeasonHUD from './SeasonHUD'
+import CryptoStatsPanel from './CryptoStatsPanel'
+import PollinationGame from './PollinationGame'
+import IrrigationGame from './IrrigationGame'
+import { getCurrentSeason, getSeasonData, calcXPEarned } from '../../utils/seasonSystem'
 import type { CSSProperties, ReactNode } from 'react'
 
 /**
@@ -56,11 +62,15 @@ export interface CauaGotchiProps {
 
   // Phase 1.5 — death is server-decided (vitals_critical_since > grace).
   isDead: boolean
-  /** True cuando vitals están bajo umbral (cualquiera de health/moisture/sunlight).
-   *  El banner naranja "VITALES CRÍTICOS" se muestra sin componente temporal. */
   inDanger: boolean
-  /** Countdown formateado a la próxima cosecha (e.g. "2h 30m") o "¡Listo!". */
   nextHarvestLabel: string
+
+  // Crypto / XP stats (optional — shown if provided)
+  cacaoBalance?:   number
+  mazorcasBurned?: number
+  harvestStreak?:  number
+  totalXP?:        number
+  lang?: 'es' | 'en'
 }
 
 export default function CauaGotchi({
@@ -71,15 +81,100 @@ export default function CauaGotchi({
   onCare, onTreeTap,
   harvestReady, harvested, onHarvest, harvestRewards,
   isDead, inDanger, nextHarvestLabel,
+  cacaoBalance = 0, mazorcasBurned = 0, harvestStreak = 0, totalXP = 0,
+  lang = 'es',
 }: CauaGotchiProps) {
 
   const prob = problem ? PLANT_PROBLEMS[problem] : null
-  // Phase 1.5 — la cosecha es recurrente. `harvested` es solo "ya cosechó al
-  // menos una vez", no bloquea acciones. Sólo isDead bloquea.
   const lockActions = isDead
 
+  // ── Season state ─────────────────────────────────────────────────────────
+  const season     = getCurrentSeason()
+  const seasonData = getSeasonData(season)
+  const [xp, setXp] = useState(totalXP)
+
+  // Season mini-game modal
+  const [miniGameOpen, setMiniGameOpen] = useState(false)
+
+  // XP floating toast
+  const [xpToast, setXpToast] = useState<{ val: number; id: number } | null>(null)
+  let toastId = 0
+
+  function handleCareWithXP(action: CareAction) {
+    onCare(action)
+    const earned = calcXPEarned(action, season, health)
+    setXp(x => x + earned)
+    const id = toastId++
+    setXpToast({ val: earned, id })
+    setTimeout(() => setXpToast(null), 1400)
+  }
+
+  function handleMiniGameComplete() {
+    setMiniGameOpen(false)
+    const earned = calcXPEarned('pollinate', season, health)
+    setXp(x => x + earned)
+    const id = toastId++
+    setXpToast({ val: earned, id })
+    setTimeout(() => setXpToast(null), 1400)
+  }
+
+  // Harvest multiplier = season bonus (level mult handled in CryptoStatsPanel)
+  const harvestMult = +(seasonData.harvestBonus).toFixed(2)
+
   return (
+    <div style={{ position: 'relative' }}>
+    {/* Season mini-game modals */}
+    {miniGameOpen && season === 'floracion' && (
+      <PollinationGame onComplete={handleMiniGameComplete} lang={lang} />
+    )}
+    {miniGameOpen && season === 'traviesa' && (
+      <IrrigationGame onComplete={handleMiniGameComplete} lang={lang} />
+    )}
+    {miniGameOpen && (season === 'mitaca' || season === 'cosecha_mayor') && (
+      // These seasons use the existing harvest mini-game — just close
+      <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(4,12,6,0.88)' }} onClick={() => setMiniGameOpen(false)}>
+        <div style={{ padding: 24, background: '#0D2214', border: '1px solid #91A63B55', borderRadius: 12, textAlign: 'center', maxWidth: 360 }}>
+          <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: '#91A63B', letterSpacing: '0.14em', marginBottom: 16 }}>
+            {season === 'cosecha_mayor' ? '🍫 ARENA MACHETE' : '🫘 COSECHA SELECTIVA'}
+          </div>
+          <p style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 14, color: '#F7F1EEaa', marginBottom: 20 }}>
+            {lang === 'es' ? 'Usa el botón COSECHAR cuando el árbol esté listo para jugar la arena.' : 'Use the HARVEST button when the tree is ready to enter the arena.'}
+          </p>
+          <button onClick={() => setMiniGameOpen(false)} style={{ background: '#91A63B22', border: '1px solid #91A63B55', borderRadius: 8, padding: '10px 20px', cursor: 'pointer', fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: '#91A63B', letterSpacing: '0.1em' }}>
+            OK →
+          </button>
+        </div>
+      </div>
+    )}
+
     <div style={panelStyle(prob, isDead)}>
+
+      {/* XP floating toast */}
+      {xpToast && (
+        <motion.div
+          key={xpToast.id}
+          initial={{ opacity: 0, y: 0 }}
+          animate={{ opacity: [0, 1, 1, 0], y: -40 }}
+          transition={{ duration: 1.3, times: [0, 0.1, 0.7, 1] }}
+          style={{
+            position: 'absolute', top: 10, right: 16, zIndex: 50,
+            fontFamily: "'Press Start 2P', monospace",
+            fontSize: 9, color: seasonData.accentColor,
+            pointerEvents: 'none',
+            textShadow: `0 0 8px ${seasonData.accentColor}`,
+          }}
+        >
+          +{xpToast.val} XP
+        </motion.div>
+      )}
+
+      {/* Season HUD — always first */}
+      <SeasonHUD
+        season={season}
+        totalXP={xp}
+        onMiniGame={() => setMiniGameOpen(true)}
+        lang={lang}
+      />
 
       {/* Top bar — stage label + LVL badge + tree name */}
       <div style={topBarStyle}>
@@ -178,7 +273,7 @@ export default function CauaGotchi({
           disabled={lockActions || !canCare || activeAction !== null}
           active={activeAction === 'water'}
           cooldown={!canCare && !isDead ? nextCareIn : null}
-          onClick={() => !isDead && onCare('water')}
+          onClick={() => !isDead && handleCareWithXP('water')}
         />
         <ActionButton
           label="SOL"
@@ -187,7 +282,7 @@ export default function CauaGotchi({
           disabled={lockActions || !canCare || activeAction !== null}
           active={activeAction === 'sunlight'}
           cooldown={!canCare && !isDead ? nextCareIn : null}
-          onClick={() => !isDead && onCare('sunlight')}
+          onClick={() => !isDead && handleCareWithXP('sunlight')}
         />
       </div>
 
@@ -207,7 +302,7 @@ export default function CauaGotchi({
               rarity={item.rarity}
               disabled={lockActions || empty || activeAction !== null}
               active={activeAction === action}
-              onClick={() => !isDead && onCare(action)}
+              onClick={() => !isDead && handleCareWithXP(action)}
             />
           )
         })}
@@ -297,6 +392,19 @@ export default function CauaGotchi({
           </p>
         </div>
       )}
+
+      {/* Crypto stats panel — always visible when alive */}
+      {!isDead && (
+        <CryptoStatsPanel
+          cacaoBalance={cacaoBalance}
+          mazorcasBurned={mazorcasBurned}
+          harvestStreak={harvestStreak}
+          totalXP={xp}
+          harvestMult={harvestMult}
+          lang={lang}
+        />
+      )}
+    </div>
     </div>
   )
 }
