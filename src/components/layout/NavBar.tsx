@@ -258,6 +258,7 @@ export default function NavBar() {
   const TABS: NavItem[] = [
     { path: '/adoptar',        label: T('nav_adoptar'), hint: es ? 'Hito 1 · adopta tu cacao'    : 'Hito 1 · adopt your cacao' },
     { path: '/lab',            label: 'LAB',            hint: es ? 'Hito 4 · forja tu chocolate' : 'Hito 4 · forge your chocolate' },
+    { path: '/marketplace',   label: 'MERCADO',        hint: es ? 'Mercado $CACAO on-chain'      : '$CACAO on-chain market' },
     { path: '/ritual',         label: 'TAROT',          hint: es ? 'Tarot diario · streak'       : 'Daily tarot · streak' },
     {
       label: 'WEB3',

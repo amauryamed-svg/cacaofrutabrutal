@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase'
 import LiofilizadoStage from '../components/lab/LiofilizadoStage'
 import RefinadoStage    from '../components/lab/RefinadoStage'
 import ConchadoStage    from '../components/lab/ConchadoStage'
+import GrageaStage      from '../components/lab/GrageaStage'
 
 /**
  * MiLaboratorio (/lab) — chocolate-making minigame (Phase 3).
@@ -34,12 +35,13 @@ import ConchadoStage    from '../components/lab/ConchadoStage'
 const RECIPE = TOKEN_RATES.chocolate_made  // { mucilage_g: 300, cacao_mass_g: 250 }
 const FORGE_BEANS_REWARD = 25
 
-type Phase = 'idle' | 'liofilizado' | 'refinado' | 'conchado' | 'forging' | 'done' | 'error'
+type Phase = 'idle' | 'liofilizado' | 'refinado' | 'conchado' | 'gragea' | 'forging' | 'done' | 'error'
 
 interface StageStamps {
   liofilizado_at?: string
   refinado_at?:    string
   conchado_at?:    string
+  gragea_at?:      string
 }
 
 interface FreshHarvestState {
@@ -95,8 +97,13 @@ export default function MiLaboratorio() {
     setStamps(s => ({ ...s, refinado_at: new Date().toISOString() }))
     setTimeout(() => setPhase('conchado'), 600)
   }
-  const onConchadoDone = async () => {
-    const finalStamps = { ...stamps, conchado_at: new Date().toISOString() }
+  const onConchadoDone = () => {
+    setStamps(s => ({ ...s, conchado_at: new Date().toISOString() }))
+    setTimeout(() => setPhase('gragea'), 600)
+  }
+
+  const onGrageaDone = async () => {
+    const finalStamps = { ...stamps, conchado_at: stamps.conchado_at ?? new Date().toISOString(), gragea_at: new Date().toISOString() }
     setStamps(finalStamps)
     setPhase('forging')
 
@@ -344,37 +351,38 @@ export default function MiLaboratorio() {
         {/* Pipeline indicator — always visible during stages */}
         {phase !== 'idle' && phase !== 'done' && phase !== 'error' && (
           <div style={{
-            display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 8, marginBottom: 20,
+            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: 6, marginBottom: 20,
           }}>
             {[
-              { key: 'liofilizado' as const, label: '1 · LIOFILIZACIÓN', icon: '❄' },
-              { key: 'refinado'    as const, label: '2 · REFINADO',      icon: '🌾' },
-              { key: 'conchado'    as const, label: '3 · CONCHADO',      icon: '🍫' },
+              { key: 'liofilizado' as const, label: '1·LIOFILIZACIÓN', icon: '❄' },
+              { key: 'refinado'    as const, label: '2·REFINADO',      icon: '🌾' },
+              { key: 'conchado'    as const, label: '3·CONCHADO',      icon: '🍫' },
+              { key: 'gragea'      as const, label: '4·GRAGEA',        icon: '🔮' },
             ].map((s, i) => {
               const active = phase === s.key
-              const past = (phase === 'refinado' && i === 0)
-                        || (phase === 'conchado' && i <= 1)
-                        || (phase === 'forging'  && i <= 2)
+              const phaseOrder = ['liofilizado','refinado','conchado','gragea','forging']
+              const currentIdx = phaseOrder.indexOf(phase)
+              const past = currentIdx > i
               const accent = active ? BRAND.mazorca : past ? BRAND.pod : `${BRAND.heirloom}33`
               return (
                 <div key={s.key} style={{
-                  padding: '12px 8px',
+                  padding: '10px 4px',
                   background: active ? `${BRAND.mazorca}22` : past ? `${BRAND.pod}11` : 'transparent',
                   border: `2px solid ${accent}`,
                   borderRadius: 0,
                   textAlign: 'center',
-                  transform: active ? 'scale(1.08)' : 'scale(1)',
+                  transform: active ? 'scale(1.06)' : 'scale(1)',
                   transition: 'all 0.3s cubic-bezier(0.34, 1.4, 0.64, 1)',
-                  boxShadow: active ? `0 0 16px ${BRAND.mazorca}44` : past ? `0 0 8px ${BRAND.pod}22` : 'none',
+                  boxShadow: active ? `0 0 14px ${BRAND.mazorca}44` : past ? `0 0 6px ${BRAND.pod}22` : 'none',
                   opacity: !active && !past ? 0.4 : 1,
                 }}>
-                  <div style={{ fontSize: past ? 14 : 20, marginBottom: 4 }}>
+                  <div style={{ fontSize: past ? 12 : 18, marginBottom: 4 }}>
                     {past ? '✓' : s.icon}
                   </div>
                   <div style={{
-                    fontFamily: "'Press Start 2P', monospace", fontSize: 6,
-                    color: accent, letterSpacing: '0.08em',
+                    fontFamily: "'Press Start 2P', monospace", fontSize: 5,
+                    color: accent, letterSpacing: '0.05em',
                     lineHeight: 1.4,
                   }}>
                     {s.label}
@@ -389,6 +397,7 @@ export default function MiLaboratorio() {
         {phase === 'liofilizado' && <LiofilizadoStage onComplete={onLiofilizadoDone} lang={lang} />}
         {phase === 'refinado'    && <RefinadoStage    onComplete={onRefinadoDone}    lang={lang} />}
         {phase === 'conchado'    && <ConchadoStage    onComplete={onConchadoDone}    lang={lang} />}
+        {phase === 'gragea'      && <GrageaStage      onComplete={onGrageaDone}      lang={lang} />}
 
         {/* Forging in flight */}
         {phase === 'forging' && (

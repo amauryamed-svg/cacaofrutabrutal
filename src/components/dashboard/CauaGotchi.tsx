@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { BRAND, FONTS } from '../../utils/constants'
 import { PLANT_PROBLEMS, SPECIAL_ITEMS } from '../../utils/growthSystem'
-import LivingTree from './LivingTree'
+import CacaoPixelTree from './CacaoPixelTree'
 import type { CSSProperties, ReactNode } from 'react'
 
 /**
@@ -105,13 +105,14 @@ export default function CauaGotchi({
         <CycleRing progress={cycleProgress} remaining={cycleRemaining} ready={harvestReady} />
 
         <div style={treeFrameStyle} onClick={isDead ? undefined : onTreeTap} role={onTreeTap && !isDead ? 'button' : undefined} tabIndex={onTreeTap && !isDead ? 0 : undefined}>
-          <LivingTree
+          <CacaoPixelTree
             stage={stageId}
             health={health}
             moisture={moisture}
             sunlight={sunlight}
             problem={problem}
             isDead={isDead}
+            careEffect={activeAction as 'water' | 'sunlight' | 'nutrients' | 'pruning' | 'molasses' | null}
           />
 
           {/* Death badge — overrides problem badge when dead */}

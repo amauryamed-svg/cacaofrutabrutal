@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { BRAND, FONTS, PRODUCTS, ROLE_CONFIG } from '../utils/constants'
 import { useAuth } from '../context/AuthContext'
 import ProductCard from '../components/auction/ProductCard'
-import CacaoCeremonyCard from '../components/marketplace/CacaoCeremonyCard'
 import { useLang } from '../context/LangContext'
 import { makeT } from '../utils/i18n'
 import type { Product } from '../types'
@@ -75,8 +74,31 @@ export default function Marketplace() {
           </p>
         </div>
 
-        {/* Cacao Ceremony — Cauaculture cross-sell with adopter discount (TOP placement so users find it) */}
-        <CacaoCeremonyCard />
+        {/* Todo Caúa tokenizado — bloque narrativo $CACAO on-chain */}
+        <div style={{
+          background: '#132B1C',
+          border: `1px solid #00A3CD33`,
+          borderRadius: 8, padding: '18px 20px', marginBottom: 24,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap',
+        }}>
+          <div>
+            <div style={{
+              fontFamily: "'Press Start 2P', monospace", fontSize: 7,
+              color: '#00A3CD', letterSpacing: '0.16em', marginBottom: 8,
+            }}>
+              ◈ TODO CAÚA ESTÁ TOKENIZADO
+            </div>
+            <div style={{ fontFamily: FONTS.body, fontSize: 12, color: '#F7F1EE88', lineHeight: 1.5 }}>
+              Cada árbol · cada cosecha · cada NIBS → $CACAO on Base
+            </div>
+          </div>
+          <button onClick={() => navigate('/lab')} style={{
+            background: '#00A3CD22', border: '1px solid #00A3CD55',
+            borderRadius: 0, padding: '8px 14px', cursor: 'pointer',
+            fontFamily: "'Press Start 2P', monospace", fontSize: 6,
+            color: '#00A3CD', letterSpacing: '0.1em', flexShrink: 0,
+          }}>FORJAR →</button>
+        </div>
 
         {/* Multiplier badge */}
         {user && (
