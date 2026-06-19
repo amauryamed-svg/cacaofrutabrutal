@@ -367,6 +367,53 @@ function Inner() {
         </Reveal>
       </section>
 
+      {/* ── Investor Pitch Video ────────────────────────────── */}
+      <section style={{ ...sectionStyle, textAlign: 'center' }}>
+        <Reveal>
+          <div style={sectionEyebrowStyle}>06 · INVESTOR PITCH · WEB3</div>
+          <h2 style={h2Style}>THE FULL PICTURE.</h2>
+          <p style={{ ...leadStyle, maxWidth: 560, margin: '0 auto 40px' }}>
+            Real asset. Real chain. Real margins. 14 seconds.
+          </p>
+        </Reveal>
+        <Reveal delay={100}>
+          <div style={{
+            position: 'relative', maxWidth: 900, margin: '0 auto',
+            border: `1px solid ${BRAND.amazon}`,
+            boxShadow: `0 0 60px ${BRAND.heroic}22, 0 0 120px ${BRAND.pod}11`,
+          }}>
+            <video
+              src="https://github.com/amauryamed-svg/cacaofrutabrutal/releases/download/cdp-demo-v1/caua-pitch-cdp.mp4"
+              autoPlay
+              loop
+              muted
+              playsInline
+              style={{ width: '100%', display: 'block' }}
+            />
+            <div style={{
+              position: 'absolute', top: 16, right: 16,
+              fontFamily: FONTS.display, fontSize: 11, letterSpacing: '0.2em',
+              color: BRAND.heroic, background: `${BRAND.bgDeep}CC`,
+              padding: '4px 12px', border: `1px solid ${BRAND.heroic}44`,
+            }}>
+              ◈ LIVE ON BASE
+            </div>
+          </div>
+        </Reveal>
+        <Reveal delay={200}>
+          <div style={{ ...ctaRowStyle, justifyContent: 'center', marginTop: 32 }}>
+            <a href="/app/web3/onboarding" style={btnStyle}>START WEB3 ONBOARDING →</a>
+            <a
+              href="https://github.com/amauryamed-svg/cacaofrutabrutal/releases/download/cdp-demo-v1/caua-pitch-cdp.mp4"
+              style={btnGhostStyle}
+              download
+            >
+              DOWNLOAD PITCH
+            </a>
+          </div>
+        </Reveal>
+      </section>
+
       {/* ── Footer ──────────────────────────────────────────── */}
       <footer style={footerStyle}>
         <div style={footerInnerStyle}>
