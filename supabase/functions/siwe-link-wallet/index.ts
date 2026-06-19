@@ -216,6 +216,17 @@ serve(async (req) => {
     .update({ consumed_at: new Date().toISOString(), wallet_address: siwe.address.toLowerCase() })
     .eq('nonce', siwe.nonce)
 
+  // Check if wallet is already claimed before writing (idempotent re-link)
+  const { data: existing } = await supabase
+    .from('user_profiles')
+    .select('user_id')
+    .eq('wallet_address', siwe.address.toLowerCase())
+    .maybeSingle()
+
+  if (existing && existing.user_id !== userId) {
+    return jsonResponse({ error: 'wallet_already_claimed' }, 409)
+  }
+
   const { error } = await supabase
     .from('user_profiles')
     .update({
