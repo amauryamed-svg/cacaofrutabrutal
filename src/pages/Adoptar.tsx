@@ -95,11 +95,11 @@ export default function Adoptar() {
   }, [])
 
   return (
-    <div style={{ background: BRAND.bgDeep, minHeight: '100vh', paddingTop: 'calc(var(--nav-h, 60px) + 0px)' }}>
+    <div style={{ background: BRAND.bgDeep, minHeight: '100vh', paddingTop: 'calc(var(--nav-h, 60px) + 60px)' }}>
 
       {/* ── Stats HUD ────────────────────────────────────────────────── */}
       <div style={{
-        position: 'sticky', top: 'var(--nav-h, 60px)', zIndex: 10,
+        position: 'fixed', top: 'var(--nav-h, 60px)', left: 0, right: 0, zIndex: 50,
         background: `${BRAND.bgDeep}ee`, backdropFilter: 'blur(8px)',
         borderBottom: `1px solid ${BRAND.amazon}44`,
         display: 'flex', justifyContent: 'center', gap: 0,
@@ -223,7 +223,7 @@ export default function Adoptar() {
 
       {/* ── Character Select + Confirm ────────────────────────────────── */}
       {(phase === 'select' || phase === 'confirm' || phase === 'adopting') && (
-        <div style={{ maxWidth: 540, margin: '0 auto', padding: '0 clamp(16px,5vw,32px) clamp(40px,8vw,80px)', paddingTop: 52 }}>
+        <div style={{ maxWidth: 540, margin: '0 auto', padding: '0 clamp(16px,5vw,32px) clamp(40px,8vw,80px)' }}>
 
           {/* Title */}
           <div style={{ textAlign: 'center', paddingTop: 28, paddingBottom: 20 }}>
