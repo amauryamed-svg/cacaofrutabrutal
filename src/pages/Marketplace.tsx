@@ -38,8 +38,8 @@ export default function Marketplace() {
     { id: 'auction',      label: T('mkt_auction')  },
     { id: 'subscription', label: T('mkt_sub')      },
   ]
-  const referrals           = 2   // TODO: query from Supabase user_referrals
-  const prevLots            = 1   // TODO: query from Supabase orders
+  const referrals           = profile?.referral_count  ?? 0
+  const prevLots            = profile?.completed_orders ?? 0
   const mult                = getMultiplier(referrals, prevLots)
   const roleDiscount        = profile?.caua_role ? (1 - ROLE_CONFIG[profile.caua_role].discount) : 1
   const filtered            = filter === 'all' ? PRODUCTS : PRODUCTS.filter((p: Product) => p.type === filter)
