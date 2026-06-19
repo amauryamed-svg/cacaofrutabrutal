@@ -95,7 +95,7 @@ export default function Adoptar() {
   }, [])
 
   return (
-    <div style={{ background: BRAND.bgDeep, minHeight: '100vh', paddingTop: 'var(--nav-h, 60px)' }}>
+    <div style={{ background: BRAND.bgDeep, minHeight: '100vh', paddingTop: 'var(--nav-h, 60px)', paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
 
       {/* ── Stats HUD ── flujo normal bajo el NavBar ─────────────────── */}
       <div style={{
