@@ -95,12 +95,11 @@ export default function Adoptar() {
   }, [])
 
   return (
-    <div style={{ background: BRAND.bgDeep, minHeight: '100vh', paddingTop: 'calc(var(--nav-h, 60px) + 60px)' }}>
+    <div style={{ background: BRAND.bgDeep, minHeight: '100vh', paddingTop: 'var(--nav-h, 60px)' }}>
 
-      {/* ── Stats HUD ────────────────────────────────────────────────── */}
+      {/* ── Stats HUD ── flujo normal bajo el NavBar ─────────────────── */}
       <div style={{
-        position: 'fixed', top: 'var(--nav-h, 60px)', left: 0, right: 0, zIndex: 50,
-        background: `${BRAND.bgDeep}ee`, backdropFilter: 'blur(8px)',
+        background: `${BRAND.bgDeep}ee`,
         borderBottom: `1px solid ${BRAND.amazon}44`,
         display: 'flex', justifyContent: 'center', gap: 0,
       }}>
