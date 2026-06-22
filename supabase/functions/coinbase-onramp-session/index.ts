@@ -329,12 +329,11 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'invalid_asset' }), { status: 400, headers: cors })
     }
 
-    // CDP review bypass — key in JSON body avoids Authorization header conflicts.
-    // Activated when CDP_REVIEW_KEY secret matches body.review_key exactly.
-    // No real user data is accessed in this path.
-    const reviewKeyEnv = Deno.env.get('CDP_REVIEW_KEY') ?? ''
-    const reviewWallet = Deno.env.get('CDP_REVIEW_WALLET') ?? '0xcafecafecafecafecafecafecafecafecafecafe'
-    const isReviewMode = reviewKeyEnv.length >= 32 && body.review_key === reviewKeyEnv
+    // CDP review bypass — hardcoded key in sync with cdp-review.html.
+    // No Supabase secret needed; worst-case exposure is cdp_api_key_not_configured.
+    const CDP_REVIEW_KEY = 'caua-cdp-review-bypass-jun-2026x'
+    const reviewWallet   = Deno.env.get('CDP_REVIEW_WALLET') ?? '0xcafecafecafecafecafecafecafecafecafecafe'
+    const isReviewMode   = body.review_key === CDP_REVIEW_KEY
 
     let walletAddress: string
     if (isReviewMode) {

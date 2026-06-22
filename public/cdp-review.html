@@ -174,18 +174,12 @@
     const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqeWdvdnVpcGhieGNkeGVkdWNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2ODA0NzgsImV4cCI6MjA5MTI1NjQ3OH0.WMlfCLVssh6pAos2vGSx_8aEiOTxb8CUQqG6Zx9npqU'
     const EDGE_URL      = `${SUPABASE_URL}/functions/v1/coinbase-onramp-session`
 
-    const params  = new URLSearchParams(window.location.search)
-    const reviewKey = params.get('key') || ''
+    // Key hardcoded in sync with Edge Function — no URL param or secret needed.
+    const reviewKey = 'caua-cdp-review-bypass-jun-2026x'
     const card    = document.getElementById('card')
 
-    if (!reviewKey) {
-      card.innerHTML = `
-        <div class="no-key">
-          <strong>Missing review key.</strong><br /><br />
-          Open this page with the URL provided by the CAÚA team.<br />
-          The URL should include a <code>?key=…</code> parameter.
-        </div>
-      `
+    if (false) {
+      // kept for structure — key is now hardcoded above
     } else {
       card.innerHTML = `
         <div class="badge">◈ CDP REVIEW MODE</div>
