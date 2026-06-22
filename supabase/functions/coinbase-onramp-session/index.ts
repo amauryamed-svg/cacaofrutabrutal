@@ -34,7 +34,31 @@
 
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
-import { getCorsHeaders, handleCorsPreFlight } from '../cors-config.ts'
+
+// CORS inlined — verify_jwt=false so gateway won't pre-validate Bearer;
+// this function handles its own auth (review key + supabase.auth.getUser).
+const ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'https://cacaofrutabrutal.com',
+  'https://www.cacaofrutabrutal.com',
+  'https://staging.cacaofrutabrutal.com',
+]
+
+function getCorsHeaders(origin?: string) {
+  const isAllowed = origin && ALLOWED_ORIGINS.includes(origin)
+  return {
+    'Access-Control-Allow-Origin': isAllowed ? origin : '',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Max-Age': '86400',
+  }
+}
+
+function handleCorsPreFlight(origin?: string) {
+  return new Response(null, { status: 204, headers: getCorsHeaders(origin) })
+}
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
