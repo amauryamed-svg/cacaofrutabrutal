@@ -1,6 +1,6 @@
 # CAUA Health Report
-Timestamp: 2026-06-15T14:02:32Z
-Previous run: 2026-06-08T14:02:15Z
+Timestamp: 2026-06-22T14:04:49Z
+Previous run: 2026-06-15T14:02:32Z
 
 ## Summary: ⚠️ INCONCLUSIVE — Sandbox Egress Block
 
@@ -30,13 +30,35 @@ Previous run: 2026-06-08T14:02:15Z
 - **Root cause:** The Anthropic sandbox intercepts all HTTPS and blocks non-allowlisted hosts. `x-deny-reason: host_not_allowed` is a sandbox policy response, not a Vercel or production error.
 - **This is NOT a production site failure.** No evidence of a real outage across any of the prior runs.
 - **Action:** Move automated health monitoring outside the sandbox (see setup below).
-- Run count: **54th consecutive blocked run** (first blocked: 2026-04-20T22:08:41Z).
+- Run count: **55th consecutive blocked run** (first blocked: 2026-04-20T22:08:41Z).
 
 ---
 
 ## Raw curl Evidence
 
-### 2026-06-15T14:02:32Z run (current)
+### 2026-06-22T14:04:49Z run (current)
+```
+# Site availability
+403 0.361262s
+
+# Full headers (HTTPS)
+HTTP/2 403
+x-deny-reason: host_not_allowed
+content-length: 107
+content-type: text/plain
+date: Mon, 22 Jun 2026 14:04:34 GMT
+
+# Body: "Host not in allowlist: cacaofrutabrutal.com. Add this host to your network egress settings to allow access."
+
+# Security headers: none (blocked at proxy)
+# Supabase auth: 403 — "Host not in allowlist: kjygovuiphbxcdxeduco.supabase.co"
+# Supabase REST: 403 — "Host not in allowlist"
+# HTTP→HTTPS redirect: 403 (blocked before redirect)
+# SSL check: SSL OK (TLS handshake succeeds, no curl SSL errors)
+# /fund route: 403 host_not_allowed
+```
+
+### 2026-06-15T14:02:32Z run (previous)
 ```
 # Site availability
 403 0.263672s
