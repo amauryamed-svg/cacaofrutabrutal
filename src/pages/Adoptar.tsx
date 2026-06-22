@@ -339,56 +339,73 @@ export default function Adoptar() {
 
           return (
             <>
-              {/* JARDÍN — chips para árboles vivos. 4-tier color system. */}
+              {/* JARDÍN — grid de tarjetas por árbol vivo */}
               {aliveTrees.length > 0 && (
                 <>
                   <div style={{
                     fontFamily: FONTS.display, fontWeight: 800, fontSize: 10,
                     color: `${BRAND.heirloom}88`, letterSpacing: '0.22em',
-                    textTransform: 'uppercase', marginBottom: 8,
+                    textTransform: 'uppercase', marginBottom: 12,
                   }}>
                     Mi Jardín · {aliveTrees.length}
                   </div>
 
-                  {/* Legend — visible siempre que hay árboles, ayuda a leer los chips */}
                   <div style={{
-                    display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center',
-                    marginBottom: 12,
-                    fontFamily: FONTS.body, fontSize: 9, color: `${BRAND.heirloom}55`,
-                    letterSpacing: '0.04em',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(min(150px, 100%), 1fr))',
+                    gap: 10,
+                    marginBottom: 24,
                   }}>
-                    <span><span style={{ color: BRAND.mazorca }}>🍫 Listo</span></span>
-                    <span><span style={{ color: '#e74c3c' }}>💀 Va a morir</span></span>
-                    <span><span style={{ color: '#F1A91E' }}>⚠️ Atención</span></span>
-                    <span><span style={{ color: BRAND.pod }}>🌱 Sano</span></span>
-                  </div>
-
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginBottom: 24 }}>
                     {aliveTrees.map((row) => {
                       const s = tierStyle(row)
                       const t = row.t
                       const tier = tierOf(row)
+                      const g = GUARDIANS[t.guardian_id]
                       return (
                         <button
                           key={t.id}
                           onClick={() => navigate(`/tree/${t.id}`)}
                           data-tier={tier}
                           style={{
-                            background: `${s.color}1a`,
-                            border: `1px solid ${s.color}${s.pulse ? 'cc' : '66'}`,
-                            borderRadius: 999,
-                            padding: '7px 14px',
+                            background: `${s.color}12`,
+                            border: `1px solid ${s.color}${s.pulse ? 'bb' : '55'}`,
+                            borderRadius: 14,
+                            padding: '14px 12px',
                             cursor: 'pointer',
-                            fontFamily: FONTS.display, fontWeight: 700, fontSize: 12,
-                            color: s.color, letterSpacing: '0.08em',
-                            boxShadow: s.pulse ? `0 0 18px ${s.color}66` : 'none',
+                            textAlign: 'left',
+                            display: 'flex', flexDirection: 'column', gap: 6,
+                            boxShadow: s.pulse ? `0 0 20px ${s.color}44` : 'none',
                             animation: tier === 'ready' ? 'caua-chip-pulse 1.6s ease-in-out infinite'
                                      : tier === 'dying' ? 'caua-chip-dying 1s ease-in-out infinite'
                                      : 'none',
-                            transition: 'border-color 0.2s, background 0.2s, box-shadow 0.2s',
+                            transition: 'transform 0.15s, box-shadow 0.15s',
                           }}
+                          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)' }}
+                          onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}
                         >
-                          {s.icon} {GUARDIANS[t.guardian_id]?.name ?? 'Árbol'} · {s.label}
+                          <span style={{ fontSize: 28, lineHeight: 1 }}>{s.icon}</span>
+                          <div style={{
+                            fontFamily: FONTS.display, fontWeight: 800,
+                            fontSize: 13, color: BRAND.heirloom, lineHeight: 1.2,
+                            letterSpacing: '0.02em',
+                          }}>
+                            {g?.name ?? 'Árbol'}
+                          </div>
+                          <div style={{
+                            fontFamily: FONTS.body, fontSize: 10,
+                            color: s.color, letterSpacing: '0.04em',
+                            fontWeight: 700, textTransform: 'uppercase',
+                          }}>
+                            {s.label}
+                          </div>
+                          {g?.region && (
+                            <div style={{
+                              fontFamily: FONTS.body, fontSize: 9,
+                              color: `${BRAND.heirloom}55`, letterSpacing: '0.04em',
+                            }}>
+                              {g.region}
+                            </div>
+                          )}
                         </button>
                       )
                     })}
