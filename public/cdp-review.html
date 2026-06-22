@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CAÚA — CDP Onramp Review</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #040C06;
+      color: #F7F1EE;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: #0a1a0e;
+      border: 1px solid #87AA2755;
+      border-radius: 16px;
+      padding: 40px 36px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #87AA2722;
+      border: 1px solid #87AA27;
+      border-radius: 999px;
+      padding: 5px 14px;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #87AA27;
+      margin-bottom: 28px;
+      font-family: ui-monospace, monospace;
+    }
+
+    .wordmark {
+      font-size: 11px;
+      letter-spacing: 0.3em;
+      color: #87AA27;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 6px;
+      font-family: ui-monospace, monospace;
+    }
+
+    h1 {
+      font-size: clamp(28px, 6vw, 40px);
+      font-weight: 900;
+      text-transform: uppercase;
+      color: #F7F1EE;
+      line-height: 1;
+      letter-spacing: 0.04em;
+      margin-bottom: 10px;
+    }
+
+    h1 span { color: #87AA27; }
+
+    .subtitle {
+      font-size: 13px;
+      color: #F7F1EEaa;
+      line-height: 1.6;
+      margin-bottom: 36px;
+      max-width: 360px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .divider {
+      height: 1px;
+      background: #87AA2733;
+      margin: 28px 0;
+    }
+
+    .flow-label {
+      font-size: 9px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #F7F1EE44;
+      margin-bottom: 14px;
+      font-family: ui-monospace, monospace;
+    }
+
+    .btn-primary {
+      display: block;
+      width: 100%;
+      background: #00A3CD;
+      color: #040C06;
+      border: none;
+      border-radius: 0;
+      padding: 16px 24px;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      cursor: pointer;
+      font-family: ui-monospace, monospace;
+      transition: opacity 0.15s;
+      margin-bottom: 12px;
+    }
+
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-secondary {
+      display: block;
+      width: 100%;
+      background: transparent;
+      color: #87AA27;
+      border: 1px solid #87AA2766;
+      border-radius: 0;
+      padding: 12px 24px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      cursor: pointer;
+      font-family: ui-monospace, monospace;
+      transition: border-color 0.15s;
+    }
+    .btn-secondary:hover { border-color: #87AA27; }
+    .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .status {
+      margin-top: 16px;
+      font-size: 12px;
+      line-height: 1.5;
+      min-height: 20px;
+      color: #F7F1EEaa;
+      font-family: ui-monospace, monospace;
+    }
+
+    .status.error { color: #E47966; }
+    .status.ok    { color: #87AA27; }
+
+    .meta {
+      margin-top: 32px;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: #F7F1EE33;
+      text-transform: uppercase;
+      font-family: ui-monospace, monospace;
+      line-height: 1.8;
+    }
+
+    .no-key {
+      background: #1a0a0a;
+      border: 1px solid #E4796666;
+      border-radius: 12px;
+      padding: 24px;
+      color: #E47966;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="card" id="card">
+    <!-- content injected by JS -->
+  </div>
+
+  <script>
+    const SUPABASE_URL  = 'https://kjygovuiphbxcdxeduco.supabase.co'
+    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqeWdvdnVpcGhieGNkeGVkdWNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2ODA0NzgsImV4cCI6MjA5MTI1NjQ3OH0.WMlfCLVssh6pAos2vGSx_8aEiOTxb8CUQqG6Zx9npqU'
+    const EDGE_URL      = `${SUPABASE_URL}/functions/v1/coinbase-onramp-session`
+
+    const params  = new URLSearchParams(window.location.search)
+    const reviewKey = params.get('key') || ''
+    const card    = document.getElementById('card')
+
+    if (!reviewKey) {
+      card.innerHTML = `
+        <div class="no-key">
+          <strong>Missing review key.</strong><br /><br />
+          Open this page with the URL provided by the CAÚA team.<br />
+          The URL should include a <code>?key=…</code> parameter.
+        </div>
+      `
+    } else {
+      card.innerHTML = `
+        <div class="badge">◈ CDP REVIEW MODE</div>
+        <div class="wordmark">Cacao Fruta Brutal</div>
+        <h1>BUY <span>USDC</span><br />WITH CARD</h1>
+        <p class="subtitle">
+          Coinbase Onramp sandbox — fiat → USDC on Base.<br />
+          No wallet extension required in review mode.
+        </p>
+        <div class="divider"></div>
+        <div class="flow-label">— Coinbase Onramp Flow —</div>
+        <button class="btn-primary" id="btnUsdc" onclick="launch('USDC', 5)">
+          BUY USDC WITH CARD · $5 PRESET
+        </button>
+        <button class="btn-secondary" id="btnEth" onclick="launch('ETH', 5)">
+          BUY ETH WITH CARD · $5 PRESET
+        </button>
+        <div class="status" id="status"></div>
+        <div class="meta">
+          Entry: /app/web3/onboarding → "BUY USDC WITH CARD"<br />
+          Asset: USDC · Chain: Base Sepolia (testnet)<br />
+          Preset: $5.00 USD · Review wallet: test address
+        </div>
+      `
+    }
+
+    async function launch(asset, presetUsd) {
+      const status  = document.getElementById('status')
+      const btnUsdc = document.getElementById('btnUsdc')
+      const btnEth  = document.getElementById('btnEth')
+
+      status.className = 'status'
+      status.textContent = 'Requesting session token…'
+      if (btnUsdc) btnUsdc.disabled = true
+      if (btnEth)  btnEth.disabled  = true
+
+      try {
+        const res = await fetch(EDGE_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${reviewKey}`,
+            'apikey': SUPABASE_ANON,
+          },
+          body: JSON.stringify({ asset, preset_usd: presetUsd }),
+        })
+
+        const json = await res.json().catch(() => null)
+
+        if (!res.ok || !json?.ok) {
+          const msg = json?.error || json?.hint || `HTTP ${res.status}`
+          status.className = 'status error'
+          status.textContent = `Error: ${msg}`
+          return
+        }
+
+        const url = json.onramp_url
+        if (!url) {
+          status.className = 'status error'
+          status.textContent = 'No onramp URL returned.'
+          return
+        }
+
+        status.className = 'status ok'
+        status.textContent = '✓ Session token issued — opening Coinbase Onramp…'
+        window.open(url, 'coinbase-onramp', 'width=480,height=720,noopener,noreferrer')
+
+      } catch (e) {
+        status.className = 'status error'
+        status.textContent = `Network error: ${e.message}`
+      } finally {
+        if (btnUsdc) btnUsdc.disabled = false
+        if (btnEth)  btnEth.disabled  = false
+      }
+    }
+  </script>
+</body>
+</html>

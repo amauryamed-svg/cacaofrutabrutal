@@ -298,28 +298,44 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'method_not_allowed' }), { status: 405, headers: cors })
     }
 
-    const userId = await verifyAuth(req.headers.get('authorization'))
     const body: SessionRequest = await req.json().catch(() => ({}))
     const asset = body.asset ?? 'USDC'
     if (!['USDC', 'ETH', 'CBBTC'].includes(asset)) {
       return new Response(JSON.stringify({ error: 'invalid_asset' }), { status: 400, headers: cors })
     }
 
-    // KYC + wallet gate (CHARTER §I.10)
-    const { data: profile, error: profErr } = await supabase
-      .from('user_profiles')
-      .select('wallet_address, wallet_chain_id, geo_blocked, country')
-      .eq('user_id', userId)
-      .maybeSingle<ProfileRow>()
+    // CDP review bypass — skips JWT + profile lookup so CDP CX can validate
+    // the Onramp widget without a full wallet + SIWE setup. Activated only
+    // when CDP_REVIEW_KEY is set and the request carries it as the Bearer
+    // token. No real user data is accessed in this path.
+    const reviewKey   = Deno.env.get('CDP_REVIEW_KEY') ?? ''
+    const reviewWallet = Deno.env.get('CDP_REVIEW_WALLET') ?? '0xcafecafecafecafecafecafecafecafecafecafe'
+    const authHeader  = req.headers.get('authorization') ?? ''
+    const isReviewMode = reviewKey.length >= 32 && authHeader === `Bearer ${reviewKey}`
 
-    if (profErr || !profile) {
-      return new Response(JSON.stringify({ error: 'profile_lookup_failed' }), { status: 500, headers: cors })
-    }
-    if (profile.geo_blocked) {
-      return new Response(JSON.stringify({ error: 'geo_blocked', country: profile.country }), { status: 403, headers: cors })
-    }
-    if (!profile.wallet_address) {
-      return new Response(JSON.stringify({ error: 'wallet_link_required' }), { status: 403, headers: cors })
+    let walletAddress: string
+    if (isReviewMode) {
+      walletAddress = reviewWallet
+    } else {
+      const userId = await verifyAuth(authHeader)
+
+      // KYC + wallet gate (CHARTER §I.10)
+      const { data: profile, error: profErr } = await supabase
+        .from('user_profiles')
+        .select('wallet_address, wallet_chain_id, geo_blocked, country')
+        .eq('user_id', userId)
+        .maybeSingle<ProfileRow>()
+
+      if (profErr || !profile) {
+        return new Response(JSON.stringify({ error: 'profile_lookup_failed' }), { status: 500, headers: cors })
+      }
+      if (profile.geo_blocked) {
+        return new Response(JSON.stringify({ error: 'geo_blocked', country: profile.country }), { status: 403, headers: cors })
+      }
+      if (!profile.wallet_address) {
+        return new Response(JSON.stringify({ error: 'wallet_link_required' }), { status: 403, headers: cors })
+      }
+      walletAddress = profile.wallet_address
     }
 
     // Mint short-lived CDP JWT + call Onramp /v1/token.
@@ -341,7 +357,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        addresses: [{ address: profile.wallet_address, blockchains: ['base'] }],
+        addresses: [{ address: walletAddress, blockchains: ['base'] }],
         assets:    [asset],
       }),
     })
