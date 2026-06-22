@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCocoaTrees } from '../hooks/useCocoaTrees'
 import { useLineageRegenerations } from '../hooks/useLineageRegenerations'
-import SwipeableTreeCard from '../components/ui/SwipeableTreeCard'
 import TokenReward from '../components/ritual/TokenReward'
 import AdoptaIntro from '../components/landing/AdoptaIntro'
 import StreakChip from '../components/ui/StreakChip'
@@ -50,7 +49,6 @@ export default function Adoptar() {
 
   const [phase,       setPhase]       = useState<Phase>('idle')
   const [activeIdx,   setActiveIdx]   = useState(initialGuardian)
-  const [cardKey,     setCardKey]     = useState(0)
   const [tokenReward, setTokenReward] = useState<{ beans: number; mazorcas: number } | null>(null)
   const [showGTModal, setShowGTModal] = useState(false)
   const [cacaoError,  setCacaoError]  = useState<string | null>(null)
@@ -60,22 +58,6 @@ export default function Adoptar() {
   const canPayWithCacao = canAffordAdoption(beans)
 
   const guardian = GUARDIANS[activeIdx]
-
-  const handleSwipeLeft = () => {
-    setActiveIdx(i => (i + 1) % GUARDIANS.length)
-    setCardKey(k => k + 1)
-  }
-
-  const handleSwipeRight = () => {
-    if (!user) { navigate('/auth'); return }
-    setPhase('confirming')
-  }
-
-  const selectGuardian = (i: number) => {
-    setActiveIdx(i)
-    setCardKey(k => k + 1)
-    setPhase('idle')
-  }
 
   const confirmAdoption = async () => {
     setPhase('adopting')
@@ -128,7 +110,6 @@ export default function Adoptar() {
 
   const cancelConfirm = () => {
     setPhase('idle')
-    setCardKey(k => k + 1)
     setCacaoError(null)
   }
 
@@ -610,37 +591,82 @@ export default function Adoptar() {
           </div>
         )}
 
-        {/* Card stack + controls */}
+        {/* Pentámera + confirmation */}
         {phase !== 'done' && (
           <>
-            {/* Card stack — height fluid so short phones (≤568px) don't clip */}
-            <div style={{ position: 'relative', height: 'clamp(420px, 62vh, 540px)', marginBottom: 20 }}>
-
-              {/* Background card (next guardian peek) */}
-              <div style={{
-                position: 'absolute', inset: 0,
-                background: `linear-gradient(160deg, ${BRAND.amazon} 0%, #091a10 50%, ${BRAND.bgDeep} 100%)`,
-                borderRadius: 24,
-                transform: 'scale(0.94) translateY(14px)',
-                opacity: 0.3,
-                pointerEvents: 'none',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <div style={{ fontSize: 80, opacity: 0.25 }}>
-                  {GUARDIANS[(activeIdx + 1) % GUARDIANS.length].emoji}
+            {/* Pentámera grid — los 5 Guardianes de entrada */}
+            {phase === 'idle' && (
+              <>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(min(130px, 100%), 1fr))',
+                  gap: 10,
+                  marginBottom: 16,
+                }}>
+                  {GUARDIANS.map((g, i) => (
+                    <button
+                      key={i}
+                      onClick={() => { setActiveIdx(i); setPhase('confirming') }}
+                      style={{
+                        background: `linear-gradient(160deg, ${BRAND.amazon}33, ${BRAND.bgDeep})`,
+                        border: `1px solid ${BRAND.pod}44`,
+                        borderRadius: 16,
+                        padding: '18px 12px 14px',
+                        cursor: 'pointer',
+                        textAlign: 'center',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                        transition: 'transform 0.15s, border-color 0.15s, box-shadow 0.15s',
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.transform = 'translateY(-3px)'
+                        e.currentTarget.style.borderColor = `${BRAND.pod}bb`
+                        e.currentTarget.style.boxShadow = `0 8px 24px ${BRAND.pod}22`
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.transform = 'translateY(0)'
+                        e.currentTarget.style.borderColor = `${BRAND.pod}44`
+                        e.currentTarget.style.boxShadow = 'none'
+                      }}
+                    >
+                      <div style={{ fontSize: 44, lineHeight: 1 }}>{g.emoji}</div>
+                      <div style={{
+                        fontFamily: FONTS.display, fontWeight: 900,
+                        fontSize: 13, color: BRAND.heirloom,
+                        letterSpacing: '0.02em', lineHeight: 1.2,
+                      }}>
+                        {g.name}
+                      </div>
+                      <div style={{
+                        fontFamily: FONTS.body, fontSize: 9,
+                        color: `${BRAND.pod}cc`, letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
+                      }}>
+                        {g.region}
+                      </div>
+                      {g.blogSlug && (
+                        <div style={{
+                          fontFamily: FONTS.body, fontSize: 9,
+                          color: `${BRAND.heirloom}44`,
+                        }}>
+                          Ver historia →
+                        </div>
+                      )}
+                    </button>
+                  ))}
                 </div>
-              </div>
+                <div style={{
+                  fontFamily: FONTS.body, fontSize: 10,
+                  color: `${BRAND.heirloom}44`, textAlign: 'center', marginBottom: 4,
+                }}>
+                  🫘 +10 granos · 🌽 +3 mazorcas al adoptar
+                </div>
+              </>
+            )}
 
-              {/* Active swipeable card */}
-              {phase !== 'adopting' && (
-                <SwipeableTreeCard
-                  key={cardKey}
-                  guardian={guardian}
-                  onSwipeRight={handleSwipeRight}
-                  onSwipeLeft={handleSwipeLeft}
-                  imageIndex={activeIdx}
-                />
-              )}
+            {/* Confirming / Adopting overlay */}
+            {(phase === 'confirming' || phase === 'adopting') && (
+            <div style={{ position: 'relative', height: 'clamp(420px, 62vh, 540px)', marginBottom: 20 }}>
+              {/* (no background card or swipeable card — only overlays) */}
 
               {/* Confirming overlay — sits ON TOP of the card, centered, so
                   the user sees clearly what they swiped into. Big emoji + price
@@ -891,68 +917,7 @@ export default function Adoptar() {
                 }
               `}</style>
             </div>
-
-            {/* Guardian dots */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 20 }}>
-              {GUARDIANS.map((_, i) => (
-                <div key={i} onClick={() => selectGuardian(i)} style={{
-                  width: i === activeIdx ? 18 : 6, height: 6, borderRadius: 3,
-                  background: i === activeIdx ? BRAND.pod : `${BRAND.heirloom}33`,
-                  cursor: 'pointer', transition: 'width 0.3s, background 0.3s',
-                }} />
-              ))}
-            </div>
-
-            {/* Idle: swipe hints + historia territorial */}
-            {phase === 'idle' && (
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ display: 'flex', justifyContent: 'center', gap: 48, marginBottom: 14 }}>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 28, marginBottom: 4 }}>👈</div>
-                    <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 9, letterSpacing: '0.15em', color: '#e74c3c88' }}>PASAR</div>
-                  </div>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 28, marginBottom: 4 }}>👉</div>
-                    <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 9, letterSpacing: '0.15em', color: '#2ecc7188' }}>ADOPTAR</div>
-                  </div>
-                </div>
-                <div style={{ fontSize: 11, color: `${BRAND.heirloom}33`, marginBottom: 16 }}>
-                  🫘 +10 granos · 🌽 +3 mazorcas al adoptar
-                </div>
-
-                {/* Lee la historia · contexto territorial del Guardián. Le da al
-                    usuario el "a quién le llega el impacto" antes de adoptar. */}
-                {guardian.blogSlug && (
-                  <button
-                    onClick={() => navigate(`/blog/${guardian.blogSlug}`)}
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 8,
-                      background: 'transparent',
-                      border: `1px solid ${BRAND.pod}66`,
-                      borderRadius: 999,
-                      padding: '9px 18px',
-                      cursor: 'pointer',
-                      color: BRAND.pod,
-                      fontFamily: FONTS.display, fontWeight: 700, fontSize: 11,
-                      letterSpacing: '0.12em', textTransform: 'uppercase',
-                      transition: 'border-color 0.2s, background 0.2s',
-                    }}
-                  >
-                    <span style={{ fontSize: 13 }}>📰</span>
-                    <span>
-                      La historia de {guardian.name}
-                      <span style={{ color: `${BRAND.heirloom}66`, fontWeight: 400, marginLeft: 6, letterSpacing: '0.04em', textTransform: 'none' }}>
-                        · {guardian.town}, {guardian.region}
-                      </span>
-                    </span>
-                    <span style={{ fontSize: 12, color: BRAND.pod }}>→</span>
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Confirming overlay lives ON the card now (above) — no separate
-                panel below to avoid the disconnected confirm button. */}
+            )} {/* end confirming/adopting overlay wrapper */}
           </>
         )}
       </div>
