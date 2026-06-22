@@ -128,6 +128,7 @@
     { "source": "/Adopta",                "destination": "/app/adoptar",               "permanent": true },
     { "source": "/tree/:path*",           "destination": "/app/tree/:path*",           "permanent": true },
     { "source": "/dashboard",             "destination": "/app/dashboard",             "permanent": true },
+    { "source": "/burn",                  "destination": "/app/burn",                  "permanent": true },
     { "source": "/fund",                  "destination": "/app/fund",                  "permanent": true },
     { "source": "/impacto",               "destination": "/app/impacto",               "permanent": true },
     { "source": "/admin/:path*",          "destination": "/app/admin/:path*",          "permanent": true }

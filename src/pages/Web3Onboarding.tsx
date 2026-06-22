@@ -3,6 +3,7 @@
 // Brutalist-luxury, hex-only per CauaCore §8.
 
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAccount, useChainId, useSignMessage, useSwitchChain } from 'wagmi'
 import Web3Provider from '../components/web3/Web3Provider'
 import ConnectWalletButton from '../components/web3/ConnectWalletButton'
@@ -374,9 +375,9 @@ function Inner() {
 
             <div style={burnSection}>
               <div style={sectionEyebrow(BRAND.criollo)}>◈ MAZORCAS → $CACAO</div>
-              <a href="/burn" style={{ ...btnPrimary(BRAND.criollo), display: 'block', textAlign: 'center' }}>
+              <Link to="/burn" style={{ ...btnPrimary(BRAND.criollo), display: 'block', textAlign: 'center' }}>
                 QUEMAR MAZORCAS →
-              </a>
+              </Link>
               <p style={sectionSub}>Burn 1,000 mazorcas → 1 $CACAO · EIP-712 · cooldown 30d</p>
             </div>
           </div>
