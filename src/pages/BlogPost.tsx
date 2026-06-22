@@ -1,4 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useMemo } from 'react'
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import { useParams, useNavigate } from 'react-router-dom'
 import { BRAND, FONTS } from '../utils/constants'
 import { useLang } from '../context/LangContext'
@@ -90,6 +92,15 @@ export default function BlogPost() {
       </div>
     )
   }
+
+  const htmlBody = useMemo(() => {
+    if (!body) return ''
+    const raw = marked.parse(body) as string
+    return DOMPurify.sanitize(raw, {
+      ALLOWED_TAGS: ['h1','h2','h3','h4','p','ul','ol','li','strong','em','a','blockquote','code','pre','br','hr'],
+      ALLOWED_ATTR: ['href','target','rel'],
+    })
+  }, [body])
 
   const publishDate = new Date(post.publishedAt)
   const dateStr = publishDate.toLocaleDateString(lang === 'es' ? 'es-CO' : 'en-US', {
@@ -250,63 +261,27 @@ export default function BlogPost() {
         margin: '0 auto',
         padding: '0 var(--space-page) clamp(40px, 10vw, 80px)',
       }}>
-        {/* Render markdown as HTML — simple conversion */}
-        <div style={{
-          fontFamily: FONTS.body,
-          fontSize: 16,
-          lineHeight: 1.8,
-          color: BRAND.heirloom,
-        }}>
-          {(body || '').split('\n').map((line, i) => {
-            if (line.startsWith('# ')) {
-              return (
-                <h2
-                  key={i}
-                  style={{
-                    fontFamily: FONTS.display,
-                    fontWeight: 900,
-                    fontSize: 28,
-                    margin: '32px 0 16px',
-                    color: BRAND.heirloom,
-                  }}
-                >
-                  {line.replace('# ', '')}
-                </h2>
-              )
-            }
-            if (line.startsWith('## ')) {
-              return (
-                <h3
-                  key={i}
-                  style={{
-                    fontFamily: FONTS.display,
-                    fontWeight: 700,
-                    fontSize: 22,
-                    margin: '24px 0 12px',
-                    color: BRAND.heirloom,
-                  }}
-                >
-                  {line.replace('## ', '')}
-                </h3>
-              )
-            }
-            if (line.startsWith('- ')) {
-              return (
-                <li key={i} style={{ marginLeft: 20, marginBottom: 8 }}>
-                  {line.replace('- ', '')}
-                </li>
-              )
-            }
-            if (line.trim() === '') {
-              return <p key={i} style={{ height: 8 }} />
-            }
-            return (
-              <p key={i} style={{ margin: '0 0 16px' }}>
-                {line}
-              </p>
-            )
-          })}
-        </div>
+        <style>{`
+          .blog-body { font-family: ${FONTS.body}; font-size: 16px; line-height: 1.8; color: ${BRAND.heirloom}; }
+          .blog-body h1, .blog-body h2 { font-family: ${FONTS.display}; font-weight: 900; font-size: 28px; color: ${BRAND.heirloom}; margin: 32px 0 16px; line-height: 1.15; }
+          .blog-body h3, .blog-body h4 { font-family: ${FONTS.display}; font-weight: 700; font-size: 20px; color: ${BRAND.heirloom}; margin: 24px 0 10px; }
+          .blog-body p { margin: 0 0 16px; }
+          .blog-body ul, .blog-body ol { margin: 0 0 16px; padding-left: 24px; }
+          .blog-body li { margin-bottom: 6px; }
+          .blog-body strong { font-weight: 700; color: ${BRAND.pod}; }
+          .blog-body em { font-style: italic; color: ${BRAND.heirloom}cc; }
+          .blog-body a { color: ${BRAND.pod}; text-decoration: underline; text-underline-offset: 3px; }
+          .blog-body a:hover { color: ${BRAND.criollo}; }
+          .blog-body blockquote { border-left: 3px solid ${BRAND.pod}; margin: 24px 0; padding: 12px 20px; background: ${BRAND.pod}11; font-style: italic; color: ${BRAND.heirloom}aa; }
+          .blog-body code { font-family: ui-monospace, monospace; font-size: 13px; background: ${BRAND.amazon}22; padding: 2px 6px; border-radius: 4px; color: ${BRAND.pod}; }
+          .blog-body pre { background: ${BRAND.amazon}22; padding: 16px; border-radius: 8px; overflow-x: auto; margin: 0 0 16px; }
+          .blog-body pre code { background: none; padding: 0; }
+          .blog-body hr { border: none; border-top: 1px solid ${BRAND.amazon}44; margin: 32px 0; }
+        `}</style>
+        <div
+          className="blog-body"
+          dangerouslySetInnerHTML={{ __html: htmlBody }}
+        />
       </article>
 
       {/* CTA Section - Connected Resources */}
