@@ -102,6 +102,23 @@ serve(async (req) => {
       return jsonResponse({ error: 'Invalid event type' }, 400)
     }
 
+    // blog_read: server-side dedup — once per slug per user per UTC day
+    if (event_type === 'blog_read' && ref_id) {
+      const dayStart = new Date()
+      dayStart.setUTCHours(0, 0, 0, 0)
+      const { data: dup } = await supabase
+        .from('token_events')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('event_type', 'blog_read')
+        .eq('ref_id', ref_id)
+        .gte('created_at', dayStart.toISOString())
+        .limit(1)
+      if (dup && dup.length > 0) {
+        return jsonResponse({ ok: false, reason: 'blog_read_today' }, 429)
+      }
+    }
+
     let { beans, mazorcas } = TOKEN_RATES[event_type]
 
     // Scale by amount if it's a purchase
