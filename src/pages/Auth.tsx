@@ -33,6 +33,11 @@ export default function Auth() {
 
   const handleGoogleLogin = async () => {
     setLoading(true); setError('')
+    // Persist ?ref= across OAuth redirect (sessionStorage cleared after award)
+    const refCode = searchParams.get('ref')
+    if (refCode && /^[a-f0-9]{8}$/.test(refCode)) {
+      sessionStorage.setItem('caua_pending_ref', refCode)
+    }
     const { error: err } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/app${nextPath}` },

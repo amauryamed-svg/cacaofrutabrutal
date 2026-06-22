@@ -53,6 +53,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq('user_id', userId)
       .then(() => {})
 
+    // Process pending referral (stored before OAuth redirect in Auth.tsx)
+    const pendingRef = sessionStorage.getItem('caua_pending_ref')
+    if (pendingRef && !(p as UserProfile & { referred_by_code?: string }).referred_by_code) {
+      sessionStorage.removeItem('caua_pending_ref')
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+      if (token) {
+        fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-referral`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ referrer_code: pendingRef }),
+        }).catch(() => {})
+      }
+    }
+
     const { data: { session } } = await supabase.auth.getSession()
     trackLoggedInUser(
       userEmail,

@@ -6,7 +6,7 @@
 - [ ] [P1] Define redemption rate table: beans-to-discount conversion per product category (e.g., 10 beans = $1 off tonics, 50 beans = $5 off subscriptions)
 - [x] [P1] Wire streak_7 award: in `Ritual.tsx`, after draw, check if `ritual_streak % 7 === 0` → call award-tokens with `streak_7` event — confirmed implemented 2026-06-22
 - [x] [P1] Wire streak_30 award: same location, check `ritual_streak % 30 === 0` → call with `streak_30` event — confirmed implemented 2026-06-22
-- [ ] [P1] Build referral token flow: on user signup, check if `referral_code` param exists → award `referral` event to referrer + `referral_bonus_referred` to new user
+- [x] [P1] Build referral token flow: ?ref=CODE captured pre-OAuth in sessionStorage → process-referral Edge Function awards 10b+3m to referrer + 5b+1m welcome to referred; idempotent on referred_by_code — deployed 2026-06-22
 - [ ] [P1] Add rate-limit: `blog_read` can only fire once per slug per user per day — check `token_events` for duplicate before calling award-tokens
 
 ## P2 — Q3–Q4 Scale

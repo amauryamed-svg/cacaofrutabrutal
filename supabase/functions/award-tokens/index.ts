@@ -43,7 +43,8 @@ const TOKEN_RATES: Record<string, Rate> = {
   lot: { beans: 5, mazorcas: 2 },
   blog_share: { beans: 1, mazorcas: 0 },
   blog_read: { beans: 0.2, mazorcas: 0 },
-  referral: { beans: 10, mazorcas: 3 },
+  referral:         { beans: 10, mazorcas: 3 },
+  referral_welcome: { beans: 5,  mazorcas: 1 },
   tree_adoption: { beans: 10, mazorcas: 3 },
   tree_update_read: { beans: 0.5, mazorcas: 0 },
   // tree_harvest_share defaults preserved for the legacy "instant harvest"
