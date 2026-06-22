@@ -10,7 +10,7 @@
 - [ ] [P1] Add rate-limiting logic in `award-tokens` Edge Function: for `blog_read` event type, check `email_log` for existing row with same user_id + ref_id + today's date before awarding
 - [ ] [P1] Add `notify-tree-care` Edge Function: checks trees where `last_update_at > NOW() - 3h` and sends push notification (or email) to the tree owner
 - [ ] [P1] Test `stripe-webhook` signature verification end-to-end: verify `stripe.webhooks.constructEvent` with `STRIPE_WEBHOOK_SECRET` — confirm it handles both test and live mode secrets
-- [ ] [P1] Add `award-tokens` call inside `stripe-webhook`: after order status → `completed`, invoke award-tokens with `lot_per_lot` event × `lots_count`
+- [x] [P1] Add token award inside `stripe-webhook`: after order status → `completed`, inline 5 beans + 2 mazorcas × lots_count; idempotent on session.id — deployed 2026-06-22
 
 ## P2 — Q3–Q4 Scale
 

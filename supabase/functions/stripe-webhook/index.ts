@@ -54,10 +54,10 @@ serve(async (req) => {
         return new Response(JSON.stringify({ error: updateError.message }), { status: 400 })
       }
 
-      // Get order details for email
+      // Get order details for email + token award
       const { data: order, error: fetchError } = await supabase
         .from('orders')
-        .select('id, user_id, amount_cents, currency')
+        .select('id, user_id, amount_cents, currency, lots_count')
         .eq('stripe_session_id', session.id)
         .single()
 
@@ -81,6 +81,44 @@ serve(async (req) => {
             amount_usd: order.amount_cents / 100,
           },
         })
+      }
+
+      // Award tokens: 5 beans + 2 mazorcas per lot, idempotent on session.id
+      const { data: alreadyAwarded } = await supabase
+        .from('token_events')
+        .select('id')
+        .eq('user_id', order.user_id)
+        .eq('event_type', 'lot')
+        .eq('ref_id', session.id)
+        .limit(1)
+
+      if (!alreadyAwarded || alreadyAwarded.length === 0) {
+        const lotsCount = (order.lots_count ?? 1)
+        const beans     = 5 * lotsCount
+        const mazorcas  = 2 * lotsCount
+
+        await supabase.from('token_events').insert([{
+          user_id:    order.user_id,
+          event_type: 'lot',
+          beans,
+          mazorcas,
+          ref_id:     session.id,
+        }])
+
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('beans_balance, mazorcas_balance, beans_lifetime')
+          .eq('user_id', order.user_id)
+          .single()
+
+        await supabase
+          .from('user_profiles')
+          .update({
+            beans_balance:    (profile?.beans_balance    ?? 0) + beans,
+            mazorcas_balance: (profile?.mazorcas_balance ?? 0) + mazorcas,
+            beans_lifetime:   (profile?.beans_lifetime   ?? 0) + beans,
+          })
+          .eq('user_id', order.user_id)
       }
 
       // Increment completed_orders count
