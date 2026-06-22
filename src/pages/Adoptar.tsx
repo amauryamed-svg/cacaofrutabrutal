@@ -12,7 +12,9 @@ import AchievementGrid from '../components/ui/AchievementGrid'
 import QuestPill from '../components/ui/QuestPill'
 import RedemptionPreviewCard from '../components/ui/RedemptionPreviewCard'
 import MobileAppShell from '../components/ui/MobileAppShell'
-import { BRAND, FONTS, GUARDIANS, TOKEN_RATES, TREE_ADOPTION_PRICE_USD } from '../utils/constants'
+import { BRAND, FONTS, GUARDIANS, TOKEN_RATES, TREE_ADOPTION_PRICE_USD, CACAO_ECONOMY } from '../utils/constants'
+import { useTokenBalance } from '../hooks/useTokenBalance'
+import { useRedeemTokens } from '../hooks/useRedeemTokens'
 import { isTreeDead, isDying, needsAttention, isHarvestReady, getStageByHours, hoursSinceAdoption } from '../utils/growthSystem'
 
 type Phase = 'idle' | 'confirming' | 'adopting' | 'done'
@@ -51,6 +53,11 @@ export default function Adoptar() {
   const [cardKey,     setCardKey]     = useState(0)
   const [tokenReward, setTokenReward] = useState<{ beans: number; mazorcas: number } | null>(null)
   const [showGTModal, setShowGTModal] = useState(false)
+  const [cacaoError,  setCacaoError]  = useState<string | null>(null)
+
+  const { beans }             = useTokenBalance()
+  const { redeem, canAffordAdoption } = useRedeemTokens()
+  const canPayWithCacao = canAffordAdoption(beans)
 
   const guardian = GUARDIANS[activeIdx]
 
@@ -91,9 +98,38 @@ export default function Adoptar() {
     }
   }
 
+  const confirmAdoptionWithCacao = async () => {
+    setCacaoError(null)
+    setPhase('adopting')
+    try {
+      const redemption = await redeem('adoption', { item_ref: `guardian_${activeIdx}` })
+      if (!redemption.ok) {
+        const msg = redemption.error === 'insufficient_balance'
+          ? `Faltan ${(redemption.need ?? 0) - (redemption.have ?? 0)} $CACAO. Sigue cuidando tu árbol para ganar más.`
+          : 'No se pudo redimir $CACAO. Intenta de nuevo.'
+        setCacaoError(msg)
+        setPhase('confirming')
+        return
+      }
+      const displayVar = guardian.varieties[0]
+      let dbEnum = 'Criollo'
+      if (displayVar.includes('Trinitario')) dbEnum = 'Trinitario'
+      if (displayVar.includes('Forastero'))  dbEnum = 'Forastero'
+      if (displayVar.includes('Nacional'))   dbEnum = 'Nacional'
+      await adoptTree(activeIdx, dbEnum, guardian.region)
+      setTokenReward(TOKEN_RATES.tree_adoption)
+      setPhase('done')
+      setTimeout(() => { setTokenReward(null) }, 3000)
+    } catch (err) {
+      setCacaoError(`Error: ${err instanceof Error ? err.message : 'Error desconocido'}`)
+      setPhase('confirming')
+    }
+  }
+
   const cancelConfirm = () => {
     setPhase('idle')
     setCardKey(k => k + 1)
+    setCacaoError(null)
   }
 
   return (
@@ -715,11 +751,24 @@ export default function Adoptar() {
                           fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}88`,
                           marginTop: 4, letterSpacing: '0.04em',
                         }}>🫘 +10 granos · 🌽 +3 mazorcas al adoptar</div>
+                        {/* $CACAO affordability pill */}
+                        <div style={{
+                          marginTop: 10, display: 'inline-flex', alignItems: 'center', gap: 6,
+                          background: canPayWithCacao ? `${BRAND.heroic}18` : `${BRAND.heirloom}08`,
+                          border: `1px solid ${canPayWithCacao ? BRAND.heroic + '88' : BRAND.heirloom + '22'}`,
+                          borderRadius: 999, padding: '4px 12px',
+                        }}>
+                          <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 6, color: canPayWithCacao ? BRAND.heroic : `${BRAND.heirloom}44`, letterSpacing: '0.1em' }}>
+                            {canPayWithCacao
+                              ? `◈ ${beans.toFixed(0)} $CACAO · ¡puedes adoptar gratis!`
+                              : `◈ ${beans.toFixed(0)} / ${CACAO_ECONOMY.ADOPTION_BEANS} $CACAO — sigue cuidando`}
+                          </span>
+                        </div>
                       </>
                     )}
                   </div>
 
-                  {/* Bottom: confirm + cancel + tiny disclaimer */}
+                  {/* Bottom: confirm + $CACAO option + cancel */}
                   <div style={{ width: '100%' }}>
                     <button onClick={confirmAdoption} style={{
                       width: '100%', padding: '14px',
@@ -736,6 +785,51 @@ export default function Adoptar() {
                     }}>
                       {IS_GOLDEN_TICKET_FREEMIUM ? '✓ Adoptar gratis' : `✓ Adoptar por $${TREE_ADOPTION_PRICE_USD}`}
                     </button>
+
+                    {/* $CACAO payment path — only shown when freemium is off */}
+                    {!IS_GOLDEN_TICKET_FREEMIUM && (
+                      <>
+                        <div style={{
+                          display: 'flex', alignItems: 'center', gap: 8, margin: '10px 0',
+                        }}>
+                          <div style={{ flex: 1, height: 1, background: `${BRAND.heroic}22` }} />
+                          <span style={{
+                            fontFamily: "'Press Start 2P', monospace", fontSize: 6,
+                            color: `${BRAND.heirloom}44`, letterSpacing: '0.14em',
+                          }}>O</span>
+                          <div style={{ flex: 1, height: 1, background: `${BRAND.heroic}22` }} />
+                        </div>
+                        <button
+                          onClick={confirmAdoptionWithCacao}
+                          disabled={!canPayWithCacao}
+                          style={{
+                            width: '100%', padding: '12px',
+                            background: canPayWithCacao ? `${BRAND.heroic}22` : 'transparent',
+                            border: `1px solid ${canPayWithCacao ? BRAND.heroic + 'aa' : BRAND.heirloom + '22'}`,
+                            borderRadius: 999, cursor: canPayWithCacao ? 'pointer' : 'not-allowed',
+                            color: canPayWithCacao ? BRAND.heroic : `${BRAND.heirloom}33`,
+                            fontFamily: "'Press Start 2P', monospace",
+                            fontSize: 7, letterSpacing: '0.1em', textTransform: 'uppercase',
+                            transition: 'all 0.2s',
+                          }}
+                        >
+                          {canPayWithCacao
+                            ? `◈ ADOPTAR · ${CACAO_ECONOMY.ADOPTION_BEANS} $CACAO`
+                            : `◈ FALTAN ${Math.max(0, CACAO_ECONOMY.ADOPTION_BEANS - Math.floor(beans))} $CACAO`}
+                        </button>
+                        {cacaoError && (
+                          <div style={{
+                            marginTop: 8, padding: '8px 12px',
+                            background: '#1a0808', border: '1px solid #E4796644',
+                            borderRadius: 8, fontFamily: FONTS.body,
+                            fontSize: 10, color: '#E47966', lineHeight: 1.5, textAlign: 'center',
+                          }}>
+                            {cacaoError}
+                          </div>
+                        )}
+                      </>
+                    )}
+
                     <button onClick={cancelConfirm} style={{
                       width: '100%', padding: 10, marginTop: 8,
                       background: 'transparent', border: 'none', cursor: 'pointer',
@@ -751,7 +845,7 @@ export default function Adoptar() {
                     }}>
                       {IS_GOLDEN_TICKET_FREEMIUM
                         ? 'Tu adopción cuenta como hito 1 de 4 del Camino del Creyente.'
-                        : 'Pago se despliega 60/30/10 vía Coinbase Onramp.'}
+                        : 'Fiat: pago 60/30/10 vía Coinbase. $CACAO: quema tus granos ganados.'}
                     </div>
                   </div>
                 </div>

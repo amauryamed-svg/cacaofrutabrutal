@@ -1,10 +1,12 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { BRAND, FONTS, CACAO_PER_USD } from '../../utils/constants'
 import { useCountdown } from '../../hooks/useCountdown'
 import ProductIllustration from '../ui/ProductIllustration'
 import type { Product } from '../../types'
 import { useNavigate } from 'react-router-dom'
 import { useLang } from '../../context/LangContext'
+import { useTokenBalance } from '../../hooks/useTokenBalance'
+import { useRedeemTokens } from '../../hooks/useRedeemTokens'
 
 const CacaoPayButton = lazy(() => import('../fund/CacaoPayButton'))
 
@@ -53,6 +55,31 @@ export default function ProductCard({ product: p, multiplier, user, roleDiscount
   let discountedPrice   = p.type === 'auction' ? Math.round(p.price / multiplier) : p.price
   // Apply role-based discount on top
   discountedPrice       = Math.round(discountedPrice * roleDiscount)
+
+  const { beans }                    = useTokenBalance()
+  const { redeem, productBeansPrice } = useRedeemTokens()
+  const beansCost                    = productBeansPrice(discountedPrice)
+  const canPayWithBeans              = user !== null && beans >= beansCost
+
+  const [beansState, setBeansState] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle')
+  const [beansMsg,   setBeansMsg]   = useState('')
+
+  const handleBeansPayment = async () => {
+    setBeansState('loading')
+    const result = await redeem('product_custom', {
+      beans_to_spend: beansCost,
+      item_ref: `product-${p.id}`,
+    })
+    if (result.ok) {
+      setBeansState('ok')
+      setBeansMsg(`Reservado con ${beansCost} $CACAO. Balance: ${(result.new_balance ?? 0).toFixed(0)}`)
+    } else {
+      setBeansState('error')
+      setBeansMsg(result.error === 'insufficient_balance'
+        ? `Faltan ${Math.ceil((result.need ?? 0) - (result.have ?? 0))} $CACAO`
+        : 'Error al redimir $CACAO')
+    }
+  }
   const hasDiscount     = (p.type === 'auction' && multiplier > 1) || roleDiscount < 1
   const benefits        = PRODUCT_BENEFITS[p.id] ?? []
 
@@ -146,7 +173,7 @@ export default function ProductCard({ product: p, multiplier, user, roleDiscount
           }}>{p.desc}</p>
         </div>
 
-        {/* Price — $CACAO primary, USD secondary */}
+        {/* Price — $CACAO primary, USD secondary, beans off-chain tertiary */}
         <div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 2 }}>
             <span style={{
@@ -165,6 +192,23 @@ export default function ProductCard({ product: p, multiplier, user, roleDiscount
               </span>
             )}
           </div>
+          {/* Off-chain beans price — shows user's proximity to affording this */}
+          {user && (
+            <div style={{
+              marginTop: 5, display: 'inline-flex', alignItems: 'center', gap: 5,
+              background: canPayWithBeans ? `${BRAND.pod}18` : `${BRAND.heirloom}08`,
+              border: `1px solid ${canPayWithBeans ? BRAND.pod + '66' : BRAND.heirloom + '18'}`,
+              borderRadius: 999, padding: '3px 8px',
+            }}>
+              <span style={{
+                fontFamily: "'Press Start 2P', monospace", fontSize: 5,
+                color: canPayWithBeans ? BRAND.pod : `${BRAND.heirloom}44`,
+                letterSpacing: '0.08em',
+              }}>
+                {canPayWithBeans ? `✓ ${beansCost} $CACAO` : `${Math.floor(beans)}/${beansCost} $CACAO`}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* CTA — CacaoPayButton */}
@@ -210,6 +254,44 @@ export default function ProductCard({ product: p, multiplier, user, roleDiscount
           }}>
             🔥 QUEMA MAZORCAS → $CACAO → COMPRA
           </p>
+
+          {/* Off-chain beans path — available today, no wallet required */}
+          {user && beansState !== 'ok' && (
+            <div style={{ marginTop: 8 }}>
+              <button
+                onClick={handleBeansPayment}
+                disabled={!canPayWithBeans || beansState === 'loading'}
+                style={{
+                  width: '100%', padding: '10px 12px',
+                  background: canPayWithBeans ? `${BRAND.pod}18` : 'transparent',
+                  border: `1px solid ${canPayWithBeans ? BRAND.pod + '66' : BRAND.heirloom + '22'}`,
+                  borderRadius: 0, cursor: canPayWithBeans ? 'pointer' : 'not-allowed',
+                  color: canPayWithBeans ? BRAND.pod : `${BRAND.heirloom}33`,
+                  fontFamily: "'Press Start 2P', monospace",
+                  fontSize: 6, letterSpacing: '0.08em', textTransform: 'uppercase',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                }}
+              >
+                {beansState === 'loading' ? '...' : `◈ RESERVAR · ${beansCost} $CACAO`}
+              </button>
+              {beansState === 'error' && (
+                <div style={{ marginTop: 4, fontFamily: FONTS.body, fontSize: 9, color: '#E47966', textAlign: 'center' }}>
+                  {beansMsg}
+                </div>
+              )}
+            </div>
+          )}
+          {beansState === 'ok' && (
+            <div style={{
+              marginTop: 8, padding: '8px 12px',
+              background: `${BRAND.pod}18`, border: `1px solid ${BRAND.pod}44`,
+              borderRadius: 0, textAlign: 'center',
+              fontFamily: "'Press Start 2P', monospace", fontSize: 6, color: BRAND.pod,
+              letterSpacing: '0.08em',
+            }}>
+              ✓ RESERVADO · {beansMsg}
+            </div>
+          )}
         </div>
 
         {/* Trust signal */}

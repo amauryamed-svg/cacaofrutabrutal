@@ -44,6 +44,13 @@ export const ROLE_CONFIG: Record<CauaRole, RoleConfig> = {
  */
 export const TREE_ADOPTION_PRICE_USD = 5
 
+/** $CACAO flywheel economy — matches redeem-tokens Edge Function RATES */
+export const CACAO_ECONOMY = {
+  BEANS_PER_USD:        10,  // 10 beans = $1 USD saved
+  ADOPTION_BEANS:       50,  // 50 beans = free tree adoption ($5 USD value)
+  MIN_REDEMPTION_BEANS: 10,  // minimum beans for any redemption
+} as const
+
 export const BRAND = {
   heirloom:   '#F7F1EE',
   amazon:     '#1C3B26',
