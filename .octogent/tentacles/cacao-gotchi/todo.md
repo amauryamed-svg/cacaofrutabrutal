@@ -2,15 +2,15 @@
 
 ## P0 — Launch Blockers
 
-- [ ] [P0] Wire real health/moisture/sunlight values from `cacao_trees` row into `CauaGotchi` props — replace hardcoded (85/60/90) in `src/pages/Dashboard.tsx`
-- [ ] [P0] Build care action buttons (Water / Sunlight / Nutrients / Prune / Molasses) in `src/pages/TreeDetail.tsx` that write care events to `cacao_trees`
-- [ ] [P0] Enforce 3h care cooldown: check `last_update_at` before allowing any care action, show countdown timer if blocked
+- [x] [P0] Wire real health/moisture/sunlight values from `cacao_trees` row into `CauaGotchi` props — replace hardcoded (85/60/90) in `src/pages/Dashboard.tsx` (done: Dashboard panel removed; TreeDetail seeds from DB)
+- [x] [P0] Build care action buttons (Water / Sunlight / Nutrients / Prune / Molasses) in `src/pages/TreeDetail.tsx` that write care events to `cacao_trees`
+- [x] [P0] Enforce 3h care cooldown: check `last_update_at` before allowing any care action, show countdown timer if blocked (cycleTick 1s + useEffect computes canCare/nextCareIn)
 
 ## P1 — Q2 Meaningful Experience
 
 - [ ] [P1] Auto-advance growth stage: Edge Function or Supabase pg_cron job that calls `getStageByDays()` and updates `cacao_trees.stage` daily
 - [ ] [P1] Wire problem detection — set plague/fungus/drought flag in tree row when conditions met; display alert in CauaGotchi
-- [ ] [P1] Add `co2_kg` increment (+0.02) on every successful care action write
+- [x] [P1] Add `co2_kg` increment (+0.02) on every successful care action write (done in careForTree; crit-divergence bug fixed 2026-06-22)
 - [ ] [P1] Wire harvest completion event: when stage reaches `maduracion` → trigger `tree_harvest_share` token award + show share CTA
 - [ ] [P1] Add push notification trigger when tree needs care (>3h since last_update_at) — see `notify-tree-care` Edge Function in supabase-backend tentacle
 

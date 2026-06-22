@@ -126,14 +126,9 @@ export function useCocoaTrees() {
   const careForTree = async (
     treeId: string,
     action: CareAction,
-    current: { health: number; moisture: number; sunlight: number; co2_kg: number },
-  ): Promise<{ health: number; moisture: number; sunlight: number }> => {
-    const d = CARE_DELTAS[action]
-    const clamp = (v: number) => Math.max(0, Math.min(100, v))
-    const health   = clamp(current.health   + d.health)
-    const moisture = clamp(current.moisture + d.moisture)
-    const sunlight = clamp(current.sunlight + d.sunlight)
-    const co2_kg   = +(current.co2_kg + 0.02).toFixed(3)
+    newVitals: { health: number; moisture: number; sunlight: number; co2_kg: number },
+  ): Promise<void> => {
+    const { health, moisture, sunlight, co2_kg } = newVitals
     const last_update_at = new Date().toISOString()
 
     const { error: err } = await supabase
@@ -179,7 +174,6 @@ export function useCocoaTrees() {
       } catch { /* non-critical */ }
     })()
 
-    return { health, moisture, sunlight }
   }
 
   /**

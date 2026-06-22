@@ -241,10 +241,14 @@ export default function TreeDetail() {
       showAchievement({ title: 'ANCIENT SECRET', subtitle: `${PLANT_PROBLEMS[currentProblem].name} eliminated`, icon: '🍯' })
     }
 
-    // Persist to DB (fire-and-forget)
+    // Persist to DB (fire-and-forget) — pass post-action vitals so crit bonuses land in DB
     if (tree) {
-      careForTree(tree.id, action, { health, moisture, sunlight, co2_kg: tree.co2_kg ?? 0 })
-        .catch(() => {})
+      careForTree(tree.id, action, {
+        health: newHealth,
+        moisture: newMoisture,
+        sunlight: newSunlight,
+        co2_kg: +((tree.co2_kg ?? 0) + 0.02).toFixed(3),
+      }).catch(() => {})
     }
   }
 
