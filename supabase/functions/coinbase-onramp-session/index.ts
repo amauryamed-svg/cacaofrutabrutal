@@ -70,6 +70,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 interface SessionRequest {
   asset?: 'USDC' | 'ETH' | 'CBBTC'
   preset_usd?: number
+  review_key?: string
 }
 
 interface ProfileRow {
@@ -328,14 +329,12 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'invalid_asset' }), { status: 400, headers: cors })
     }
 
-    // CDP review bypass — skips JWT + profile lookup so CDP CX can validate
-    // the Onramp widget without a full wallet + SIWE setup. Activated only
-    // when CDP_REVIEW_KEY is set and the request carries it as the Bearer
-    // token. No real user data is accessed in this path.
-    const reviewKey   = Deno.env.get('CDP_REVIEW_KEY') ?? ''
+    // CDP review bypass — key in JSON body avoids Authorization header conflicts.
+    // Activated when CDP_REVIEW_KEY secret matches body.review_key exactly.
+    // No real user data is accessed in this path.
+    const reviewKeyEnv = Deno.env.get('CDP_REVIEW_KEY') ?? ''
     const reviewWallet = Deno.env.get('CDP_REVIEW_WALLET') ?? '0xcafecafecafecafecafecafecafecafecafecafe'
-    const authHeader  = req.headers.get('authorization') ?? ''
-    const isReviewMode = reviewKey.length >= 32 && authHeader === `Bearer ${reviewKey}`
+    const isReviewMode = reviewKeyEnv.length >= 32 && body.review_key === reviewKeyEnv
 
     let walletAddress: string
     if (isReviewMode) {

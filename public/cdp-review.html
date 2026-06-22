@@ -227,10 +227,10 @@
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${reviewKey}`,
             'apikey': SUPABASE_ANON,
           },
-          body: JSON.stringify({ asset, preset_usd: presetUsd }),
+          // review_key in body — avoids Authorization header conflicts with Supabase gateway
+          body: JSON.stringify({ asset, preset_usd: presetUsd, review_key: reviewKey }),
         })
 
         const json = await res.json().catch(() => null)
