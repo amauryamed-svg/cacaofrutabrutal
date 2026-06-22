@@ -2,7 +2,7 @@
 
 ## P0 — Launch Blockers
 
-- [ ] [P0] Seed `blog_posts` table with 3–5 Guardian farmer and founder origin stories (see content strategy in CONTEXT.md)
+- [x] [P0] Seed `blog_posts` table with 3–5 Guardian farmer and founder origin stories — 5 posts inserted 2026-06-22 (Lucho/Huila, Ricardo/Santander, Fernando/Meta, Marta/Arauca, Rafael/Cundinamarca)
 
 ## P1 — Q2 Meaningful Experience
 

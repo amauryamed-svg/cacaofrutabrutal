@@ -2,7 +2,7 @@
 
 ## P0 — Launch Blockers
 
-- [ ] [P0] Refactor `predict_tree_health` in `api/ml_predictor.py` into ≤20-line sub-functions: `privacy_filter`, `extract_features`, `run_model`, `log_prediction` — current function is ~30 lines, violating CauaCore §8
+- [x] [P0] Refactor `predict_tree_health` in `api/ml_predictor.py` into ≤20-line sub-functions: `privacy_filter`, `extract_features`, `run_model`, `log_prediction` — done 2026-06-22; endpoint is POST /predict/health with X-ML-Secret auth
 
 ## P1 — Q2 Meaningful Experience
 

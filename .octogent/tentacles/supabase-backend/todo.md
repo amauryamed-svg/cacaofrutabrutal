@@ -2,7 +2,7 @@
 
 ## P0 — Launch Blockers
 
-- [ ] [P0] Create migration `011_ml_predictions_log.sql`: table with columns (id, anon_token, tree_id, temp_c, soil_moisture, sunlight_lux, predicted_health, stress_alert, created_at) — RLS: service_role INSERT only, founder role SELECT
+- [x] [P0] Create migration `049_ml_predictions_log.sql`: table with columns (id, anon_token, tree_id, temp_c, soil_moisture, sunlight_lux, predicted_health, stress_alert, created_at) — applied to prod 2026-06-22; RLS: service_role INSERT, founder SELECT
 
 ## P1 — Q2 Meaningful Experience
 
