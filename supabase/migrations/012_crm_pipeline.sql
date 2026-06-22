@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS crm_deals (
   hubspot_synced_at   timestamptz,
   notes               text,
   expected_close_date date,
-  owner_email         text DEFAULT 'amaury@cauaculture.co',
+  owner_email         text DEFAULT 'amaury@cauacolombia.co',
   created_at          timestamptz DEFAULT now(),
   updated_at          timestamptz DEFAULT now()
 );

@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { trackLoggedInUser } from '../lib/hubspotTracking'
 import type { UserProfile } from '../lib/database.types'
 
-const SUPER_ADMINS = ['amauryamed@gmail.com', 'amaury@cauaculture.co']
+const SUPER_ADMINS = ['amauryamed@gmail.com', 'amaury@cauacolombia.co']
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface AuthState {

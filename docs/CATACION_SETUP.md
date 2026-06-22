@@ -26,7 +26,7 @@ supabase db push
 
 ## 2. Desplegar Edge Function
 
-Despliega `notify-catacion-lead` que envía notificaciones a amaury@cauaculture.co:
+Despliega `notify-catacion-lead` que envía notificaciones a amaury@cauacolombia.co:
 
 ### Opción A: Via Dashboard (recomendado)
 1. Ve a https://app.supabase.com → tu proyecto → **Edge Functions**
@@ -67,7 +67,7 @@ npm run dev
 2. **Verifica:**
    - ✓ `catacion_leads` se insertó en Supabase Studio → tabla `catacion_leads`
    - ✓ Magic link OTP llegó al email
-   - ✓ Email de notificación en amaury@cauaculture.co con detalles del lead
+   - ✓ Email de notificación en amaury@cauacolombia.co con detalles del lead
 
 3. **Haz clic en el magic link:**
    - Deberías ser autenticado en `/catacion`
@@ -92,7 +92,7 @@ Formulario (Nombre + Email)
   ├→ Magic Link OTP (Supabase Auth signInWithOtp)
   └→ notify-catacion-lead() [Edge Function]
       ↓
-      Email a amaury@cauaculture.co [Resend]
+      Email a amaury@cauacolombia.co [Resend]
 
 User cliquea magic link
   ↓

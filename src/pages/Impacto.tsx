@@ -27,7 +27,7 @@ export default function Impacto() {
           <p style={leadStyle}>
             Adopta tu primer árbol y desbloquea tu wallet de impacto:
             CO₂ capturado on-tree, mazorcas mineadas en cosecha,
-            yield convertible a Cacao Ceremony de Cauaculture.co.
+            yield convertible a Cacao Ceremony de Cauacolombia.co.
           </p>
           <Link to="/adoptar" style={primaryCtaStyle}>Adoptar mi primer árbol →</Link>
         </div>
@@ -46,7 +46,7 @@ export default function Impacto() {
             <p style={leadStyle}>
               Tu wallet aún no tiene árboles. Cada árbol que adoptas mintea
               CO₂ on-chain off-chain, sostiene una familia guardiana en Huila,
-              y reduce tu precio de Cacao Ceremony en Cauaculture.co.
+              y reduce tu precio de Cacao Ceremony en Cauacolombia.co.
             </p>
             <Link to="/adoptar" style={primaryCtaStyle}>Mintear mi primer árbol →</Link>
           </>
@@ -67,7 +67,7 @@ export default function Impacto() {
                 Cada uno de tus {treeCount} {treeCount === 1 ? 'árbol' : 'árboles'} en Huila
                 rinde mucílago fresco que se procesa con nuestras tecnologías propietarias —
                 MucilageExtract™ e HydroSol™ — y termina como Cacao Ceremony,
-                el cacao ceremonial Criollo de Cauaculture.co. Tu wallet, en producto sostenible.
+                el cacao ceremonial Criollo de Cauacolombia.co. Tu wallet, en producto sostenible.
               </p>
             </div>
 

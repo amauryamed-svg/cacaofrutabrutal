@@ -9,7 +9,7 @@ status: done
 ## Qué es
 
 Página `/catacion` para captura de leads premium con magic link OTP.
-El lead recibe acceso temporal + notificación a amaury@cauaculture.co.
+El lead recibe acceso temporal + notificación a amaury@cauacolombia.co.
 
 ## Flujo
 
@@ -17,7 +17,7 @@ El lead recibe acceso temporal + notificación a amaury@cauaculture.co.
 /catacion → form (nombre + email)
 → INSERT catacion_leads (Supabase)
 → Supabase envía magic link OTP al email del lead
-→ Edge Function notify-catacion-lead → email a amaury@cauaculture.co
+→ Edge Function notify-catacion-lead → email a amaury@cauacolombia.co
 → Lead accede con OTP → sesión autenticada
 ```
 

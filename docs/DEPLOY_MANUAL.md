@@ -86,7 +86,7 @@ Rellena el formulario:
 Debería:
 1. ✅ Guardar el lead en `catacion_leads`
 2. ✅ Enviar magic link OTP al email
-3. ✅ Enviar notificación a amaury@cauaculture.co
+3. ✅ Enviar notificación a amaury@cauacolombia.co
 
 ---
 

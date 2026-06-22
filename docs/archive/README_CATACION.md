@@ -97,7 +97,7 @@ Ver `DEPLOY_MANUAL.md` para paso a paso en Supabase Studio.
 ### Formulario
 - Inputs on-brand (sin Chrome defaults)
 - Magic Link OTP (Supabase Auth)
-- Notificación a amaury@cauaculture.co
+- Notificación a amaury@cauacolombia.co
 - Estados: idle → loading → sent → error
 
 ### PDF
@@ -149,7 +149,7 @@ Usuario llena formulario: Nombre + Email
 Backend:
   1️⃣ INSERT catacion_leads (Supabase)
   2️⃣ Envía Magic Link OTP (Supabase Auth)
-  3️⃣ Notifica amaury@cauaculture.co (Edge Function)
+  3️⃣ Notifica amaury@cauacolombia.co (Edge Function)
         ↓
 Usuario ve: "Revisa tu bandeja"
         ↓
@@ -180,7 +180,7 @@ Email: tu_email@gmail.com
 # 4. Verifica
 ✓ Lead insertado en catacion_leads (Supabase Studio)
 ✓ Magic link en tu email
-✓ Notificación en amaury@cauaculture.co
+✓ Notificación en amaury@cauacolombia.co
 ✓ PDF descarga con botón
 ```
 
@@ -226,7 +226,7 @@ Ver `DEPLOY_MANUAL.md` para soluciones detalladas.
 - [ ] Verificar Edge Function `notify-catacion-lead` deployada
 - [ ] Test formulario en http://localhost:3002/catacion
 - [ ] Verificar magic link en email
-- [ ] Verificar notificación en amaury@cauaculture.co
+- [ ] Verificar notificación en amaury@cauacolombia.co
 - [ ] Descargar PDF y verificar A4 correcto
 - [ ] Sesión autenticada después de clicar magic link
 
@@ -235,7 +235,7 @@ Ver `DEPLOY_MANUAL.md` para soluciones detalladas.
 ## 🎯 Próximos Pasos (Opcionales)
 
 1. **Personalizar email de notificación** → Editar `notify-catacion-lead/index.ts`
-2. **Cambiar destinatario de notificación** → Buscar `amaury@cauaculture.co` en Edge Function
+2. **Cambiar destinatario de notificación** → Buscar `amaury@cauacolombia.co` en Edge Function
 3. **Agregar más campos al formulario** → Editar `catacion_leads` tabla + form en Catacion.tsx
 4. **Modificar diseño** → Editar colores/animaciones en `Catacion.tsx`
 

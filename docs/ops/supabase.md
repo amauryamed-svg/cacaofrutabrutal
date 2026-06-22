@@ -36,7 +36,7 @@ npx supabase functions deploy create-stripe-checkout
 | Función | Propósito |
 |---------|----------|
 | `award-tokens` | Otorga beans/mazorcas en tree adoption, reads, harvest |
-| `notify-catacion-lead` | Email a amaury@cauaculture.co en nuevo lead |
+| `notify-catacion-lead` | Email a amaury@cauacolombia.co en nuevo lead |
 | `create-stripe-checkout` | Crea sesión de pago Stripe |
 | `create-mp-preference` | Crea preferencia MercadoPago |
 | `stripe-webhook` | Procesa eventos webhook de Stripe |

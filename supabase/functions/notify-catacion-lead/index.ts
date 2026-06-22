@@ -78,7 +78,7 @@ async function sendNotification(payload: CatacionNotification) {
     },
     body: JSON.stringify({
       from: 'hola@cacaofrutabrutal.com',
-      to: 'amaury@cauaculture.co',
+      to: 'amaury@cauacolombia.co',
       subject: `🫘 Nuevo lead catación: ${full_name}`,
       html,
     }),

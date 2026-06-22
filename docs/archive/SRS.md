@@ -187,7 +187,7 @@ Tentacles: `cacao-gotchi`, `b2b-marketplace`, `token-economy`, `blog-cms`, `supa
 - User panel: edit role, region, lead_score (1–5 mazorcas), name
 - Investment overview: technology + lot count + currency + payment provider
 - Email log viewer: tracking of transactional email success/failure
-- Access guard: `amauryamed@gmail.com` + `amaury@cauaculture.co` OR `caua_role = 'founder'`
+- Access guard: `amauryamed@gmail.com` + `amaury@cauacolombia.co` OR `caua_role = 'founder'`
 
 ---
 

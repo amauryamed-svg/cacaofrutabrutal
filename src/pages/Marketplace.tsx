@@ -100,6 +100,9 @@ export default function Marketplace() {
           }}>FORJAR →</button>
         </div>
 
+        {/* Cacao Ceremony — Cauacolombia cross-sell with adopter discount (TOP placement so users find it) */}
+        <CacaoCeremonyCard />
+
         {/* Multiplier badge */}
         {user && (
           <div style={{

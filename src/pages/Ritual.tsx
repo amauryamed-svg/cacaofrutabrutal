@@ -370,7 +370,7 @@ export default function Ritual() {
                 }}>{T('rit_new_draw')}</button>
               </div>
 
-              {/* Cacao Ceremony cross-sell — Cauaculture.co with adopter discount */}
+              {/* Cacao Ceremony cross-sell — Cauacolombia.co with adopter discount */}
               <div style={{ width: '100%' }}>
                 <CacaoCeremonyCTA variant="ritual" />
               </div>

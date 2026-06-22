@@ -282,7 +282,7 @@ function PriceCalculator() {
           </button>
           {phase === 'error' && (
             <p style={{ fontFamily: FONTS.body, fontSize: 11, color: BRAND.theobroma, margin: 0, textAlign: 'center' }}>
-              Error al enviar. Escríbenos a amaury@cauaculture.co
+              Error al enviar. Escríbenos a amaury@cauacolombia.co
             </p>
           )}
         </form>
@@ -525,7 +525,7 @@ export default function CauaCoti() {
                   textTransform: 'uppercase', color: `${BRAND.pod}99`, margin: '0 0 8px' }}>Contacto directo</p>
                 <p style={{ fontFamily: FONTS.body, fontSize: 12, color: `${BRAND.heirloom}88`, margin: 0, lineHeight: 1.7 }}>
                   📱 +57 310 222 7848<br />
-                  📧 amaury@cauaculture.co<br />
+                  📧 amaury@cauacolombia.co<br />
                   <span style={{ color: `${BRAND.heirloom}44` }}>Respuesta en {'<'} 2 horas</span>
                 </p>
               </div>
@@ -549,7 +549,7 @@ export default function CauaCoti() {
         <strong style={{ display: 'block', marginBottom: 6, color: BRAND.heirloom, fontSize: 13, fontFamily: FONTS.display }}>
           CAUA COLOMBIA SAS · NIT 901213846-7
         </strong>
-        <div>📧 amaury@cauaculture.co · 📱 +57 310 222 7848 · 🌐 cacaofrutabrutal.com</div>
+        <div>📧 amaury@cauacolombia.co · 📱 +57 310 222 7848 · 🌐 cacaofrutabrutal.com</div>
         <div style={{ marginTop: 8, opacity: 0.5 }}>Pago contraentrega · Factura Electrónica · Válida 30 días</div>
       </footer>
     </div>

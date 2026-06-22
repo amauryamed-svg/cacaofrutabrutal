@@ -6,6 +6,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > Contexto completo: [[docs/MAIN.md]] | Ownership: `api/` `supabase/` `scripts/`
 
+## Sister repos (siblings under `~/Documents/`)
+- **`CauaColombia.co/`** — Shopify native Liquid theme (storefront at `cauacolombia.co`).
+  Read its `CLAUDE.md`, `docs/PRD.md`, `docs/SRS.md` before touching cross-product
+  code (discount tiers, redemption deep-links, Cacao Ceremony cards).
+  Domain migrated from `cauaculture.co` on **2026-05-06** via
+  `scripts/migrate_domain.py` (this repo).
+- **`cauaculture-admin/`** — Polaris admin app (Remix). Pending rename to
+  `cauacolombia-admin`.
+- **`Cauaculture.co/`** — legacy theme. Do **not** edit; historical reference only.
+
 ## Stack
 React 19 + Vite + TypeScript + TailwindCSS v4 | Supabase Auth + PostgreSQL + Edge Functions | Stripe + MercadoPago + Coinbase | Vercel | Python ML (`api/`)
 

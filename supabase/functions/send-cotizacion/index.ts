@@ -246,7 +246,7 @@ function buildHtml(payload: {
   <div class="footer">
     <strong>CAUA COLOMBIA SAS · NIT 901213846-7</strong><br>
     Biotecnología ancestral del cacao colombiano · Del genoma colombiano al mundo<br>
-    📧 amaury@cauaculture.co · 📱 +57 310 222 7848 · 🌐 www.cacaofrutabrutal.com
+    📧 amaury@cauacolombia.co · 📱 +57 310 222 7848 · 🌐 www.cacaofrutabrutal.com
   </div>
 
 </div><!-- /wrap -->
@@ -288,7 +288,7 @@ serve(async (req) => {
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${RESEND_KEY}` },
       body: JSON.stringify({
         from: 'Caúa CRM <onboarding@resend.dev>',
-        to: 'amaury@cauaculture.co',
+        to: 'amaury@cauacolombia.co',
         subject: `🫘 Nueva cotización: ${nombre} — ${participants}p · ${fmtCOP(total)}`,
         html: `<p style="font-family:sans-serif;background:#040C06;color:#F7F1EE;padding:24px">
           <strong style="color:#F1A91E">${nombre}</strong> (${email}) solicitó una cotización.<br><br>

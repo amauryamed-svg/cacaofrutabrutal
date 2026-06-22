@@ -133,7 +133,7 @@ We've pre-provisioned a clean review account so the assessment can skip the Pers
 - Logout, click button → frontend shows `login_required` error.
 - Sign up a fresh account (no KYC) → click button → backend returns `kyc_required`.
 
-**Direct contact:** `amaury@cauaculture.co` (CTO). Happy to share screen async (Loom) or jump on a 15-min call if anything fails to load.
+**Direct contact:** `amaury@cauacolombia.co` (CTO). Happy to share screen async (Loom) or jump on a 15-min call if anything fails to load.
 
 ---
 
@@ -150,4 +150,4 @@ Happy to hop on a 15-minute Loom or call to walk through the staging flow if hel
 Best,
 Amaury Amed
 CTO · CauaCorp
-amaury@cauaculture.co
+amaury@cauacolombia.co

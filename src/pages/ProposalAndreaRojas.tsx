@@ -343,7 +343,7 @@ function PriceCalculator() {
           {optPhase === 'error' && (
             <p style={{ fontFamily: FONTS.body, fontSize: 11, color: BRAND.theobroma,
               margin: 0, textAlign: 'center' }}>
-              Error al enviar. Intenta de nuevo o escríbenos a amaury@cauaculture.co
+              Error al enviar. Intenta de nuevo o escríbenos a amaury@cauacolombia.co
             </p>
           )}
         </form>
@@ -662,7 +662,7 @@ export default function ProposalAndreaRojas() {
                 <br />
                 ✓ <strong>Documento:</strong> Factura Electrónica de Servicios
                 <br />
-                ✓ <strong>Confirmación:</strong> 3102227848 o amaury@cauaculture.co
+                ✓ <strong>Confirmación:</strong> 3102227848 o amaury@cauacolombia.co
               </div>
             </div>
           </RevealSection>
@@ -683,7 +683,7 @@ export default function ProposalAndreaRojas() {
           <strong style={{ display: 'block', marginBottom: 6 }}>CAUA COLOMBIA SAS · NIT 901213846-7</strong>
           <div style={{ marginBottom: 8, opacity: 0.85 }}>Biotecnología ancestral del cacao colombiano · Del genoma colombiano al mundo</div>
           <div style={{ fontSize: 10, opacity: 0.75 }}>
-            📧 amaury@cauaculture.co · 📱 +57 310 222 7848 · 🌐 www.cacaofrutabrutal.com
+            📧 amaury@cauacolombia.co · 📱 +57 310 222 7848 · 🌐 www.cacaofrutabrutal.com
           </div>
         </footer>
       </div>

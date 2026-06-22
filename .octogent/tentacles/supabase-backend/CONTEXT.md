@@ -98,7 +98,7 @@ All DB schema, migrations, RLS policies, Edge Functions, triggers, and backend s
 - Session: Supabase Auth JWT, stored in Supabase session (never localStorage)
 - User profile: auto-created on first login via `handle_new_user()` trigger
 - Single profile fetch per session, cached in `AuthContext.tsx`
-- Super-admins: `amauryamed@gmail.com` + `amaury@cauaculture.co` (hardcoded) OR `caua_role = 'founder'`
+- Super-admins: `amauryamed@gmail.com` + `amaury@cauacolombia.co` (hardcoded) OR `caua_role = 'founder'`
 
 ## Pending Migrations
 

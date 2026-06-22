@@ -6,12 +6,12 @@ export type CacaoCeremonyCTAVariant = 'ritual' | 'impacto' | 'fondo' | 'adopta'
 const COPY: Record<CacaoCeremonyCTAVariant, { eyebrow: string; pitch: string; cta: string }> = {
   ritual: {
     eyebrow: 'CIERRE DEL RITUAL',
-    pitch:   'Tu wallet on-tree → tu Cacao Ceremony 250g de Cauaculture.co. Claim con descuento según árboles adoptados.',
+    pitch:   'Tu wallet on-tree → tu Cacao Ceremony 250g de Cauacolombia.co. Claim con descuento según árboles adoptados.',
     cta:     'Claim mi Cacao Ceremony →',
   },
   impacto: {
     eyebrow: 'IMPACTO ON-CHAIN OFF-CHAIN',
-    pitch:   'Convierte tus mazorcas + árboles del wallet en Cacao Ceremony — tu inversión, en producto real, vía Cauaculture.co.',
+    pitch:   'Convierte tus mazorcas + árboles del wallet en Cacao Ceremony — tu inversión, en producto real, vía Cauacolombia.co.',
     cta:     'Claim impacto → cacao real →',
   },
   fondo: {
@@ -21,7 +21,7 @@ const COPY: Record<CacaoCeremonyCTAVariant, { eyebrow: string; pitch: string; ct
   },
   adopta: {
     eyebrow: 'YIELD INMEDIATO',
-    pitch:   'Cada árbol que adoptas mintea descuento cruzado en tu Cacao Ceremony en Cauaculture.co — 5/10/15/20%.',
+    pitch:   'Cada árbol que adoptas mintea descuento cruzado en tu Cacao Ceremony en Cauacolombia.co — 5/10/15/20%.',
     cta:     'Ver mi yield →',
   },
 }
@@ -63,7 +63,7 @@ export default function CacaoCeremonyCTA({ variant }: { variant: CacaoCeremonyCT
         fontSize: 'clamp(20px, 3vw, 26px)', color: BRAND.heirloom,
         textTransform: 'uppercase', margin: '6px 0 10px', lineHeight: 1.05,
       }}>
-        Cacao Ceremony · Cauaculture
+        Cacao Ceremony · Cauacolombia
       </h3>
       <p style={{
         fontFamily: FONTS.body, color: `${BRAND.heirloom}99`,

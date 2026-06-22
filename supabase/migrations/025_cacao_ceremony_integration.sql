@@ -1,5 +1,5 @@
 -- ─────────────────────────────────────────────────────────────────
--- 023 — Cacao Ceremony (Cauaculture.co Shopify) integration
+-- 023 — Cacao Ceremony (Cauacolombia.co Shopify) integration
 -- Phase 1: discount codes issued to CFB users
 -- Phase 2 (next): inbound orders from Shopify webhook
 -- ─────────────────────────────────────────────────────────────────
