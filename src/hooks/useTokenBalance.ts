@@ -61,8 +61,10 @@ export function useTokenBalance(): TokenBalance & { loading: boolean; error: str
 
     fetchBalance()
 
-    // Poll for updates every 5 seconds
-    const interval = setInterval(fetchBalance, 5000)
+    // Poll for updates every 2 seconds. Lowered from 5s (CRM360 2026-05-07)
+    // for snappier UI in journey moments — post-harvest the user navigates
+    // to /lab and expects mucilage/masa to appear within a single beat.
+    const interval = setInterval(fetchBalance, 2000)
     return () => clearInterval(interval)
   }, [userId])
 

@@ -7,6 +7,7 @@ import { BRAND, FONTS, GUARDIANS, TOKEN_RATES } from '../utils/constants'
 import CauaGotchi from '../components/dashboard/CauaGotchi'
 import HarvestMinigameModal, { type HarvestMinigamePayload } from '../components/dashboard/HarvestMinigameModal'
 import MintTreeButton from '../components/dashboard/MintTreeButton'
+import StreakChip from '../components/ui/StreakChip'
 import type { CacaoTree } from '../lib/database.types'
 import type { CSSProperties } from 'react'
 import {
@@ -451,6 +452,7 @@ export default function TreeDetail() {
           <div style={comboPillStyle(combo, comboFlash)}>
             {combo >= 3 ? `CACAO COMBO ×${combo}!!` : combo > 0 ? `COMBO ×${combo}` : ''}
           </div>
+          <StreakChip compact />
         </div>
 
         <CauaGotchi

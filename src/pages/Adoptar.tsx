@@ -1,68 +1,74 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCocoaTrees } from '../hooks/useCocoaTrees'
 import { useLineageRegenerations } from '../hooks/useLineageRegenerations'
-import { useTokenBalance } from '../hooks/useTokenBalance'
-import { useLang } from '../context/LangContext'
+import SwipeableTreeCard from '../components/ui/SwipeableTreeCard'
 import TokenReward from '../components/ritual/TokenReward'
-import {
-  BRAND, FONTS, GUARDIANS, TOKEN_RATES,
-  TREE_ADOPTION_PRICE_USD,
-} from '../utils/constants'
-import {
-  isTreeDead, isDying, needsAttention, isHarvestReady,
-  getStageByHours, hoursSinceAdoption, getCycleProgress,
-} from '../utils/growthSystem'
+import AdoptaIntro from '../components/landing/AdoptaIntro'
+import StreakChip from '../components/ui/StreakChip'
+import UserLevelChip from '../components/ui/UserLevelChip'
+import AchievementGrid from '../components/ui/AchievementGrid'
+import QuestPill from '../components/ui/QuestPill'
+import RedemptionPreviewCard from '../components/ui/RedemptionPreviewCard'
+import MobileAppShell from '../components/ui/MobileAppShell'
+import { BRAND, FONTS, GUARDIANS, TOKEN_RATES, TREE_ADOPTION_PRICE_USD } from '../utils/constants'
+import { isTreeDead, isDying, needsAttention, isHarvestReady, getStageByHours, hoursSinceAdoption } from '../utils/growthSystem'
 
-type Phase = 'select' | 'confirm' | 'adopting' | 'done'
+type Phase = 'idle' | 'confirming' | 'adopting' | 'done'
 
+// Golden Ticket Freemium flag — toggled via VITE_GOLDEN_TICKET_FREEMIUM env var
+// (Vercel env vars). When true, adoption is the 1st of 4 hitos del Camino del
+// Creyente: gratis · ancla de valor $5 USD se muestra tachada, CTA "Adopta
+// gratis", payment-surface bypass. Cuando termine la campaña, flip a false en
+// Vercel y redeploy — sin tocar código. Hitos: 1 adoptar · 2 cuidar · 3 cosechar
+// · 4 forjar (ver MiLaboratorio.tsx:402).
 const IS_GOLDEN_TICKET_FREEMIUM = import.meta.env.VITE_GOLDEN_TICKET_FREEMIUM === 'true'
 
-// ── Particle seed (CSS-only burst on adoption) ────────────────────────────────
-const SEED_COUNT = 16
-const SEEDS = Array.from({ length: SEED_COUNT }, (_, i) => ({
-  angle: (360 / SEED_COUNT) * i,
-  dist:  80 + Math.random() * 80,
-  delay: Math.random() * 0.2,
-  emoji: ['🌱', '🫘', '🌿', '🍃'][i % 4],
-}))
+const GOLDEN_TICKET_HITOS = [
+  { n: 1, label: 'Adopta tu árbol',       hint: 'Conoce a uno de los 5 Guardianes y siembra tu cacao' },
+  { n: 2, label: 'Cuida cada 30 min',     hint: 'Agua, sol, nutrientes — 5 horas hasta cosecha' },
+  { n: 3, label: 'Cosecha la mazorca',    hint: 'Fruit-Ninja arena — corta las mazorcas maduras' },
+  { n: 4, label: 'Forja tu chocolate',    hint: 'Liofilizado · refinado · conchado en el Lab' },
+] as const
 
 export default function Adoptar() {
   const { user } = useAuth()
-  const navigate  = useNavigate()
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { trees, loading: treesLoading, adoptTree } = useCocoaTrees()
   const { findByGuardian: findRegen } = useLineageRegenerations()
-  const { beans, mazorcas } = useTokenBalance()
-  const { lang } = useLang()
-  const es = lang === 'es'
 
+  // Deep-link from CauaBonga finca: /adoptar?guardian=2 lands directly on that guardian's card.
+  // Resolved at mount via lazy initializer to avoid setState-in-effect cascades.
   const initialGuardian = (() => {
     const g = Number(searchParams.get('guardian'))
     return Number.isInteger(g) && g >= 0 && g < GUARDIANS.length ? g : 0
   })()
 
-  const [phase,       setPhase]       = useState<Phase>('select')
+  const [phase,       setPhase]       = useState<Phase>('idle')
   const [activeIdx,   setActiveIdx]   = useState(initialGuardian)
+  const [cardKey,     setCardKey]     = useState(0)
   const [tokenReward, setTokenReward] = useState<{ beans: number; mazorcas: number } | null>(null)
-  const [burst,       setBurst]       = useState(false)
+  const [showGTModal, setShowGTModal] = useState(false)
 
   const guardian = GUARDIANS[activeIdx]
 
-  // Annotate trees
-  const annotated = trees.map(t => {
-    const dead  = isTreeDead(t)
-    const dying = !dead && isDying(t)
-    const warn  = !dead && needsAttention(t)
-    const ready = !dead && isHarvestReady(t)
-    const stage = getStageByHours(hoursSinceAdoption(t.adopted_at))
-    const pct   = getCycleProgress(t.adopted_at) * 100
-    return { t, dead, dying, warn, ready, stage, pct }
-  })
-  const aliveTrees = annotated.filter(x => !x.dead)
-  const deadTrees  = annotated.filter(x =>  x.dead)
-  const readyCount = aliveTrees.filter(x => x.ready).length
+  const handleSwipeLeft = () => {
+    setActiveIdx(i => (i + 1) % GUARDIANS.length)
+    setCardKey(k => k + 1)
+  }
+
+  const handleSwipeRight = () => {
+    if (!user) { navigate('/auth'); return }
+    setPhase('confirming')
+  }
+
+  const selectGuardian = (i: number) => {
+    setActiveIdx(i)
+    setCardKey(k => k + 1)
+    setPhase('idle')
+  }
 
   const confirmAdoption = async () => {
     setPhase('adopting')
@@ -74,703 +80,903 @@ export default function Adoptar() {
       if (displayVar.includes('Nacional'))   dbEnum = 'Nacional'
       await adoptTree(activeIdx, dbEnum, guardian.region)
       setTokenReward(TOKEN_RATES.tree_adoption)
-      setBurst(true)
       setPhase('done')
-      setTimeout(() => setTokenReward(null), 3000)
-      setTimeout(() => setBurst(false),      1200)
+      // Token reward toast hides at 3s; the gift card reveal in `done` state
+      // requires explicit dismiss (CRM360 Camino A · the user shouldn't lose
+      // their RedimeCacao10K code in a 3-second flash).
+      setTimeout(() => { setTokenReward(null) }, 3000)
     } catch (err) {
       alert(`No se pudo adoptar: ${err instanceof Error ? err.message : 'Error desconocido'}`)
-      setPhase('select')
+      setPhase('idle')
     }
   }
 
-  // Inject Press Start 2P for game labels
-  useEffect(() => {
-    const id = 'ps2p'
-    if (document.getElementById(id)) return
-    const link = document.createElement('link')
-    link.id = id; link.rel = 'stylesheet'
-    link.href = 'https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap'
-    document.head.appendChild(link)
-  }, [])
+  const cancelConfirm = () => {
+    setPhase('idle')
+    setCardKey(k => k + 1)
+  }
 
   return (
-    <div style={{ background: BRAND.bgDeep, minHeight: '100vh', paddingTop: 'var(--nav-h, 60px)', paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 0px))' }}>
+    <>
+      {/* Cinematic intro — outside the shell so it can fullscreen-overlay. */}
+      <AdoptaIntro />
 
-      {/* ── Stats HUD ── flujo normal bajo el NavBar ─────────────────── */}
-      <div style={{
-        background: `${BRAND.bgDeep}ee`,
-        borderBottom: `1px solid ${BRAND.amazon}44`,
-        display: 'flex', justifyContent: 'center', gap: 0,
-      }}>
-        {[
-          { icon: '🫘', label: 'BEANS',     val: beans.toFixed(0),              color: BRAND.pod    },
-          { icon: '🌽', label: 'MAZORCAS',  val: mazorcas.toString(),            color: BRAND.mazorca },
-          { icon: '🌱', label: 'ÁRBOLES',   val: aliveTrees.length.toString(),   color: BRAND.heroic  },
-          { icon: '🍫', label: 'LISTOS',     val: readyCount.toString(),          color: readyCount > 0 ? BRAND.mazorca : `${BRAND.heirloom}33` },
-        ].map(s => (
-          <div key={s.label} style={{
-            flex: 1, textAlign: 'center', padding: '8px 4px',
-            borderRight: `1px solid ${BRAND.amazon}33`,
-          }}>
-            <div style={{ fontSize: 14, lineHeight: 1 }}>{s.icon}</div>
-            <div style={{
-              fontFamily: "'Press Start 2P', monospace",
-              fontSize: 9, color: s.color, lineHeight: 1.6,
-              marginTop: 2,
-            }}>{s.val}</div>
-            <div style={{
-              fontFamily: FONTS.display, fontSize: 7,
-              letterSpacing: '0.2em', color: `${BRAND.heirloom}33`,
-              textTransform: 'uppercase',
-            }}>{s.label}</div>
-          </div>
-        ))}
-      </div>
+      <MobileAppShell
+        topRow={user ? (<><StreakChip compact /><UserLevelChip compact /></>) : null}
+      >
 
-      {tokenReward && <TokenReward beans={tokenReward.beans} mazorcas={tokenReward.mazorcas} />}
-
-      {/* ── Done state ───────────────────────────────────────────────── */}
-      {phase === 'done' && (
-        <div style={{ position: 'relative', maxWidth: 480, margin: '0 auto', padding: '40px clamp(20px,5vw,40px)', textAlign: 'center' }}>
-
-          {/* Particle burst */}
-          {burst && (
-            <div style={{ position: 'absolute', top: '20%', left: '50%', pointerEvents: 'none', zIndex: 20 }}>
-              {SEEDS.map((s, i) => (
-                <div key={i} style={{
-                  position: 'absolute',
-                  fontSize: 16,
-                  animation: `seed-burst-${i} 1s cubic-bezier(0.1, 0.8, 0.3, 1) ${s.delay}s both`,
-                  '--dx': `${Math.cos(s.angle * Math.PI / 180) * s.dist}px`,
-                  '--dy': `${Math.sin(s.angle * Math.PI / 180) * s.dist}px`,
-                } as React.CSSProperties}>
-                  {s.emoji}
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div style={{ fontSize: 72, marginBottom: 8, animation: 'tree-drop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both' }}>🌱</div>
-
-          <div style={{
-            fontFamily: "'Press Start 2P', monospace",
-            fontSize: 'clamp(12px, 3vw, 16px)',
-            color: BRAND.pod,
-            lineHeight: 1.6,
-            marginBottom: 6,
-            textShadow: `0 0 20px ${BRAND.pod}88`,
-          }}>
-            ÁRBOL<br />ADOPTADO!
-          </div>
-
-          <div style={{
-            fontFamily: FONTS.display, fontWeight: 800,
-            fontSize: 12, letterSpacing: '0.2em',
-            color: BRAND.mazorca, marginBottom: 20,
-            textTransform: 'uppercase',
-          }}>
-            +{TOKEN_RATES.tree_adoption.beans} BEANS · +{TOKEN_RATES.tree_adoption.mazorcas} MAZORCAS
-          </div>
-
-          {/* Achievement card */}
-          <div style={{
-            background: `linear-gradient(160deg, #2A0F26 0%, ${BRAND.bgDeep} 100%)`,
-            border: `1.5px solid ${BRAND.mazorca}`,
-            borderRadius: 16, padding: 'clamp(16px, 4vw, 24px)',
-            marginBottom: 20,
-            boxShadow: `0 0 32px ${BRAND.mazorca}33`,
-            animation: 'slide-up 0.5s cubic-bezier(0.34, 1.4, 0.64, 1) 0.3s both',
-          }}>
-            <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 9, color: BRAND.mazorca, letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 6 }}>
-              🎁 Tu reward inmediato CAÚA
-            </div>
-            <div style={{ fontFamily: 'ui-monospace, monospace', fontWeight: 800, fontSize: 'clamp(18px,4vw,26px)', color: BRAND.heirloom, letterSpacing: '0.08em', marginBottom: 8 }}>
-              RedimeCacao10K
-            </div>
-            <div style={{ fontFamily: FONTS.body, fontSize: 12, color: `${BRAND.heirloom}cc`, lineHeight: 1.5, marginBottom: 14 }}>
-              $10.000 COP de Gift Card · canjeable en cauacolombia.co
-            </div>
-            <a
-              href="https://cauacolombia.co/discount/RedimeCacao10K?redirect=/products/cacao-ceremonial-250gr-origen-hobo-huila"
-              target="_blank" rel="noopener noreferrer"
-              style={{
-                display: 'block', background: BRAND.mazorca, color: BRAND.bgDeep,
-                padding: '12px 18px', borderRadius: 999, textDecoration: 'none',
-                fontFamily: FONTS.display, fontWeight: 800, fontSize: 11,
-                letterSpacing: '0.16em', textTransform: 'uppercase', textAlign: 'center',
-              }}
-            >
-              Canjear en CAÚA Colombia →
-            </a>
-          </div>
-
-          <button
-            onClick={() => { setTokenReward(null); setPhase('select') }}
+      {/* Preface section — un solo card que agrupa el contexto emocional
+          (chain) + las stakes (disclosure). Mismo padding, mismo radio,
+          mismo borde — visualmente consistente con el resto del shell. */}
+      <div style={{ padding: '16px 16px 0' }}>
+        <div
+          style={{
+            background: `${BRAND.bgCard}66`,
+            border: `1px solid ${BRAND.amazon}`,
+            borderRadius: 14,
+            overflow: 'hidden',
+          }}
+        >
+          {/* Emotional chain — usa solo BRAND.pod como acento + heirloom muted
+              para los conectores. Menos competing colors. */}
+          <div
             style={{
-              background: 'transparent', color: `${BRAND.heirloom}55`,
-              border: `1px solid ${BRAND.heirloom}22`, borderRadius: 999,
-              padding: '10px 24px', cursor: 'pointer',
-              fontFamily: FONTS.display, fontWeight: 700, fontSize: 10,
-              letterSpacing: '0.16em', textTransform: 'uppercase',
+              padding: '14px 16px',
+              display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6,
+              fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}88`,
+              letterSpacing: '0.2em', textTransform: 'uppercase', flexWrap: 'wrap',
+              textAlign: 'center',
             }}
           >
-            Continuar →
-          </button>
+            <span style={{ color: BRAND.pod, fontWeight: 700 }}>tú cuidas</span>
+            <span aria-hidden="true" style={{ opacity: 0.4 }}>·</span>
+            <span>guardián cosecha</span>
+            <span aria-hidden="true" style={{ opacity: 0.4 }}>·</span>
+            <span>tú comes chocolate</span>
+          </div>
+
+          {/* Divider sutil */}
+          <div style={{ height: 1, background: `${BRAND.amazon}77` }} aria-hidden="true" />
+
+          {/* Stakes disclosure — borde suavizado a amazon, no theobroma. El
+              warning se mantiene en el ícono y en la palabra "muere" dentro. */}
+          <details
+            style={{
+              padding: '12px 16px',
+              fontFamily: FONTS.body,
+              color: BRAND.heirloom,
+              cursor: 'pointer',
+            }}
+          >
+            <summary
+              style={{
+                listStyle: 'none',
+                display: 'flex', alignItems: 'center', gap: 10,
+                fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase',
+                color: `${BRAND.heirloom}cc`,
+                fontFamily: FONTS.display, fontWeight: 700,
+              }}
+            >
+              <span aria-hidden="true" style={{ color: BRAND.theobroma }}>⚠</span>
+              <span>¿qué pasa si no lo cuido?</span>
+              <span style={{ marginLeft: 'auto', fontFamily: FONTS.body, fontSize: 9, color: `${BRAND.heirloom}44`, letterSpacing: '0.04em', textTransform: 'none' }}>
+                tap
+              </span>
+            </summary>
+            <div style={{ marginTop: 12, fontSize: 12, lineHeight: 1.6, color: `${BRAND.heirloom}aa` }}>
+              <p style={{ margin: '0 0 8px 0' }}>
+                Sus vitales bajan sin tu cuidado. <span style={{ color: BRAND.theobroma }}>Si los pierdes todos, muere</span> — y los granos sin cosechar se queman.
+              </p>
+              <p style={{ margin: '0 0 8px 0' }}>
+                Pero la muerte no es el final: pasa a la <span style={{ color: BRAND.pod }}>Labranza</span>. Con el machete cortás su biomasa, regresa al suelo, y siembras su linaje. <span style={{ color: BRAND.pod }}>+10 granos</span> por cada regeneración.
+              </p>
+              <p style={{ margin: 0, fontFamily: FONTS.serif, fontStyle: 'italic', color: `${BRAND.heirloom}77`, fontSize: 13 }}>
+                Cuidar es la regla. Regenerar es el segundo acto.
+              </p>
+            </div>
+          </details>
         </div>
-      )}
+      </div>
 
-      {/* ── Character Select + Confirm ────────────────────────────────── */}
-      {(phase === 'select' || phase === 'confirm' || phase === 'adopting') && (
-        <div style={{ maxWidth: 540, margin: '0 auto', padding: '0 clamp(16px,5vw,32px) clamp(40px,8vw,80px)' }}>
+      {/* Header — tight padding inside the mobile shell. */}
+      <div style={{ maxWidth: 640, margin: '0 auto', padding: '24px 16px 0', textAlign: 'center' }}>
+        <p style={{ fontFamily: FONTS.serif, fontStyle: 'italic', color: BRAND.pod, fontSize: 12, letterSpacing: '0.28em', marginBottom: 10 }}>
+          cacao fruta brutal
+        </p>
+        <h1 style={{
+          fontFamily: FONTS.display, fontWeight: 900,
+          fontSize: 'clamp(36px, 9vw, 56px)', color: BRAND.heirloom,
+          textTransform: 'uppercase', margin: '0 0 12px', lineHeight: 0.92,
+          letterSpacing: '0.02em',
+        }}>
+          Adopta un<br /><span style={{ color: BRAND.pod }}>árbol de cacao</span>
+        </h1>
+        <p style={{ fontFamily: FONTS.body, color: `${BRAND.heirloom}66`, fontSize: 12, lineHeight: 1.6, maxWidth: 360, margin: '0 auto 20px' }}>
+          Desliza <span style={{ color: BRAND.pod }}>→ derecha</span> para adoptar ·{' '}
+          <span style={{ color: `${BRAND.theobroma}cc` }}>← izquierda</span> para pasar
+        </p>
 
-          {/* Title */}
-          <div style={{ textAlign: 'center', paddingTop: 28, paddingBottom: 20 }}>
-            <p style={{ fontFamily: FONTS.serif, fontStyle: 'italic', color: BRAND.pod, fontSize: 12, letterSpacing: '0.25em', marginBottom: 8 }}>
-              cacao fruta brutal
-            </p>
-            <h1 style={{
-              fontFamily: FONTS.display, fontWeight: 900,
-              fontSize: 'clamp(36px, 9vw, 60px)', color: BRAND.heirloom,
-              textTransform: 'uppercase', margin: '0 0 6px', lineHeight: 0.92,
+        {/* Golden Ticket Freemium · ribbon de campaña — visible siempre que el
+            flag está activo. Click → abre modal con los 4 hitos del Camino del
+            Creyente. Apagar campaña: VITE_GOLDEN_TICKET_FREEMIUM=false en Vercel. */}
+        {IS_GOLDEN_TICKET_FREEMIUM && (
+          <button
+            onClick={() => setShowGTModal(true)}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              background: `linear-gradient(135deg, ${BRAND.mazorca}22, ${BRAND.mazorca}11)`,
+              border: `1.5px solid ${BRAND.mazorca}`,
+              borderRadius: 999,
+              padding: '8px 16px',
+              cursor: 'pointer',
+              marginBottom: 18,
+              boxShadow: `0 0 18px ${BRAND.mazorca}55`,
+              animation: 'caua-gt-ribbon-pulse 2.4s ease-in-out infinite',
+            }}
+          >
+            <span style={{ fontSize: 14 }}>🎟️</span>
+            <span style={{
+              fontFamily: FONTS.display, fontWeight: 800, fontSize: 11,
+              color: BRAND.mazorca, letterSpacing: '0.18em', textTransform: 'uppercase',
             }}>
-              {es ? 'Adopta un' : 'Adopt a'}<br />
-              <span style={{ color: BRAND.pod }}>{es ? 'árbol de cacao' : 'cacao tree'}</span>
-            </h1>
+              Adopta gratis · Golden Ticket activo
+            </span>
+            <span style={{
+              fontFamily: FONTS.display, fontWeight: 700, fontSize: 9,
+              color: `${BRAND.mazorca}99`, letterSpacing: '0.08em',
+            }}>
+              ¿qué es?
+            </span>
+          </button>
+        )}
 
+        {/* Gamify section — agrupado en card consistente con el preface:
+            mismo borde, mismo radio, divider interno entre Logros y Pactos.  */}
+        {user && !treesLoading && trees.length > 0 && (
+          <div style={{
+            background: `${BRAND.bgCard}66`,
+            border: `1px solid ${BRAND.amazon}`,
+            borderRadius: 14,
+            overflow: 'hidden',
+            marginBottom: 20,
+            textAlign: 'left',
+          }}>
+            <div style={{ padding: '16px' }}>
+              <div style={{
+                fontFamily: FONTS.display, fontWeight: 700, fontSize: 10,
+                color: `${BRAND.heirloom}99`, letterSpacing: '0.22em',
+                textTransform: 'uppercase', marginBottom: 12,
+              }}>
+                Logros
+              </div>
+              <AchievementGrid />
+            </div>
+            <div style={{ height: 1, background: `${BRAND.amazon}77`, margin: '0 16px' }} aria-hidden="true" />
+            <div style={{ padding: '16px' }}>
+              <QuestPill />
+            </div>
+          </div>
+        )}
+
+        {/* Adopted trees — split en dos jardines:
+              · Jardín       → vivos / en peligro / listos a cosechar / cosechados
+              · Labranza     → muertos · biomasa que regresa al suelo (regenerativo) */}
+        {!treesLoading && trees.length > 0 && (() => {
+          // Annotate each tree with its life-status. Phase 1.5 — 4 niveles
+          // visuales claramente distintos: ready / healthy / attention / dying.
+          // Death lo decide el server (died_at populated) — el cliente solo lo refleja.
+          const annotated = trees.map(t => {
+            const harvested = !!t.harvested_at
+            const dead    = isTreeDead(t)
+            const dying   = !dead && isDying(t)        // vitals < 30 — VA A MORIR
+            const warn    = !dead && needsAttention(t) // 30 ≤ vitals < 50 — necesita atención
+            const ready   = !dead && isHarvestReady(t) // ≥ 4.6h + cooldown vencido
+            const stage   = getStageByHours(hoursSinceAdoption(t.adopted_at))
+            return { t, harvested, dead, dying, warn, ready, stage }
+          })
+          const aliveTrees = annotated.filter(x => !x.dead)
+          const deadTrees  = annotated.filter(x =>  x.dead)
+
+          // Tier definition — exclusive priority: ready > dying > warn > healthy.
+          // Each tier has a dedicated color, emoji, label, animation.
+          type Tier = 'ready' | 'dying' | 'warn' | 'harvested' | 'healthy'
+          type TierStyle = {
+            color:     string
+            icon:      string
+            label:     string
+            pulse?:    boolean
+          }
+          const tierStyle = (t: typeof annotated[number]): TierStyle => {
+            if (t.ready)  return { color: BRAND.mazorca, icon: '🍫', label: 'Listo a cosechar', pulse: true }
+            if (t.dying)  return { color: '#e74c3c',     icon: '💀', label: 'Va a morir',       pulse: true }
+            if (t.warn)   return { color: '#F1A91E',     icon: '⚠️', label: 'Necesita atención' }
+            if (t.harvested) return { color: BRAND.pod,  icon: '🌳', label: 'Cosechado · próx ciclo' }
+            return { color: BRAND.pod, icon: '🌱', label: t.stage.name }
+          }
+          const tierOf = (t: typeof annotated[number]): Tier => {
+            if (t.ready) return 'ready'
+            if (t.dying) return 'dying'
+            if (t.warn)  return 'warn'
+            if (t.harvested) return 'harvested'
+            return 'healthy'
+          }
+
+          return (
+            <>
+              {/* JARDÍN — chips para árboles vivos. 4-tier color system. */}
+              {aliveTrees.length > 0 && (
+                <>
+                  <div style={{
+                    fontFamily: FONTS.display, fontWeight: 800, fontSize: 10,
+                    color: `${BRAND.heirloom}88`, letterSpacing: '0.22em',
+                    textTransform: 'uppercase', marginBottom: 8,
+                  }}>
+                    Mi Jardín · {aliveTrees.length}
+                  </div>
+
+                  {/* Legend — visible siempre que hay árboles, ayuda a leer los chips */}
+                  <div style={{
+                    display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center',
+                    marginBottom: 12,
+                    fontFamily: FONTS.body, fontSize: 9, color: `${BRAND.heirloom}55`,
+                    letterSpacing: '0.04em',
+                  }}>
+                    <span><span style={{ color: BRAND.mazorca }}>🍫 Listo</span></span>
+                    <span><span style={{ color: '#e74c3c' }}>💀 Va a morir</span></span>
+                    <span><span style={{ color: '#F1A91E' }}>⚠️ Atención</span></span>
+                    <span><span style={{ color: BRAND.pod }}>🌱 Sano</span></span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginBottom: 24 }}>
+                    {aliveTrees.map((row) => {
+                      const s = tierStyle(row)
+                      const t = row.t
+                      const tier = tierOf(row)
+                      return (
+                        <button
+                          key={t.id}
+                          onClick={() => navigate(`/tree/${t.id}`)}
+                          data-tier={tier}
+                          style={{
+                            background: `${s.color}1a`,
+                            border: `1px solid ${s.color}${s.pulse ? 'cc' : '66'}`,
+                            borderRadius: 999,
+                            padding: '7px 14px',
+                            cursor: 'pointer',
+                            fontFamily: FONTS.display, fontWeight: 700, fontSize: 12,
+                            color: s.color, letterSpacing: '0.08em',
+                            boxShadow: s.pulse ? `0 0 18px ${s.color}66` : 'none',
+                            animation: tier === 'ready' ? 'caua-chip-pulse 1.6s ease-in-out infinite'
+                                     : tier === 'dying' ? 'caua-chip-dying 1s ease-in-out infinite'
+                                     : 'none',
+                            transition: 'border-color 0.2s, background 0.2s, box-shadow 0.2s',
+                          }}
+                        >
+                          {s.icon} {GUARDIANS[t.guardian_id]?.name ?? 'Árbol'} · {s.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </>
+              )}
+
+              {/* LABRANZA — árboles muertos. Tiles más grandes + CTA al machete
+                  arena (vive en el dashboard). El click directo en "Regenerar"
+                  lleva al usuario al dashboard donde está el Fruit-Ninja arena
+                  con el machete 3D. Cierra el bucle muerte → regeneración. */}
+              {deadTrees.length > 0 && (
+                <>
+                  <div style={{
+                    fontFamily: FONTS.display, fontWeight: 800, fontSize: 11,
+                    color: '#e74c3ccc', letterSpacing: '0.22em',
+                    textTransform: 'uppercase', marginBottom: 4,
+                    display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center',
+                  }}>
+                    <span style={{ fontSize: 14 }}>💀</span>
+                    <span>Labranza · {deadTrees.length}</span>
+                  </div>
+                  <div style={{
+                    fontFamily: FONTS.serif, fontStyle: 'italic',
+                    color: `${BRAND.heirloom}66`, fontSize: 11,
+                    marginBottom: 10, letterSpacing: '0.04em', textAlign: 'center',
+                  }}>
+                    Biomasa que regresa al suelo · machete · +10 granos por cada lineage regenerado
+                  </div>
+
+                  {/* Sticky CTA — bigger, gradient, leads to the machete arena */}
+                  <button
+                    onClick={() => navigate('/dashboard#labranza')}
+                    style={{
+                      width: '100%',
+                      maxWidth: 420,
+                      margin: '0 auto 12px',
+                      display: 'flex',
+                      background: `linear-gradient(135deg, #1a0606 0%, ${BRAND.pod}33 100%)`,
+                      border: `1px solid ${BRAND.pod}88`,
+                      borderRadius: 14,
+                      padding: '14px 18px',
+                      cursor: 'pointer',
+                      alignItems: 'center', gap: 14,
+                      boxShadow: `0 0 24px ${BRAND.pod}33, inset 0 1px 0 ${BRAND.heirloom}11`,
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)' }}
+                  >
+                    <div style={{
+                      fontSize: 32,
+                      filter: `drop-shadow(0 4px 8px ${BRAND.pod}aa)`,
+                    }}>⚔</div>
+                    <div style={{ flex: 1, textAlign: 'left' }}>
+                      <div style={{
+                        fontFamily: FONTS.display, fontWeight: 800, fontSize: 13,
+                        color: BRAND.heirloom, letterSpacing: '0.12em', textTransform: 'uppercase',
+                      }}>
+                        Rebanar con machete →
+                      </div>
+                      <div style={{
+                        fontFamily: FONTS.body, fontSize: 10,
+                        color: `${BRAND.heirloom}99`, marginTop: 3, letterSpacing: '0.02em',
+                      }}>
+                        Fruit-Ninja arena · regenera · +10 granos × {deadTrees.length}
+                      </div>
+                    </div>
+                    <div style={{
+                      fontFamily: FONTS.display, fontWeight: 800, fontSize: 18,
+                      color: BRAND.pod,
+                    }}>▶</div>
+                  </button>
+
+                  {/* Compact list of pending regenerations — just for visibility */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center', marginBottom: 24 }}>
+                    {deadTrees.map(({ t }) => (
+                      <div key={t.id} style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 5,
+                        background: '#1a0606',
+                        border: `1px solid #e74c3c44`,
+                        borderRadius: 999,
+                        padding: '5px 10px',
+                        opacity: 0.75,
+                      }}>
+                        <span style={{ fontSize: 12, filter: 'grayscale(0.5)' }}>💀</span>
+                        <span style={{
+                          fontFamily: FONTS.display, fontWeight: 700, fontSize: 10,
+                          color: '#e74c3ccc', letterSpacing: '0.08em',
+                        }}>
+                          {GUARDIANS[t.guardian_id]?.name ?? 'Árbol'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              <style>{`
+                @keyframes caua-chip-pulse {
+                  0%, 100% { box-shadow: 0 0 14px ${BRAND.mazorca}55; }
+                  50%      { box-shadow: 0 0 24px ${BRAND.mazorca}aa; }
+                }
+                @keyframes caua-chip-dying {
+                  0%, 100% { box-shadow: 0 0 12px #e74c3c66; opacity: 1; }
+                  50%      { box-shadow: 0 0 22px #e74c3caa; opacity: 0.85; }
+                }
+                @keyframes caua-regen-pulse {
+                  0%, 100% { box-shadow: 0 0 16px ${BRAND.pod}44; }
+                  50%      { box-shadow: 0 0 28px ${BRAND.pod}88; }
+                }
+              `}</style>
+            </>
+          )
+        })()}
+      </div>
+
+      {/* Main area */}
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 var(--space-page) clamp(48px,8vw,80px)' }}>
+
+        {tokenReward && <TokenReward beans={tokenReward.beans} mazorcas={tokenReward.mazorcas} />}
+
+        {/* Done */}
+        {phase === 'done' && (
+          <div style={{ textAlign: 'center', padding: '32px 0 16px' }}>
+            <div style={{ fontSize: 56, marginBottom: 12 }}>🌱</div>
+            <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 28, color: BRAND.pod, letterSpacing: '0.05em' }}>
+              ¡ÁRBOL ADOPTADO!
+            </div>
+            <p style={{ fontFamily: FONTS.body, color: `${BRAND.heirloom}66`, fontSize: 13, marginTop: 8 }}>
+              Cuídalo cada 30 min durante 5 horas para cosechar 🍫
+            </p>
+
+            {/* Golden Ticket · hito 1/4 completado · solo cuando freemium activo */}
             {IS_GOLDEN_TICKET_FREEMIUM && (
               <div style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                background: `${BRAND.mazorca}18`, border: `1.5px solid ${BRAND.mazorca}`,
-                borderRadius: 999, padding: '6px 14px', marginTop: 10,
-                animation: 'hud-pulse 2.4s ease-in-out infinite',
+                marginTop: 18,
+                display: 'inline-flex', alignItems: 'center', gap: 10,
+                background: `${BRAND.mazorca}1a`,
+                border: `1.5px solid ${BRAND.mazorca}`,
+                borderRadius: 999,
+                padding: '8px 18px',
+                boxShadow: `0 0 18px ${BRAND.mazorca}44`,
               }}>
-                <span style={{ fontSize: 13 }}>🎟️</span>
-                <span style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 10, color: BRAND.mazorca, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
-                  Adopta gratis · Golden Ticket activo
+                <span style={{ fontSize: 15 }}>🎟️</span>
+                <span style={{
+                  fontFamily: FONTS.display, fontWeight: 800, fontSize: 11,
+                  color: BRAND.mazorca, letterSpacing: '0.16em', textTransform: 'uppercase',
+                }}>
+                  Hito 1 de 4 completado · siguen 3 más
                 </span>
               </div>
             )}
-          </div>
 
-          {/* ── CHARACTER SELECT ───────────────────────────────────────── */}
-          <div style={{ marginBottom: 24 }}>
-            <div style={{
-              fontFamily: "'Press Start 2P', monospace",
-              fontSize: 7, color: `${BRAND.heirloom}44`,
-              letterSpacing: '0.16em', textTransform: 'uppercase',
-              textAlign: 'center', marginBottom: 12,
-            }}>
-              {es ? '— ELIGE TU GUARDIÁN —' : '— SELECT YOUR GUARDIAN —'}
+            {/* ─── 3-step redemption preview ───
+                Reemplaza el block hardcoded RedimeCacao10K. Surfacea el
+                camino completo: gift card hoy → primera mazorca día 30 →
+                1000 mz → 1 $CACAO on-chain. */}
+            <div style={{ marginTop: 28, maxWidth: 420, marginLeft: 'auto', marginRight: 'auto' }}>
+              <RedemptionPreviewCard giftCode="RedimeCacao10K" />
+              <a
+                href="https://cauacolombia.co/discount/RedimeCacao10K?redirect=/products/cacao-ceremonial-250gr-origen-hobo-huila"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-cta-name="cfb-camino-a-redime"
+                data-cta-surface="adoptar-done"
+                data-cta-destination="cauacolombia-pdp-discount"
+                style={{
+                  display: 'block',
+                  marginTop: 14,
+                  background: BRAND.mazorca,
+                  color: BRAND.bgDeep,
+                  padding: '12px 18px',
+                  borderRadius: 999,
+                  textDecoration: 'none',
+                  fontFamily: FONTS.display, fontWeight: 800, fontSize: 12,
+                  letterSpacing: '0.16em', textTransform: 'uppercase',
+                  textAlign: 'center',
+                }}
+              >
+                Canjear en CAÚA Colombia →
+              </a>
             </div>
 
-            {/* Guardian cards row */}
-            <div style={{
-              display: 'flex', gap: 10, overflowX: 'auto',
-              paddingBottom: 6, scrollSnapType: 'x mandatory',
-              scrollbarWidth: 'none',
-            }}>
-              {GUARDIANS.map((g, i) => {
-                const isActive = i === activeIdx
-                const ownedHere = aliveTrees.filter(x => x.t.guardian_id === i).length
-                return (
+            {/* Continuar — dismiss explícito (no auto-reset) */}
+            <button
+              onClick={() => { setTokenReward(null); setPhase('idle') }}
+              style={{
+                marginTop: 20,
+                background: 'transparent',
+                color: `${BRAND.heirloom}88`,
+                border: `1px solid ${BRAND.heirloom}33`,
+                borderRadius: 999,
+                padding: '10px 22px',
+                cursor: 'pointer',
+                fontFamily: FONTS.display, fontWeight: 700, fontSize: 11,
+                letterSpacing: '0.16em', textTransform: 'uppercase',
+              }}
+            >
+              Continuar →
+            </button>
+          </div>
+        )}
+
+        {/* Card stack + controls */}
+        {phase !== 'done' && (
+          <>
+            {/* Card stack — height fluid so short phones (≤568px) don't clip */}
+            <div style={{ position: 'relative', height: 'clamp(420px, 62vh, 540px)', marginBottom: 20 }}>
+
+              {/* Background card (next guardian peek) */}
+              <div style={{
+                position: 'absolute', inset: 0,
+                background: `linear-gradient(160deg, ${BRAND.amazon} 0%, #091a10 50%, ${BRAND.bgDeep} 100%)`,
+                borderRadius: 24,
+                transform: 'scale(0.94) translateY(14px)',
+                opacity: 0.3,
+                pointerEvents: 'none',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <div style={{ fontSize: 80, opacity: 0.25 }}>
+                  {GUARDIANS[(activeIdx + 1) % GUARDIANS.length].emoji}
+                </div>
+              </div>
+
+              {/* Active swipeable card */}
+              {phase !== 'adopting' && (
+                <SwipeableTreeCard
+                  key={cardKey}
+                  guardian={guardian}
+                  onSwipeRight={handleSwipeRight}
+                  onSwipeLeft={handleSwipeLeft}
+                  imageIndex={activeIdx}
+                />
+              )}
+
+              {/* Confirming overlay — sits ON TOP of the card, centered, so
+                  the user sees clearly what they swiped into. Big emoji + price
+                  + circular CTA. The two buttons (confirm/cancel) live INSIDE
+                  the same card frame so the swipe→action thread is unbroken. */}
+              {phase === 'confirming' && (
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  background: `linear-gradient(160deg, ${BRAND.amazon} 0%, #091a10 50%, ${BRAND.bgDeep} 100%)`,
+                  borderRadius: 24, padding: 'clamp(20px, 4vw, 32px)',
+                  display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', justifyContent: 'space-between',
+                  boxShadow: `inset 0 0 60px ${BRAND.pod}22, 0 0 32px ${BRAND.pod}33`,
+                  border: `1px solid ${BRAND.pod}66`,
+                  animation: 'caua-confirm-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both',
+                }}>
+                  {/* Top: eyebrow */}
+                  <div style={{
+                    fontFamily: FONTS.display, fontWeight: 700, fontSize: 10,
+                    color: IS_GOLDEN_TICKET_FREEMIUM ? BRAND.mazorca : BRAND.pod,
+                    letterSpacing: '0.25em', textTransform: 'uppercase',
+                  }}>
+                    {IS_GOLDEN_TICKET_FREEMIUM ? '🎟️ Hito 1 de 4 · Camino del Creyente' : 'Confirma tu adopción'}
+                  </div>
+
+                  {/* Center: emoji + name + region + price */}
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{
+                      fontSize: 'clamp(60px, 14vw, 88px)',
+                      marginBottom: 14,
+                      filter: `drop-shadow(0 12px 24px ${BRAND.pod}55)`,
+                    }}>{guardian.emoji}</div>
+                    <div style={{
+                      fontFamily: FONTS.display, fontWeight: 900,
+                      fontSize: 'clamp(22px, 5vw, 30px)',
+                      color: BRAND.heirloom, letterSpacing: '0.04em',
+                      textTransform: 'uppercase', lineHeight: 1,
+                    }}>{guardian.name}</div>
+                    <div style={{
+                      fontFamily: FONTS.serif, fontStyle: 'italic',
+                      color: BRAND.mazorca, fontSize: 13, marginTop: 4,
+                      letterSpacing: '0.06em',
+                    }}>
+                      {guardian.region} · {guardian.varieties[0]}
+                    </div>
+
+                    {/* Lineage regenerated badge — shown only when the user
+                        has an active regen for this guardian (Phase 2.5).
+                        Narrative-only for now; future PR will apply a
+                        discount at server-side adoption time. */}
+                    {(() => {
+                      const regen = findRegen(activeIdx)
+                      if (!regen) return null
+                      // Show the expiration as an absolute date — keeps the
+                      // render pure (Date.now() can't be called here under
+                      // react-hooks/purity). User gets "vence Mayo 8" rather
+                      // than a live countdown; close enough for a 7d window.
+                      const expDate = new Date(regen.expires_at).toLocaleDateString('es-CO', {
+                        day: 'numeric', month: 'short',
+                      })
+                      return (
+                        <div style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 6,
+                          background: `${BRAND.pod}22`,
+                          border: `1px solid ${BRAND.pod}aa`,
+                          borderRadius: 999,
+                          padding: '5px 12px',
+                          marginTop: 12,
+                          boxShadow: `0 0 16px ${BRAND.pod}33`,
+                          animation: 'caua-regen-pulse 2.4s ease-in-out infinite',
+                        }}>
+                          <span style={{ fontSize: 14 }}>🌱</span>
+                          <span style={{
+                            fontFamily: FONTS.display, fontWeight: 800, fontSize: 9,
+                            color: BRAND.pod, letterSpacing: '0.16em', textTransform: 'uppercase',
+                          }}>
+                            Lineage regenerado · vence {expDate}
+                          </span>
+                        </div>
+                      )
+                    })()}
+
+                    {IS_GOLDEN_TICKET_FREEMIUM ? (
+                      <>
+                        <div style={{ marginTop: 18, display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 10 }}>
+                          <span style={{
+                            fontFamily: FONTS.display, fontWeight: 800,
+                            fontSize: 'clamp(20px, 4.5vw, 28px)',
+                            color: `${BRAND.heirloom}55`,
+                            textDecoration: 'line-through',
+                            letterSpacing: '-0.01em',
+                          }}>
+                            ${TREE_ADOPTION_PRICE_USD} USD
+                          </span>
+                          <span style={{
+                            fontFamily: FONTS.display, fontWeight: 900,
+                            fontSize: 'clamp(36px, 9vw, 56px)',
+                            color: BRAND.mazorca, letterSpacing: '-0.01em',
+                            textShadow: `0 4px 24px ${BRAND.mazorca}66`,
+                          }}>
+                            GRATIS
+                          </span>
+                        </div>
+                        <div style={{
+                          fontFamily: FONTS.body, fontSize: 11, color: BRAND.mazorca,
+                          marginTop: 4, letterSpacing: '0.08em', fontWeight: 700,
+                        }}>🎟️ 1 de 30 cupos para Cacao Ceremony gratis</div>
+                        <div style={{
+                          fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}88`,
+                          marginTop: 4, letterSpacing: '0.04em',
+                        }}>🫘 +10 granos · 🌽 +3 mazorcas al adoptar</div>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{
+                          marginTop: 18,
+                          fontFamily: FONTS.display, fontWeight: 900,
+                          fontSize: 'clamp(36px, 9vw, 56px)',
+                          color: BRAND.mazorca, letterSpacing: '-0.01em',
+                          textShadow: `0 4px 24px ${BRAND.mazorca}66`,
+                        }}>
+                          ${TREE_ADOPTION_PRICE_USD}<span style={{ fontSize: 14, color: `${BRAND.heirloom}66`, marginLeft: 6, fontWeight: 700, letterSpacing: '0.16em' }}>USD</span>
+                        </div>
+                        <div style={{
+                          fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}88`,
+                          marginTop: 4, letterSpacing: '0.04em',
+                        }}>🫘 +10 granos · 🌽 +3 mazorcas al adoptar</div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Bottom: confirm + cancel + tiny disclaimer */}
+                  <div style={{ width: '100%' }}>
+                    <button onClick={confirmAdoption} style={{
+                      width: '100%', padding: '14px',
+                      background: IS_GOLDEN_TICKET_FREEMIUM
+                        ? `linear-gradient(135deg, ${BRAND.mazorca}, ${BRAND.pod})`
+                        : `linear-gradient(135deg, ${BRAND.pod}, ${BRAND.amazon})`,
+                      border: 'none', borderRadius: 999, cursor: 'pointer',
+                      color: IS_GOLDEN_TICKET_FREEMIUM ? BRAND.bgDeep : BRAND.heirloom,
+                      fontFamily: FONTS.display, fontWeight: 800,
+                      fontSize: 13, letterSpacing: '0.16em', textTransform: 'uppercase',
+                      boxShadow: IS_GOLDEN_TICKET_FREEMIUM
+                        ? `0 12px 28px ${BRAND.mazorca}66`
+                        : `0 12px 28px ${BRAND.pod}55`,
+                    }}>
+                      {IS_GOLDEN_TICKET_FREEMIUM ? '✓ Adoptar gratis' : `✓ Adoptar por $${TREE_ADOPTION_PRICE_USD}`}
+                    </button>
+                    <button onClick={cancelConfirm} style={{
+                      width: '100%', padding: 10, marginTop: 8,
+                      background: 'transparent', border: 'none', cursor: 'pointer',
+                      color: `${BRAND.heirloom}66`,
+                      fontFamily: FONTS.display, fontWeight: 700,
+                      fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase',
+                    }}>
+                      ← Volver
+                    </button>
+                    <div style={{
+                      textAlign: 'center', fontSize: 9, color: `${BRAND.heirloom}55`,
+                      lineHeight: 1.5, marginTop: 6,
+                    }}>
+                      {IS_GOLDEN_TICKET_FREEMIUM
+                        ? 'Tu adopción cuenta como hito 1 de 4 del Camino del Creyente.'
+                        : 'Pago se despliega 60/30/10 vía Coinbase Onramp.'}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Adopting overlay */}
+              {phase === 'adopting' && (
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  background: `linear-gradient(160deg, ${BRAND.amazon} 0%, #091a10 50%, ${BRAND.bgDeep} 100%)`,
+                  borderRadius: 24,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 52, marginBottom: 12 }}>{guardian.emoji}</div>
+                    <div style={{ fontFamily: FONTS.serif, fontStyle: 'italic', color: `${BRAND.heirloom}80`, fontSize: 14 }}>
+                      Plantando tu semilla...
+                    </div>
+                  </div>
+                </div>
+              )}
+              <style>{`
+                @keyframes caua-confirm-in {
+                  0%   { opacity: 0; transform: scale(0.92); }
+                  100% { opacity: 1; transform: scale(1); }
+                }
+              `}</style>
+            </div>
+
+            {/* Guardian dots */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 20 }}>
+              {GUARDIANS.map((_, i) => (
+                <div key={i} onClick={() => selectGuardian(i)} style={{
+                  width: i === activeIdx ? 18 : 6, height: 6, borderRadius: 3,
+                  background: i === activeIdx ? BRAND.pod : `${BRAND.heirloom}33`,
+                  cursor: 'pointer', transition: 'width 0.3s, background 0.3s',
+                }} />
+              ))}
+            </div>
+
+            {/* Idle: swipe hints + historia territorial */}
+            {phase === 'idle' && (
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 48, marginBottom: 14 }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 28, marginBottom: 4 }}>👈</div>
+                    <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 9, letterSpacing: '0.15em', color: '#e74c3c88' }}>PASAR</div>
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 28, marginBottom: 4 }}>👉</div>
+                    <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 9, letterSpacing: '0.15em', color: '#2ecc7188' }}>ADOPTAR</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 11, color: `${BRAND.heirloom}33`, marginBottom: 16 }}>
+                  🫘 +10 granos · 🌽 +3 mazorcas al adoptar
+                </div>
+
+                {/* Lee la historia · contexto territorial del Guardián. Le da al
+                    usuario el "a quién le llega el impacto" antes de adoptar. */}
+                {guardian.blogSlug && (
                   <button
-                    key={i}
-                    onClick={() => { setActiveIdx(i); if (phase === 'confirm') setPhase('select') }}
+                    onClick={() => navigate(`/blog/${guardian.blogSlug}`)}
                     style={{
-                      flexShrink: 0, scrollSnapAlign: 'start',
-                      width: isActive ? 100 : 78,
-                      padding: isActive ? '14px 8px' : '10px 6px',
-                      background: isActive
-                        ? `linear-gradient(160deg, ${BRAND.pod}22, ${BRAND.bgCard})`
-                        : BRAND.bgCard,
-                      border: `2px solid ${isActive ? BRAND.pod : BRAND.amazon + '55'}`,
-                      borderRadius: 14, cursor: 'pointer',
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-                      boxShadow: isActive ? `0 0 20px ${BRAND.pod}44` : 'none',
-                      transform: isActive ? 'translateY(-4px)' : 'none',
-                      transition: 'all 0.22s cubic-bezier(0.34, 1.4, 0.64, 1)',
+                      display: 'inline-flex', alignItems: 'center', gap: 8,
+                      background: 'transparent',
+                      border: `1px solid ${BRAND.pod}66`,
+                      borderRadius: 999,
+                      padding: '9px 18px',
+                      cursor: 'pointer',
+                      color: BRAND.pod,
+                      fontFamily: FONTS.display, fontWeight: 700, fontSize: 11,
+                      letterSpacing: '0.12em', textTransform: 'uppercase',
+                      transition: 'border-color 0.2s, background 0.2s',
                     }}
                   >
+                    <span style={{ fontSize: 13 }}>📰</span>
+                    <span>
+                      La historia de {guardian.name}
+                      <span style={{ color: `${BRAND.heirloom}66`, fontWeight: 400, marginLeft: 6, letterSpacing: '0.04em', textTransform: 'none' }}>
+                        · {guardian.town}, {guardian.region}
+                      </span>
+                    </span>
+                    <span style={{ fontSize: 12, color: BRAND.pod }}>→</span>
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Confirming overlay lives ON the card now (above) — no separate
+                panel below to avoid the disconnected confirm button. */}
+          </>
+        )}
+      </div>
+
+      {/* Golden Ticket explainer modal — 4 hitos del Camino del Creyente */}
+      {showGTModal && (
+        <div
+          onClick={() => setShowGTModal(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 200,
+            background: 'rgba(4, 12, 6, 0.86)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 'clamp(16px, 4vw, 32px)',
+            animation: 'caua-gt-modal-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 520, width: '100%',
+              background: `linear-gradient(160deg, #2A0F26 0%, ${BRAND.bgDeep} 100%)`,
+              border: `1.5px solid ${BRAND.mazorca}`,
+              borderRadius: 18,
+              padding: 'clamp(20px, 4vw, 32px)',
+              boxShadow: `0 24px 64px rgba(0, 0, 0, 0.6), 0 0 32px ${BRAND.mazorca}33`,
+              maxHeight: '90vh', overflowY: 'auto',
+            }}
+          >
+            <div style={{
+              fontFamily: FONTS.display, fontWeight: 700, fontSize: 10,
+              color: BRAND.mazorca, letterSpacing: '0.25em', textTransform: 'uppercase',
+              marginBottom: 8, textAlign: 'center',
+            }}>
+              🎟️ Golden Ticket
+            </div>
+            <h2 style={{
+              fontFamily: FONTS.display, fontWeight: 900,
+              fontSize: 'clamp(24px, 5vw, 32px)',
+              color: BRAND.heirloom, letterSpacing: '0.02em',
+              textTransform: 'uppercase', textAlign: 'center',
+              margin: '0 0 6px', lineHeight: 1,
+            }}>
+              Camino del Creyente
+            </h2>
+            <p style={{
+              fontFamily: FONTS.serif, fontStyle: 'italic',
+              color: `${BRAND.heirloom}99`, fontSize: 13,
+              textAlign: 'center', margin: '0 0 22px', lineHeight: 1.4,
+            }}>
+              Cumple los 4 hitos y compite por <strong style={{ color: BRAND.mazorca }}>1 de 30 cupos</strong> a la Cacao Ceremony 100% gratis.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 22 }}>
+              {GOLDEN_TICKET_HITOS.map((h) => {
+                const isFirst = h.n === 1
+                return (
+                  <div key={h.n} style={{
+                    display: 'flex', alignItems: 'flex-start', gap: 14,
+                    background: isFirst ? `${BRAND.mazorca}14` : `${BRAND.heirloom}08`,
+                    border: `1px solid ${isFirst ? BRAND.mazorca : `${BRAND.heirloom}22`}`,
+                    borderRadius: 12,
+                    padding: '12px 14px',
+                  }}>
                     <div style={{
-                      fontSize: isActive ? 44 : 32,
-                      filter: isActive ? `drop-shadow(0 4px 12px ${BRAND.pod}88)` : 'none',
-                      transition: 'font-size 0.22s',
+                      flexShrink: 0,
+                      width: 32, height: 32, borderRadius: '50%',
+                      background: isFirst ? BRAND.mazorca : `${BRAND.heirloom}11`,
+                      color: isFirst ? BRAND.bgDeep : `${BRAND.heirloom}88`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontFamily: FONTS.display, fontWeight: 900, fontSize: 14,
                     }}>
-                      {g.emoji}
+                      {h.n}
                     </div>
-                    <div style={{
-                      fontFamily: FONTS.display, fontWeight: 800,
-                      fontSize: isActive ? 11 : 9,
-                      color: isActive ? BRAND.heirloom : `${BRAND.heirloom}77`,
-                      letterSpacing: '0.06em', textTransform: 'uppercase',
-                      lineHeight: 1,
-                    }}>
-                      {g.name}
-                    </div>
-                    <div style={{
-                      fontFamily: FONTS.body, fontSize: 8,
-                      color: isActive ? BRAND.pod : `${BRAND.heirloom}33`,
-                      letterSpacing: '0.04em',
-                    }}>
-                      {g.region.split(' ')[0]}
-                    </div>
-                    {ownedHere > 0 && (
+                    <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{
-                        fontFamily: "'Press Start 2P', monospace",
-                        fontSize: 6, color: BRAND.mazorca,
-                        background: `${BRAND.mazorca}18`, borderRadius: 4,
-                        padding: '2px 5px',
+                        fontFamily: FONTS.display, fontWeight: 800, fontSize: 13,
+                        color: isFirst ? BRAND.mazorca : BRAND.heirloom,
+                        letterSpacing: '0.06em', textTransform: 'uppercase',
+                        marginBottom: 2,
                       }}>
-                        ×{ownedHere}
+                        {h.label}
+                      </div>
+                      <div style={{
+                        fontFamily: FONTS.body, fontSize: 12,
+                        color: `${BRAND.heirloom}99`, lineHeight: 1.4,
+                      }}>
+                        {h.hint}
+                      </div>
+                    </div>
+                    {isFirst && (
+                      <div style={{
+                        flexShrink: 0,
+                        fontFamily: FONTS.display, fontWeight: 800, fontSize: 9,
+                        color: BRAND.mazorca, letterSpacing: '0.14em',
+                        textTransform: 'uppercase',
+                        alignSelf: 'center',
+                      }}>
+                        Aquí ↓
                       </div>
                     )}
-                  </button>
+                  </div>
                 )
               })}
             </div>
+
+            <button
+              onClick={() => setShowGTModal(false)}
+              style={{
+                width: '100%', padding: '14px',
+                background: `linear-gradient(135deg, ${BRAND.mazorca}, ${BRAND.pod})`,
+                border: 'none', borderRadius: 999, cursor: 'pointer',
+                color: BRAND.bgDeep,
+                fontFamily: FONTS.display, fontWeight: 800,
+                fontSize: 12, letterSpacing: '0.18em', textTransform: 'uppercase',
+                boxShadow: `0 12px 28px ${BRAND.mazorca}55`,
+              }}
+            >
+              Continuar adopción →
+            </button>
           </div>
-
-          {/* ── SELECTED GUARDIAN DETAIL ─────────────────────────────── */}
-          {phase === 'select' && (
-            <div style={{
-              background: `linear-gradient(160deg, ${BRAND.amazon}33 0%, ${BRAND.bgCard} 100%)`,
-              border: `1px solid ${BRAND.pod}55`,
-              borderRadius: 20, padding: 'clamp(18px, 4vw, 28px)',
-              marginBottom: 20,
-              boxShadow: `0 0 32px ${BRAND.pod}22`,
-              animation: 'slide-up 0.3s cubic-bezier(0.34, 1.4, 0.64, 1) both',
-            }}>
-              {/* Guardian header */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
-                <div style={{ fontSize: 56, filter: `drop-shadow(0 8px 20px ${BRAND.pod}66)`, flexShrink: 0 }}>
-                  {guardian.emoji}
-                </div>
-                <div>
-                  <div style={{
-                    fontFamily: FONTS.display, fontWeight: 900,
-                    fontSize: 'clamp(22px, 5vw, 28px)', color: BRAND.heirloom,
-                    textTransform: 'uppercase', lineHeight: 1,
-                  }}>
-                    {guardian.name}
-                  </div>
-                  <div style={{ fontFamily: FONTS.serif, fontStyle: 'italic', color: BRAND.pod, fontSize: 13, marginTop: 4 }}>
-                    {guardian.region}
-                  </div>
-                  <div style={{ fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}55`, marginTop: 2 }}>
-                    {guardian.varieties.join(' · ')}
-                  </div>
-                </div>
-              </div>
-
-              {/* Stats bars */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 18 }}>
-                {[
-                  { label: 'IMPACTO',    val: 85, color: BRAND.pod     },
-                  { label: 'RAREZA',     val: [92, 78, 65, 88, 72][activeIdx], color: BRAND.criollo },
-                  { label: 'VARIEDAD',   val: guardian.varieties.length * 30, color: BRAND.mazorca },
-                  { label: 'TERROIR',    val: [90, 75, 80, 70, 85][activeIdx], color: BRAND.heroic  },
-                ].map(s => (
-                  <div key={s.label}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 6, color: `${BRAND.heirloom}55`, letterSpacing: '0.1em' }}>
-                        {s.label}
-                      </span>
-                      <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 6, color: s.color }}>
-                        {s.val}
-                      </span>
-                    </div>
-                    <div style={{ height: 5, background: `${BRAND.amazon}66`, borderRadius: 3, overflow: 'hidden' }}>
-                      <div style={{
-                        width: `${s.val}%`, height: '100%',
-                        background: s.color,
-                        borderRadius: 3,
-                        boxShadow: `0 0 6px ${s.color}88`,
-                        transition: 'width 0.6s cubic-bezier(0.34, 1.4, 0.64, 1)',
-                      }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Lineage regen badge */}
-              {(() => {
-                const regen = findRegen(activeIdx)
-                if (!regen) return null
-                const expDate = new Date(regen.expires_at).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
-                return (
-                  <div style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                    background: `${BRAND.pod}22`, border: `1px solid ${BRAND.pod}aa`,
-                    borderRadius: 999, padding: '5px 12px', marginBottom: 14,
-                    animation: 'hud-pulse 2.4s ease-in-out infinite',
-                  }}>
-                    <span style={{ fontSize: 12 }}>🌱</span>
-                    <span style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 9, color: BRAND.pod, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
-                      Lineage regenerado · vence {expDate}
-                    </span>
-                  </div>
-                )
-              })()}
-
-              {/* Price + adopt button */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ flex: 1 }}>
-                  {IS_GOLDEN_TICKET_FREEMIUM ? (
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                      <span style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 16, color: `${BRAND.heirloom}44`, textDecoration: 'line-through' }}>
-                        ${TREE_ADOPTION_PRICE_USD}
-                      </span>
-                      <span style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 28, color: BRAND.mazorca, textShadow: `0 4px 16px ${BRAND.mazorca}66` }}>
-                        GRATIS
-                      </span>
-                    </div>
-                  ) : (
-                    <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 28, color: BRAND.mazorca }}>
-                      ${TREE_ADOPTION_PRICE_USD} <span style={{ fontSize: 12, color: `${BRAND.heirloom}55`, fontWeight: 700 }}>USD</span>
-                    </div>
-                  )}
-                  <div style={{ fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}55`, marginTop: 2 }}>
-                    +{TOKEN_RATES.tree_adoption.beans} beans · +{TOKEN_RATES.tree_adoption.mazorcas} mazorcas
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => user ? setPhase('confirm') : navigate('/auth')}
-                  style={{
-                    padding: '14px 22px', borderRadius: 12,
-                    background: `linear-gradient(135deg, ${BRAND.pod}, ${BRAND.amazon})`,
-                    border: 'none', cursor: 'pointer',
-                    color: BRAND.heirloom,
-                    fontFamily: FONTS.display, fontWeight: 900, fontSize: 12,
-                    letterSpacing: '0.14em', textTransform: 'uppercase',
-                    boxShadow: `0 8px 24px ${BRAND.pod}55`,
-                    transition: 'transform 0.15s, box-shadow 0.15s',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.04)'; e.currentTarget.style.boxShadow = `0 12px 32px ${BRAND.pod}77` }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = `0 8px 24px ${BRAND.pod}55` }}
-                >
-                  {IS_GOLDEN_TICKET_FREEMIUM ? '✓ ADOPTAR GRATIS' : `✓ ADOPTAR`}
-                </button>
-              </div>
-
-              {guardian.blogSlug && (
-                <button
-                  onClick={() => navigate(`/blog/${guardian.blogSlug}`)}
-                  style={{
-                    marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 6,
-                    background: 'transparent', border: 'none', cursor: 'pointer',
-                    color: `${BRAND.pod}88`, fontFamily: FONTS.body, fontSize: 11,
-                  }}
-                >
-                  📰 La historia de {guardian.name} →
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* ── CONFIRM OVERLAY ────────────────────────────────────────── */}
-          {phase === 'confirm' && (
-            <div style={{
-              background: `linear-gradient(160deg, ${BRAND.amazon} 0%, #091a10 50%, ${BRAND.bgDeep} 100%)`,
-              border: `1.5px solid ${BRAND.pod}88`,
-              borderRadius: 20, padding: 'clamp(20px,5vw,32px)',
-              marginBottom: 20, textAlign: 'center',
-              boxShadow: `0 0 40px ${BRAND.pod}33`,
-              animation: 'slide-up 0.35s cubic-bezier(0.34, 1.4, 0.64, 1) both',
-            }}>
-              <div style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 9, color: BRAND.pod, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 12 }}>
-                {IS_GOLDEN_TICKET_FREEMIUM ? '🎟️ Hito 1 de 4 · Camino del Creyente' : 'Confirma tu adopción'}
-              </div>
-
-              <div style={{ fontSize: 64, marginBottom: 10, filter: `drop-shadow(0 12px 24px ${BRAND.pod}55)` }}>
-                {guardian.emoji}
-              </div>
-              <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 24, color: BRAND.heirloom, textTransform: 'uppercase' }}>
-                {guardian.name}
-              </div>
-              <div style={{ fontFamily: FONTS.serif, fontStyle: 'italic', color: BRAND.mazorca, fontSize: 13, marginTop: 4, marginBottom: 16 }}>
-                {guardian.region} · {guardian.varieties[0]}
-              </div>
-
-              {IS_GOLDEN_TICKET_FREEMIUM ? (
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, justifyContent: 'center', marginBottom: 20 }}>
-                  <span style={{ fontFamily: FONTS.display, fontSize: 18, color: `${BRAND.heirloom}44`, textDecoration: 'line-through' }}>${TREE_ADOPTION_PRICE_USD} USD</span>
-                  <span style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 40, color: BRAND.mazorca, textShadow: `0 4px 24px ${BRAND.mazorca}66` }}>GRATIS</span>
-                </div>
-              ) : (
-                <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 40, color: BRAND.mazorca, marginBottom: 20 }}>
-                  ${TREE_ADOPTION_PRICE_USD}<span style={{ fontSize: 14, color: `${BRAND.heirloom}55`, marginLeft: 6, fontWeight: 700 }}>USD</span>
-                </div>
-              )}
-
-              <button
-                onClick={confirmAdoption}
-                style={{
-                  width: '100%', padding: '16px',
-                  background: IS_GOLDEN_TICKET_FREEMIUM
-                    ? `linear-gradient(135deg, ${BRAND.mazorca}, ${BRAND.pod})`
-                    : `linear-gradient(135deg, ${BRAND.pod}, ${BRAND.amazon})`,
-                  border: 'none', borderRadius: 999, cursor: 'pointer',
-                  color: BRAND.bgDeep,
-                  fontFamily: FONTS.display, fontWeight: 900,
-                  fontSize: 14, letterSpacing: '0.16em', textTransform: 'uppercase',
-                  boxShadow: `0 12px 28px ${BRAND.pod}55`,
-                  marginBottom: 8,
-                }}
-              >
-                {IS_GOLDEN_TICKET_FREEMIUM ? '✓ Adoptar gratis' : `✓ Adoptar por $${TREE_ADOPTION_PRICE_USD}`}
-              </button>
-              <button
-                onClick={() => setPhase('select')}
-                style={{
-                  width: '100%', padding: '10px',
-                  background: 'transparent', border: 'none', cursor: 'pointer',
-                  color: `${BRAND.heirloom}55`,
-                  fontFamily: FONTS.display, fontWeight: 700,
-                  fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase',
-                }}
-              >
-                ← Volver
-              </button>
-            </div>
-          )}
-
-          {/* ── ADOPTING SPINNER ─────────────────────────────────────── */}
-          {phase === 'adopting' && (
-            <div style={{
-              background: BRAND.bgCard, border: `1px solid ${BRAND.pod}55`,
-              borderRadius: 20, padding: '48px', textAlign: 'center', marginBottom: 20,
-            }}>
-              <div style={{ fontSize: 52, marginBottom: 12, animation: 'float 1.2s ease-in-out infinite' }}>
-                {guardian.emoji}
-              </div>
-              <div style={{ fontFamily: FONTS.serif, fontStyle: 'italic', color: `${BRAND.heirloom}66`, fontSize: 14 }}>
-                Plantando tu semilla...
-              </div>
-            </div>
-          )}
-
-          {/* ── MY GARDEN ────────────────────────────────────────────── */}
-          {!treesLoading && aliveTrees.length > 0 && (
-            <div style={{ marginTop: 8 }}>
-              <div style={{
-                fontFamily: "'Press Start 2P', monospace",
-                fontSize: 7, color: `${BRAND.heirloom}44`,
-                letterSpacing: '0.14em', textTransform: 'uppercase',
-                textAlign: 'center', marginBottom: 14,
-              }}>
-                — MI JARDÍN · {aliveTrees.length} ÁRBOLES —
-              </div>
-
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(min(140px,100%),1fr))',
-                gap: 10,
-              }}>
-                {aliveTrees.map(({ t, dead: _d, dying, warn, ready, stage, pct }) => {
-                  const g = GUARDIANS[t.guardian_id]
-                  const isOnChain = t.nft_mint_tx != null
-                  const color = dying ? '#e74c3c'
-                               : ready ? BRAND.mazorca
-                               : warn  ? BRAND.theobroma
-                               : BRAND.pod
-                  const statusLabel = dying ? 'VA A MORIR'
-                                    : ready ? 'COSECHAR!'
-                                    : warn  ? 'ATENCIÓN'
-                                    : stage.name.toUpperCase()
-                  const statusIcon = dying ? '💀'
-                                   : ready ? '🍫'
-                                   : warn  ? '⚠️'
-                                   : stage.emoji
-                  const lvl = stage.id + 1
-                  const blockFilled = Math.round(Math.min(pct, 100) / 100 * 8)
-                  const blockBar = '■'.repeat(blockFilled) + '□'.repeat(8 - blockFilled)
-
-                  return (
-                    <div
-                      key={t.id}
-                      style={{
-                        background: `linear-gradient(160deg, ${color}14, ${BRAND.bgCard})`,
-                        border: `2px solid ${color}${ready || dying ? 'cc' : '55'}`,
-                        borderRadius: 6, padding: '10px 8px',
-                        display: 'flex', flexDirection: 'column', gap: 5,
-                        textAlign: 'left',
-                        boxShadow: ready ? `0 0 16px ${color}44`
-                                 : dying ? `0 0 12px ${color}44` : 'none',
-                        animation: ready ? 'ready-glow 1.4s ease-in-out infinite'
-                                 : dying ? 'dying-pulse 1s ease-in-out infinite'
-                                 : 'none',
-                        position: 'relative',
-                        outline: `1px solid ${BRAND.bgDeep}`,
-                        outlineOffset: -3,
-                      }}
-                    >
-                      {/* LV badge — top left */}
-                      <div style={{
-                        position: 'absolute', top: 5, left: 6,
-                        fontFamily: "'Press Start 2P', monospace", fontSize: 5,
-                        color: BRAND.pod, background: BRAND.bgDeep,
-                        border: `1px solid ${BRAND.pod}66`,
-                        padding: '1px 4px', letterSpacing: '0.06em',
-                      }}>
-                        LV.{lvl}
-                      </div>
-
-                      {/* on-chain badge — top right */}
-                      {isOnChain && (
-                        <div style={{
-                          position: 'absolute', top: 5, right: 6,
-                          fontFamily: "'Press Start 2P', monospace", fontSize: 5,
-                          color: BRAND.heroic, background: `${BRAND.heroic}22`,
-                          border: `1px solid ${BRAND.heroic}55`,
-                          padding: '1px 4px', letterSpacing: '0.1em',
-                        }}>
-                          ⛓ON
-                        </div>
-                      )}
-
-                      {/* Status icon + name */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 14 }}>
-                        <span style={{ fontSize: 16, lineHeight: 1 }}>{statusIcon}</span>
-                        <span style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 10, color: BRAND.heirloom, letterSpacing: '0.04em' }}>
-                          {g?.name ?? 'Árbol'}
-                        </span>
-                      </div>
-
-                      {/* Status label */}
-                      <div style={{
-                        fontFamily: "'Press Start 2P', monospace", fontSize: 6,
-                        color, letterSpacing: '0.08em',
-                      }}>
-                        {statusLabel}
-                      </div>
-
-                      {/* Block HP bar */}
-                      <div style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color, letterSpacing: '0.02em', lineHeight: 1 }}>
-                        {blockBar}
-                      </div>
-                      <div style={{ fontFamily: FONTS.body, fontSize: 7, color: `${BRAND.heirloom}33` }}>
-                        {Math.round(pct)}% ciclo
-                      </div>
-
-                      {/* COSECHAR button for ready trees */}
-                      {ready && (
-                        <button
-                          onClick={e => { e.stopPropagation(); navigate(`/tree/${t.id}`) }}
-                          style={{
-                            marginTop: 4, width: '100%', padding: '6px 4px',
-                            background: BRAND.mazorca, border: 'none',
-                            cursor: 'pointer',
-                            fontFamily: "'Press Start 2P', monospace", fontSize: 6,
-                            color: BRAND.bgDeep, letterSpacing: '0.08em',
-                            boxShadow: `0 0 10px ${BRAND.mazorca}66`,
-                          }}
-                          onMouseDown={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(0.93)' }}
-                          onMouseUp={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)' }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)' }}
-                        >
-                          COSECHAR →
-                        </button>
-                      )}
-                      {/* Navigate to detail on the whole card */}
-                      {!ready && (
-                        <button
-                          onClick={() => navigate(`/tree/${t.id}`)}
-                          style={{
-                            position: 'absolute', inset: 0, background: 'transparent',
-                            border: 'none', cursor: 'pointer',
-                          }}
-                          aria-label={`Ver árbol de ${g?.name}`}
-                        />
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Dead trees */}
-          {!treesLoading && deadTrees.length > 0 && (
-            <div style={{ marginTop: 20 }}>
-              <div style={{
-                fontFamily: "'Press Start 2P', monospace",
-                fontSize: 7, color: '#e74c3c88',
-                letterSpacing: '0.14em', textTransform: 'uppercase',
-                textAlign: 'center', marginBottom: 10,
-              }}>
-                — LABRANZA · {deadTrees.length} —
-              </div>
-              <button
-                onClick={() => navigate('/dashboard#labranza')}
-                style={{
-                  width: '100%', display: 'flex', alignItems: 'center', gap: 14,
-                  background: `linear-gradient(135deg, #1a0606 0%, ${BRAND.pod}22 100%)`,
-                  border: `1px solid ${BRAND.pod}66`, borderRadius: 14,
-                  padding: '14px 18px', cursor: 'pointer',
-                  boxShadow: `0 0 20px ${BRAND.pod}22`,
-                  transition: 'transform 0.2s',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)' }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}
-              >
-                <div style={{ fontSize: 28, filter: `drop-shadow(0 4px 8px ${BRAND.pod}aa)` }}>⚔</div>
-                <div style={{ flex: 1, textAlign: 'left' }}>
-                  <div style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 12, color: BRAND.heirloom, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-                    Rebanar con machete →
-                  </div>
-                  <div style={{ fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}77`, marginTop: 3 }}>
-                    Fruit-Ninja arena · +10 granos × {deadTrees.length}
-                  </div>
-                </div>
-                <div style={{ fontFamily: FONTS.display, fontWeight: 800, fontSize: 18, color: BRAND.pod }}>▶</div>
-              </button>
-            </div>
-          )}
         </div>
       )}
 
-      {/* ── Global keyframes ─────────────────────────────────────────── */}
       <style>{`
-        @keyframes hud-pulse {
-          0%, 100% { box-shadow: 0 0 14px ${BRAND.mazorca}44; }
-          50%       { box-shadow: 0 0 26px ${BRAND.mazorca}88; }
+        @keyframes caua-gt-ribbon-pulse {
+          0%, 100% { box-shadow: 0 0 14px ${BRAND.mazorca}55; }
+          50%      { box-shadow: 0 0 24px ${BRAND.mazorca}aa; }
         }
-        @keyframes dying-pulse {
-          0%, 100% { box-shadow: 0 0 10px #e74c3c55; opacity: 1; }
-          50%       { box-shadow: 0 0 20px #e74c3caa; opacity: 0.85; }
+        @keyframes caua-gt-modal-in {
+          0%   { opacity: 0; transform: scale(0.96); }
+          100% { opacity: 1; transform: scale(1); }
         }
-        @keyframes ready-glow {
-          0%, 100% { box-shadow: 0 0 8px ${BRAND.mazorca}44; }
-          50%       { box-shadow: 0 0 22px ${BRAND.mazorca}aa; }
-        }
-        @keyframes slide-up {
-          0%   { opacity: 0; transform: translateY(16px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes tree-drop {
-          0%   { opacity: 0; transform: scale(0.4) translateY(-40px); }
-          70%  { transform: scale(1.15) translateY(6px); }
-          100% { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50%       { transform: translateY(-8px); }
-        }
-        ${SEEDS.map((s, i) => `
-          @keyframes seed-burst-${i} {
-            0%   { opacity: 1; transform: translate(0,0) scale(1); }
-            80%  { opacity: 0.6; transform: translate(${Math.cos(s.angle * Math.PI / 180) * s.dist}px, ${Math.sin(s.angle * Math.PI / 180) * s.dist}px) scale(1.2) rotate(${s.angle}deg); }
-            100% { opacity: 0; transform: translate(${Math.cos(s.angle * Math.PI / 180) * (s.dist + 20)}px, ${Math.sin(s.angle * Math.PI / 180) * (s.dist + 20)}px) scale(0.6); }
-          }
-        `).join('')}
-        @keyframes gt-ribbon-pulse {
-          0%, 100% { box-shadow: 0 0 12px ${BRAND.mazorca}44; }
-          50%       { box-shadow: 0 0 22px ${BRAND.mazorca}88; }
-        }
-        ::-webkit-scrollbar { display: none; }
       `}</style>
-    </div>
+      </MobileAppShell>
+    </>
   )
 }

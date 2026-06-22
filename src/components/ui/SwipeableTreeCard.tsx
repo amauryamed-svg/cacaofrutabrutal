@@ -4,6 +4,7 @@ import { BRAND, FONTS } from '../../utils/constants'
 import type { Guardian } from '../../types'
 import { ADOPTION_HOURS, CARE_INTERVAL_MIN } from '../../utils/growthSystem'
 import ColombiaMap from './ColombiaMap'
+import GuardianLiveChip from './GuardianLiveChip'
 
 interface SwipeableTreeCardProps {
   guardian: Guardian
@@ -12,13 +13,14 @@ interface SwipeableTreeCardProps {
   imageIndex: number
 }
 
-const SLIDES = ['identity', 'territory', 'journey'] as const
+const SLIDES = ['identity', 'territory', 'journey', 'stakes'] as const
 type Slide = typeof SLIDES[number]
 
 export default function SwipeableTreeCard({
   guardian,
   onSwipeRight,
   onSwipeLeft,
+  imageIndex,
 }: SwipeableTreeCardProps) {
   const [exitX, setExitX] = useState<number | string>(0)
   const [currentSlide, setCurrentSlide] = useState<Slide>('identity')
@@ -226,6 +228,20 @@ export default function SwipeableTreeCard({
               <div style={{ fontSize: 11, color: '#999' }}>
                 ⏱ Cuida tu árbol cada {CARE_INTERVAL_MIN}min · 🍯 Items secretos · 🍫 Cosecha al final
               </div>
+            </motion.div>
+          )}
+
+          {currentSlide === 'stakes' && (
+            <motion.div key="stakes"
+              initial={{ opacity: 0, x: slideDir * 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -slideDir * 30 }}
+              transition={{ duration: 0.35, ease: 'easeOut' }}
+            >
+              <div style={{ fontSize: 11, color: BRAND.pod, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>
+                ¿qué pasa cuando adoptas?
+              </div>
+              <GuardianLiveChip guardianId={imageIndex} />
             </motion.div>
           )}
         </AnimatePresence>

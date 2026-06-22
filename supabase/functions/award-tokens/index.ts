@@ -1,5 +1,12 @@
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
+import {
+  combinedMultiplier,
+  mazorcaRarity,
+  sunriseMultiplier,
+  streakMultiplier,
+  levelMultiplier,
+} from '../_shared/streaks.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -29,6 +36,7 @@ type Rate = {
 }
 const TOKEN_RATES: Record<string, Rate> = {
   ritual_draw: { beans: 0.5, mazorcas: 0 },
+  streak_3: { beans: 1, mazorcas: 1 },
   streak_7: { beans: 3.5, mazorcas: 1 },
   streak_30: { beans: 15, mazorcas: 5 },
   purchase: { beans: 2, mazorcas: 0 }, // per USD
@@ -187,6 +195,32 @@ serve(async (req) => {
     const mucilage_g   = Math.max(0, Math.min(body.mucilage_g   ?? 0, 800))
     const cacao_mass_g = Math.max(0, Math.min(body.cacao_mass_g ?? 0, 800))
 
+    // ─── Gamify multipliers (Phase A4) ────────────────────────────
+    // Apply only on care + harvest events. Skip on streak/quest/achievement
+    // events themselves to avoid cascading bonuses.
+    const MULTIPLIED_EVENTS = new Set(['tree_update_read', 'tree_harvest_share'])
+    let appliedMultiplier = 1.0
+    if (MULTIPLIED_EVENTS.has(event_type)) {
+      const [streakRes, levelRes, diversityRes] = await Promise.all([
+        supabase.from('user_streaks').select('current_days').eq('user_id', userId).maybeSingle(),
+        supabase.from('user_levels').select('current_level').eq('user_id', userId).maybeSingle(),
+        supabase.from('cacao_trees').select('guardian_id').eq('user_id', userId),
+      ])
+      const streakDays = (streakRes.data as { current_days?: number } | null)?.current_days ?? 0
+      const level = (levelRes.data as { current_level?: number } | null)?.current_level ?? 1
+      const guardianIds = (diversityRes.data ?? []).map((r) => (r as { guardian_id: number }).guardian_id)
+      const guardianDiversity = new Set(guardianIds).size >= 5
+      const sunrise = event_type === 'tree_update_read' && sunriseMultiplier(new Date()) > 1
+      const iotVerified = false // hardware pending — wire when iot_devices.last_seen flows
+      appliedMultiplier = combinedMultiplier({
+        streakDays, sunrise, iotVerified, level, guardianDiversity,
+      })
+      beans    = Number((beans * appliedMultiplier).toFixed(2))
+      mazorcas = Number((mazorcas * appliedMultiplier).toFixed(2))
+      // touch helpers so unused-import lint doesn't trip during partial rollouts
+      void streakMultiplier; void levelMultiplier
+    }
+
     // Insert token event (with per-event resource trace)
     const { error: eventError } = await supabase
       .from('token_events')
@@ -257,11 +291,111 @@ serve(async (req) => {
         .eq('user_id', userId)
     }
 
+    // ─── Gamify side effects (Phase A4) ───────────────────────────
+    // Best-effort: any failure here logs and continues — the token award
+    // itself already committed.
+
+    if (event_type === 'tree_adoption') {
+      // Seed the 5 quest templates idempotently on first adoption.
+      await supabase.rpc('seed_adopta_quests', { p_user_id: userId })
+        .then(() => {}, (e: unknown) => console.error('seed_adopta_quests:', e))
+      // first_adoption achievement
+      await supabase.rpc('unlock_achievement', { p_user_id: userId, p_slug: 'first_adoption' })
+        .then(() => {}, (e: unknown) => console.error('first_adoption:', e))
+
+      // Count distinct guardians + total trees.
+      const { data: ownTrees } = await supabase
+        .from('cacao_trees').select('guardian_id').eq('user_id', userId)
+      const trees = ownTrees ?? []
+      const distinctGuardians = new Set(
+        trees.map((t) => (t as { guardian_id: number }).guardian_id),
+      ).size
+      if (trees.length >= 5) {
+        await supabase.rpc('unlock_achievement', { p_user_id: userId, p_slug: 'multi_tree_5' })
+          .then(() => {}, (e: unknown) => console.error('multi_tree_5:', e))
+      }
+      if (distinctGuardians >= 5) {
+        await supabase.rpc('unlock_achievement', { p_user_id: userId, p_slug: 'multi_guardian_all_5' })
+          .then(() => {}, (e: unknown) => console.error('multi_guardian_all_5:', e))
+      }
+      // Progress support_3_guardians quest.
+      const supportComplete = distinctGuardians >= 3
+      await supabase
+        .from('adopta_quests')
+        .update({
+          progress: Math.min(distinctGuardians, 3),
+          state: supportComplete ? 'complete' : 'open',
+          completed_at: supportComplete ? new Date().toISOString() : null,
+        })
+        .eq('user_id', userId)
+        .eq('quest_id', 'support_3_guardians')
+        .neq('state', 'claimed')
+    }
+
+    if (event_type === 'tree_update_read') {
+      const { data: streakRow } = await supabase
+        .from('user_streaks').select('current_days').eq('user_id', userId).maybeSingle()
+      const days = (streakRow as { current_days?: number } | null)?.current_days ?? 0
+      if (days >= 7) {
+        await supabase.rpc('unlock_achievement', { p_user_id: userId, p_slug: 'streak_7' })
+          .then(() => {}, (e: unknown) => console.error('streak_7:', e))
+      }
+      if (days >= 30) {
+        await supabase.rpc('unlock_achievement', { p_user_id: userId, p_slug: 'streak_30' })
+          .then(() => {}, (e: unknown) => console.error('streak_30:', e))
+      }
+      // Progress pact_30d quest.
+      await supabase
+        .from('adopta_quests')
+        .update({
+          progress: Math.min(days, 30),
+          state: days >= 30 ? 'complete' : 'open',
+          completed_at: days >= 30 ? new Date().toISOString() : null,
+        })
+        .eq('user_id', userId)
+        .eq('quest_id', 'pact_30d')
+        .neq('state', 'claimed')
+    }
+
+    if (event_type === 'tree_harvest_share') {
+      const baseHarvestBeans = TOKEN_RATES.tree_harvest_share.beans
+      const isCombo = (body.beans_override ?? 0) > baseHarvestBeans * 1.5
+      const isSunrise = sunriseMultiplier(new Date()) > 1
+      const score = mucilage_g + cacao_mass_g + (isCombo ? 200 : 0) + (isSunrise ? 50 : 0)
+      const kind = mazorcaRarity(score)
+      const { data: existing } = await supabase
+        .from('mazorca_inventory')
+        .select('count').eq('user_id', userId).eq('mazorca_kind', kind).maybeSingle()
+      const currentCount = (existing as { count?: number } | null)?.count ?? 0
+      await supabase
+        .from('mazorca_inventory')
+        .upsert({
+          user_id: userId,
+          mazorca_kind: kind,
+          count: currentCount + 1,
+          last_minted_at: new Date().toISOString(),
+        }, { onConflict: 'user_id,mazorca_kind' })
+
+      await supabase.rpc('unlock_achievement', { p_user_id: userId, p_slug: 'first_harvest' })
+        .then(() => {}, (e: unknown) => console.error('first_harvest:', e))
+      if (isCombo) {
+        await supabase.rpc('unlock_achievement', { p_user_id: userId, p_slug: 'perfect_harvest' })
+          .then(() => {}, (e: unknown) => console.error('perfect_harvest:', e))
+        await supabase
+          .from('adopta_quests')
+          .update({ progress: 1, state: 'complete', completed_at: new Date().toISOString() })
+          .eq('user_id', userId)
+          .eq('quest_id', 'harvest_perfect')
+          .neq('state', 'claimed')
+      }
+    }
+
     return jsonResponse({
       beans_awarded: beans,
       mazorcas_awarded: mazorcas,
       mucilage_awarded:    mucilage_g,
       cacao_mass_awarded:  cacao_mass_g,
+      multiplier_applied:  appliedMultiplier,
       new_balance: {
         beans:        (profile?.beans_balance || 0) + beans,
         mazorcas:     (profile?.mazorcas_balance || 0) + mazorcas,
