@@ -209,8 +209,7 @@ export default function Adoptar() {
           Adopta un<br /><span style={{ color: BRAND.pod }}>árbol de cacao</span>
         </h1>
         <p style={{ fontFamily: FONTS.body, color: `${BRAND.heirloom}66`, fontSize: 12, lineHeight: 1.6, maxWidth: 360, margin: '0 auto 20px' }}>
-          Desliza <span style={{ color: BRAND.pod }}>→ derecha</span> para adoptar ·{' '}
-          <span style={{ color: `${BRAND.theobroma}cc` }}>← izquierda</span> para pasar
+          Elige tu <span style={{ color: BRAND.pod }}>Guardián</span> · adopta · cuida · cosecha
         </p>
 
         {/* Golden Ticket Freemium · ribbon de campaña — visible siempre que el
@@ -249,7 +248,7 @@ export default function Adoptar() {
 
         {/* Gamify section — agrupado en card consistente con el preface:
             mismo borde, mismo radio, divider interno entre Logros y Pactos.  */}
-        {user && !treesLoading && trees.length > 0 && (
+        {phase === 'idle' && user && !treesLoading && trees.length > 0 && (
           <div style={{
             background: `${BRAND.bgCard}66`,
             border: `1px solid ${BRAND.amazon}`,
@@ -275,10 +274,73 @@ export default function Adoptar() {
           </div>
         )}
 
+        {/* Pentámera — Elige tu Guardián */}
+        {phase === 'idle' && (
+          <div style={{ marginBottom: 24 }}>
+            <div style={{
+              fontFamily: FONTS.display, fontWeight: 800, fontSize: 10,
+              color: `${BRAND.heirloom}55`, letterSpacing: '0.22em',
+              textTransform: 'uppercase', textAlign: 'center', marginBottom: 14,
+            }}>
+              Elige tu Guardián
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 7 }}>
+              {GUARDIANS.map((g, i) => {
+                const PALETTE = [
+                  { bg: '#87AA2716', border: '#87AA2758', glow: '#87AA27' },
+                  { bg: '#CC66AA16', border: '#CC66AA58', glow: '#CC66AA' },
+                  { bg: '#F1A91E16', border: '#F1A91E58', glow: '#F1A91E' },
+                  { bg: '#7B4F9016', border: '#7B4F9058', glow: '#9B6FD0' },
+                  { bg: '#5B9BD516', border: '#5B9BD558', glow: '#5B9BD5' },
+                ]
+                const pal = PALETTE[i]
+                return (
+                  <button
+                    key={i}
+                    onClick={() => { if (!user) { navigate('/auth'); return }; setActiveIdx(i); setPhase('confirming') }}
+                    style={{
+                      background: `linear-gradient(180deg, ${pal.bg} 0%, ${BRAND.bgCard}cc 100%)`,
+                      border: `1px solid ${pal.border}`,
+                      borderRadius: 14,
+                      padding: '14px 4px 11px',
+                      cursor: 'pointer',
+                      textAlign: 'center',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7,
+                      minHeight: 124,
+                      transition: 'transform 0.15s, box-shadow 0.15s',
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.transform = 'translateY(-4px)'
+                      e.currentTarget.style.boxShadow = `0 10px 26px ${pal.glow}33`
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.transform = 'translateY(0)'
+                      e.currentTarget.style.boxShadow = 'none'
+                    }}
+                  >
+                    <div style={{ fontSize: 30, lineHeight: 1, filter: `drop-shadow(0 2px 8px ${pal.glow}66)` }}>
+                      {g.emoji}
+                    </div>
+                    <div style={{ fontFamily: FONTS.display, fontWeight: 900, fontSize: 10, color: BRAND.heirloom, letterSpacing: '0.01em', lineHeight: 1.2 }}>
+                      {g.name}
+                    </div>
+                    <div style={{ fontFamily: FONTS.body, fontSize: 8, color: pal.glow, letterSpacing: '0.05em', textTransform: 'uppercase', lineHeight: 1.2 }}>
+                      {g.region}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+            <div style={{ fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}44`, textAlign: 'center', marginTop: 10 }}>
+              🫘 +10 granos · 🌽 +3 mazorcas al adoptar
+            </div>
+          </div>
+        )}
+
         {/* Adopted trees — split en dos jardines:
               · Jardín       → vivos / en peligro / listos a cosechar / cosechados
               · Labranza     → muertos · biomasa que regresa al suelo (regenerativo) */}
-        {!treesLoading && trees.length > 0 && (() => {
+        {phase === 'idle' && !treesLoading && trees.length > 0 && (() => {
           // Annotate each tree with its life-status. Phase 1.5 — 4 niveles
           // visuales claramente distintos: ready / healthy / attention / dying.
           // Death lo decide el server (died_at populated) — el cliente solo lo refleja.
@@ -594,75 +656,6 @@ export default function Adoptar() {
         {/* Pentámera + confirmation */}
         {phase !== 'done' && (
           <>
-            {/* Pentámera grid — los 5 Guardianes de entrada */}
-            {phase === 'idle' && (
-              <>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(min(130px, 100%), 1fr))',
-                  gap: 10,
-                  marginBottom: 16,
-                }}>
-                  {GUARDIANS.map((g, i) => (
-                    <button
-                      key={i}
-                      onClick={() => { setActiveIdx(i); setPhase('confirming') }}
-                      style={{
-                        background: `linear-gradient(160deg, ${BRAND.amazon}33, ${BRAND.bgDeep})`,
-                        border: `1px solid ${BRAND.pod}44`,
-                        borderRadius: 16,
-                        padding: '18px 12px 14px',
-                        cursor: 'pointer',
-                        textAlign: 'center',
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-                        transition: 'transform 0.15s, border-color 0.15s, box-shadow 0.15s',
-                      }}
-                      onMouseEnter={e => {
-                        e.currentTarget.style.transform = 'translateY(-3px)'
-                        e.currentTarget.style.borderColor = `${BRAND.pod}bb`
-                        e.currentTarget.style.boxShadow = `0 8px 24px ${BRAND.pod}22`
-                      }}
-                      onMouseLeave={e => {
-                        e.currentTarget.style.transform = 'translateY(0)'
-                        e.currentTarget.style.borderColor = `${BRAND.pod}44`
-                        e.currentTarget.style.boxShadow = 'none'
-                      }}
-                    >
-                      <div style={{ fontSize: 44, lineHeight: 1 }}>{g.emoji}</div>
-                      <div style={{
-                        fontFamily: FONTS.display, fontWeight: 900,
-                        fontSize: 13, color: BRAND.heirloom,
-                        letterSpacing: '0.02em', lineHeight: 1.2,
-                      }}>
-                        {g.name}
-                      </div>
-                      <div style={{
-                        fontFamily: FONTS.body, fontSize: 9,
-                        color: `${BRAND.pod}cc`, letterSpacing: '0.06em',
-                        textTransform: 'uppercase',
-                      }}>
-                        {g.region}
-                      </div>
-                      {g.blogSlug && (
-                        <div style={{
-                          fontFamily: FONTS.body, fontSize: 9,
-                          color: `${BRAND.heirloom}44`,
-                        }}>
-                          Ver historia →
-                        </div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-                <div style={{
-                  fontFamily: FONTS.body, fontSize: 10,
-                  color: `${BRAND.heirloom}44`, textAlign: 'center', marginBottom: 4,
-                }}>
-                  🫘 +10 granos · 🌽 +3 mazorcas al adoptar
-                </div>
-              </>
-            )}
-
             {/* Confirming / Adopting overlay */}
             {(phase === 'confirming' || phase === 'adopting') && (
             <div style={{ position: 'relative', height: 'clamp(420px, 62vh, 540px)', marginBottom: 20 }}>
