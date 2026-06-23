@@ -68,9 +68,38 @@ export default function Landing() {
             {T('land_sub')}
           </p>
 
-          <CauaButton size="lg" onClick={() => navigate('/adoptar')}>
-            {T('land_cta1')}
-          </CauaButton>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <CauaButton size="lg" onClick={() => navigate('/adoptar')}>
+              {T('land_cta1')}
+            </CauaButton>
+            <button
+              onClick={() => navigate('/web3')}
+              style={{
+                padding: '14px 24px',
+                background: 'transparent',
+                border: `1.5px solid ${BRAND.heroic}88`,
+                borderRadius: 999,
+                color: BRAND.heroic,
+                fontFamily: FONTS.display,
+                fontWeight: 800,
+                fontSize: 13,
+                letterSpacing: '0.16em',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                transition: 'border-color 0.2s, box-shadow 0.2s',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = BRAND.heroic
+                e.currentTarget.style.boxShadow = `0 0 18px ${BRAND.heroic}44`
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = `${BRAND.heroic}88`
+                e.currentTarget.style.boxShadow = 'none'
+              }}
+            >
+              ⬡ ON-CHAIN →
+            </button>
+          </div>
         </div>
 
         {/* Scroll indicator */}

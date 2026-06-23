@@ -263,6 +263,7 @@ export default function NavBar() {
     {
       label: 'WEB3',
       children: [
+        { path: '/web3',            label: '⬡ ON-CHAIN',   hint: es ? 'Árbol NFT · $CACAO · NIBS on-chain' : 'Tree NFT · $CACAO · NIBS on-chain' },
         { path: '/web3/onboarding', label: 'ONBOARDING',  hint: es ? 'Vincula wallet · KYC' : 'Link wallet · KYC' },
         { path: '/web3/dashboard',  label: 'MIS ACTIVOS', hint: es ? 'NFTs · $CACAO · Beans' : 'NFTs · $CACAO · Beans' },
       ],
