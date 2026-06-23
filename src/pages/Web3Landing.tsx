@@ -252,8 +252,8 @@ function Inner() {
           </div>
           <p style={fineStyle}>
             KYC required for mint and redemption · Charter:{' '}
-            <a href="/docs/CHARTER.md" style={linkStyle}>read</a> · Compliance:{' '}
-            <a href="/docs/COMPLIANCE.md" style={linkStyle}>read</a>
+            <a href="/app/docs/CHARTER" style={linkStyle}>read</a> · Compliance:{' '}
+            <a href="/app/docs/COMPLIANCE" style={linkStyle}>read</a>
           </p>
         </Reveal>
 
@@ -419,16 +419,16 @@ function Inner() {
         <div style={footerInnerStyle}>
           <div style={footerLogoStyle}>CAÚA · ON-CHAIN CACAO</div>
           <div style={footerLinksStyle}>
-            <a href="/docs/CHARTER.md"    style={linkStyle}>CHARTER</a>
-            <a href="/docs/COMPLIANCE.md" style={linkStyle}>COMPLIANCE</a>
-            <a href="/docs/AUDIT.md"      style={linkStyle}>AUDIT</a>
-            <a href="/docs/LEGAL.md"      style={linkStyle}>LEGAL</a>
-            <a href="/docs/SECURITY.md"   style={linkStyle}>SECURITY</a>
+            <a href="/app/docs/CHARTER"    style={linkStyle}>CHARTER</a>
+            <a href="/app/docs/COMPLIANCE" style={linkStyle}>COMPLIANCE</a>
+            <a href="/app/docs/AUDIT"      style={linkStyle}>AUDIT</a>
+            <a href="/app/docs/LEGAL"      style={linkStyle}>LEGAL</a>
+            <a href="/app/docs/SECURITY"   style={linkStyle}>SECURITY</a>
           </div>
         </div>
         <div style={footerFineStyle}>
           © {new Date().getFullYear()} CauaCorp. Charter governs · Smart contract risk: see{' '}
-          <a href="/docs/LEGAL.md" style={linkStyle}>LEGAL.md</a>.
+          <a href="/app/docs/LEGAL" style={linkStyle}>LEGAL</a>.
         </div>
       </footer>
     </main>

@@ -28,6 +28,7 @@ import AdminCRM          from './pages/AdminCRM'
 import CincoTiemposProposal from './pages/CincoTiemposProposal'
 import ProposalAndreaRojas from './pages/ProposalAndreaRojas'
 import CauaCoti           from './pages/CauaCoti'
+import Docs               from './pages/Docs'
 import { hsTrackPage }   from './lib/hubspot'
 
 // Web3 routes are lazy-loaded — wagmi/viem/RainbowKit (~80kb gz) only ship
@@ -135,6 +136,9 @@ function AppShell() {
             </AuthGate>
           }
         />
+
+        {/* Legal docs viewer — public, no auth */}
+        <Route path="/docs/:slug"  element={<Docs />} />
 
         {/* Super admin only — guarded inside AdminCRM */}
         <Route path="/admin/crm"   element={<AdminCRM />} />
