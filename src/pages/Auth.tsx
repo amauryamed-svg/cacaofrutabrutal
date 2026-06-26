@@ -19,15 +19,16 @@ const ALLOWED_NEXT_PATHS = new Set<string>([
 ])
 
 export default function Auth() {
-  const [loading, setLoading] = useState(false)
-  const [error, setError]     = useState('')
-  const [searchParams]        = useSearchParams()
+  const [loading, setLoading]       = useState(false)
+  const [error, setError]           = useState('')
+  const [email, setEmail]           = useState('')
+  const [magicSent, setMagicSent]   = useState(false)
+  const [searchParams]              = useSearchParams()
   const { lang } = useLang()
   const T = makeT(lang)
   const es = lang === 'es'
 
-  // Honor ?next= query so deep-links like /app/web3/onboarding return correctly.
-  // SPA basename is "/app", so the absolute URL is `${origin}/app${nextPath}`.
+  // Honor ?next= query so deep-links like /web3/onboarding return correctly.
   const nextRaw  = searchParams.get('next') || '/adoptar'
   const nextPath = ALLOWED_NEXT_PATHS.has(nextRaw) ? nextRaw : '/adoptar'
 
@@ -40,9 +41,20 @@ export default function Auth() {
     }
     const { error: err } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/app${nextPath}` },
+      options: { redirectTo: `${window.location.origin}${nextPath}` },
     })
     if (err) { setError(err.message); setLoading(false) }
+  }
+
+  const handleMagicLink = async () => {
+    if (!email.trim()) return
+    setLoading(true); setError('')
+    const { error: err } = await supabase.auth.signInWithOtp({
+      email: email.trim(),
+      options: { emailRedirectTo: `${window.location.origin}${nextPath}` },
+    })
+    if (err) { setError(err.message); setLoading(false) }
+    else { setMagicSent(true); setLoading(false) }
   }
 
   return (
@@ -83,7 +95,7 @@ export default function Auth() {
           </p>
         </div>
 
-        {/* ── Login — Google only ───────────────────────────────────────────── */}
+        {/* ── Login — Google ────────────────────────────────────────────────── */}
         <button
           onClick={handleGoogleLogin}
           disabled={loading}
@@ -110,9 +122,66 @@ export default function Auth() {
           {loading ? '…' : `${T('auth_continue')} Google`}
         </button>
 
+        {/* ── Divider ────────────────────────────────────────────────────────── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+          <div style={{ flex: 1, height: 1, background: `${BRAND.amazon}44` }} />
+          <span style={{ fontFamily: FONTS.body, fontSize: 11, color: `${BRAND.heirloom}44`, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+            {es ? 'o por email' : 'or via email'}
+          </span>
+          <div style={{ flex: 1, height: 1, background: `${BRAND.amazon}44` }} />
+        </div>
+
+        {/* ── Magic link ─────────────────────────────────────────────────────── */}
+        {magicSent ? (
+          <div style={{
+            padding: '14px 16px', borderRadius: 10,
+            border: `1px solid ${BRAND.pod}66`, background: `${BRAND.pod}11`,
+            textAlign: 'center',
+          }}>
+            <p style={{ fontFamily: FONTS.body, fontSize: 13, color: BRAND.pod, margin: 0, lineHeight: 1.5 }}>
+              {es
+                ? `✓ Enlace enviado a ${email}. Revisa tu correo.`
+                : `✓ Link sent to ${email}. Check your inbox.`}
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleMagicLink()}
+              placeholder={T('auth_email')}
+              style={{
+                flex: 1, padding: '12px 14px', borderRadius: 10,
+                border: `1px solid ${BRAND.amazon}55`, background: BRAND.bgDark,
+                color: BRAND.heirloom, fontFamily: FONTS.body, fontSize: 13,
+                outline: 'none',
+              }}
+            />
+            <button
+              onClick={handleMagicLink}
+              disabled={loading || !email.trim()}
+              style={{
+                padding: '12px 16px', borderRadius: 10,
+                border: `1px solid ${BRAND.pod}77`, background: 'transparent',
+                color: BRAND.pod, cursor: (loading || !email.trim()) ? 'not-allowed' : 'pointer',
+                fontFamily: FONTS.body, fontSize: 13, fontWeight: 600,
+                whiteSpace: 'nowrap',
+                opacity: (loading || !email.trim()) ? 0.5 : 1,
+                transition: 'border-color 0.2s, opacity 0.2s',
+              }}
+              onMouseEnter={e => { if (!loading && email.trim()) e.currentTarget.style.borderColor = BRAND.pod }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = `${BRAND.pod}77` }}
+            >
+              {es ? 'Enviar enlace' : 'Send link'}
+            </button>
+          </div>
+        )}
+
         {/* Feedback */}
         {error && (
-          <p style={{ fontFamily: FONTS.body, fontSize: 12, color: '#E05C5C', marginBottom: 12, textAlign: 'center', lineHeight: 1.4, marginTop: 12 }}>
+          <p style={{ fontFamily: FONTS.body, fontSize: 12, color: '#E05C5C', marginBottom: 0, textAlign: 'center', lineHeight: 1.4, marginTop: 12 }}>
             {error}
           </p>
         )}

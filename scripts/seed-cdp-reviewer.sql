@@ -1,23 +1,33 @@
 -- CDP reviewer test account seed
--- Run in Supabase SQL editor AFTER cauacdpreview@gmail.com has logged in
--- at least once via Google OAuth so auth.users has their record.
+-- Run in Supabase SQL editor AFTER the target reviewer email has logged in
+-- at least once (Google OAuth or magic link) so auth.users has their record.
+--
+-- Supported reviewer emails:
+--   cauacdpreview@gmail.com   — original test account (Google OAuth)
+--   rishabh.jain@coinbase.com — CDP reviewer account (magic link or Google Workspace)
 --
 -- Usage: paste in Supabase Dashboard → SQL Editor → Run
 
 do $$
 declare
   v_user_id uuid;
+  v_target_email text := coalesce(
+    (select email from auth.users where email = 'rishabh.jain@coinbase.com' limit 1),
+    'cauacdpreview@gmail.com'
+  );
 begin
   select id into v_user_id
   from auth.users
-  where email = 'cauacdpreview@gmail.com'
+  where email = v_target_email
   limit 1;
 
   if v_user_id is null then
     raise exception
-      'User cauacdpreview@gmail.com not found in auth.users. '
-      'Make sure they have logged in at least once via Google OAuth first.';
+      'No reviewer email found in auth.users. '
+      'Make sure rishabh.jain@coinbase.com or cauacdpreview@gmail.com has logged in at least once first.';
   end if;
+
+  raise notice 'Seeding reviewer account: %', v_target_email;
 
   -- Remove any existing wallet binding that would conflict on the unique index
   update public.user_profiles
