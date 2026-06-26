@@ -542,6 +542,49 @@ export default function CauaCoti() {
         </div>
       </div>
 
+      {/* ── JOIN CAUA ─────────────────────────────────────────── */}
+      <div style={{ background: `linear-gradient(135deg, ${BRAND.pod}18 0%, ${BRAND.criollo}10 100%)`,
+        borderTop: `1px solid ${BRAND.pod}33`, padding: '80px 32px' }}>
+        <div style={{ maxWidth: 760, margin: '0 auto', textAlign: 'center' }}>
+          <Reveal delay={0}>
+            <p style={{ fontFamily: FONTS.body, fontSize: 10, letterSpacing: '0.3em',
+              color: `${BRAND.pod}99`, textTransform: 'uppercase', marginBottom: 16 }}>
+              CAÚA · Comunidad Regenerativa
+            </p>
+            <h2 style={{ fontFamily: FONTS.display, fontSize: 'clamp(28px,5vw,52px)', fontWeight: 900,
+              color: BRAND.heirloom, margin: '0 0 16px', letterSpacing: '-0.02em', lineHeight: 1 }}>
+              Adopta tu árbol.<br />
+              <span style={{ color: BRAND.pod }}>Sé parte del origen.</span>
+            </h2>
+            <p style={{ fontFamily: FONTS.body, fontSize: 14, color: `${BRAND.heirloom}77`,
+              lineHeight: 1.75, margin: '0 auto 40px', maxWidth: 520 }}>
+              Cada catación financia directamente a los guardianes que cuidan los árboles. Únete a la app, adopta un Theobroma cacao y sigue tu árbol desde la semilla hasta tu barra.
+            </p>
+            <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <a href="/auth?next=/adoptar" style={{
+                padding: '16px 36px', borderRadius: 999, background: BRAND.pod,
+                color: BRAND.bgDeep, fontFamily: FONTS.display, fontSize: 14, fontWeight: 900,
+                textDecoration: 'none', letterSpacing: '0.06em', display: 'inline-block',
+              }}>
+                ADOPTAR UN ÁRBOL →
+              </a>
+              <a href="/auth" style={{
+                padding: '16px 28px', borderRadius: 999,
+                border: `1.5px solid ${BRAND.heirloom}33`,
+                color: `${BRAND.heirloom}99`, fontFamily: FONTS.display, fontSize: 13, fontWeight: 700,
+                textDecoration: 'none', display: 'inline-block',
+              }}>
+                Crear cuenta gratis
+              </a>
+            </div>
+            <p style={{ fontFamily: FONTS.body, fontSize: 10, color: `${BRAND.heirloom}33`,
+              marginTop: 20, letterSpacing: '0.06em' }}>
+              ERC-721 · Base · Árbol real en Colombia · Triple impacto certificado
+            </p>
+          </Reveal>
+        </div>
+      </div>
+
       {/* ── FOOTER ────────────────────────────────────────────── */}
       <footer style={{ background: `linear-gradient(135deg, ${BRAND.amazon} 0%, #0a1410 100%)`,
         borderTop: `1px solid ${BRAND.pod}22`, padding: '32px 40px', textAlign: 'center',

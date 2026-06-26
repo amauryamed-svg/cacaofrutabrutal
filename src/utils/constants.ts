@@ -82,10 +82,11 @@ export const PRODUCTS: Product[] = [
   { id: 2, name: 'SUNSET SOCIAL TONIC',   desc: 'Mucílago 40% · Doble concentración · Adaptógeno vespertino',      price: 1000, type: 'preorder',      stock: 75,  img: '🌇' },
   { id: 3, name: 'CACAO CEREMONIAL',       desc: 'Fine-flavor criollo · Huila · 250g bloque puro',                 price: 3500, type: 'auction',       stock: 50,  timer: 172800, img: '🫘' },
   { id: 4, name: 'EDICIÓN GUARDIÁN',       desc: 'Kit numerado · 5 orígenes · Colección limitada',                 price: 8500, type: 'auction',       stock: 12,  timer: 259200, img: '🏛️' },
-  { id: 5, name: 'CÍRCULO SUMAPAZ',        desc: 'Suscripción mensual · Cacao + Ritual + Comunidad',               price: 4500, type: 'subscription',  stock: 999, img: '🌿' },
   { id: 6, name: 'MIDNIGHT COLD BREW',     desc: 'Fermentado en frío 72h · Probióticos nativos · Teobromina',      price: 1200, type: 'preorder',      stock: 60,  img: '☕️' },
   { id: 7, name: 'HIDROSOL DE CACAO',      desc: 'Agua floral destilada · 500mL · Uso cosmético + alimentario',   price: 3500, type: 'preorder',      stock: 80,  img: '💧' },
-  { id: 8, name: 'ACEITE ESENCIAL CACAO',  desc: 'Aceite esencial puro · 5mL · Aromaterapia · IaaS B2B',          price:  500, type: 'preorder',      stock: 200, img: '🌿' },
+  { id: 8, name: 'SYRUP CACAO',            desc: 'Jarabe concentrado de mucílago · Endulzante funcional · 250mL · Uso gastronómico y ritual', price: 2200, type: 'preorder', stock: 120, img: '🍯' },
+  { id: 9,  name: 'NIBS CAÚA & CO — BLANCO', desc: 'Lote 200 kg · Grano liofilizado · Cobertura blanca funcional · Endulzado con mucílago · Whey proteico · Alimentec 2026', price: 250000, type: 'auction', stock: 1, timer: 604800, img: '🍫' },
+  { id: 10, name: 'NIBS CAÚA & CO — OSCURO', desc: 'Lote 200 kg · Grano liofilizado · Cobertura oscura de cacao 72% · Polifenoles máximos · Teobromina · Epicatequina · Alimentec 2026', price: 250000, type: 'auction', stock: 1, timer: 604800, img: '🫘' },
 ]
 
 export const TAROT_CARDS: TarotCard[] = [

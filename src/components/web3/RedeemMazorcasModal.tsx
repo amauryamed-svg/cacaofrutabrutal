@@ -154,7 +154,7 @@ function Locked({ kycLoading, canPerform, hasWallet, balance }: {
   if (!canPerform) return (
     <>
       <p style={pStyle}>Redemption requires KYC tier ≥ 1 and a linked wallet.</p>
-      <a href="/app/web3/onboarding" style={ctaLinkStyle}>→ Complete Web3 onboarding</a>
+      <a href="/web3/onboarding" style={ctaLinkStyle}>→ Complete Web3 onboarding</a>
     </>
   )
   if (!hasWallet) return <p style={pStyle}>Connect your wallet first to redeem.</p>

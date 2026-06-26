@@ -335,6 +335,120 @@ const ILLUSTRATIONS: Record<number, () => ReactElement> = {
         fontWeight="700" fontSize="9" fill="#F1A91E" letterSpacing="3" opacity="0.7">ESENCIAL · CONCENTRADO</text>
     </svg>
   ),
+
+  // NIBS CAÚA × ZURYCH — white-coated nibs scattered, co-brand badge
+  9: () => (
+    <svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+      <defs>
+        <radialGradient id="nibglow" cx="50%" cy="50%" r="55%">
+          <stop offset="0%" stopColor="#F7F1EE" stopOpacity="0.12"/>
+          <stop offset="100%" stopColor="#040C06" stopOpacity="0"/>
+        </radialGradient>
+        <radialGradient id="nibwhite" cx="30%" cy="30%" r="70%">
+          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.95"/>
+          <stop offset="100%" stopColor="#C8C0BC" stopOpacity="0.85"/>
+        </radialGradient>
+        <radialGradient id="nibdark" cx="30%" cy="30%" r="70%">
+          <stop offset="0%" stopColor="#3A2218"/>
+          <stop offset="100%" stopColor="#1A0E0A"/>
+        </radialGradient>
+      </defs>
+      <rect width="320" height="200" fill="#0A1A0E"/>
+      {/* Background glow */}
+      <ellipse cx="160" cy="100" rx="130" ry="80" fill="url(#nibglow)"/>
+      {/* Scattered white-coated nibs — various angles */}
+      {[
+        [72,  60,  22, 8, 32],
+        [128, 45,  18, 7, -15],
+        [190, 55,  20, 8, 45],
+        [248, 70,  22, 8, -30],
+        [55,  115, 20, 7, 20],
+        [110, 130, 24, 9, -45],
+        [168, 110, 22, 8, 60],
+        [228, 125, 20, 7, -20],
+        [92,  160, 18, 7, 35],
+        [152, 165, 22, 8, -10],
+        [210, 158, 20, 7, 50],
+        [275, 110, 18, 7, -40],
+      ].map(([cx, cy, rx, ry, deg], i) => (
+        <g key={i} transform={`rotate(${deg} ${cx} ${cy})`}>
+          <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="url(#nibwhite)" opacity="0.92"/>
+          <ellipse cx={cx} cy={cy} rx={rx * 0.55} ry={ry * 0.55} fill="url(#nibdark)" opacity="0.45"/>
+          <ellipse cx={cx - rx * 0.3} cy={cy - ry * 0.3} rx={rx * 0.18} ry={ry * 0.22} fill="white" opacity="0.5"/>
+        </g>
+      ))}
+      {/* Co-brand strip */}
+      <rect x="0" y="170" width="320" height="30" fill="#040C0699"/>
+      <text x="160" y="188" textAnchor="middle" fontFamily="'Barlow Condensed',sans-serif"
+        fontWeight="900" fontSize="10" fill="#F7F1EE" letterSpacing="4" opacity="0.85">
+        CAÚA & CO · LOTE 200 KG · ALIMENTEC 2026
+      </text>
+      {/* 200 KG badge */}
+      <rect x="228" y="10" width="80" height="30" rx="2" fill="#87AA2722" stroke="#87AA2766" strokeWidth="1"/>
+      <text x="268" y="28" textAnchor="middle" fontFamily="'Barlow Condensed',sans-serif"
+        fontWeight="900" fontSize="11" fill="#87AA27" letterSpacing="2">200 KG</text>
+      {/* SUBASTA badge */}
+      <rect x="10" y="10" width="72" height="22" rx="2" fill="#F1A91E22" stroke="#F1A91E66" strokeWidth="1"/>
+      <text x="46" y="24" textAnchor="middle" fontFamily="'Barlow Condensed',sans-serif"
+        fontWeight="700" fontSize="9" fill="#F1A91E" letterSpacing="2">SUBASTA</text>
+    </svg>
+  ),
+
+  // NIBS CAÚA × ZURYCH OSCURO — dark 72% cacao-coated nibs, criollo glow
+  10: () => (
+    <svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+      <defs>
+        <radialGradient id="darkglow" cx="50%" cy="50%" r="55%">
+          <stop offset="0%" stopColor="#881C79" stopOpacity="0.18"/>
+          <stop offset="100%" stopColor="#040C06" stopOpacity="0"/>
+        </radialGradient>
+        <radialGradient id="nibdarkcoat" cx="30%" cy="30%" r="70%">
+          <stop offset="0%" stopColor="#3D1F10"/>
+          <stop offset="100%" stopColor="#1A0C05"/>
+        </radialGradient>
+        <radialGradient id="nibdarkshine" cx="25%" cy="25%" r="60%">
+          <stop offset="0%" stopColor="#6B3320" stopOpacity="0.9"/>
+          <stop offset="100%" stopColor="#2A1008" stopOpacity="0.7"/>
+        </radialGradient>
+      </defs>
+      <rect width="320" height="200" fill="#080A06"/>
+      <ellipse cx="160" cy="100" rx="140" ry="85" fill="url(#darkglow)"/>
+      {[
+        [68,  58,  22, 8, 28],
+        [124, 42,  18, 7, -18],
+        [185, 52,  21, 8, 42],
+        [245, 68,  22, 8, -28],
+        [52,  118, 20, 7, 22],
+        [108, 132, 24, 9, -42],
+        [165, 108, 22, 8, 58],
+        [225, 122, 20, 7, -18],
+        [90,  162, 18, 7, 32],
+        [150, 168, 22, 8, -12],
+        [208, 155, 20, 7, 48],
+        [272, 108, 19, 7, -38],
+      ].map(([cx, cy, rx, ry, deg], i) => (
+        <g key={i} transform={`rotate(${deg} ${cx} ${cy})`}>
+          <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill="url(#nibdarkcoat)" opacity="0.95"/>
+          <ellipse cx={cx} cy={cy} rx={rx * 0.6} ry={ry * 0.6} fill="url(#nibdarkshine)" opacity="0.5"/>
+          <ellipse cx={cx - rx * 0.28} cy={cy - ry * 0.28} rx={rx * 0.16} ry={ry * 0.2} fill="#8B5030" opacity="0.35"/>
+        </g>
+      ))}
+      {[[80,80],[150,65],[220,88],[95,145],[175,148],[255,130]].map(([x,y],i) => (
+        <circle key={i} cx={x} cy={y} r="1.8" fill="#881C79" opacity={0.35 - i * 0.04}/>
+      ))}
+      <rect x="0" y="170" width="320" height="30" fill="#04060499"/>
+      <text x="160" y="188" textAnchor="middle" fontFamily="'Barlow Condensed',sans-serif"
+        fontWeight="900" fontSize="10" fill="#F7F1EE" letterSpacing="4" opacity="0.85">
+        CAÚA & CO · LOTE 200 KG · ALIMENTEC 2026
+      </text>
+      <rect x="228" y="10" width="80" height="30" rx="2" fill="#881C7922" stroke="#881C7966" strokeWidth="1"/>
+      <text x="268" y="28" textAnchor="middle" fontFamily="'Barlow Condensed',sans-serif"
+        fontWeight="900" fontSize="11" fill="#881C79" letterSpacing="2">200 KG</text>
+      <rect x="10" y="10" width="72" height="22" rx="2" fill="#F1A91E22" stroke="#F1A91E66" strokeWidth="1"/>
+      <text x="46" y="24" textAnchor="middle" fontFamily="'Barlow Condensed',sans-serif"
+        fontWeight="700" fontSize="9" fill="#F1A91E" letterSpacing="2">72% CACAO</text>
+    </svg>
+  ),
 }
 
 export default function ProductIllustration({ productId, imageSrc, height = 160 }: Props) {

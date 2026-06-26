@@ -361,7 +361,7 @@ function Inner() {
             ))}
           </div>
           <div style={{ ...ctaRowStyle, marginTop: 32 }}>
-            <a href="/app/web3/onboarding" style={btnStyle}>START WEB3 ONBOARDING →</a>
+            <a href="/web3/onboarding" style={btnStyle}>START WEB3 ONBOARDING →</a>
             <a href="/docs/LEGAL.md" style={btnGhostStyle}>LEGAL POSTURE</a>
           </div>
         </Reveal>
@@ -402,7 +402,7 @@ function Inner() {
         </Reveal>
         <Reveal delay={200}>
           <div style={{ ...ctaRowStyle, justifyContent: 'center', marginTop: 32 }}>
-            <a href="/app/web3/onboarding" style={btnStyle}>START WEB3 ONBOARDING →</a>
+            <a href="/web3/onboarding" style={btnStyle}>START WEB3 ONBOARDING →</a>
             <a
               href="https://github.com/amauryamed-svg/cacaofrutabrutal/releases/download/cdp-demo-v1/caua-pitch-cdp.mp4"
               style={btnGhostStyle}

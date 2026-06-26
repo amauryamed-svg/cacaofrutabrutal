@@ -37,6 +37,7 @@ begin
 
   insert into public.user_profiles (
     user_id,
+    email,
     country,
     kyc_status,
     kyc_tier,
@@ -47,16 +48,18 @@ begin
     geo_blocked
   ) values (
     v_user_id,
+    v_target_email,
     'US',
     'verified',
     1,
     now(),
     'cdp-review-manual-tier1',
     '0x7E9E25cFfc8BC68Fb9E1f4708e761C68a37a846A',
-    84532,  -- Base Sepolia (ACTIVE_CHAIN_ID) — switch to 8453 post-mainnet
+    84532,
     false
   )
   on conflict (user_id) do update set
+    email           = excluded.email,
     country         = excluded.country,
     kyc_status      = excluded.kyc_status,
     kyc_tier        = excluded.kyc_tier,

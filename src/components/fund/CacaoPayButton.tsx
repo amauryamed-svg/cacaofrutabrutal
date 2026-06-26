@@ -148,7 +148,7 @@ function CacaoPayInner({ amountUsd, label, techId, mvpId, lotsCount = 1, lang, o
         {!disabled && <span style={{ fontFamily: FONTS.display, fontWeight: 700, fontSize: 12 }}>→</span>}
       </button>
       {!hasEnough && (
-        <a href="/app/burn" style={{ fontFamily: FONTS.body, fontSize: 9, color: BRAND.criollo, textAlign: 'right', letterSpacing: '0.08em' }}>
+        <a href="/burn" style={{ fontFamily: FONTS.body, fontSize: 9, color: BRAND.criollo, textAlign: 'right', letterSpacing: '0.08em' }}>
           {T('↗ Quemar mazorcas para obtener $CACAO', '↗ Burn mazorcas to earn $CACAO')}
         </a>
       )}

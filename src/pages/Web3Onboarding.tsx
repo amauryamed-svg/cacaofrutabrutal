@@ -3,7 +3,7 @@
 // Brutalist-luxury, hex-only per CauaCore §8.
 
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useAccount, useChainId, useSignMessage, useSwitchChain } from 'wagmi'
 import Web3Provider from '../components/web3/Web3Provider'
 import ConnectWalletButton from '../components/web3/ConnectWalletButton'
@@ -272,6 +272,7 @@ function Discovery({ onComplete }: { onComplete: () => void }) {
 
 function Inner() {
   const { userId } = useAuth()
+  const navigate = useNavigate()
   const { address, isConnected } = useAccount()
   const chainId = useChainId()
   const { switchChain } = useSwitchChain()
@@ -342,7 +343,7 @@ function Inner() {
           <Chip color={BRAND.theobroma}>● NOT SIGNED IN</Chip>
           <H1>SIGN IN FIRST.</H1>
           <Lead>You need a Caúa account before linking a wallet.</Lead>
-          <a href="/auth" style={btnPrimary(BRAND.mazorca)}>GO TO SIGN-IN →</a>
+          <button onClick={() => navigate('/auth')} style={{ ...btnPrimary(BRAND.mazorca), cursor: 'pointer' }}>GO TO SIGN-IN →</button>
         </Screen>
       </Shell>
     )
@@ -361,9 +362,9 @@ function Inner() {
           <div style={doneGrid}>
             <div style={onchainSection}>
               <div style={sectionEyebrow(BRAND.pod)}>YOU'RE ON-CHAIN ✓</div>
-              <a href="/adoptar" style={{ ...btnPrimary(BRAND.mazorca), display: 'block', textAlign: 'center' }}>
+              <button onClick={() => navigate('/adoptar')} style={{ ...btnPrimary(BRAND.mazorca), display: 'block', textAlign: 'center', width: '100%', cursor: 'pointer' }}>
                 ADOPT A TREE →
-              </a>
+              </button>
               <p style={sectionSub}>ERC-721 on Base · árbol real en Colombia</p>
             </div>
 
@@ -375,9 +376,9 @@ function Inner() {
 
             <div style={burnSection}>
               <div style={sectionEyebrow(BRAND.criollo)}>◈ MAZORCAS → $CACAO</div>
-              <Link to="/burn" style={{ ...btnPrimary(BRAND.criollo), display: 'block', textAlign: 'center' }}>
+              <button onClick={() => navigate('/burn')} style={{ ...btnPrimary(BRAND.criollo), display: 'block', textAlign: 'center', width: '100%', cursor: 'pointer' }}>
                 QUEMAR MAZORCAS →
-              </Link>
+              </button>
               <p style={sectionSub}>Burn 1,000 mazorcas → 1 $CACAO · EIP-712 · cooldown 30d</p>
             </div>
           </div>
@@ -385,7 +386,7 @@ function Inner() {
           <PersonaNotice />
 
           <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginTop: 4 }}>
-            <a href="/dashboard" style={dashLink}>→ Tu Dashboard</a>
+            <button onClick={() => navigate('/dashboard')} style={{ background: 'none', border: 'none', cursor: 'pointer', ...dashLink }}>→ Tu Dashboard</button>
             <button
               onClick={() => setMode('discovery')}
               style={{ background: 'none', border: 'none', cursor: 'pointer', ...dashLink }}

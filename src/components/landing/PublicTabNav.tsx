@@ -68,7 +68,7 @@ export default function PublicTabNav({ mode }: Props) {
       WebkitBackdropFilter: 'blur(8px)',
     }}>
       <a
-        href="/app/"
+        href="/adoptar"
         style={adoptarStyle}
         aria-current={mode === 'adoptar' ? 'page' : undefined}
       >

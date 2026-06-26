@@ -27,6 +27,8 @@ const PRODUCT_IMAGES: Record<number, string | undefined> = {
   6: undefined,
   7: undefined,
   8: undefined,
+  9:  undefined,
+  10: undefined,
 }
 
 const TYPE_CONFIG = {
@@ -44,7 +46,9 @@ const PRODUCT_BENEFITS: Record<number, string[]> = {
   5: ['Comunidad viva','Mensual','Impacto directo'],
   6: ['Fermentado 72h','Probiótico','Cold brew'],
   7: ['HydroSol™','500mL','Cosmético + alimentario'],
-  8: ['Aceite puro','5mL','Aromaterapia'],
+  8: ['Mucílago','Endulzante natural','Gastronómico'],
+  9:  ['Bioactivo','Lote B2B','Cobertura Blanca','Whey'],
+  10: ['Bioactivo','Lote B2B','Cobertura Oscura','72% Cacao'],
 }
 
 export default function ProductCard({ product: p, multiplier, user, roleDiscount = 1 }: Props) {

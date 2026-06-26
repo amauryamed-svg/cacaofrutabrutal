@@ -36,7 +36,7 @@ export default function CacaoCeremonyCard() {
         <p style={subtitleStyle}>
           Inicia sesión y adopta tu primer árbol para desbloquear tu bono de $10.000 COP en CAÚA Colombia.
         </p>
-        <a href="/app/adoptar" style={ctaSecondaryStyle}>Adoptar árbol →</a>
+        <a href="/adoptar" style={ctaSecondaryStyle}>Adoptar árbol →</a>
       </div>
     )
   }
@@ -95,7 +95,7 @@ export default function CacaoCeremonyCard() {
           ¿Tu árbol ya cosechó? <strong style={{ color: BRAND.pod }}>Forja tu chocolate</strong> en el Laboratorio. El Hito 4 del Camino del Creyente desbloquea un Cacao Ceremony 100% gratis (1 de 30 cupos).
         </p>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <a href="/app/lab"
+          <a href="/lab"
              data-cta-name="cfb-marketplace-funnel-lab"
              data-cta-surface="marketplace-cacao-ceremony"
              data-cta-destination="cfb-lab"

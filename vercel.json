@@ -4,7 +4,7 @@
   "outputDirectory": "./dist",
   "headers": [
     {
-      "source": "/app/catacion/:path*",
+      "source": "/catacion",
       "headers": [
         {
           "key": "Cache-Control",
@@ -135,9 +135,7 @@
   ],
   "rewrites": [
     { "source": "/api/crm/:path*", "destination": "/api/crm" },
-    { "source": "/app",            "destination": "/index.html" },
-    { "source": "/app/",           "destination": "/index.html" },
-    { "source": "/app/:path*",     "destination": "/index.html" }
+    { "source": "/:path*",         "destination": "/index.html" }
   ],
   "crons": [
     { "path": "/api/cacao_predictor", "schedule": "0 6 * * *" }

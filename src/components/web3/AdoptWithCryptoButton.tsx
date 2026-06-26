@@ -252,7 +252,7 @@ export default function AdoptWithCryptoButton({ treeId, guardianId, variety, gps
       <div style={boxStyle}>
         <div style={titleStyle}>ADOPT WITH CRYPTO</div>
         <p style={hintStyle}>Connect your wallet to adopt with ETH, USDC, or cbBTC on Base.</p>
-        <a href="/app/web3/onboarding" style={ctaLinkStyle}>→ Connect & verify</a>
+        <a href="/web3/onboarding" style={ctaLinkStyle}>→ Connect & verify</a>
       </div>
     )
   }
@@ -264,7 +264,7 @@ export default function AdoptWithCryptoButton({ treeId, guardianId, variety, gps
         <p style={hintStyle}>
           Crypto adoption requires KYC tier ≥ 2 (Enhanced). Complete identity verification first.
         </p>
-        <a href="/app/web3/onboarding" style={ctaLinkStyle}>→ Upgrade KYC</a>
+        <a href="/web3/onboarding" style={ctaLinkStyle}>→ Upgrade KYC</a>
       </div>
     )
   }

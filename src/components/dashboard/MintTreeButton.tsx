@@ -227,7 +227,7 @@ export default function MintTreeButton({ treeId, alreadyMintedTokenId, alreadyMi
           )}
           {result.error === 'wallet_not_linked' && (
             <p style={hintStyle}>
-              <a href="/app/web3/onboarding" style={{ color: BRAND.mazorca, textDecoration: 'underline' }}>
+              <a href="/web3/onboarding" style={{ color: BRAND.mazorca, textDecoration: 'underline' }}>
                 Vincula tu wallet primero →
               </a>
             </p>

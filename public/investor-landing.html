@@ -1047,7 +1047,7 @@ footer a:hover{color:var(--ink2);}
 <!-- Public tab nav: separa el flow Adoptar (estudiantes/consumer) del Inversores.
      Cross-bundle navigation porque /app/ es SPA y aquí estamos en static HTML. -->
 <div style="position:sticky;top:0;z-index:100;width:100%;background:#040C06;border-bottom:1px solid #1C3B2688;display:flex;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);">
-  <a href="/app/" style="flex:1;height:52px;border:none;cursor:pointer;font-family:'Helvetica Neue',Arial,sans-serif;font-weight:800;font-size:clamp(11px,2.4vw,13px);letter-spacing:0.16em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;background:transparent;color:#F7F1EE88;border-right:1px solid #1C3B2655;transition:background-color 200ms,color 200ms;">🌱 Adoptar</a>
+  <a href="/adoptar" style="flex:1;height:52px;border:none;cursor:pointer;font-family:'Helvetica Neue',Arial,sans-serif;font-weight:800;font-size:clamp(11px,2.4vw,13px);letter-spacing:0.16em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;background:transparent;color:#F7F1EE88;border-right:1px solid #1C3B2655;transition:background-color 200ms,color 200ms;">🌱 Adoptar</a>
   <a href="/investor-landing.html" aria-current="page" style="flex:1;height:52px;border:none;cursor:pointer;font-family:'Helvetica Neue',Arial,sans-serif;font-weight:800;font-size:clamp(11px,2.4vw,13px);letter-spacing:0.16em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;background:#1C3B26;color:#F7F1EE;transition:background-color 200ms,color 200ms;">📊 Inversores</a>
 </div>
 
@@ -1068,7 +1068,7 @@ footer a:hover{color:var(--ink2);}
       <span id="snd-label">SFX</span>
     </button>
     <button id="lang-toggle" onclick="toggleLang()" style="background:none;border:1px solid var(--line-b);color:var(--ink2);padding:7px 14px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:border-color .2s,color .2s;" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--line-b)';this.style.color='var(--ink2)'">EN</button>
-    <a href="/app" class="nav-app" aria-label="Ir a la app">APP <span style="font-size:12px;">→</span></a>
+    <a href="/adoptar" class="nav-app" aria-label="Ir a la app">APP <span style="font-size:12px;">→</span></a>
     <button class="nav-cta" onclick="document.getElementById('cta').scrollIntoView({behavior:'smooth'})" data-i18n="nav_cta">Invertir Ahora</button>
   </div>
 </nav>
@@ -1165,7 +1165,7 @@ footer a:hover{color:var(--ink2);}
         <div class="sec-idx">01</div>
         <div class="app-mockup-title" data-i18n="mk1_t">Adopta un árbol</div>
         <p class="app-mockup-desc" data-i18n="mk1_d">Elige un guardián entre las 5 fincas Caúa. <strong style="color:#F1A91E;">$5 USD</strong> por árbol — pago se despliega 60/30/10 al instante.</p>
-        <a href="/app/adoptar" class="app-mockup-cta" data-i18n="mk1_cta">Adoptar por $5 →</a>
+        <a href="/adoptar" class="app-mockup-cta" data-i18n="mk1_cta">Adoptar por $5 →</a>
       </div>
     </div>
 
@@ -1201,7 +1201,7 @@ footer a:hover{color:var(--ink2);}
         <div class="sec-idx">02</div>
         <div class="app-mockup-title" data-i18n="mk_rit_t">Ritual diario</div>
         <p class="app-mockup-desc" data-i18n="mk_rit_d">Sorteo de carta tarot del cacao + streak diario. Cada 7 días sin romper el streak desbloquea tokens bonus.</p>
-        <a href="/app/auth" class="app-mockup-cta" data-i18n="mk_rit_cta">Iniciar sesión →</a>
+        <a href="/auth" class="app-mockup-cta" data-i18n="mk_rit_cta">Iniciar sesión →</a>
       </div>
     </div>
 
@@ -1262,7 +1262,7 @@ footer a:hover{color:var(--ink2);}
         <div class="sec-idx">03</div>
         <div class="app-mockup-title" data-i18n="mk2_t">Cuídalo en tiempo real</div>
         <p class="app-mockup-desc" data-i18n="mk2_d">Caua-Gotchi: ves el árbol crecer en 8 stages. Riega, expón al sol, cosecha mazorcas.</p>
-        <a href="/app/auth" class="app-mockup-cta" data-i18n="mk2_cta">Iniciar sesión →</a>
+        <a href="/auth" class="app-mockup-cta" data-i18n="mk2_cta">Iniciar sesión →</a>
       </div>
     </div>
 
@@ -1321,7 +1321,7 @@ footer a:hover{color:var(--ink2);}
         <div class="sec-idx">04</div>
         <div class="app-mockup-title" data-i18n="mk3_t">Cosecha y canjea</div>
         <p class="app-mockup-desc" data-i18n="mk3_d">$CACAO on Base. Mazorcas ↔ chocolate ceremonial real. Wallet linked vía SIWE + KYC.</p>
-        <a href="/app/web3/onboarding" class="app-mockup-cta" data-i18n="mk3_cta">KYC + Wallet →</a>
+        <a href="/web3/onboarding" class="app-mockup-cta" data-i18n="mk3_cta">KYC + Wallet →</a>
       </div>
     </div>
 
@@ -1576,8 +1576,8 @@ footer a:hover{color:var(--ink2);}
   <!-- Footer: chain badge + CTAs + disclaimer -->
   <div class="w3-foot reveal d2">
     <div class="w3-chain-badge">⬡ Base · chain 84532 (Sepolia)</div>
-    <a href="/app/web3/onboarding" class="w3-cta w3-cta-primary" data-i18n="w3_cta_kyc">KYC + Wallet →</a>
-    <a href="/app/adoptar" class="w3-cta w3-cta-secondary" data-i18n="w3_cta_adopt">Adoptar on-chain →</a>
+    <a href="/web3/onboarding" class="w3-cta w3-cta-primary" data-i18n="w3_cta_kyc">KYC + Wallet →</a>
+    <a href="/adoptar" class="w3-cta w3-cta-secondary" data-i18n="w3_cta_adopt">Adoptar on-chain →</a>
   </div>
 
   <p class="w3-disclaimer reveal d3" data-i18n="w3_disc">
@@ -2348,7 +2348,7 @@ footer a:hover{color:var(--ink2);}
     </svg>
   </div>
   <div class="f-mono">CAUA COLOMBIA SAS · NIT 901.213.846-7 · Bogotá D.C. · Colombia · 2026</div>
-  <div class="f-mono"><a href="/app">App</a> &nbsp;·&nbsp; <a href="#investment">Deck</a> &nbsp;·&nbsp; <a href="/pitch_growth.html">Growth</a></div>
+  <div class="f-mono"><a href="/adoptar">App</a> &nbsp;·&nbsp; <a href="#investment">Deck</a> &nbsp;·&nbsp; <a href="/pitch_growth.html">Growth</a></div>
 </footer>
 
 <div id="wallet-modal" class="wallet-modal" onclick="if(event.target===this)this.classList.remove('open')">
