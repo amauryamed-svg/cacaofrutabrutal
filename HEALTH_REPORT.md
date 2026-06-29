@@ -1,42 +1,69 @@
 # CAUA Health Report
-Timestamp: 2026-06-22T14:04:49Z
-Previous run: 2026-06-15T14:02:32Z
+Timestamp: 2026-06-29T14:05:00Z
+Previous run: 2026-06-22T14:04:49Z
 
 ## Summary: ⚠️ INCONCLUSIVE — Sandbox Egress Block
 
-> **All HTTP checks were blocked by the Anthropic sandbox egress proxy.** Every request to `cacaofrutabrutal.com` and `kjygovuiphbxcdxeduco.supabase.co` returned **HTTP 403 `x-deny-reason: host_not_allowed`** — issued by the proxy, not by the real servers. This is a network-level sandbox restriction, **not a production outage**. Results below cannot confirm or deny real site health. Re-run from an external environment (local terminal, CI runner, or uptime monitor).
+> **All HTTP checks were blocked by the Claude Code remote execution environment's egress policy.** Requests to `cacaofrutabrutal.com` and `kjygovuiphbxcdxeduco.supabase.co` were rejected at the CONNECT tunnel stage (proxy `connect_rejected` — policy denial), returning curl exit code 56 (recv error) and HTTP 000 before any response from the real servers. This is a network-level sandbox restriction, **not a production outage**. Results below cannot confirm or deny real site health. Re-run from an external environment (local terminal, CI runner, or uptime monitor).
 
 ---
 
 | Check | Status | Detail |
 |-------|--------|--------|
-| Site availability | ⚠️ INCONCLUSIVE | 403 `host_not_allowed` — sandbox egress proxy, **0.26s** response time |
-| Security headers | ⚠️ INCONCLUSIVE | No app-layer headers returned; blocked at proxy |
-| Supabase auth endpoint | ⚠️ INCONCLUSIVE | 403 — body: "Host not in allowlist" |
-| Supabase REST endpoint | ⚠️ INCONCLUSIVE | 403 — body: "Host not in allowlist" |
-| HTTPS redirect (HTTP→HTTPS) | ⚠️ INCONCLUSIVE | HTTP also returned 403; redirect behavior unverifiable from sandbox |
-| SSL certificate | ✅ PASS | TLS 1.3 handshake succeeds; proxy cert via `O=Anthropic; CN=Egress Gateway SDS Issuing CA (production)` (not real site cert) |
-| /fund route | ⚠️ INCONCLUSIVE | 403 `host_not_allowed` — sandbox egress proxy |
+| Site availability | ⚠️ INCONCLUSIVE | `connect_rejected` — proxy denied CONNECT to `cacaofrutabrutal.com:443`; curl exit 56, HTTP 000 |
+| Security headers | ⚠️ INCONCLUSIVE | No connection established; blocked at CONNECT stage |
+| Supabase auth endpoint | ⚠️ INCONCLUSIVE | `connect_rejected` — proxy denied CONNECT to `kjygovuiphbxcdxeduco.supabase.co:443` |
+| Supabase REST endpoint | ⚠️ INCONCLUSIVE | `connect_rejected` — same host; curl exit 56, HTTP 000 |
+| HTTPS redirect (HTTP→HTTPS) | ⚠️ INCONCLUSIVE | HTTP returned 403 from proxy (port 80 blocked); redirect unverifiable |
+| SSL certificate | ⚠️ INCONCLUSIVE | TLS handshake never reached (CONNECT rejected before tunnel); no SSL errors in curl output |
+| /fund route | ⚠️ INCONCLUSIVE | `connect_rejected` — proxy denied CONNECT to `cacaofrutabrutal.com:443` |
 
 ---
 
 ## Issues Found
 
-### 1. ✅ SSL Healthy — No Certificate Errors
-- **What:** `curl -sI --max-time 5 https://cacaofrutabrutal.com` returned no SSL/certificate error strings. TLS 1.3 handshake succeeded.
-- **Note:** The cert shown is issued by `O=Anthropic; CN=Egress Gateway SDS Issuing CA (production)` — that is the proxy's interception cert, not the real origin cert. To verify real expiry, run locally: `openssl s_client -connect cacaofrutabrutal.com:443 2>/dev/null | openssl x509 -noout -dates`
-
-### 2. ℹ️ INFO — Sandbox Egress Policy Prevents Health Checks from Claude Code
-- **Root cause:** The Anthropic sandbox intercepts all HTTPS and blocks non-allowlisted hosts. `x-deny-reason: host_not_allowed` is a sandbox policy response, not a Vercel or production error.
+### 1. ℹ️ INFO — Sandbox Egress Policy Prevents Health Checks from Claude Code
+- **Root cause:** The Claude Code remote execution session's egress policy does not allowlist `cacaofrutabrutal.com` or `kjygovuiphbxcdxeduco.supabase.co`. The local proxy at `127.0.0.1:39119` logged `connect_rejected: gateway answered 403 to CONNECT (policy denial or upstream failure)` for both hosts.
+- **Note:** Previous runs (2026-04-20 through 2026-06-22) showed `x-deny-reason: host_not_allowed` after TLS inspection. This run shows early `connect_rejected` before TLS — the proxy behavior may have changed, or the policy tightened. Either way the root cause is identical.
 - **This is NOT a production site failure.** No evidence of a real outage across any of the prior runs.
 - **Action:** Move automated health monitoring outside the sandbox (see setup below).
-- Run count: **55th consecutive blocked run** (first blocked: 2026-04-20T22:08:41Z).
+- Run count: **56th consecutive blocked run** (first blocked: 2026-04-20T22:08:41Z).
 
 ---
 
 ## Raw curl Evidence
 
-### 2026-06-22T14:04:49Z run (current)
+### 2026-06-29T14:05:00Z run (current)
+```
+# Site availability
+curl exit 56 (CURLE_RECV_ERROR) — 000 0.292602s
+Proxy log: connect_rejected: gateway answered 403 to CONNECT (policy denial or upstream failure)
+  → cacaofrutabrutal.com:443
+
+# Security headers
+No output (connection never reached server)
+
+# Supabase auth endpoint
+curl exit 56 — 000
+Proxy log: connect_rejected → kjygovuiphbxcdxeduco.supabase.co:443
+
+# Supabase REST endpoint
+curl exit 56 — 000
+Proxy log: connect_rejected → kjygovuiphbxcdxeduco.supabase.co:443
+
+# HTTP→HTTPS redirect
+HTTP returned 403 (proxy blocked port 80 too; no redirect visible)
+
+# SSL certificate
+"SSL OK" — no SSL error strings in curl output; however CONNECT was rejected before
+TLS handshake could complete, so this is not meaningful cert validation
+
+# /fund route
+curl exit 56 — 000
+Proxy log: connect_rejected → cacaofrutabrutal.com:443
+```
+
+### 2026-06-22T14:04:49Z run (previous)
 ```
 # Site availability
 403 0.361262s
