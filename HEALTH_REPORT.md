@@ -1,6 +1,6 @@
 # CAUA Health Report
-Timestamp: 2026-06-29T14:05:00Z
-Previous run: 2026-06-22T14:04:49Z
+Timestamp: 2026-07-06T14:03:34Z
+Previous run: 2026-06-29T14:05:00Z
 
 ## Summary: ⚠️ INCONCLUSIVE — Sandbox Egress Block
 
@@ -27,13 +27,42 @@ Previous run: 2026-06-22T14:04:49Z
 - **Note:** Previous runs (2026-04-20 through 2026-06-22) showed `x-deny-reason: host_not_allowed` after TLS inspection. This run shows early `connect_rejected` before TLS — the proxy behavior may have changed, or the policy tightened. Either way the root cause is identical.
 - **This is NOT a production site failure.** No evidence of a real outage across any of the prior runs.
 - **Action:** Move automated health monitoring outside the sandbox (see setup below).
-- Run count: **56th consecutive blocked run** (first blocked: 2026-04-20T22:08:41Z).
+- Run count: **57th consecutive blocked run** (first blocked: 2026-04-20T22:08:41Z).
 
 ---
 
 ## Raw curl Evidence
 
-### 2026-06-29T14:05:00Z run (current)
+### 2026-07-06T14:03:34Z run (current)
+```
+# Site availability
+curl exit 56 (CURLE_RECV_ERROR) — 000 0.325s
+Proxy log: connect_rejected: gateway answered 403 to CONNECT (policy denial or upstream failure)
+  → cacaofrutabrutal.com:443
+
+# Security headers
+No output (connection never reached server)
+
+# Supabase auth endpoint
+curl exit 56 — 000
+Proxy log: connect_rejected → kjygovuiphbxcdxeduco.supabase.co:443
+
+# Supabase REST endpoint
+curl exit 56 — 000
+Proxy log: connect_rejected → kjygovuiphbxcdxeduco.supabase.co:443
+
+# HTTP→HTTPS redirect
+HTTP returned 403 (proxy blocked; no redirect visible)
+
+# SSL certificate
+"SSL OK" — curl exited before TLS handshake; not meaningful cert validation
+
+# /fund route
+curl exit 56 — 000
+Proxy log: connect_rejected → cacaofrutabrutal.com:443
+```
+
+### 2026-06-29T14:05:00Z run (previous)
 ```
 # Site availability
 curl exit 56 (CURLE_RECV_ERROR) — 000 0.292602s
