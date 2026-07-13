@@ -1,6 +1,6 @@
 # CAUA Health Report
-Timestamp: 2026-07-06T14:03:34Z
-Previous run: 2026-06-29T14:05:00Z
+Timestamp: 2026-07-13T14:01:30Z
+Previous run: 2026-07-06T14:03:34Z
 
 ## Summary: ⚠️ INCONCLUSIVE — Sandbox Egress Block
 
@@ -23,17 +23,46 @@ Previous run: 2026-06-29T14:05:00Z
 ## Issues Found
 
 ### 1. ℹ️ INFO — Sandbox Egress Policy Prevents Health Checks from Claude Code
-- **Root cause:** The Claude Code remote execution session's egress policy does not allowlist `cacaofrutabrutal.com` or `kjygovuiphbxcdxeduco.supabase.co`. The local proxy at `127.0.0.1:39119` logged `connect_rejected: gateway answered 403 to CONNECT (policy denial or upstream failure)` for both hosts.
-- **Note:** Previous runs (2026-04-20 through 2026-06-22) showed `x-deny-reason: host_not_allowed` after TLS inspection. This run shows early `connect_rejected` before TLS — the proxy behavior may have changed, or the policy tightened. Either way the root cause is identical.
+- **Root cause:** The Claude Code remote execution session's egress policy does not allowlist `cacaofrutabrutal.com` or `kjygovuiphbxcdxeduco.supabase.co`. The local proxy at `127.0.0.1:35813` logged `connect_rejected: gateway answered 403 to CONNECT (policy denial or upstream failure)` for both hosts.
+- **Note:** Previous runs (2026-04-20 through 2026-06-22) showed `x-deny-reason: host_not_allowed` after TLS inspection. Since 2026-06-29 the proxy rejects before the CONNECT tunnel completes (exit 56). Either way the root cause is identical.
 - **This is NOT a production site failure.** No evidence of a real outage across any of the prior runs.
 - **Action:** Move automated health monitoring outside the sandbox (see setup below).
-- Run count: **57th consecutive blocked run** (first blocked: 2026-04-20T22:08:41Z).
+- Run count: **58th consecutive blocked run** (first blocked: 2026-04-20T22:08:41Z).
 
 ---
 
 ## Raw curl Evidence
 
-### 2026-07-06T14:03:34Z run (current)
+### 2026-07-13T14:01:30Z run (current)
+```
+# Site availability
+curl exit 56 (CURLE_RECV_ERROR) — 000 0.527s
+Proxy log: connect_rejected: gateway answered 403 to CONNECT (policy denial or upstream failure)
+  → cacaofrutabrutal.com:443
+
+# Security headers
+No output (connection never reached server)
+
+# Supabase auth endpoint
+curl exit 56 — 000
+Proxy log: connect_rejected → kjygovuiphbxcdxeduco.supabase.co:443
+
+# Supabase REST endpoint
+curl exit 56 — 000
+Proxy log: connect_rejected → kjygovuiphbxcdxeduco.supabase.co:443
+
+# HTTP→HTTPS redirect
+HTTP returned 403 (proxy blocked port 80; no redirect visible)
+
+# SSL certificate
+"SSL OK" — CONNECT rejected before TLS handshake; not meaningful cert validation
+
+# /fund route
+curl exit 56 — 000
+Proxy log: connect_rejected → cacaofrutabrutal.com:443
+```
+
+### 2026-07-06T14:03:34Z run
 ```
 # Site availability
 curl exit 56 (CURLE_RECV_ERROR) — 000 0.325s
