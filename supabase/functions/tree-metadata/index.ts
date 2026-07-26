@@ -60,7 +60,7 @@ serve(async (req) => {
 
   const { data: tree } = await supabase
     .from('cacao_trees')
-    .select('id, guardian_id, region, variety, stage, adopted_at, health, moisture, sunlight, co2_kg, metadata_ipfs_cid, owner_wallet')
+    .select('id, guardian_id, region, variety, stage, adopted_at, health, moisture, sunlight, co2_kg, adoption_season, metadata_ipfs_cid, owner_wallet')
     .eq('nft_token_id', tokenId)
     .eq('nft_contract', contractAddress)
     .eq('nft_chain_id', chainId)
@@ -104,7 +104,8 @@ serve(async (req) => {
       { trait_type: 'Moisture',      value: tree.moisture, max_value: 100 },
       { trait_type: 'Sunlight',      value: tree.sunlight, max_value: 100 },
       { trait_type: 'CO₂ sequestered (kg)', value: Number(tree.co2_kg ?? 0) },
-      { trait_type: 'Rarity score',  value: rarityScore },
+      { trait_type: 'Rarity score',         value: rarityScore },
+      { trait_type: 'Adoption Season',      value: (tree as { adoption_season?: string | null }).adoption_season ?? 'floracion' },
     ],
   })
 })

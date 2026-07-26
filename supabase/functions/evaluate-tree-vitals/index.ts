@@ -38,10 +38,18 @@ const CORS_HEADERS = {
 }
 
 // MUST mirror src/utils/constants.ts. Tune in tandem.
-const VITAL_THRESHOLD   = 30     // % below this on any single vital = critical
-const VITAL_GRACE_HOURS = 24     // hours of sustained criticality before death
+const VITAL_THRESHOLD         = 30   // % below this on any single vital = critical
+const VITAL_GRACE_HOURS       = 24   // hours of sustained criticality before death
+const TRAVIESA_GRACE_HOURS    = 12   // shorter grace during dry-season drought risk
 
 const MS_PER_HOUR = 3600_000
+
+// Traviesa = Andean dry season (months 7-9). Grace window is halved to
+// reflect that irrigation neglect is more dangerous during drought.
+function currentGraceHours(): number {
+  const month = new Date().getUTCMonth() + 1  // 1-12
+  return (month >= 7 && month <= 9) ? TRAVIESA_GRACE_HOURS : VITAL_GRACE_HOURS
+}
 
 interface TreeVitalRow {
   id: string
@@ -169,10 +177,10 @@ serve(async (req) => {
         continue
       }
 
-      // Already critical — check grace window.
+      // Already critical — check grace window (shorter during traviesa drought).
       const sinceMs = new Date(tree.vitals_critical_since).getTime()
       const elapsedH = (now - sinceMs) / MS_PER_HOUR
-      if (elapsedH >= VITAL_GRACE_HOURS) {
+      if (elapsedH >= currentGraceHours()) {
         const result = await killTree(tree, 'vitals_critical_grace_expired')
         if (result) {
           deaths.push(result)

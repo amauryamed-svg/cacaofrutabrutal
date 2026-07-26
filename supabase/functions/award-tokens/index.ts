@@ -53,6 +53,9 @@ const TOKEN_RATES: Record<string, Rate> = {
   tree_harvest_share: { beans: 5, mazorcas: 2 },
   // Phase 2.5 — Labranza machete regenerative bonus when slicing dead biomass.
   tree_compost_regen: { beans: 10, mazorcas: 0 },
+  // Seasonal mini-game completion (pollinate, irrigate, selective_pick). Dedup
+  // enforced by ref_id = "minigame:<treeId>:<season>:<utc-date>" on the caller side.
+  seasonal_minigame: { beans: 2, mazorcas: 1 },
 }
 
 async function verifyAuth(authHeader: string) {
@@ -96,6 +99,9 @@ serve(async (req) => {
       // the harvest minigame. Server clamps to a sane max to prevent abuse.
       beans_override?:    number
       mazorcas_override?: number
+      // Season at time of harvest — used to apply SEASONAL_HARVEST_MULTS.
+      // Computed server-side from current UTC month if not provided.
+      season?: string
     }
     const { event_type, ref_id, amount } = body
 
@@ -205,6 +211,25 @@ serve(async (req) => {
       if (typeof body.mazorcas_override === 'number') {
         mazorcas = Math.min(Math.max(0, body.mazorcas_override), mazorcas * 3)
       }
+    }
+
+    // Seasonal harvest multiplier — apply to mazorcas (the scarce on-chain resource).
+    // Season is derived from current UTC month if caller doesn't supply it.
+    const SEASONAL_HARVEST_MULTS: Record<string, number> = {
+      floracion:     1.4,
+      mitaca:        1.3,
+      traviesa:      0.9,
+      cosecha_mayor: 1.8,
+    }
+    if (event_type === 'tree_harvest_share') {
+      const month  = new Date().getUTCMonth() + 1   // 1-12
+      const season = body.season ?? (
+        month <= 3 ? 'floracion' :
+        month <= 6 ? 'mitaca'    :
+        month <= 9 ? 'traviesa'  : 'cosecha_mayor'
+      )
+      const mult = SEASONAL_HARVEST_MULTS[season] ?? 1.0
+      mazorcas = Number((mazorcas * mult).toFixed(2))
     }
 
     // Resource awards (mucilage + cacao_mass). Cap per call at a sane max to

@@ -207,6 +207,10 @@ export interface CacaoTree {
   // `harvested_at` → set by award-tokens when tree_harvest_share fires
   died_at: string | null
   harvested_at: string | null
+  // Seasonal system — added by migration 052_seasonal_system.sql
+  adoption_season: 'floracion' | 'mitaca' | 'traviesa' | 'cosecha_mayor' | null
+  minigame_last_completed_season: 'floracion' | 'mitaca' | 'traviesa' | 'cosecha_mayor' | null
+  minigame_last_completed_at: string | null
 }
 
 export interface TreeUpdate {

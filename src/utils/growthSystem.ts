@@ -316,6 +316,7 @@ export interface TreeForMetadata {
   sunlight: number | null
   co2_kg: number | null
   adopted_at: string | Date
+  adoption_season?: string | null
 }
 
 export interface MetadataAttribute {
@@ -365,5 +366,6 @@ export function getMetadataAttributes(tree: TreeForMetadata): MetadataAttribute[
     { trait_type: 'Sunlight',             value: tree.sunlight ?? 0, max_value: 100 },
     { trait_type: 'CO₂ sequestered (kg)', value: Number(tree.co2_kg ?? 0) },
     { trait_type: 'Rarity score',         value: getRarityScore(tree) },
+    { trait_type: 'Adoption Season',      value: tree.adoption_season ?? 'floracion' },
   ]
 }

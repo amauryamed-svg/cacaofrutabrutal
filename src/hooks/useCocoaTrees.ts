@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import type { CacaoTree, TreeUpdate } from '../lib/database.types'
+import { getCurrentSeason } from '../utils/seasonSystem'
 
 const CARE_DELTAS = {
   water:     { health: 5,  moisture: 20, sunlight:  0 },
@@ -64,6 +65,7 @@ export function useCocoaTrees() {
           guardian_id: guardianId,
           region,
           variety,
+          adoption_season: getCurrentSeason(),
         },
       ])
       .select()

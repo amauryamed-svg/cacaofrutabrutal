@@ -281,6 +281,18 @@ export const TOKEN_RATES = {
   chocolate_made: { mucilage_g: 300, cacao_mass_g: 250 },
 }
 
+/**
+ * Seasonal harvest multipliers — applied server-side in award-tokens for
+ * tree_harvest_share events. Matches SeasonData.harvestBonus in seasonSystem.ts.
+ * Update both when re-tuning the seasonal economy.
+ */
+export const SEASONAL_HARVEST_MULTS: Record<string, number> = {
+  floracion:      1.4,
+  mitaca:         1.3,
+  traviesa:       0.9,
+  cosecha_mayor:  1.8,
+}
+
 /** Window (ms) in which the player must slice all pods to earn combo bonus. */
 export const HARVEST_COMBO_WINDOW_MS = 6000
 
