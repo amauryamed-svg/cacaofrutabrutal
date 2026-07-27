@@ -1,74 +1,77 @@
 # Vercel Deploy Health Report
-Timestamp: 2026-07-20T14:16:04Z
-Window: last 7 days (2026-07-13 → 2026-07-20)
-Project: caua-mvp (id: discovered via workflow; Vercel MCP not enabled — see §Limitations)
+Timestamp: 2026-07-27T14:10:00Z
+Window: last 7 days (2026-07-20 → 2026-07-27)
+Project: caua-mvp (amauryamed-svg/cacaofrutabrutal) — run #122
 
 ## Summary: ⚠️ WARN
 
-Deploy pipeline is healthy — 2/2 gh Actions runs succeeded this week, both alias promotions
-completed (VERCEL_TOKEN confirmed working, both domains aliased today at 14:04:07Z).
-**WARN reason:** The monitoring sandbox egress policy blocks direct HTTPS to
-`cacaofrutabrutal.com` for the 60th consecutive week, making checks #1, #2, #5 (domain
-state), and #9 impossible. The Vercel MCP connector is installed but `enabledInChat: false`.
+Deploy pipeline is healthy — 2/2 GitHub Actions runs succeeded this week, alias promotion
+completed for both domains at 14:06:23Z today.
+**WARN reason:** Monitoring sandbox egress blocks direct HTTPS to `cacaofrutabrutal.com`
+for the **61st consecutive week**, making curl checks #1, #2, and #9 impossible. The Vercel
+MCP connector is installed but `enabledInChat: false`, preventing direct Vercel API queries.
 These are monitoring infrastructure gaps — not evidence of a production outage.
 
 ---
 
 ## Deploy activity (7d)
 - **Total runs:** 2 | **SUCCESS:** 2 | **FAILURE:** 0 | **CANCELED:** 0
-- **Last SUCCESS:** run #120 — sha `76252d6` — "chore: health report 2026-07-20" — 0h ago — pipeline 64s
-- **Last FAILURE:** none in 7d (none in last 30 days across all 10 sampled runs)
-- **Last real code deploy:** `16ed059` "fix(seed): include email column in cdp-reviewer upsert" — 2026-06-26 (24 days ago)
+- **Last SUCCESS:** run #122 — sha `c5aac3c` — *"chore: weekly health report 2026-07-27"* — 0.2h ago — pipeline 121s
+- **Previous SUCCESS:** run #121 — sha `f593c6d` — *"chore: health report 2026-07-20"* — 168h ago — pipeline 124s
+- **Last FAILURE:** none in 7d
+- **Last real code deploy:** `16ed059` "fix(seed): include email column in cdp-reviewer upsert" — 2026-06-26 (~31 days ago)
 
 ### 7-day runs detail
-| Run ID | SHA | Title | Created | Duration | Conclusion |
-|--------|-----|-------|---------|----------|------------|
-| 29748918484 | 76252d6 | health report 2026-07-20 | 2026-07-20T14:03:07Z | 64s | success |
-| 29257623193 | 2457776 | health report 2026-07-13 | 2026-07-13T14:21:53Z | 61s | success |
+| Run ID | SHA | Title | Created (UTC) | Duration | Conclusion |
+|--------|-----|-------|---------------|----------|------------|
+| 30273288405 | c5aac3c | weekly health report 2026-07-27 | 2026-07-27T14:04:23Z | 121s | ✅ success |
+| 29750087801 | f593c6d | health report 2026-07-20 | 2026-07-20T14:04:XXZ | 124s | ✅ success |
 
 ---
 
 ## Build / pipeline performance (last 5 successful runs)
 | Run ID | Created | Total pipeline duration |
 |--------|---------|------------------------|
+| 30273288405 | 2026-07-27 | 121s |
+| 29750087801 | 2026-07-20 | 124s |
 | 29748918484 | 2026-07-20 | 64s |
 | 29257623193 | 2026-07-13 | 61s |
 | 29256326358 | 2026-07-13 | 60s |
-| 28798427673 | 2026-07-06 | 190s |
-| 28797544501 | 2026-07-06 | 125s |
 
-- **Average pipeline time (last 5):** ~100s (~1.7 min)
+- **Average pipeline time (last 5): 86s (~1m 26s)**
 - **Verdict: OK** — well under 4-min WARN threshold
+- ⚠️ **Trend note:** The two most recent runs (~122s) are ~2× the older baseline (~62s). The
+  "Wait for deployment" step is using 1–2 extra 20s poll cycles before finding READY, suggesting
+  Vercel's build started taking slightly longer (~85s vs ~45s). Not alarming, but watch next week.
 
-> Note: These are total workflow durations (deploy-hook POST + poll-for-READY + alias-set),
-> not the Vercel build time itself. The "Wait for deployment" step in today's run took 45s,
-> implying the Vercel build completed within ~1 min of the hook being called.
+> Note: Durations are total workflow wall-clock (hook POST + wait-for-READY + alias set).
+> The 45s initial sleep in the promote job is included. Vercel build itself appears to be
+> completing within 65–85s of the hook being triggered.
 
 ---
 
 ## Domains
-Vercel MCP is not enabled for this session (`enabledInChat: false`), so domain state cannot
-be confirmed via the Vercel API directly. However, **today's "Promote latest READY deployment"
-job succeeded** — step "Set production aliases" completed at 14:04:07Z with conclusion
-`success`, meaning the Vercel API accepted both alias assignments.
+Vercel MCP not enabled for this session — domain state cannot be confirmed via Vercel API.
+However, the **"Set production aliases" step in run #122 completed successfully at 14:06:23Z**,
+meaning the Vercel API accepted alias assignments for both targets.
 
-- `cacaofrutabrutal.com` → aliased to sha `76252d6` deployment at 14:04:07Z (inferred from gh job success)
-- `www.cacaofrutabrutal.com` → same deployment, same promotion step (inferred from gh job success)
+- `cacaofrutabrutal.com` → sha `c5aac3c` deployment (inferred from gh job success ✅)
+- `www.cacaofrutabrutal.com` → same deployment (same promotion step ✅)
 
 ---
 
 ## Checks
 | # | Check | Status | Detail |
 |---|-------|--------|--------|
-| 1 | Site availability | BLOCKED | Egress proxy 403 on CONNECT to cacaofrutabrutal.com — sandbox policy, 60th consecutive week |
-| 2 | Bundle freshness | BLOCKED | Cannot curl production site — same proxy restriction |
-| 3 | gh Actions 7d | PASS | 2 runs, 2 success, 0 failures |
-| 4 | Pipeline duration | PASS | avg 100s, well under 4-min WARN threshold |
-| 5 | Domain alias | INFERRED OK | Alias promotion job succeeded today; Vercel MCP needed for direct confirmation |
-| 6 | Failed deploy logs | N/A | Zero failures in 7d |
-| 7 | gh <-> Vercel cross-check | PASS | Both gh successes -> "Set production aliases" step succeeded -> READY deployments confirmed |
-| 8 | Workflow integrity | PASS | No changes to deploy-vercel.yml or vercel.json in last 7 days |
-| 9 | SPA routes (/fund, /app/adoptar, /investor-landing.html) | BLOCKED | Cannot curl production site |
+| 1 | Site availability | BLOCKED | Egress proxy 403 — sandbox policy, 61st consecutive week. Not a production issue. |
+| 2 | Bundle freshness | BLOCKED | Cannot curl production site — same proxy restriction. |
+| 3 | Vercel deploys 7d | ✅ PASS | GitHub Actions: 2/2 success, 0 errors. Vercel MCP offline so no server-side list. |
+| 4 | Pipeline duration | ✅ PASS | Avg 86s across last 5 runs; under 4-min threshold. Mild upward trend — monitor. |
+| 5 | Domain alias | ✅ INFERRED | Alias promotion step succeeded at 14:06:23Z today for both domains. |
+| 6 | Failed deploy logs | N/A | Zero failures in 7d. |
+| 7 | gh ↔ Vercel cross-check | ✅ PASS | Both gh successes → "Set production aliases" step succeeded → READY deployments confirmed for each sha. |
+| 8 | Workflow integrity | ✅ PASS | No changes to `deploy-vercel.yml` or `vercel.json` in last 7 days. Alias logic targets both `cacaofrutabrutal.com` and `www`. SPA rewrite (`/:path* → /index.html`) and key redirects present. |
+| 9 | SPA routes (/fund, /app/adoptar, /investor-landing.html) | BLOCKED | Cannot curl production site. |
 
 ---
 
@@ -80,27 +83,30 @@ None in the last 7 days.
 ## Issues / Action items
 
 ### Persistent (known, pre-existing)
-1. **Monitoring sandbox egress block (60 consecutive weeks):** The Claude Code remote execution
-   environment's egress policy does not permit CONNECT tunnels to `cacaofrutabrutal.com`.
-   Checks #1, #2, #9, and direct Vercel API calls are impossible from here. This is a sandbox
-   policy issue, not a production issue. The deploy pipeline's own alias-promotion step (which
-   runs on GitHub Actions, not this sandbox) confirms READY deployments are being aliased.
-   **Action:** Enable the **Vercel MCP connector** in claude.ai connector settings
-   (it is installed but `enabledInChat: false`). This alone unlocks deployment and domain
-   state checks natively without needing curl to the production domain.
+1. **Monitoring sandbox egress block (61 consecutive weeks):** The Claude Code remote execution
+   environment's egress policy does not permit CONNECT tunnels to external domains.
+   Checks #1, #2, #9, and Vercel API calls are blocked from this environment. This is a sandbox
+   policy limitation — not evidence of a production issue.
+   **Action:** Enable the **Vercel MCP connector** in claude.ai → Settings → Connectors
+   (`enabledInChat: false`, directoryUuid `7eb42afe-0087-4493-a105-da2b021d5c03`). Enabling it
+   unlocks checks 3, 5, and 7 from Vercel's API without needing curl to the live domain.
 
-2. **No real code deploys in 24 days:** Last product commit was 2026-06-26. This may be
-   intentional (feature freeze, CDP review period) but worth confirming if active development
-   is expected.
+2. **No real code deploys in 31 days:** Last product commit was 2026-06-26. Confirm whether
+   active development is paused intentionally (CDP review / feature freeze).
+
+3. **Build time upward trend:** Pipeline time jumped from ~62s (early July) to ~122s (latest two
+   runs). If next week's average exceeds 150s, run `npm run build -- --report` to check for
+   bundle size growth.
 
 ---
 
 ## Vercel MCP tools used
-None — `enabledInChat: false`. The connector is installed (directoryUuid:
-`7eb42afe-0087-4493-a105-da2b021d5c03`) but toggled off for this session. Enable it in
-claude.ai connector settings to unlock: `list_projects`, `get_project`, `list_deployments`,
-`get_deployment`, `get_deployment_events`, `list_teams`.
+None — `enabledInChat: false`. Connector installed (directoryUuid `7eb42afe-0087-4493-a105-da2b021d5c03`).
+Enable in claude.ai connector settings to unlock: `list_projects`, `get_project`,
+`list_deployments`, `get_deployment`, `get_deployment_events`, `list_teams`.
 
 ## GitHub MCP tools used
-- `mcp__github__actions_list` (list_workflow_runs, list_workflow_jobs)
-- `mcp__github__actions_get` (get_workflow_run x 2)
+- `mcp__github__actions_list` — `list_workflow_runs` (deploy-vercel.yml, last 20 runs)
+- `mcp__github__actions_list` — `list_workflow_jobs` (run 30273288405)
+- `mcp__github__actions_get` — `get_workflow_run_usage` (runs 30273288405, 29750087801, 29748918484, 29257623193, 29256326358)
+- `mcp__github__actions_get` — `get_workflow_run` (run 30273288405)
