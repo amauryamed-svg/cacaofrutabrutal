@@ -1,65 +1,72 @@
 # Vercel Deploy Health Report
-Timestamp: 2026-08-10T14:30:00Z
-Window: last 7 days
-Project: caua-mvp (Vercel project — id not retrievable; Vercel MCP enabledInChat: false)
+Timestamp: 2026-08-17T14:21:28Z
+Window: last 7 days (since 2026-08-10)
+Project: caua-mvp (alias: caua-mvp-amauryamed-1073s-projects.vercel.app)
 
-## Summary: PASS ⚠️ (pipeline healthy; site & Vercel MCP inaccessible from monitor container)
+## Summary: WARN
 
-> **Note — 63rd consecutive egress-blocked run.** This remote execution container's
-> egress proxy blocks outbound HTTPS to external domains (cacaofrutabrutal.com, vercel.com).
-> All curl-based checks return 000/403/CURLE_RECV_ERROR from the proxy, NOT from the live site.
-> The Vercel MCP connector is installed but `enabledInChat: false` for this session.
-> Evidence that the site is UP: both 7-day GitHub Actions runs completed `success` and
-> the promote-alias step succeeded, meaning Vercel confirmed a READY deployment and
-> aliased it to cacaofrutabrutal.com + www.
+Core CI/CD pipeline is **healthy** — all GitHub Actions runs in the window succeeded and build times are excellent. However, **3 checks could not be executed** due to infrastructure constraints in this scheduled run (egress policy blocks outbound HTTP to external hosts; Vercel MCP connector is installed but not enabled for this chat session). These gaps reduce confidence in end-to-end site health.
+
+**Action required:** Enable the Vercel MCP connector in claude.ai chat settings so future runs can query deployment state, domain aliases, and fetch build logs directly.
+
+---
 
 ## Deploy activity (7d)
-- Total: 2 | READY/success: 2 | ERROR: 0 | CANCELED: 0
-- Last READY: Run 31396216667 — c7af940 — "chore: health report 2026-08-10 — all checks blocked by proxy egress" — ~0h ago — build 61s
-- Last READY (prior): Run 30822295051 — 62a43c2 — "chore: Vercel health report 2026-08-03 — pipeline PASS (62nd blocked run)" — 167h ago — build 61s
-- Last ERROR: none in window
+- **Total:** 2 | **SUCCESS:** 2 | **FAILURE:** 0 | **CANCELED:** 0
+- **Last SUCCESS:** run `32037688540` — sha `3b9b830` — *"chore: update HEALTH_REPORT with inconclusive monitor run"* — 0.3h ago — build **91s**
+- **Previous SUCCESS:** run `31397743269` — sha `1b03edd` — *"chore: Vercel health report 2026-08-10 — pipeline PASS"* — 168h ago — build **77s**
+- **Last FAILURE:** none in window ✅
 
 ## Build performance
-- Last 2 successful runs avg build time: 61s (gh Actions wall-clock, includes polling wait + alias promotion)
-- Actual Vite build is subset of this; 61s total is well within thresholds
-- Verdict: OK (historical baseline ~90s; current ~61s = faster)
+- Last 5 READY avg build time: **71s** (1m 11s)
+- Historical baseline: ~90s
+- Verdict: **OK** — well within normal range; no bundle regression detected
 
 ## Domains
-- cacaofrutabrutal.com → alias promotion succeeded in both runs ✅ (inferred from gh Actions `success`)
-- www.cacaofrutabrutal.com → same ✅
-- Vercel MCP domain query: NOT AVAILABLE (enabledInChat: false)
+- `cacaofrutabrutal.com` → NOT VERIFIABLE (Vercel MCP disabled) ⚠️
+- `www.cacaofrutabrutal.com` → NOT VERIFIABLE (Vercel MCP disabled) ⚠️
+- **Workflow analysis:** `deploy-vercel.yml` promote-alias job explicitly aliases both `cacaofrutabrutal.com` and `www.cacaofrutabrutal.com` to the READY deployment. Logic is correct and unchanged this week.
+
+---
 
 ## Checks
+
 | # | Check | Status | Detail |
 |---|-------|--------|--------|
-| 1 | Site availability | ⚠️ BLOCKED | Proxy returns 403; curl HTTP 000. Not a site failure — egress policy. |
-| 2 | Bundle freshness | ⚠️ BLOCKED | curl body empty due to proxy block. Cannot verify asset hashes. |
-| 3 | Vercel deploys 7d | ✅ PASS (via gh) | gh Actions: 2 runs, 2 success, 0 ERROR |
-| 4 | Build duration | ✅ OK | 61s avg — well under 4-min threshold |
-| 5 | Domain alias | ✅ PASS (inferred) | promote-alias step succeeded both runs; workflow aliases both domains |
-| 6 | Failed deploy logs | ✅ N/A | No ERROR deployments in 7d |
-| 7 | gh ↔ Vercel cross-check | ✅ PASS | 2 gh success runs; alias promotion confirmed READY dep per run |
-| 8 | Workflow integrity | ✅ UNCHANGED | No changes to deploy-vercel.yml or vercel.json in last 7 days |
-| 9 | SPA routes | ⚠️ BLOCKED | curl exit 56 (proxy block); not a routing regression |
+| 1 | Site availability | ⚠️ BLOCKED | Egress policy denies outbound HTTPS to cacaofrutabrutal.com from this environment. Cannot curl. |
+| 2 | Bundle freshness | ⚠️ BLOCKED | Same egress policy; cannot fetch HTML to verify Vite-hashed assets. |
+| 3 | Vercel deploys 7d | ✅ PASS | 2 GitHub Actions runs, both success. No ERROR states. (via gh, not Vercel MCP) |
+| 4 | Build duration | ✅ PASS | Avg 71s across last 5 builds. Threshold <4min. No regression. |
+| 5 | Domain alias | ⚠️ UNVERIFIED | Vercel MCP not enabled in chat. Workflow code confirms correct alias logic. |
+| 6 | Failed deploy logs | ✅ PASS | Zero failures in 7d. No logs to fetch. |
+| 7 | gh ↔ Vercel cross-check | ✅ PASS | 2 GH Actions successes. Deploy hook fires on each push to main per workflow design. |
+| 8 | Workflow integrity | ✅ PASS | No commits to `deploy-vercel.yml` or `vercel.json` in 7 days. Alias logic intact. |
+| 9 | SPA routes | ⚠️ BLOCKED | Cannot curl /fund, /app/adoptar, /investor-landing.html — egress policy. |
+
+---
 
 ## Failed deployments (if any)
-None in the 7-day window.
+None in the last 7 days. ✅
+
+---
 
 ## Issues / Action items
-1. **Vercel MCP not enabled in chat**: The Vercel MCP server is installed
-   (`installedServerId: ce17b2be-c8b3-4032-8770-a1702e6da06b`) but `enabledInChat: false`.
-   **Action**: Enable the Vercel connector for this session in claude.ai connector settings.
-   Once enabled, direct deployment/domain queries will replace the gh-Actions-inferred data.
 
-2. **Egress proxy blocks outbound HTTPS**: Site availability, bundle freshness, and SPA
-   route checks cannot run from this container. This has been the case for 63 consecutive
-   weekly runs. Checks 1, 2, 9 will remain BLOCKED until the monitor is moved to an
-   environment with open egress, or a Cloudflare Worker / external uptime service is used.
+1. **[INFRA] Enable Vercel MCP in claude.ai chat settings** — The Vercel connector (`installedServerId: ce17b2be-c8b3-4032-8770-a1702e6da06b`) is authenticated but `enabledInChat: false`. Enable it via claude.ai → connector settings → Vercel → toggle on. This will unlock checks 3 (Vercel-side), 5 (domain aliases), and 6 (build logs) in future runs.
 
-3. (If any real concern): No genuine failures detected in the 7-day window based on
-   available data (gh Actions pipeline fully green).
+2. **[INFRA] Egress policy blocks external curl** — Checks 1, 2, and 9 (site availability, bundle freshness, SPA routes) cannot run because the scheduled cloud environment's network policy denies CONNECT to `cacaofrutabrutal.com:443`. These checks require either: (a) the egress policy to allowlist the production domain, or (b) using the Vercel MCP to infer health from deployment state.
+
+3. **[INFO] Monitoring frequency** — Only 2 deployments in 7 days (one was a health-report commit, one was the prior health-report commit). This is expected for a stable week. No action needed.
+
+---
 
 ## Vercel MCP tools used
-- None used (Vercel MCP `enabledInChat: false` for this session)
-- `mcp__github__actions_list` (list_workflow_runs) — primary deploy data source
-- `SearchMcpRegistry` — confirmed Vercel MCP is installed but disabled for chat
+None — `enabledInChat: false` for this session. Tools available if enabled: `list_projects`, `get_project`, `list_deployments`, `get_deployment`, `get_deployment_events`, `list_teams`.
+
+## GitHub MCP tools used
+- `mcp__github__actions_list` (list_workflow_runs for deploy-vercel.yml, last 20)
+- `mcp__github__get_file_contents` (.github/workflows/deploy-vercel.yml, vercel.json)
+- `mcp__github__list_commits` (path filter for workflow files, 7d window)
+
+## Curl checks attempted
+All blocked by egress proxy policy (403 on CONNECT to external hosts). See `/root/.ccr/README.md` §"403 / 407 from the proxy".
