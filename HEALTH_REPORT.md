@@ -1,39 +1,68 @@
 # CAUA Health Report
-Timestamp: 2026-08-10T14:03:10Z
+Timestamp: 2026-08-17T14:02:00Z
 
-## Summary: BLOCKED — Network Policy Prevented All Checks
+## Summary: ⚠️ INCONCLUSIVE — Network policy blocked all checks
 
-All health checks failed to complete because the remote execution environment's outbound network policy blocks HTTPS connections to external hosts (including `cacaofrutabrutal.com` and `kjygovuiphbxcdxeduco.supabase.co`). This is a sandbox network restriction — **not a site outage**.
+> **All 7 checks failed to execute.** The remote execution environment's outbound proxy
+> (`127.0.0.1:39331`) denied CONNECT tunnel requests to `cacaofrutabrutal.com:443` and
+> `kjygovuiphbxcdxeduco.supabase.co:443` with HTTP 403 (gateway policy denial). No actual
+> site or Supabase data was reachable from this container.
+>
+> **This is an environment limitation, not a site outage.** Results below reflect connection
+> status from the monitoring container, not real availability.
+
+---
 
 | Check | Status | Detail |
 |-------|--------|--------|
-| Site availability | ❌ BLOCKED | Proxy 403 — CONNECT tunnel to `cacaofrutabrutal.com:443` denied by gateway policy |
-| Security headers | ❌ BLOCKED | Could not reach host |
-| Supabase auth endpoint | ❌ BLOCKED | Proxy 403 — CONNECT to `kjygovuiphbxcdxeduco.supabase.co:443` denied |
-| Supabase REST endpoint | ❌ BLOCKED | Proxy 403 — same policy denial |
-| HTTPS redirect (HTTP→HTTPS) | ❌ BLOCKED | HTTP also returned proxy 403 (not a site 301/302) |
-| SSL certificate validity | ⚠️ INCONCLUSIVE | No TLS errors in curl output, but tunnel never established |
-| /fund route accessible | ❌ BLOCKED | Proxy 403 — CONNECT tunnel denied |
+| Site availability | 🚫 INCONCLUSIVE | Proxy blocked CONNECT to cacaofrutabrutal.com:443 (403 policy denial) |
+| Security headers | 🚫 INCONCLUSIVE | Headers seen were proxy's own response, not origin server |
+| Supabase auth endpoint | 🚫 INCONCLUSIVE | Proxy blocked CONNECT to kjygovuiphbxcdxeduco.supabase.co:443 |
+| Supabase REST endpoint | 🚫 INCONCLUSIVE | Proxy blocked CONNECT to kjygovuiphbxcdxeduco.supabase.co:443 |
+| HTTPS redirect (HTTP→HTTPS) | 🚫 INCONCLUSIVE | HTTP tunnel also blocked (proxy returned 403) |
+| SSL certificate validity | 🚫 INCONCLUSIVE | TLS handshake never reached origin (CONNECT denied) |
+| /fund route accessible | 🚫 INCONCLUSIVE | Proxy blocked CONNECT to cacaofrutabrutal.com:443 |
 
-## Root Cause
-
-The Claude Code remote execution environment uses an outbound proxy (`http://127.0.0.1:34039`) with a **selective allow-list policy**. Connections to `cacaofrutabrutal.com` and `supabase.co` are not on the allow-list and were rejected at the gateway level:
-
-```
-connect_rejected: gateway answered 403 to CONNECT (policy denial or upstream failure)
-host: cacaofrutabrutal.com:443
-host: kjygovuiphbxcdxeduco.supabase.co:443
-```
+---
 
 ## Issues Found
 
-1. **BLOCKED — All external health checks**: The remote execution environment's network policy blocks access to `cacaofrutabrutal.com` and `supabase.co`. No actual site health data was collected.
+### Critical: Monitoring environment cannot reach production targets
+
+**Root cause:** The network policy for this remote execution environment denies outbound CONNECT
+tunnel requests to arbitrary external domains. Only a fixed allow-list (npm, pypi, GitHub, etc.)
+is permitted by the upstream gateway.
+
+**Proxy status:**
+- Proxy address: `127.0.0.1:39331`
+- Mode: gateway-enforced block (not selective per tool)
+- Recent relay failures all show `connect_rejected` / "gateway answered 403 to CONNECT"
+
+**What this means for the health monitor:**
+- None of the 7 curl-based checks produced real data from the live site or Supabase.
+- The `X-Content-Type-Options: nosniff` header observed in the security headers check came from
+  the proxy's own 403 response body, not from Vercel/cacaofrutabrutal.com.
+- The 403 seen on the HTTP redirect check was also the proxy refusing the plain-HTTP tunnel.
+
+---
 
 ## Recommended Actions
 
-- **To run these checks**: Execute them from a local machine or CI environment (GitHub Actions, Vercel preview job) that has unrestricted outbound access to these hosts.
-- **To enable checks in this environment**: The network policy for the Claude Code remote execution environment would need to allowlist `cacaofrutabrutal.com` and `kjygovuiphbxcdxeduco.supabase.co`. See [Claude Code remote execution docs](https://code.claude.com/docs/en/claude-code-on-the-web) for environment configuration options.
-- **Alternative**: Add this health check script to a GitHub Actions workflow (`infra-devops` tentacle) that runs on a schedule with full outbound access.
+1. **Re-run checks from a machine with unrestricted outbound access** — the scheduled monitor
+   is not viable in this remote container environment as configured.
 
-## All Clear
-No — checks could not run. Revisit from an environment with unrestricted outbound HTTPS.
+2. **Alternative monitoring options:**
+   - Run the health script from a local machine or a Vercel cron/edge function.
+   - Use an external uptime service (Better Uptime, UptimeRobot, Checkly) that runs probes
+     outside Anthropic's proxy network.
+   - Add a GitHub Actions workflow on a schedule (`on: schedule`) that runs the curl checks
+     from a standard runner with unrestricted egress.
+
+3. **Security headers to verify when access is restored:**
+   - Confirm `X-Frame-Options` is set (was absent from Vercel response headers in prior checks)
+   - Confirm `Strict-Transport-Security` is present
+   - Confirm `Content-Security-Policy` is set (was missing in last successful scan)
+
+---
+
+_Report generated by automated health monitor. No code was modified. Environment: remote container, proxy gateway policy denial._
