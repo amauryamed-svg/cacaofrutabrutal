@@ -1,75 +1,90 @@
 # Vercel Deploy Health Report
-Timestamp: 2026-08-31T14:16:00Z
-Window: last 7 days (2026-08-24 → 2026-08-31)
+Timestamp: 2026-09-07T14:10:00Z
+Window: last 7 days (2026-08-31 → 2026-09-07)
 Project: caua-mvp (id: prj_Fc5Rbha3hlIRAXrevMIoIaBeXWoz)
 Team: amauryamed-1073s-projects (id: team_aVPGjM9P30YNoCQKEvdBp4UQ)
 
 ## Summary: WARN
 
-Pipeline healthy: no ERROR deployments, all GH Actions runs succeeded, workflow unchanged.
-Two persistent WARNs:
-1. **`www.cacaofrutabrutal.com` is absent from Vercel project domain list** — only `cacaofrutabrutal.com` is registered as a permanent domain; www is only aliased transiently by the deploy workflow.
-2. **Egress policy blocks site curl checks** — checks #1, #2, #9 still inconclusive from this sandbox environment (66th consecutive week). No production outage indicated; pipeline evidence is all green.
-
-✅ Positive update: **Vercel MCP is now accessible** (previously showed `enabledInChat:false` for many weeks). Deployment data is now verifiable directly via MCP.
+Pipeline healthy: 5 READY / 0 ERROR in 7d window, all 3 GH Actions runs succeeded,
+workflow unchanged. Two persistent WARNs carried over from last week:
+1. **www.cacaofrutabrutal.com** is NOT in the Vercel project's permanent domain list
+   (only aliased per-deploy by workflow; needs adding as a permanent domain).
+2. **Egress proxy blocks curl checks** — 67th consecutive week; site availability,
+   bundle freshness, and SPA route checks are all inconclusive from this environment.
 
 ## Deploy activity (7d)
-- Total (production-targeted): 6 | READY: 5 | CANCELED: 1 | ERROR: 0
-- Last READY: `dpl_9dCFAnT5i3tYhdG5LjsP5pAjdTcM` — d6413239 — "chore: health report 2026-08-31" — 0h ago
-- Last CANCELED: `dpl_HzZ5TK2VrHSY5rNbFB7v7bjArCP3` — d6413239 — same sha, same push (superseded by dpl_9dCFA)
+- Total: 7 | READY: 5 | CANCELED: 2 | ERROR: 0
+- Last READY (production): `dpl_AQGfuxMVxFi7YEeDQJkeCud62ZNP` — `e80bd6f` — "chore: update HEALTH_REPORT.md for 2026-09-07 health check run" — 0h ago — READY
+- Last READY (any): `dpl_4v2PU5BYsB22mnWE4fEp2528vonv` — `28b3b8c` — "chore: weekly dead-code sweep 2026-08-31" (PR #67 preview) — ~19h ago — READY
 - Last ERROR: none in 7d ✅
-- Note: all 7d deploys are health-report commits; last real code deploy was 2026-06-26 (65 days ago — sha 16ed059, "fix(seed): include email column in cdp-reviewer upsert")
+
+Breakdown:
+| Deployment | State | Target | Commit (short) | Timestamp |
+|---|---|---|---|---|
+| dpl_AQGfuxMV | READY | production | e80bd6f — health report | 2026-09-07T14:03Z |
+| dpl_73ELYnif | CANCELED | production | e80bd6f — health report | 2026-09-07T14:03Z |
+| dpl_4v2PU5BY | READY | (PR #67 preview) | 28b3b8c — dead-code sweep | 2026-08-31T14:38Z |
+| dpl_GFMzJ87T | READY | production | c94d5bf — health report | 2026-08-31T14:18Z |
+| dpl_AsT3hmwD | READY | production | c94d5bf — health report | 2026-08-31T14:18Z |
+| dpl_9dCFAnT5 | READY | production | d641323 — health report | 2026-08-31T14:02Z |
+| dpl_HzZ5TK2V | CANCELED | production | d641323 — health report | 2026-08-31T14:02Z |
+
+*Note: CANCELED deployments are normal — each commit triggers two concurrent hooks; the first one in wins and the duplicate is auto-canceled.*
 
 ## Build performance
-- Build duration: not returned by Vercel list API; estimated ~75s based on GH Actions run deltas and prior weekly reports
-- GH Action run #132 (today): created 14:02:42Z → updated 14:04:49Z ≈ 127s total (includes 45s initial wait + polling)
-- Prior 5-week avg from commit messages: ~75s
-- Verdict: OK (within 90s baseline; no regression signal)
+- Last 5 GH Actions run durations (proxy for Vercel build): 125s, 62s, 127s, 81s, 65s
+- Average: ~92s (~1m 32s)
+- Verdict: **OK** — well under 4-min threshold; within historical baseline (~62–127s range)
 
 ## Domains
-- `cacaofrutabrutal.com` → attached to project ✅ (permanent domain in Vercel project settings)
-- `www.cacaofrutabrutal.com` → ⚠️ NOT in Vercel project domain list (only aliased per-deploy by workflow; not a permanent project domain)
-- `caua-mvp.vercel.app` → attached ✅
-- `caua-mvp-amauryamed-1073s-projects.vercel.app` → attached ✅
+- `cacaofrutabrutal.com` → `dpl_AQGfuxMVxFi7YEeDQJkeCud62ZNP` (state: READY) ✅
+- `www.cacaofrutabrutal.com` → **NOT in permanent domain list** ⚠️ (per-deploy alias only)
+- `caua-mvp.vercel.app` → project default alias ✅
+- `caua-mvp-amauryamed-1073s-projects.vercel.app` → project alias ✅
 
 ## Checks
 | # | Check | Status | Detail |
 |---|-------|--------|--------|
-| 1 | Site availability | ⚠️ BLOCKED | Egress proxy denies CONNECT to cacaofrutabrutal.com:443 (org policy, 66th week) |
-| 2 | Bundle freshness | ⚠️ BLOCKED | Cannot curl production HTML from this sandbox |
-| 3 | Vercel deploys 7d | ✅ PASS | READY=5 ERROR=0 CANCELED=1 (superseded) |
-| 4 | Build duration | ✅ OK | ~75s avg (estimated); no regression |
-| 5 | Domain alias | ⚠️ WARN | `cacaofrutabrutal.com` ✅; `www.cacaofrutabrutal.com` missing from project domain list |
+| 1 | Site availability | ⚠️ INCONCLUSIVE | Egress proxy blocks CONNECT to cacaofrutabrutal.com:443 (67th week) |
+| 2 | Bundle freshness | ⚠️ INCONCLUSIVE | Egress proxy blocks curl; cannot verify Vite-hashed assets |
+| 3 | Vercel deploys 7d | ✅ PASS | READY=5, ERROR=0, CANCELED=2 (normal duplicate cancels) |
+| 4 | Build duration | ✅ OK | avg ~92s (GH Actions proxy); baseline ~62–127s |
+| 5 | Domain alias | ⚠️ WARN | cacaofrutabrutal.com attached ✅; www.cacaofrutabrutal.com not permanent ⚠️ |
 | 6 | Failed deploy logs | ✅ N/A | No ERROR deployments in 7d |
-| 7 | gh ↔ Vercel cross-check | ✅ MATCHED | 3 GH runs → 3 matching READY Vercel deployments (+ 1 CANCELED superseded); no mismatches |
-| 8 | Workflow integrity | ✅ UNCHANGED | No commits to deploy-vercel.yml or vercel.json in 7d; alias logic intact for both domains |
-| 9 | SPA routes | ⚠️ BLOCKED | Egress proxy blocks /fund, /app/adoptar, /investor-landing.html checks |
+| 7 | gh ↔ Vercel cross-check | ✅ PASS | 3/3 GH runs matched to READY Vercel deployments |
+| 8 | Workflow integrity | ✅ PASS | No changes to deploy-vercel.yml or vercel.json in 7d |
+| 9 | SPA routes | ⚠️ INCONCLUSIVE | Egress proxy blocks curl; /fund, /app/adoptar, /investor-landing.html unverifiable |
 
 ## Failed deployments (if any)
-None — 0 ERROR deployments in the 7-day window.
-
-One CANCELED deployment:
-- `dpl_HzZ5TK2VrHSY5rNbFB7v7bjArCP3` | d641323 | 2026-08-31T14:02:43Z | CANCELED (superseded by dpl_9dCFA seconds later; same sha/push — expected behavior)
+None in 7d — all production deploys resulted in READY or CANCELED (not ERROR).
 
 ## Issues / Action items
 
-1. **⚠️ Add `www.cacaofrutabrutal.com` as a permanent project domain in Vercel** — currently it is only aliased per-deploy by the GitHub Actions workflow (`promote-alias` step). If Vercel ever reclaims or removes the transient alias, www traffic will break. Fix: Vercel dashboard → caua-mvp → Settings → Domains → Add `www.cacaofrutabrutal.com`.
+1. **[PERSISTENT WARN — Action needed] www.cacaofrutabrutal.com not permanently attached.**
+   The domain `www.cacaofrutabrutal.com` is not in the Vercel project's domain list. It is
+   only set as an alias per-deploy by the workflow's `vercel alias` step. If a deploy ever
+   fails mid-alias-set or the workflow changes, www goes stale. Fix: add
+   `www.cacaofrutabrutal.com` as a permanent domain in Vercel project settings → Domains.
+   This has been flagged since the 2026-08-31 report.
 
-2. **⚠️ Site curl checks still blocked (66th week)** — checks #1/#2/#9 remain inconclusive. The org sandbox egress policy denies CONNECT to the production domain. Mitigation options (no action taken yet):
-   - Add a step to `deploy-vercel.yml` that curls the site and checks HTTP 200 + asset hash after alias promotion (runs in GitHub Actions, which has unrestricted egress).
-   - Or: subscribe to an external uptime monitor (e.g. Vercel Web Analytics, Better Uptime, UptimeRobot).
+2. **[PERSISTENT WARN — Environment limitation] Curl checks blocked for 67 consecutive weeks.**
+   The remote execution environment's egress proxy denies CONNECT tunnels to
+   `cacaofrutabrutal.com:443`. Checks #1, #2, #9 (site availability, bundle freshness, SPA
+   routes) cannot be run from this environment. Site health is inferred from Vercel deployment
+   state only. To close this gap, consider an external uptime monitor (Better Uptime, UptimeRobot,
+   or a GitHub Actions `curl` step on a schedule).
 
-3. **ℹ️ No real code deployed in 65 days** — last substantive deploy was 2026-06-26. Not a failure, but worth noting for awareness.
+3. **[INFO] No real code deployed in ~73 days** (last code commit: 2026-06-26). All recent
+   deploys are automated health report commits. Deploy pipeline is exercised and healthy but
+   only carries chore commits. Not a production issue — just context.
 
-4. **✅ Vercel MCP now accessible** — no action needed; previously the connector was `enabledInChat:false`. Deployment and domain data can now be queried directly each week.
+4. **[INFO] Dead-code sweep PR #67** (chore/dead-code-sweep-2026-08-31) is open with a READY
+   preview deploy. It removes 3 orphaned source files and 4 unused @remotion devDeps.
+   Not blocking; merge at owner's discretion.
 
 ## Vercel MCP tools used
 - `mcp__Vercel__list_teams`
 - `mcp__Vercel__list_projects`
-- `mcp__Vercel__list_deployments` (project `caua-mvp`, target `production`, limit 20)
-- `mcp__Vercel__get_project` (project `caua-mvp`)
-
-## GitHub MCP tools used
-- `mcp__github__actions_list` (list_workflow_runs, deploy-vercel.yml, limit 20)
-- `mcp__github__get_file_contents` (.github/workflows/deploy-vercel.yml)
-- `mcp__github__list_commits` (path filter: deploy-vercel.yml, since 7d)
+- `mcp__Vercel__get_project`
+- `mcp__Vercel__list_deployments`
