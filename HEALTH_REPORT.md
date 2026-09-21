@@ -1,36 +1,41 @@
 # CAUA Health Report
-Timestamp: 2026-09-07T00:00:00Z
+Timestamp: 2026-09-21T14:01:45Z
 
-## Summary: ⚠️ INCONCLUSIVE — Network policy blocked external connections
+## Summary: ⛔ BLOCKED — Network Policy Prevented All Checks
 
-> **Note:** This health check ran in a remote execution environment whose egress proxy
-> denied outbound HTTPS connections to both `cacaofrutabrutal.com:443` and
-> `kjygovuiphbxcdxeduco.supabase.co:443`. Checks that require those connections
-> returned HTTP 000 (connection rejected). The results below reflect what was observable;
-> they do NOT indicate the site or Supabase are down — only that they were unreachable
-> from this container.
+> **The remote execution environment's egress proxy denied all outbound HTTPS connections
+> to `cacaofrutabrutal.com` and `kjygovuiphbxcdxeduco.supabase.co`.**
+> No health checks could produce valid results. This is a configuration issue with
+> the Claude Code remote environment, not necessarily a problem with the live site.
 
 | Check | Status | Detail |
 |-------|--------|--------|
-| Site availability | ❌ BLOCKED | HTTP 000 — egress proxy denied CONNECT to cacaofrutabrutal.com:443 |
-| Security headers | ⚠️ INCONCLUSIVE | Only `X-Content-Type-Options: nosniff` detected; `X-Frame-Options` and `Strict-Transport-Security` NOT seen (may be proxy-filtered) |
-| Supabase auth endpoint | ❌ BLOCKED | HTTP 000 — egress proxy denied CONNECT to kjygovuiphbxcdxeduco.supabase.co:443 |
-| Supabase REST endpoint | ❌ BLOCKED | HTTP 000 — egress proxy denied CONNECT to kjygovuiphbxcdxeduco.supabase.co:443 |
-| HTTPS redirect (HTTP→HTTPS) | ❌ BLOCKED | Got HTTP 403 from proxy, not from origin — result is proxy rejection, not site redirect |
-| SSL certificate validity | ⚠️ INCONCLUSIVE | No SSL error in curl output, but connection was blocked before TLS handshake completed |
-| /fund route accessible | ❌ BLOCKED | HTTP 000 — egress proxy denied CONNECT to cacaofrutabrutal.com:443 |
+| Site availability | ⛔ BLOCKED | Proxy 403 on CONNECT to `cacaofrutabrutal.com:443` — curl exit 56, HTTP 000 |
+| Security headers | ⛔ BLOCKED | Response headers seen were from the proxy's own 403, not origin |
+| Supabase auth endpoint | ⛔ BLOCKED | Proxy 403 on CONNECT to `kjygovuiphbxcdxeduco.supabase.co:443` |
+| Supabase REST endpoint | ⛔ BLOCKED | Same — proxy denied CONNECT |
+| HTTPS redirect (HTTP→HTTPS) | ⛔ BLOCKED | HTTP 403 from proxy (not origin redirect) |
+| SSL certificate validity | ⚠️ INCONCLUSIVE | No TLS errors seen, but connection never reached origin |
+| /fund route accessible | ⛔ BLOCKED | Proxy 403 on CONNECT to `cacaofrutabrutal.com:443` |
 
 ## Issues Found
 
-### Critical: Health checks could not run
-- **Root cause:** The remote execution environment's network policy blocks outbound HTTPS to `cacaofrutabrutal.com` and `kjygovuiphbxcdxeduco.supabase.co`.
-- **Recommended action:** Re-run this scheduled task with a network policy that allows HTTPS egress to the target domains, OR run equivalent checks from a machine with unrestricted network access (e.g., a GitHub Action, a Vercel cron, or a local workstation).
-- **Proxy status command:** `curl -sS "$HTTPS_PROXY/__agentproxy/status"` for details.
+### CRITICAL: Egress network policy blocks all checks
 
-### Warning: Missing security headers (unconfirmed)
-- Only `X-Content-Type-Options: nosniff` was returned by the security headers check. `X-Frame-Options` and `Strict-Transport-Security` were absent from what was visible. Since the connection was likely intercepted by the proxy, this result is unreliable — verify from an unrestricted network.
+**Root cause:** The Claude Code remote environment was created with a network policy that
+does not allow outbound connections to `cacaofrutabrutal.com` or `supabase.co`.
+The proxy's `recentRelayFailures` log confirms 8+ `connect_rejected` events for:
+- `cacaofrutabrutal.com:443`
+- `kjygovuiphbxcdxeduco.supabase.co:443`
+- `mcp.supabase.com:443`
 
-## Recommended Next Steps
-1. Configure the Claude Code remote environment with a network policy that permits HTTPS to `cacaofrutabrutal.com` and `*.supabase.co`.
-2. Alternatively, move these health checks to a GitHub Action or an uptime monitoring service (e.g., BetterUptime, UptimeRobot, Checkly) that has direct internet access.
-3. Once connectivity is restored, re-run all 7 checks and confirm site availability, Supabase health, and security header presence.
+**Recommended action:**
+1. Recreate the remote session with an **"Allowed list"** or **"Allow all"** network policy
+   (see https://code.claude.com/docs/en/claude-code-on-the-web — network policy config).
+2. Alternatively, run this health check from a local terminal where outbound access
+   to these hosts is unrestricted.
+
+## Notes
+- `mcp.supabase.com:443` was also blocked (Supabase MCP server cannot authenticate in
+  non-interactive sessions either — unrelated but consistent).
+- No site code was modified during this run.
