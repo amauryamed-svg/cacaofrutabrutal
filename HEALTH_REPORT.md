@@ -1,41 +1,45 @@
 # CAUA Health Report
-Timestamp: 2026-09-21T14:01:45Z
+Timestamp: 2026-09-28T14:09:23Z
 
-## Summary: ⛔ BLOCKED — Network Policy Prevented All Checks
+## Summary: ⛔ BLOCKED — Network policy prevented all checks
 
-> **The remote execution environment's egress proxy denied all outbound HTTPS connections
-> to `cacaofrutabrutal.com` and `kjygovuiphbxcdxeduco.supabase.co`.**
-> No health checks could produce valid results. This is a configuration issue with
-> the Claude Code remote environment, not necessarily a problem with the live site.
+All health checks failed to execute because the remote execution environment's
+egress proxy denied outbound CONNECT requests to both `cacaofrutabrutal.com:443`
+and `kjygovuiphbxcdxeduco.supabase.co:443` with HTTP 403 (organization policy).
+
+This is a **monitoring infrastructure failure**, not necessarily a site outage.
+The proxy `/status` endpoint confirmed: `"gateway answered 403 to CONNECT (policy denial or upstream failure)"`.
 
 | Check | Status | Detail |
 |-------|--------|--------|
-| Site availability | ⛔ BLOCKED | Proxy 403 on CONNECT to `cacaofrutabrutal.com:443` — curl exit 56, HTTP 000 |
-| Security headers | ⛔ BLOCKED | Response headers seen were from the proxy's own 403, not origin |
-| Supabase auth endpoint | ⛔ BLOCKED | Proxy 403 on CONNECT to `kjygovuiphbxcdxeduco.supabase.co:443` |
-| Supabase REST endpoint | ⛔ BLOCKED | Same — proxy denied CONNECT |
-| HTTPS redirect (HTTP→HTTPS) | ⛔ BLOCKED | HTTP 403 from proxy (not origin redirect) |
-| SSL certificate validity | ⚠️ INCONCLUSIVE | No TLS errors seen, but connection never reached origin |
-| /fund route accessible | ⛔ BLOCKED | Proxy 403 on CONNECT to `cacaofrutabrutal.com:443` |
+| Site availability | ⛔ BLOCKED | Egress proxy denied CONNECT to cacaofrutabrutal.com:443 |
+| Security headers | ⛔ BLOCKED | Egress proxy denied CONNECT to cacaofrutabrutal.com:443 |
+| Supabase auth endpoint | ⛔ BLOCKED | Egress proxy denied CONNECT to kjygovuiphbxcdxeduco.supabase.co:443 |
+| Supabase REST endpoint | ⛔ BLOCKED | Egress proxy denied CONNECT to kjygovuiphbxcdxeduco.supabase.co:443 |
+| HTTPS redirect | ⛔ BLOCKED | Egress proxy denied CONNECT to cacaofrutabrutal.com:80 |
+| SSL certificate validity | ⛔ BLOCKED | Egress proxy denied CONNECT to cacaofrutabrutal.com:443 |
+| /fund route accessible | ⛔ BLOCKED | Egress proxy denied CONNECT to cacaofrutabrutal.com:443 |
 
-## Issues Found
+## Issues found
 
-### CRITICAL: Egress network policy blocks all checks
+### ⛔ Monitoring environment: egress policy blocks external health checks
+- **Root cause:** The Claude Code remote execution environment's egress proxy
+  (`HTTPS_PROXY`) is configured with an organization-level policy that denies
+  CONNECT tunnels to external production domains.
+- **Evidence:** `recentRelayFailures` in proxy status shows 403 for
+  `cacaofrutabrutal.com:443` and `mcp.supabase.com:443`.
+- **Impact:** Zero visibility — no check could run, site status is unknown.
+- **Recommended actions:**
+  1. **Re-run this scheduled task from a different environment** (e.g., a
+     non-restricted Claude Code session, a GitHub Action, or an external
+     uptime monitor like Better Uptime / UptimeRobot).
+  2. **Allow-list production domains** in the Claude Code on the Web environment
+     network policy (see https://code.claude.com/docs/en/claude-code-on-the-web).
+  3. **Set up an independent uptime monitor** for `cacaofrutabrutal.com` and
+     the Supabase project so you get alerts even when this routine is blocked.
 
-**Root cause:** The Claude Code remote environment was created with a network policy that
-does not allow outbound connections to `cacaofrutabrutal.com` or `supabase.co`.
-The proxy's `recentRelayFailures` log confirms 8+ `connect_rejected` events for:
-- `cacaofrutabrutal.com:443`
-- `kjygovuiphbxcdxeduco.supabase.co:443`
-- `mcp.supabase.com:443`
-
-**Recommended action:**
-1. Recreate the remote session with an **"Allowed list"** or **"Allow all"** network policy
-   (see https://code.claude.com/docs/en/claude-code-on-the-web — network policy config).
-2. Alternatively, run this health check from a local terminal where outbound access
-   to these hosts is unrestricted.
-
-## Notes
-- `mcp.supabase.com:443` was also blocked (Supabase MCP server cannot authenticate in
-  non-interactive sessions either — unrelated but consistent).
-- No site code was modified during this run.
+## Environment details
+- Runner: Claude Code remote execution environment (cloud container)
+- Proxy: agent proxy active, `bundleCoversEveryHost: true`, `selective: false`
+- Proxy status endpoint: `http://127.0.0.1:40853/__agentproxy/status`
+- Proxy error: `gateway answered 403 to CONNECT (policy denial or upstream failure)`
